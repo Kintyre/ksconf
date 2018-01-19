@@ -1,10 +1,12 @@
 # Kintyre Splunk Admin Script with CLI interfaces
 Kintyre's Splunk scripts for various admin tasks.
 ## kast.py
-    usage: kast.py [-h] [-S MODE] [-K MODE] {combine,diff,patch,merge,sort} ...
+    usage: kast.py [-h] [-S MODE] [-K MODE]
+                   {check,combine,diff,patch,merge,minimize,sort,unarchive} ...
     
     positional arguments:
-      {combine,diff,patch,merge,sort}
+      {check,combine,diff,patch,merge,minimize,sort,unarchive}
+        check               Perform a basic syntax and sanity check on .conf files
         combine             Combine .conf settings from across multiple
                             directories into a single consolidated target
                             directory. This is similar to running 'merge'
@@ -14,7 +16,12 @@ Kintyre's Splunk scripts for various admin tasks.
                             automatically (all changes) or interactively allowing
                             the user to pick which stanzas and keys to integrate
         merge               Merge two or more .conf files
+        minimize            Minimize the target file by removing entries
+                            duplicated in the default conf(s) provided.
         sort                Sort a Splunk .conf file
+        unarchive           Install or overwrite an existing app in a git-friendly
+                            way. If the app already exist, steps will be taken to
+                            upgrade it in a sane way.
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -35,6 +42,18 @@ Kintyre's Splunk scripts for various admin tasks.
                             keys are found.
 
 
+### kast.py check
+    usage: kast.py check [-h] FILE [FILE ...]
+    
+    positional arguments:
+      FILE        One or more configuration files to check. If the special value
+                  of '-' is given, then the list of files to validate is read from
+                  standard input
+    
+    optional arguments:
+      -h, --help  show this help message and exit
+
+
 ### kast.py combine
     usage: kast.py combine [-h]
     
@@ -52,11 +71,11 @@ Kintyre's Splunk scripts for various admin tasks.
     optional arguments:
       -h, --help      show this help message and exit
       --comments, -C  Enable comparison of comments. (Unlikely to work
-                      consitently.
+                      consistently.
 
 
 ### kast.py patch
-    usage: kast.py patch [-h] [--target FILE] [--interactive] [--copy] FILE
+    usage: kast.py patch [-h] [--target FILE] [--interactive] FILE
     
     positional arguments:
       FILE                  The source configuration file to pull changes from.
@@ -69,10 +88,6 @@ Kintyre's Splunk scripts for various admin tasks.
                             conf to standard output.
       --interactive, -i     Enable interactive mode (like git '--patch' or add
                             '-i' mode.)
-      --copy                Copy settings from the source configuration file
-                            instead of migrating the selected settings from the
-                            source to the target, which is the default behavior if
-                            the target is a file rather than standard out.
 
 
 ### kast.py merge
@@ -87,6 +102,13 @@ Kintyre's Splunk scripts for various admin tasks.
                             Save the merged configuration files to this target
                             file. If not given, the default is to write the merged
                             conf to standard output.
+
+
+### kast.py minimize
+    usage: kast.py minimize [-h]
+    
+    optional arguments:
+      -h, --help  show this help message and exit
 
 
 ### kast.py sort
@@ -105,6 +127,37 @@ Kintyre's Splunk scripts for various admin tasks.
                             move/remove comments.
       -n LINES, --newlines LINES
                             Lines between stanzas.
+
+
+### kast.py unarchive
+    usage: kast.py unarchive [-h] [--dest DIR] [--app-name NAME]
+                             [--default-dir DIR]
+                             [--git-sanity-check {all,disable,changes,untracked}]
+                             SPL
+    
+    positional arguments:
+      SPL                   The path to the archive to install.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --dest DIR            Set the destination path where the archive will be
+                            extracted. By default the current directory is used,
+                            but sane values include etc/apps, etc/deployment-apps,
+                            and so on. This could also be a git repository working
+                            tree where splunk apps are stored.
+      --app-name NAME       The app name to use when expanding the archive. By
+                            default, the app name is taken from the archive as the
+                            top-level path include in the archive (by convention.)
+      --default-dir DIR     Name of the directory where the default contents will
+                            be stored. This is a useful feature for apps that use
+                            a dynamic default directory that's created by the
+                            'combine' mode.
+      --git-sanity-check {all,disable,changes,untracked}
+                            By default a 'git status' is run on the destination
+                            folder to see if the working tree has any
+                            modifications before the unarchive process starts.
+                            (This check is automatically disabled if git is not in
+                            use or not installed.)
 
 
 ## sort_conf.py

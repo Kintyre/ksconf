@@ -17,25 +17,107 @@ Design goals:
  * No eternal dependencies (single source file, if possible; or packagable as single file.)
  * Stable CLI
 
+
+
+
+Merge magic:
+
+ * Allow certain keys to be suppressed by subsequent layers by using some kind of sentinel value,
+   like "<<BLANK>>" or something.  Use case:  Disabling a transformer defined in the upstream layer.
+   So instead of "TRANSFORMS-class=" being shown in the output, the entire key is removed from the
+   destination.)
+ * Allow stanzas to be suppressed with some kind of special key value token.  Use case:  Removing
+   unwanted eventgen related source matching stanza's like "[source::...(osx.*|sample.*.osx)]"
+   instead of having to suppress individual keys.
+ * Allow a special wildcard stanzas that globally apply one or more keys to all subsequent stanzas.
+   Use Case:  set "index=os_<ORG>" on all existing stanzas in an inputs.conf file.  Perhaps this
+   could be setup like [*] index=os_prod
+ * (Maybe) allow list augmentation (or subtraction?) to comma or semicolon separated lists.
+        TRANSFORMS-syslog = <<APPEND>> ciso-asa-sourcetype-rewrite   OR
+        TRANSFORMS-syslog = <<REMOVE>> ciso-asa-sourcetype-rewrite
+
+   Possible filter operators include:
+        <<APPEND>> string           Pure string concatenation
+        <<APPEND(sep=",")>> i1,i2   Handles situation where parent may be empty (no leading ",")
+        <<REMOVE>> string           Removes "string" from parent value; empty if no parent
+        <<ADD(sep=";")>> i1;i2      Does SET addition.  Preserves order where possible, squash dups.
+        <<SUBTRACT(sep=",")>> i1    Does SET reducton.  Preserves order where possible, squash dups.
+
+    Does a simple find and replace.  (Whitespaces around the
+
+    Down the road stuff:        (Let's be careful NOT to build yet another template language...)
+        <<LOOKUP(envvar="HOSTNAME")>>               <<-- setting host in inputs.conf, part of a monitor stanza
+        <<LOOKUP(file="../regex.txt", line=2)>>     <<-- Can't thing of a legitimate use, currently
+        <<RE_SUB(pattern, replace, count=2)>>       <<-- Parsing this will be a challenge
+        <<INTROSPECT(key, stanza="default")>>       <<-- Reference another value located within the current config file.
+
+    @register_filter("APPEND")
+    def filter_op_APPEND(context, sep=","):
+        # context.op is the name of the filter, "APPEND" in this case.
+        # context.stanza is name of the current stanza
+        # context.key is the name of the key who's value is being operated on
+        # context.parent is the original string value.
+        # context.payload  the value included after the
+        # Allow for standard python style argument passing in the form of position or key/value pairs
+            *args, **kwargs
+
+
+Known bugs / limitations:
+ * Parser doesn't figure out that "[s" or "s]" are incomplete stanza entries (values are silently
+   merged into the preceding stanza)
+
+
+To do (Someday):
+
+ * Add automatic metadata merging support so that when patching changes from local to default,
+   for example, the appropriate local metadata settings move from local.meta to default.meta.
+   There are quite a few complications to this idea.
+ * Build a proper conf parser that tracks things correctly.  (Preferably one that has a dict-like
+   interface so existing code doesn't break, but that's a lower-priority).  This is necessary to
+   (1) improve comment handling, (2) edit a single stanza or key without rewrite the entire file,
+   (3) improve syntax error reporting (line numbers), and (4) preserve original ordering.
+   For example, it would be nice to run patch in away that only applies changes and doesn't re-sort
+   and loose/mangle all comments.
+ * Find a good way to unit test this.  Probably requires a stub class (based on the above)
+   Keep unit-test in a separate file (keep size under control.)
+
+
 """
+
+
 
 import os
 import re
 import sys
+import difflib
+from collections import namedtuple, defaultdict, Counter
+from copy import deepcopy
 from StringIO import StringIO
 
 
-GLOBAL_STANZA = object()
+
+class Token(object):
+    """ Immutable token object.  deepcopy returns the same object """
+    def __deepcopy__(self, memo):
+        memo[id(self)] = self
+        return self
+
+GLOBAL_STANZA = Token()
 
 DUP_OVERWRITE = "overwrite"
 DUP_EXCEPTION = "exception"
 DUP_MERGE = "merge"
 
-class ConfParserException(Exception): pass
 
-class DuplicateKeyException(ConfParserException): pass
 
-class DuplicateStanzaException(ConfParserException): pass
+class ConfParserException(Exception):
+    pass
+
+class DuplicateKeyException(ConfParserException):
+    pass
+
+class DuplicateStanzaException(ConfParserException):
+    pass
 
 
 def section_reader(stream, section_re=re.compile(r'^\[(.*)\]\s*$')):
@@ -120,7 +202,8 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                     local_stanza[key] = value
                 elif dup_key == DUP_EXCEPTION:
                     raise DuplicateKeyException("Stanza [{0}] has duplicate key '{1}' in file "
-                                                "{2}".format(section, key, stream.name))
+                                                "{2}".format(_format_stanza(section),
+                                                             key, stream.name))
             else:
                 local_stanza[key] = value
                 s[key] = value
@@ -128,15 +211,24 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
 
 
 def write_conf(stream, conf, stanza_delim="\n"):
-    for (section, cfg) in sorted(conf.iteritems()):
-        if section != GLOBAL_STANZA:
-            stream.write("[%s]\n" % section)
-        for (key, value) in sorted(cfg.iteritems()):
+    conf = dict(conf)
+
+    def write_stanza_body(items):
+        for (key, value) in sorted(items.iteritems()):
             if key.startswith("#"):
-                stream.write(value + "\n")
+                stream.write("{0}\n".format(value))
             else:
-                stream.write("%s = %s\n" % (key, value.replace("\n", "\\\n")))
+                stream.write("{0} = {1}\n".format(key, value.replace("\n", "\\\n")))
         stream.write(stanza_delim)
+
+    # Global MUST be written first
+    if GLOBAL_STANZA in conf:
+        write_stanza_body(conf[GLOBAL_STANZA])
+        # Remove from our shallow copy of conf, to prevent dup output
+        del conf[GLOBAL_STANZA]
+    for (section, cfg) in sorted(conf.iteritems()):
+        stream.write("[{0}]\n".format(section))
+        write_stanza_body(cfg)
 
 
 def sort_conf(instream, outstream, stanza_delim="\n", parse_args=None):
@@ -148,23 +240,44 @@ def sort_conf(instream, outstream, stanza_delim="\n", parse_args=None):
     write_conf(outstream, conf, stanza_delim=stanza_delim)
 
 
-def merge_conf_dicts(*dicts):
-    result = dict()
-    dicts = list(dicts)
-    while dicts:
-        d = dicts.pop(0)
-        if not result:
-            result.update(d)
+STANZA_MAGIC_KEY = "_stanza"
+STANZA_OP_DROP = "<<DROP>>"
+
+
+def _merge_conf_dicts(base, new_layer):
+    """ Merge new_layer on top of base.  It's up to the caller to deal with any necessary object
+    copying to avoid odd referencing between the base and new_layer"""
+    for (section, items) in new_layer.iteritems():
+        if STANZA_MAGIC_KEY in items:
+            magic_op = items[STANZA_MAGIC_KEY]
+            if STANZA_OP_DROP in magic_op:
+                # If this section exist in a parent (base), then drop it now
+                if section in base:
+                    del base[section]
+                continue
+        if section in base:
+            # TODO:  Support other magic here...
+            base[section].update(items)
         else:
-            for (section, items) in d.iteritems():
-                if section in result:
-                    result[section].update(items)
-                else:
-                    result[section] = dict(items)
+            # TODO:  Support other magic here too..., though with no parent info
+            base[section] = items
+    # Nothing to return, base is updated in-place
+
+
+def merge_conf_dicts(*dicts):
+    result = {}
+    for d in dicts:
+        d = deepcopy(d)
+        if not result:
+            result = d
+        else:
+            # Merge each subsequent layer on one at a time
+            _merge_conf_dicts(result, d)
     return result
 
 
 def _cmp_sets(a, b):
+    """ Result tuples in format (a-only, common, b-only) """
     set_a = set(a)
     set_b = set(b)
     a_only = set_a.difference(set_b)
@@ -173,33 +286,85 @@ def _cmp_sets(a, b):
     return (a_only, common, b_only)
 
 
-def compare_cfgs(a, b):
-    """ Result tuples in format (a-only, common, b-only) """
-    stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
-    for stanza in stanza_a:
-        yield ((stanza, None), (a[stanza], None, None))
-    for stanza in stanza_b:
-        yield ((stanza, None), (None, None, b[stanza]))
+DIFF_OP_INSERT  = "insert"
+DIFF_OP_DELETE  = "delete"
+DIFF_OP_REPLACE = "replace"
+DIFF_OP_EQUAL   = "equal"
 
+
+DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
+
+def compare_cfgs(a, b):
+    '''
+    Opcode tags borrowed from difflib.SequenceMatcher
+
+    Return list of 5-tuples describing how to turn a into b. Each tuple is of the form
+
+        (tag, location, a, b)
+
+    tag:
+
+    Value	    Meaning
+    'replace'	same element in both, but different values.
+    'delete'	present in b, but not a
+    'insert'    present in a, but not b
+    'equal'	    same values in both
+
+    location is a tuple that can take the following forms:
+
+    (level, pos0, ... posN)
+    (0)                 Global file level context (e.g., both files are the same)
+    (1, stanza)         Stanzas are the same, or completely different (no shared keys)
+    (2, stanza, key)    Key level, indicating
+
+
+    If very long lines, or very subtle changes the difflib.Differ (or ndiff) produces a nice output
+    that underscores what changed in a line.
+
+    SequenceMatcher can be used to provide a ratio (how similar two strings are)
+    '''
+
+    # Level 1 - Compare entire file
+    stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
+    delta = []
+    if a == b:  ## Test this out... (does this recurse as necessary?)
+        return [DiffOp(DIFF_OP_EQUAL, (0,), a, b)]
+
+    if not stanza_common:
+        # Q:  Does this specific output make the consumer's job more difficult?
+        # Nothing in common between these two files
+        return [DiffOp(DIFF_OP_REPLACE, (0,), a, b)]
+
+    # Level 2 - Compare stanzas
+    for stanza in stanza_a:
+        delta.append(DiffOp(DIFF_OP_INSERT, (1, stanza), a[stanza], None))
+    for stanza in stanza_b:
+        delta.append(DiffOp(DIFF_OP_DELETE, (1, stanza), None, b[stanza]))
     for stanza in stanza_common:
-        ## Todo: If a==b, then we shoud yield a stanza level entry, ..((stanza,None)(None,DICT,None)) instead of dropping down into the key-by-key comparison
         a_ = a[stanza]
         b_ = b[stanza]
+        if a_ == b_:
+            delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
+            continue
         kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
+        if not kv_common:
+            # No keys in common, just swap
+            delta.append(DiffOp(DIFF_OP_REPLACE, (1, stanza), a_, b_))
+            continue
 
-        t = {}
+        # Level 3 - Key comparisons
         for key in kv_a:
-            yield ((stanza, key), (a_[key], None, None))
+            delta.append(DiffOp(DIFF_OP_INSERT, (2, stanza, key), a_[key], None))
         for key in kv_b:
-            yield ((stanza, key), (None, None, b_[key]))
+            delta.append(DiffOp(DIFF_OP_DELETE, (2, stanza, key), None, b_[key]))
         for key in kv_common:
             a__ = a_[key]
             b__ = b_[key]
             if a__ == b__:
-                yield ((stanza, key), (None, a__, None))
+                delta.append(DiffOp(DIFF_OP_EQUAL, (2, stanza, key), a__, b__))
             else:
-                yield ((stanza, key), (a__, None, b__))
-
+                delta.append(DiffOp(DIFF_OP_REPLACE, (2, stanza, key), a__, b__))
+    return delta
 
 
 def do_cmp(f1, f2):
@@ -216,8 +381,66 @@ def do_cmp(f1, f2):
             return True
 
 
+def _stdin_iter(stream=None):
+    if stream is None:
+        stream = sys.stdin
+    for line in stream:
+        yield line.rstrip()
+
+
+def _format_stanza(stanza):
+    """ Return a more human readable stanza name."""
+    if stanza is GLOBAL_STANZA:
+        return "GLOBAL"
+    else:
+        return stanza
 
 # ==================================================================================================
+
+
+def do_check(args):
+    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
+                      keep_comments=False)
+
+    # Should we read a list of conf files from STDIN?
+    if len(args.conf) == 1 and args.conf[0] == "-":
+        confs = _stdin_iter()
+    else:
+        confs = args.conf
+    c = Counter()
+    # of could use c = defaultdict(int)
+    #c.subtract()
+    exit_code = 0
+    for conf in confs:
+        c["checked"] += 1
+        if not os.path.isfile(conf):
+            sys.stderr.write("Skipping missing file:  {0}\n".format(conf))
+            c["missing"] += 1
+        try:
+            parse_conf(conf, **parse_args)
+            c["okay"] += 1
+            if True:    # verbose
+                sys.stdout.write("Successfully parsed {0}\n".format(conf))
+                sys.stdout.flush()
+        except ConfParserException, e:
+            sys.stderr.write("Error in file {0}:  {1}\n".format(conf, e))
+            sys.stderr.flush()
+            exit_code = 1
+            # TODO:  Break out counts by error type/category (there's only a few of them)
+            c["error"] += 1
+        except Exception, e:
+            sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
+                             "Aborting.\n{1}".format(conf, e))
+            exit_code = 2
+            c["error"] += 1
+            break
+    if True:    #show stats or verbose
+        sys.stdout.write("Completed checking {0[checked]} files.  rc={1} Breakdown:\n"
+                         "   {0[okay]} files were parsed successfully.\n"
+                         "   {0[error]} files failed.\n".format(c, exit_code))
+    sys.exit(exit_code)
+
+
 
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
@@ -232,6 +455,16 @@ def do_merge(args):
 
 def do_diff(args):
     ''' Compare two configuration files. '''
+
+
+    prefix = {
+        DIFF_OP_EQUAL : " ",
+        DIFF_OP_INSERT : "+",
+        DIFF_OP_DELETE: "-",
+        DIFF_OP_REPLACE: "?"
+    }
+    differ = difflib.Differ()
+
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=args.comments)
     # Parse all config files
@@ -239,27 +472,76 @@ def do_diff(args):
     cfg2 = parse_conf(args.conf2, **parse_args)
 
     last_stanza = None
-    for ((stanza, key), (a, common, b)) in compare_cfgs(cfg1, cfg2):
+    diffs = compare_cfgs(cfg1, cfg2)
+
+    if len(diffs) == 1:
+        print diffs[0].location[0]
+        print diffs[0].tag
+        return
+
+
+    def show_value(value, key, prefix=""):
+        if isinstance(v, dict):
+            lines = [ "{0}{1} = {2}".format(prefix, x, y) for x, y in value.iteritems() ]
+            return "\n".join(lines)
+        else:
+            return "{0}{1} = {2}".format(prefix, key, value)
+
+    for op in diffs:
+        l = op.location[0]
+        if l == 1:
+            stanza = op.location[1]
+            key = None
+        elif l == 2:
+            stanza, key = op.location[1:]
+
         if stanza != last_stanza:
-            if stanza is GLOBAL_STANZA:
-                print "[DEFAULT]"
-            else:
-                print "[{0}]".format(stanza)
+            if last_stanza is not None:
+                # Line breaker after last stanza
+                print
+            print "[{0}]".format(_format_stanza(stanza))
             last_stanza = stanza
+
+        p = ""
+        if op.tag == DIFF_OP_INSERT:
+            p = "+"
+            v = op.a
+            print show_value(op.a, key, "+")
+        elif op.tag == DIFF_OP_DELETE:
+            p = "-"
+            v = op.b
+            #print "- {0} = {1}".format(key, op.b)
+            print show_value(op.b, key, "-")
+        elif op.tag == DIFF_OP_REPLACE:
+            p = ">>"
+            v = "\n" + "".join(differ.compare(op.a,op.b))
+            print show_value(op.a, key, "+")
+            print show_value(op.b, key, "-")
+        elif op.tag == DIFF_OP_EQUAL:
+            v = op.a    # doesn't matter, same value
+            print show_value(op.b, key, " ")
+
+        '''
+        if key:
+            print "{0} {1}={2}".format(p, key, v)
+        else:
+            v = "\n".join(["{0}{1} = {2}".format(p, x,y) for x, y in v.iteritems()])
+            print "{0} {1}={2}".format(p, op.location[-1], v)
+        '''
+        '''
         if key:
             prefix = "{0} = ".format(key)
         else:
             prefix = " "
-        if a:
-            print "+  {0} {1}".format(prefix, a)
-        if common:
-            print "   {0} {1}".format(prefix, common)
-        if b:
-            print "-  {0} {1}".format(prefix, b)
+        '''
+        # p = prefix[diffop.tag]
+        # print "{0} {1:30} {2} | {3}".format(p, diffop.location[1:], diffop.a, diffop.b)
+
 
 
 def do_patch(args):
     ''' Interactively "patch" settings from one configuration file into another '''
+    # Todo: Implement
     pass
 
 def do_sort(args):
@@ -300,6 +582,13 @@ def do_combine(args):
 
 
 
+def do_unarchive(args):
+    """ Install / upgrade a Splunk app from an achive file """
+    # Must support tgz, tar, and zip
+    # TODO: Make this work well if git hold many apps, or if the destination folder IS the git app.
+    # Handle ignored files by preserving them as much as possible.
+    pass
+
 
 def cli():
     import argparse
@@ -328,6 +617,21 @@ def cli():
 
     subparsers = parser.add_subparsers()
 
+    # SUBCOMMAND:  splconf check <CONF>
+    sp_chck = subparsers.add_parser("check",
+                                    help="Perform a basic syntax and sanity check on .conf files")
+    sp_chck.set_defaults(funct=do_check)
+    sp_chck.add_argument("conf", metavar="FILE", nargs="+",
+                         help="One or more configuration files to check.  If the special value of "
+                              "'-' is given, then the list of files to validate is read from "
+                              "standard input")
+    ''' # Do we really need this?
+    sp_chck.add_argument("--max-errors", metavar="INT", type=int, default=0,
+                         help="Abort check if more than this many files fail validation.  Useful 
+                         for a pre-commit hook where any failure is unacceptable.")
+    '''
+    # Usage example:   find . -name '*.conf' | splconf check -  (Nice little pre-commit script)
+
     # SUBCOMMAND:  splconf combine --target=<DIR> <SRC1> [ <SRC-n> ]
     sp_comb = subparsers.add_parser("combine",
                                     help="Combine .conf settings from across multiple directories "
@@ -344,7 +648,7 @@ def cli():
     sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison")
     sp_diff.add_argument("--comments", "-C",
                          action="store_true", default=False,
-                         help="Enable comparison of comments.  (Unlikely to work consitently.")
+                         help="Enable comparison of comments.  (Unlikely to work consistently.")
 
 
     # SUBCOMMAND:  splconf patch --target=<CONF> <CONF>
@@ -362,12 +666,50 @@ def cli():
     sp_ptch.add_argument("--interactive", "-i",
                          action="store_true", default=False,
                          help="Enable interactive mode (like git '--patch' or add '-i' mode.)")
+
+    """ Possible behaviors.... thinking through what CLI options make the most sense...
+    
+    Things we may want to control:
+
+        Q: What mode of operation?
+            1.)  Automatic (merge all)
+            2.)  Interactive (user guided / sub-shell)
+            3.)  Batch mode:  CLI driven based on a stanza or key using either a name or pattern to 
+                 select which content should be integrated.
+
+        Q: What happens to the original?
+            1.)  Updated
+              a.)  Only remove source content that has been integrated into the target.
+              b.)  Let the user pick
+            2.)  Preserved  (Dry-run, or don't delete the original mode);  if output is stdout.
+            3.)  Remove
+              a.)  Only if all content was integrated.
+              b.)  If user chose to discard entry.
+              c.)  Always (--always-remove)
+        Q: What to do with discarded content?
+            1.)  Remove from the original (destructive)
+            2.)  Place in a "discard" file.  (Allow the user to select the location of the file.)
+            3.)  Automatically backup discards to a internal store, and/or log.  (More difficult to
+                 recover, but content is always logged/recoverable with some effort.)
+    
+    
+    Interactive approach:
+    
+        3 action options:
+            Integrate/Accept: Move content from the source to the target  (e.g., local to default)
+            Reject/Remove:    Discard content from the source; destructive (e.g., rm local setting)
+            Skip/Keep:        Don't move content from
+    
+    
+    sp_ptch.add_argument("--preview", action="store_true", default=False,
+                         help="")
     sp_ptch.add_argument("--copy", action="store_true", default=False,
                          help="Copy settings from the source configuration file instead of "
                               "migrating the selected settings from the source to the target, "
                               "which is the default behavior if the target is a file rather than "
                               "standard out.")
-    
+    sp_ptch.add_argument("--keep-empty")
+    """
 
     # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
     sp_merg = subparsers.add_parser("merge",
@@ -380,6 +722,19 @@ def cli():
                          type=argparse.FileType('w'), default=sys.stdout,
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output.")
+
+
+    # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
+    # Example workflow:
+    #   1. cp default/props.conf local/props.conf
+    #   2. vi local/props.conf (edit JUST the lines you want to change)
+    #   3. splconf minimize --target=local/props.conf default/props.conf
+    #  (You could take this a step further by appending "$SPLUNK_HOME/system/default/props.conf"
+    # and removing any SHOULD_LINEMERGE = true entries (for example)
+    sp_minz = subparsers.add_parser("minimize",
+                                    help="Minimize the target file by removing entries duplicated "
+                                         "in the default conf(s) provided.  ")
+
 
     # SUBCOMMAND:  splconf sort <CONF>
     sp_sort = subparsers.add_parser("sort",
@@ -399,13 +754,45 @@ def cli():
                             "potentially destructive operation that may move/remove comments.")
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
+
+    # SUBCOMMAND:  splconf upgrade tarball
+    sp_upgr = subparsers.add_parser("unarchive",
+                                    help="Install or overwrite an existing app in a git-friendly "
+                                         "way.  If the app already exist, steps will be taken to "
+                                         "upgrade it in a sane way.")
+    # Q:  Should this also work for fresh installs?
+    sp_upgr.set_defaults(funct=do_unarchive)
+    sp_upgr.add_argument("tarball", metavar="SPL",
+                         help="The path to the archive to install.")
+    sp_upgr.add_argument("--dest", metavar="DIR", default=".",
+                         help="Set the destination path where the archive will be extracted.  "
+                              "By default the current directory is used, but sane values include "
+                              "etc/apps, etc/deployment-apps, and so on.  This could also be a "
+                              "git repository working tree where splunk apps are stored.")
+    sp_upgr.add_argument("--app-name", metavar="NAME", default=None,
+                         help="The app name to use when expanding the archive.  By default, the "
+                              "app name is taken from the archive as the top-level path include in "
+                              "the archive (by convention.)")
+    sp_upgr.add_argument("--default-dir", default="default", metavar="DIR",
+                         help="Name of the directory where the default contents will be stored.  "
+                              "This is a useful feature for apps that use a dynamic default "
+                              "directory that's created by the 'combine' mode.")
+    sp_upgr.add_argument("--git-sanity-check",
+                         choices=["all", "disable", "changes", "untracked"],
+                         default="all",
+                         help="By default a 'git status' is run on the destination folder to see "
+                              "if the working tree has any modifications before the unarchive "
+                              "process starts.  "
+                              "(This check is automatically disabled if git is not in use or " 
+                              "not installed.)")
     args = parser.parse_args()
 
 
     try:
         args.funct(args)
     except Exception, e:
-        sys.stderr.write("Unhandle top-level exception.  {0}\n".format(e))
+        sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
+        raise
         sys.exit(99)
 
 
