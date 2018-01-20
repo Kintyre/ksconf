@@ -240,6 +240,8 @@ def sort_conf(instream, outstream, stanza_delim="\n", parse_args=None):
     write_conf(outstream, conf, stanza_delim=stanza_delim)
 
 
+# TODO: Replace this with "<<DROP_STANZA>>" on ANY key.  Let's use just ONE mechanism for all of
+# these merge hints/customizations
 STANZA_MAGIC_KEY = "_stanza"
 STANZA_OP_DROP = "<<DROP>>"
 
@@ -336,6 +338,18 @@ def compare_cfgs(a, b):
         return [DiffOp(DIFF_OP_REPLACE, (0,), a, b)]
 
     # Level 2 - Compare stanzas
+
+    # Make sure global goes first, this feels very painful...
+    if GLOBAL_STANZA in stanza_a:
+        delta.append(DiffOp(DIFF_OP_INSERT, (1, GLOBAL_STANZA), a[GLOBAL_STANZA], None))
+        stanza_a.remove(GLOBAL_STANZA)
+    elif GLOBAL_STANZA in stanza_b:
+        delta.append(DiffOp(DIFF_OP_DELETE, (1, GLOBAL_STANZA), None, b[GLOBAL_STANZA]))
+        stanza_b.remove(GLOBAL_STANZA)
+    elif GLOBAL_STANZA in stanza_common:
+        stanza_common.remove(GLOBAL_STANZA)
+        stanza_common = [ GLOBAL_STANZA ] + list(stanza_common)
+
     for stanza in stanza_a:
         delta.append(DiffOp(DIFF_OP_INSERT, (1, stanza), a[stanza], None))
     for stanza in stanza_b:
@@ -343,6 +357,7 @@ def compare_cfgs(a, b):
     for stanza in stanza_common:
         a_ = a[stanza]
         b_ = b[stanza]
+        # Note must make sure that the '==' operator continues to work with custom classes....
         if a_ == b_:
             delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
             continue
@@ -480,46 +495,56 @@ def do_diff(args):
         return
 
 
-    def show_value(value, key, prefix=""):
-        if isinstance(v, dict):
+    def show_value(value, stanza, key, prefix=""):
+        if isinstance(value, dict):
+            print "{0}[{1}]".format(prefix, _format_stanza(stanza))
             lines = [ "{0}{1} = {2}".format(prefix, x, y) for x, y in value.iteritems() ]
-            return "\n".join(lines)
+            return "\n".join(lines) + "\n"
         else:
             return "{0}{1} = {2}".format(prefix, key, value)
 
     for op in diffs:
         l = op.location[0]
         if l == 1:
+            t = "stanza"
             stanza = op.location[1]
             key = None
         elif l == 2:
+            t = "key"
             stanza, key = op.location[1:]
+
+        if t == "stanza":
+            print show_value(op.a, stanza, key, prefix[op.tag])
+            continue
 
         if stanza != last_stanza:
             if last_stanza is not None:
                 # Line breaker after last stanza
                 print
-            print "[{0}]".format(_format_stanza(stanza))
+            if op.tag == DIFF_OP_EQUAL:
+                print " [{0}]".format(_format_stanza(stanza))
+            else:
+                print "_[{0}]".format(_format_stanza(stanza))
             last_stanza = stanza
 
         p = ""
         if op.tag == DIFF_OP_INSERT:
             p = "+"
             v = op.a
-            print show_value(op.a, key, "+")
+            print show_value(op.a, stanza, key, "+")
         elif op.tag == DIFF_OP_DELETE:
             p = "-"
             v = op.b
             #print "- {0} = {1}".format(key, op.b)
-            print show_value(op.b, key, "-")
+            print show_value(op.b, stanza, key, "-")
         elif op.tag == DIFF_OP_REPLACE:
             p = ">>"
-            v = "\n" + "".join(differ.compare(op.a,op.b))
-            print show_value(op.a, key, "+")
-            print show_value(op.b, key, "-")
+            #v = "\n" + "".join(differ.compare(op.a,op.b))
+            print show_value(op.a, stanza, key, "+")
+            print show_value(op.b, stanza, key, "-")
         elif op.tag == DIFF_OP_EQUAL:
             v = op.a    # doesn't matter, same value
-            print show_value(op.b, key, " ")
+            print show_value(op.b, stanza, key, " ")
 
         '''
         if key:
@@ -642,7 +667,10 @@ def cli():
 
     # SUBCOMMAND:  splconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
-                                    help="Compare two .conf files")
+                                    help="Compares settings differences of two .conf files.  "
+                                         "This command ignores textual differences (like order, "
+                                         "spacing, and comments) and focuses strictly on comparing "
+                                         "stanzas, keys, and values.")
     sp_diff.set_defaults(funct=do_diff)
     sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison")
     sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison")

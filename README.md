@@ -11,7 +11,10 @@ Kintyre's Splunk scripts for various admin tasks.
                             directories into a single consolidated target
                             directory. This is similar to running 'merge'
                             recursively against a set of directories.
-        diff                Compare two .conf files
+        diff                Compares settings differences of two .conf files. This
+                            command ignores textual differences (like order,
+                            spacing, and comments) and focuses strictly on
+                            comparing stanzas, keys, and values.
         patch               Patch .conf settings from one file into another either
                             automatically (all changes) or interactively allowing
                             the user to pick which stanzas and keys to integrate
