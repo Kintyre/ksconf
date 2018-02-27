@@ -308,8 +308,8 @@ def compare_cfgs(a, b):
 
     Value	    Meaning
     'replace'	same element in both, but different values.
-    'delete'	present in b, but not a
-    'insert'    present in a, but not b
+    'delete'	remove value b
+    'insert'    insert value a
     'equal'	    same values in both
 
     location is a tuple that can take the following forms:
@@ -324,61 +324,69 @@ def compare_cfgs(a, b):
     that underscores what changed in a line.
 
     SequenceMatcher can be used to provide a ratio (how similar two strings are)
+
+
+    Possible alternatives:
+
+    https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
+
     '''
 
     # Level 1 - Compare entire file
     stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
     delta = []
-    if a == b:  ## Test this out... (does this recurse as necessary?)
+    if a == b:
         return [DiffOp(DIFF_OP_EQUAL, (0,), a, b)]
 
     if not stanza_common:
         # Q:  Does this specific output make the consumer's job more difficult?
         # Nothing in common between these two files
+        # Note:  We don't attempt to detect stanza renames (like a textual diff would do easily)
         return [DiffOp(DIFF_OP_REPLACE, (0,), a, b)]
 
     # Level 2 - Compare stanzas
 
-    # Make sure global goes first, this feels very painful...
-    if GLOBAL_STANZA in stanza_a:
-        delta.append(DiffOp(DIFF_OP_INSERT, (1, GLOBAL_STANZA), a[GLOBAL_STANZA], None))
-        stanza_a.remove(GLOBAL_STANZA)
-    elif GLOBAL_STANZA in stanza_b:
-        delta.append(DiffOp(DIFF_OP_DELETE, (1, GLOBAL_STANZA), None, b[GLOBAL_STANZA]))
-        stanza_b.remove(GLOBAL_STANZA)
-    elif GLOBAL_STANZA in stanza_common:
-        stanza_common.remove(GLOBAL_STANZA)
-        stanza_common = [ GLOBAL_STANZA ] + list(stanza_common)
+    # Make sure GLOBAL stanza is output first
+    all_stanzas = set(a.keys()).union(b.keys())
+    if GLOBAL_STANZA in all_stanzas:
+        all_stanzas.remove(GLOBAL_STANZA)
+        all_stanzas = [GLOBAL_STANZA] + list(all_stanzas)
+    else:
+        all_stanzas = list(all_stanzas)
+    all_stanzas.sort()
 
-    for stanza in stanza_a:
-        delta.append(DiffOp(DIFF_OP_INSERT, (1, stanza), a[stanza], None))
-    for stanza in stanza_b:
-        delta.append(DiffOp(DIFF_OP_DELETE, (1, stanza), None, b[stanza]))
-    for stanza in stanza_common:
-        a_ = a[stanza]
-        b_ = b[stanza]
-        # Note must make sure that the '==' operator continues to work with custom classes....
-        if a_ == b_:
-            delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
-            continue
-        kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
-        if not kv_common:
-            # No keys in common, just swap
-            delta.append(DiffOp(DIFF_OP_REPLACE, (1, stanza), a_, b_))
-            continue
+    for stanza in all_stanzas:
+        if stanza in a and stanza in b:
+            a_ = a[stanza]
+            b_ = b[stanza]
+            # Note must make sure that the '==' operator continues to work with custom classes....
+            if a_ == b_:
+                delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
+                continue
+            kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
+            if not kv_common:
+                # No keys in common, just swap
+                delta.append(DiffOp(DIFF_OP_REPLACE, (1, stanza), a_, b_))
+                continue
 
-        # Level 3 - Key comparisons
-        for key in kv_a:
-            delta.append(DiffOp(DIFF_OP_INSERT, (2, stanza, key), a_[key], None))
-        for key in kv_b:
-            delta.append(DiffOp(DIFF_OP_DELETE, (2, stanza, key), None, b_[key]))
-        for key in kv_common:
-            a__ = a_[key]
-            b__ = b_[key]
-            if a__ == b__:
-                delta.append(DiffOp(DIFF_OP_EQUAL, (2, stanza, key), a__, b__))
-            else:
-                delta.append(DiffOp(DIFF_OP_REPLACE, (2, stanza, key), a__, b__))
+            # Level 3 - Key comparisons
+            for key in kv_a:
+                delta.append(DiffOp(DIFF_OP_DELETE, (2, stanza, key), None, a_[key]))
+            for key in kv_b:
+                delta.append(DiffOp(DIFF_OP_INSERT, (2, stanza, key), b_[key], None))
+            for key in kv_common:
+                a__ = a_[key]
+                b__ = b_[key]
+                if a__ == b__:
+                    delta.append(DiffOp(DIFF_OP_EQUAL, (2, stanza, key), a__, b__))
+                else:
+                    delta.append(DiffOp(DIFF_OP_REPLACE, (2, stanza, key), a__, b__))
+        elif stanza in a:
+            # A only
+            delta.append(DiffOp(DIFF_OP_DELETE, (1, stanza), None, a[stanza]))
+        else:
+            # B only
+            delta.append(DiffOp(DIFF_OP_INSERT, (1, stanza), b[stanza], None))
     return delta
 
 
@@ -481,10 +489,20 @@ def do_diff(args):
     differ = difflib.Differ()
 
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=args.comments)
+                      keep_comments=False)  #args.comments)
     # Parse all config files
     cfg1 = parse_conf(args.conf1, **parse_args)
     cfg2 = parse_conf(args.conf2, **parse_args)
+
+    import datetime
+    def header(sign, filename):
+        ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
+        print "{0} {1:19} {2}".format(sign*3, filename, ts)
+
+    header("-", args.conf1)
+    header("+", args.conf2)
+    #print "--- {0:19} {1}".format(args.conf1, "timestamp")
+    #print "+++ {0:19} {1}".format(args.conf2, "timestamp")
 
     last_stanza = None
     diffs = compare_cfgs(cfg1, cfg2)
@@ -514,7 +532,10 @@ def do_diff(args):
             stanza, key = op.location[1:]
 
         if t == "stanza":
-            print show_value(op.a, stanza, key, prefix[op.tag])
+            if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
+                print show_value(op.b, stanza, key, "-")
+            if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
+                print show_value(op.a, stanza, key, "+")
             continue
 
         if stanza != last_stanza:
@@ -559,9 +580,11 @@ def do_diff(args):
         else:
             prefix = " "
         '''
-        # p = prefix[diffop.tag]
-        # print "{0} {1:30} {2} | {3}".format(p, diffop.location[1:], diffop.a, diffop.b)
-
+    """
+    for op in diffs:
+        p = prefix[op.tag]
+        print "{0} {1:40}    {2:20} <=> {3:20}".format(op.tag, op.location[1:], op.a, op.b)
+    """
 
 
 def do_patch(args):
