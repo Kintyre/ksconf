@@ -4,7 +4,9 @@ kast - Kintyre's Awesome Splunk Tool
 
 splconf - SPLunk CONFig tool
 
-kast - Kintyre's Awesome Splunk Tool for Configs
+splkt - Splunk Konfig tool (K for Kintyre/Config...  yeah, it's bad.  why geeks shouldn't name things)
+
+kasc - Kintyre's Awesome Splunk Tool for Configs
 
 kasct - Kintyre's Awesome Splunk Config Tool
 
@@ -65,10 +67,16 @@ Merge magic:
 Known bugs / limitations:
  * Parser doesn't figure out that "[s" or "s]" are incomplete stanza entries (values are silently
    merged into the preceding stanza)
+ * Parser may not support line continuations properly if a continued line starts with a "[".
+   We need to be able to support a line starting with at "[" over a continuation.  Real life
+   example, a subsearch starts on it's own line after a line continuation.  This must be 
+   interpreted as part of the search and NOT a new stanza definition.
 
 
 To do (Someday):
 
+ * Seperate the concepts of global and empty (anonymous) stanzas.  Entries at the top of the 
+   file, vs stuff litterally under a "[]" stanza (e.g., metadata files)
  * Add automatic metadata merging support so that when patching changes from local to default,
    for example, the appropriate local metadata settings move from local.meta to default.meta.
    There are quite a few complications to this idea.
@@ -78,6 +86,9 @@ To do (Someday):
    (3) improve syntax error reporting (line numbers), and (4) preserve original ordering.
    For example, it would be nice to run patch in away that only applies changes and doesn't re-sort
    and loose/mangle all comments.
+ * Allow config stanzas to be sorted without sorting the stanza content.  Useful for typically 
+   hand-created file like props.conf or transforms.conf where there's mixed comments and keys and a
+   prefered reading order.
  * Find a good way to unit test this.  Probably requires a stub class (based on the above)
    Keep unit-test in a separate file (keep size under control.)
 
@@ -134,7 +145,8 @@ def section_reader(stream, section_re=re.compile(r'^\[(.*)\]\s*$')):
         line = line.rstrip("\r\n")
         match = section_re.match(line)
         if match:
-            yield section, buf
+            if buf:
+                yield section, buf
             section = match.group(1)
             buf = []
         else:
@@ -178,14 +190,14 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
 
     sections = {}
     for section, entry in section_reader(stream):
-        if not section:
+        if section is None:
             section = GLOBAL_STANZA
         if section in sections:
             if dup_stanza == DUP_OVERWRITE:
                s = sections[section] = {}
             elif dup_stanza == DUP_EXCEPTION:
                 raise DuplicateStanzaException("Stanza [{0}] found more than once in config "
-                                               "file {1}".format(section, stream.name))
+                                               "file {1}".format(_format_stanza(section), stream.name))
             elif dup_stanza == DUP_MERGE:
                 s = sections[section]
         else:
