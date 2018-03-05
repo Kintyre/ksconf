@@ -493,6 +493,7 @@ def do_merge(args):
 def do_diff(args):
     ''' Compare two configuration files. '''
 
+    stream = sys.stdout
 
     prefix = {
         DIFF_OP_EQUAL:   " ",
@@ -500,7 +501,6 @@ def do_diff(args):
         DIFF_OP_DELETE:  "-",
         DIFF_OP_REPLACE: "?"
     }
-    differ = difflib.Differ()
 
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=False, strict=True)  #args.comments)
@@ -512,15 +512,33 @@ def do_diff(args):
 
     def header(sign, filename):
         ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
-        print "{0} {1:19} {2}".format(sign*3, filename, ts)
+        stream.write("{0} {1:19} {2}\n".format(sign*3, filename, ts))
 
     def show_value(value, stanza, key, prefix=""):
         if isinstance(value, dict):
-            print "{0}[{1}]".format(prefix, _format_stanza(stanza))
+            stream.write("{0}[{1}]\n".format(prefix, _format_stanza(stanza)))
             lines = [ "{0}{1} = {2}".format(prefix, x, y) for x, y in value.iteritems() ]
-            return "\n".join(lines) + "\n"
+            stream.write("\n".join(lines) + "\n\n")
         else:
-            return "{0}{1} = {2}".format(prefix, key, value)
+            if "\n" in value:
+                lines = value.replace("\n", "\\\n").split("\n")
+                stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
+                for line in lines:
+                    stream.write(" {0}\n".format(line))
+            else:
+                stream.write("{0}{1} = {2}\n".format(prefix, key, value))
+
+    def show_multiline_diff(value_a, value_b, key):
+        def f(v):
+            r = "{0} = {1}".format(key, v)
+            r = r.replace("\n", "\\\n")
+            return r.splitlines()
+        a = f(value_a)
+        b = f(value_b)
+        differ = difflib.Differ()
+        for d in differ.compare(a, b):
+            stream.write(d)
+            stream.write("\n")
 
     diffs = compare_cfgs(cfg1, cfg2)
 
@@ -530,7 +548,6 @@ def do_diff(args):
 
     header("-", args.conf1)
     header("+", args.conf2)
-
 
     last_stanza = None
     for op in diffs:
@@ -545,43 +562,31 @@ def do_diff(args):
 
         if t == "stanza":
             if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
-                print show_value(op.b, stanza, key, "-")
+                show_value(op.b, stanza, key, "-")
             if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
-                print show_value(op.a, stanza, key, "+")
+                show_value(op.a, stanza, key, "+")
             continue
 
         if stanza != last_stanza:
             if last_stanza is not None:
                 # Line break after last stanza
-                print
-            '''
-            # Not sure what this is here... seems like we always want to do the same thing here..
-            if op.tag == DIFF_OP_EQUAL:
-                print " [{0}]".format(_format_stanza(stanza))
-            else:
-                print "_[{0}]".format(_format_stanza(stanza))
-            '''
-            print " [{0}]".format(_format_stanza(stanza))
+                stream.write("\n")
+                stream.flush()
+            stream.write(" [{0}]\n".format(_format_stanza(stanza)))
             last_stanza = stanza
 
-        p = ""
         if op.tag == DIFF_OP_INSERT:
-            p = "+"
-            v = op.a
-            print show_value(op.a, stanza, key, "+")
+            show_value(op.a, stanza, key, "+")
         elif op.tag == DIFF_OP_DELETE:
-            p = "-"
-            v = op.b
-            #print "- {0} = {1}".format(key, op.b)
-            print show_value(op.b, stanza, key, "-")
+            show_value(op.b, stanza, key, "-")
         elif op.tag == DIFF_OP_REPLACE:
-            p = ">>"
-            #v = "\n" + "".join(differ.compare(op.a,op.b))
-            print show_value(op.a, stanza, key, "+")
-            print show_value(op.b, stanza, key, "-")
+            if "\n" in op.a or "\n" in op.b:
+                show_multiline_diff(op.a, op.b, key)
+            else:
+                show_value(op.b, stanza, key, "-")
+                show_value(op.a, stanza, key, "+")
         elif op.tag == DIFF_OP_EQUAL:
-            v = op.a    # doesn't matter, same value
-            print show_value(op.b, stanza, key, " ")
+            show_value(op.b, stanza, key, " ")
 
         '''
         if key:
@@ -601,6 +606,7 @@ def do_diff(args):
         p = prefix[op.tag]
         print "{0} {1:40}    {2:20} <=> {3:20}".format(op.tag, op.location[1:], op.a, op.b)
     """
+    stream.flush()
 
 
 def do_patch(args):
