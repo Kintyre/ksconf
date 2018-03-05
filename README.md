@@ -150,7 +150,9 @@ Kintyre's Splunk scripts for various admin tasks.
                             tree where splunk apps are stored.
       --app-name NAME       The app name to use when expanding the archive. By
                             default, the app name is taken from the archive as the
-                            top-level path include in the archive (by convention.)
+                            top-level path included in the archive (by convention)
+                            Expanding archives that contain multiple (ITSI) or
+                            nested apps (NIX, ES) is not supported.
       --default-dir DIR     Name of the directory where the default contents will
                             be stored. This is a useful feature for apps that use
                             a dynamic default directory that's created by the

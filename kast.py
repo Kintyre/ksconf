@@ -10,13 +10,19 @@ kasc - Kintyre's Awesome Splunk Tool for Configs
 
 kasct - Kintyre's Awesome Splunk Config Tool
 
+ksconf - Kintyre Splunk CONFig tool
+
+kscfg - Kintyre Splunk ConFiG tool
+
+ksc - Kintyre Splunk Config tool
+
 
 Design goals:
 
  * Multi-purpose go-to .conf tool.
  * Dependability
  * Simplicity
- * No eternal dependencies (single source file, if possible; or packagable as single file.)
+ * No eternal dependencies (single source file, if possible; or packable as single file.)
  * Stable CLI
 
 
@@ -30,10 +36,10 @@ Merge magic:
    destination.)
  * Allow stanzas to be suppressed with some kind of special key value token.  Use case:  Removing
    unwanted eventgen related source matching stanza's like "[source::...(osx.*|sample.*.osx)]"
-   instead of having to suppress individual keys.
+   instead of having to suppress individual keys (difficult to maintain).
  * Allow a special wildcard stanzas that globally apply one or more keys to all subsequent stanzas.
    Use Case:  set "index=os_<ORG>" on all existing stanzas in an inputs.conf file.  Perhaps this
-   could be setup like [*] index=os_prod
+   could be setup like [*] index=os_prod;  or [<<COPY_TO_ALL>>] index=os_prod
  * (Maybe) allow list augmentation (or subtraction?) to comma or semicolon separated lists.
         TRANSFORMS-syslog = <<APPEND>> ciso-asa-sourcetype-rewrite   OR
         TRANSFORMS-syslog = <<REMOVE>> ciso-asa-sourcetype-rewrite
@@ -43,30 +49,31 @@ Merge magic:
         <<APPEND(sep=",")>> i1,i2   Handles situation where parent may be empty (no leading ",")
         <<REMOVE>> string           Removes "string" from parent value; empty if no parent
         <<ADD(sep=";")>> i1;i2      Does SET addition.  Preserves order where possible, squash dups.
-        <<SUBTRACT(sep=",")>> i1    Does SET reducton.  Preserves order where possible, squash dups.
-
-    Does a simple find and replace.  (Whitespaces around the
+        <<SUBTRACT(sep=",")>> i1    Does SET reduction.  Preserves order where possible, squash dups.
 
     Down the road stuff:        (Let's be careful NOT to build yet another template language...)
         <<LOOKUP(envvar="HOSTNAME")>>               <<-- setting host in inputs.conf, part of a monitor stanza
+                                                         NOTE:  This is possibly bad or misleading example as HOSTAME maybe on a deployer not on the SHC memeber, for example.
         <<LOOKUP(file="../regex.txt", line=2)>>     <<-- Can't thing of a legitimate use, currently
-        <<RE_SUB(pattern, replace, count=2)>>       <<-- Parsing this will be a challenge
+        <<RE_SUB("pattern", "replace", count=2)>>   <<-- Parsing this will be a challenge, possibly allow flexible regex start/stop characters?
         <<INTROSPECT(key, stanza="default")>>       <<-- Reference another value located within the current config file.
 
+    # May just make these easily registered via decorator; align with python function calling norms
     @register_filter("APPEND")
     def filter_op_APPEND(context, sep=","):
         # context.op is the name of the filter, "APPEND" in this case.
         # context.stanza is name of the current stanza
         # context.key is the name of the key who's value is being operated on
         # context.parent is the original string value.
-        # context.payload  the value included after the
-        # Allow for standard python style argument passing in the form of position or key/value pairs
-            *args, **kwargs
+        # context.payload is the raw value of the current key, without magic text (may be blank)
+        #
+        # Allow for standard python style function argument passing; allowing for both positional
+        # and named parameters.            *args, **kwargs
 
 
 Known bugs / limitations:
  * Parser doesn't figure out that "[s" or "s]" are incomplete stanza entries (values are silently
-   merged into the preceding stanza)
+   merged into the preceding stanza).  Possibly any non key=value lines should cause a warning.
  * Parser may not support line continuations properly if a continued line starts with a "[".
    We need to be able to support a line starting with at "[" over a continuation.  Real life
    example, a subsearch starts on it's own line after a line continuation.  This must be 
@@ -75,8 +82,8 @@ Known bugs / limitations:
 
 To do (Someday):
 
- * Seperate the concepts of global and empty (anonymous) stanzas.  Entries at the top of the 
-   file, vs stuff litterally under a "[]" stanza (e.g., metadata files)
+ * Separate the concepts of global and empty (anonymous) stanzas.  Entries at the top of the
+   file, vs stuff literally under a "[]" stanza (e.g., metadata files)
  * Add automatic metadata merging support so that when patching changes from local to default,
    for example, the appropriate local metadata settings move from local.meta to default.meta.
    There are quite a few complications to this idea.
@@ -88,7 +95,7 @@ To do (Someday):
    and loose/mangle all comments.
  * Allow config stanzas to be sorted without sorting the stanza content.  Useful for typically 
    hand-created file like props.conf or transforms.conf where there's mixed comments and keys and a
-   prefered reading order.
+   preferred reading order.
  * Find a good way to unit test this.  Probably requires a stub class (based on the above)
    Keep unit-test in a separate file (keep size under control.)
 
@@ -171,7 +178,7 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
         yield buf
 
 
-def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False):
+def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False, strict=False):
     for (i, entry) in enumerate(lines):
         if comments_re.search(entry):
             if keep_comments:
@@ -180,10 +187,13 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False
         if "=" in entry:
             k, v = entry.split("=", 1)
             yield k.rstrip(), v.lstrip()
+            continue
+        if strict and entry.strip():
+            raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
 
 def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
-               dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE):
+               dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if not hasattr(stream, "read"):
         # Assume it's a filename
         stream = open(stream)
@@ -197,7 +207,8 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                s = sections[section] = {}
             elif dup_stanza == DUP_EXCEPTION:
                 raise DuplicateStanzaException("Stanza [{0}] found more than once in config "
-                                               "file {1}".format(_format_stanza(section), stream.name))
+                                               "file {1}".format(_format_stanza(section),
+                                                                 stream.name))
             elif dup_stanza == DUP_MERGE:
                 s = sections[section]
         else:
@@ -205,7 +216,7 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
         if handle_conts:
             entry = cont_handler(entry)
         local_stanza = {}
-        for key, value in splitup_kvpairs(entry, keep_comments=keep_comments):
+        for key, value in splitup_kvpairs(entry, keep_comments=keep_comments, strict=strict):
             if keys_lower:
                 key = key.lower()
             if key in local_stanza:
@@ -294,9 +305,9 @@ def _cmp_sets(a, b):
     """ Result tuples in format (a-only, common, b-only) """
     set_a = set(a)
     set_b = set(b)
-    a_only = set_a.difference(set_b)
-    common = set_a.intersection(set_b)
-    b_only = set_b.difference(set_a)
+    a_only = sorted(set_a.difference(set_b))
+    common = sorted(set_a.intersection(set_b))
+    b_only = sorted(set_b.difference(set_a))
     return (a_only, common, b_only)
 
 
@@ -332,12 +343,6 @@ def compare_cfgs(a, b):
     (2, stanza, key)    Key level, indicating
 
 
-    If very long lines, or very subtle changes the difflib.Differ (or ndiff) produces a nice output
-    that underscores what changed in a line.
-
-    SequenceMatcher can be used to provide a ratio (how similar two strings are)
-
-
     Possible alternatives:
 
     https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
@@ -353,7 +358,7 @@ def compare_cfgs(a, b):
     if not stanza_common:
         # Q:  Does this specific output make the consumer's job more difficult?
         # Nothing in common between these two files
-        # Note:  We don't attempt to detect stanza renames (like a textual diff would do easily)
+        # Note:  Stanza renames are not detected and are out of scope.
         return [DiffOp(DIFF_OP_REPLACE, (0,), a, b)]
 
     # Level 2 - Compare stanzas
@@ -371,7 +376,7 @@ def compare_cfgs(a, b):
         if stanza in a and stanza in b:
             a_ = a[stanza]
             b_ = b[stanza]
-            # Note must make sure that the '==' operator continues to work with custom classes....
+            # Note: make sure that '==' operator continues work with custom conf parsing classes.
             if a_ == b_:
                 delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
                 continue
@@ -435,7 +440,7 @@ def _format_stanza(stanza):
 
 def do_check(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False)
+                      keep_comments=False, strict=True)
 
     # Should we read a list of conf files from STDIN?
     if len(args.conf) == 1 and args.conf[0] == "-":
@@ -443,8 +448,6 @@ def do_check(args):
     else:
         confs = args.conf
     c = Counter()
-    # of could use c = defaultdict(int)
-    #c.subtract()
     exit_code = 0
     for conf in confs:
         c["checked"] += 1
@@ -476,11 +479,10 @@ def do_check(args):
     sys.exit(exit_code)
 
 
-
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True)
+                      keep_comments=True, strict=True)
     # Parse all config files
     cfgs = [ parse_conf(conf, **parse_args) for conf in args.conf ]
     # Merge all config files:
@@ -493,37 +495,24 @@ def do_diff(args):
 
 
     prefix = {
-        DIFF_OP_EQUAL : " ",
-        DIFF_OP_INSERT : "+",
-        DIFF_OP_DELETE: "-",
+        DIFF_OP_EQUAL:   " ",
+        DIFF_OP_INSERT:  "+",
+        DIFF_OP_DELETE:  "-",
         DIFF_OP_REPLACE: "?"
     }
     differ = difflib.Differ()
 
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False)  #args.comments)
+                      keep_comments=False, strict=True)  #args.comments)
     # Parse all config files
     cfg1 = parse_conf(args.conf1, **parse_args)
     cfg2 = parse_conf(args.conf2, **parse_args)
 
     import datetime
+
     def header(sign, filename):
         ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
         print "{0} {1:19} {2}".format(sign*3, filename, ts)
-
-    header("-", args.conf1)
-    header("+", args.conf2)
-    #print "--- {0:19} {1}".format(args.conf1, "timestamp")
-    #print "+++ {0:19} {1}".format(args.conf2, "timestamp")
-
-    last_stanza = None
-    diffs = compare_cfgs(cfg1, cfg2)
-
-    if len(diffs) == 1:
-        print diffs[0].location[0]
-        print diffs[0].tag
-        return
-
 
     def show_value(value, stanza, key, prefix=""):
         if isinstance(value, dict):
@@ -533,6 +522,17 @@ def do_diff(args):
         else:
             return "{0}{1} = {2}".format(prefix, key, value)
 
+    diffs = compare_cfgs(cfg1, cfg2)
+
+    # No changes between files
+    if len(diffs) == 1 and diffs[0].tag == DIFF_OP_EQUAL:
+        return
+
+    header("-", args.conf1)
+    header("+", args.conf2)
+
+
+    last_stanza = None
     for op in diffs:
         l = op.location[0]
         if l == 1:
@@ -552,12 +552,16 @@ def do_diff(args):
 
         if stanza != last_stanza:
             if last_stanza is not None:
-                # Line breaker after last stanza
+                # Line break after last stanza
                 print
+            '''
+            # Not sure what this is here... seems like we always want to do the same thing here..
             if op.tag == DIFF_OP_EQUAL:
                 print " [{0}]".format(_format_stanza(stanza))
             else:
                 print "_[{0}]".format(_format_stanza(stanza))
+            '''
+            print " [{0}]".format(_format_stanza(stanza))
             last_stanza = stanza
 
         p = ""
@@ -624,7 +628,7 @@ def do_sort(args):
                 t = dest + ".tmp"
                 conf.close()
                 open(t, "w").write(temp.getvalue())
-                print "Replacing file %s with sorted content." % (dest)
+                print "Replacing file %s with sorted content." % (dest,)
                 os.unlink(dest)
                 os.rename(t, dest)
     else:
@@ -643,9 +647,10 @@ def do_combine(args):
 
 
 def do_unarchive(args):
-    """ Install / upgrade a Splunk app from an achive file """
+    """ Install / upgrade a Splunk app from an archive file """
     # Must support tgz, tar, and zip
     # TODO: Make this work well if git hold many apps, or if the destination folder IS the git app.
+    # TODO: Have git check for a clean status before doing anything (if in a git working tree)
     # Handle ignored files by preserving them as much as possible.
     pass
 
@@ -834,8 +839,9 @@ def cli():
                               "git repository working tree where splunk apps are stored.")
     sp_upgr.add_argument("--app-name", metavar="NAME", default=None,
                          help="The app name to use when expanding the archive.  By default, the "
-                              "app name is taken from the archive as the top-level path include in "
-                              "the archive (by convention.)")
+                              "app name is taken from the archive as the top-level path included "
+                              "in the archive (by convention)  Expanding archives that contain "
+                              "multiple (ITSI) or nested apps (NIX, ES) is not supported.")
     sp_upgr.add_argument("--default-dir", default="default", metavar="DIR",
                          help="Name of the directory where the default contents will be stored.  "
                               "This is a useful feature for apps that use a dynamic default "
@@ -849,6 +855,7 @@ def cli():
                               "(This check is automatically disabled if git is not in use or " 
                               "not installed.)")
     args = parser.parse_args()
+
 
 
     try:
