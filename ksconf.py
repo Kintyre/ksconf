@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""
+"""ksconf - Kintyre Splunk CONFig tool
+
 kast - Kintyre's Awesome Splunk Tool
 
 splconf - SPLunk CONFig tool
