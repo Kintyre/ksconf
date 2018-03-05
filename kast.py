@@ -24,6 +24,7 @@ Design goals:
  * Simplicity
  * No eternal dependencies (single source file, if possible; or packable as single file.)
  * Stable CLI
+ * Good scripting interface for deployment scripts and/or git hooks
 
 
 
@@ -69,15 +70,6 @@ Merge magic:
         #
         # Allow for standard python style function argument passing; allowing for both positional
         # and named parameters.            *args, **kwargs
-
-
-Known bugs / limitations:
- * Parser doesn't figure out that "[s" or "s]" are incomplete stanza entries (values are silently
-   merged into the preceding stanza).  Possibly any non key=value lines should cause a warning.
- * Parser may not support line continuations properly if a continued line starts with a "[".
-   We need to be able to support a line starting with at "[" over a continuation.  Real life
-   example, a subsearch starts on it's own line after a line continuation.  This must be 
-   interpreted as part of the search and NOT a new stanza definition.
 
 
 To do (Someday):
@@ -199,7 +191,12 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
         stream = open(stream)
 
     sections = {}
-    for section, entry in section_reader(stream):
+    # Q: What's the value of allowing line continuations to be disabled?
+    if handle_conts:
+        reader = section_reader(cont_handler(stream))
+    else:
+        reader = section_reader(stream)
+    for section, entry in reader:
         if section is None:
             section = GLOBAL_STANZA
         if section in sections:
@@ -213,8 +210,6 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                 s = sections[section]
         else:
             s = sections[section] = {}
-        if handle_conts:
-            entry = cont_handler(entry)
         local_stanza = {}
         for key, value in splitup_kvpairs(entry, keep_comments=keep_comments, strict=strict):
             if keys_lower:
@@ -493,14 +488,7 @@ def do_merge(args):
 def do_diff(args):
     ''' Compare two configuration files. '''
 
-    stream = sys.stdout
-
-    prefix = {
-        DIFF_OP_EQUAL:   " ",
-        DIFF_OP_INSERT:  "+",
-        DIFF_OP_DELETE:  "-",
-        DIFF_OP_REPLACE: "?"
-    }
+    stream = args.output
 
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=False, strict=True)  #args.comments)
@@ -716,10 +704,14 @@ def cli():
                                     help="Compares settings differences of two .conf files.  "
                                          "This command ignores textual differences (like order, "
                                          "spacing, and comments) and focuses strictly on comparing "
-                                         "stanzas, keys, and values.")
+                                         "stanzas, keys, and values.  Note that spaces within any "
+                                         "given value will be compared.")
     sp_diff.set_defaults(funct=do_diff)
     sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison")
     sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison")
+    sp_diff.add_argument("-o", "--output", metavar="FILE",
+                         type=argparse.FileType('w'), default=sys.stdout,
+                         help="File where difference is stored.  Defaults to standard out.")
     sp_diff.add_argument("--comments", "-C",
                          action="store_true", default=False,
                          help="Enable comparison of comments.  (Unlikely to work consistently.")

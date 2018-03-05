@@ -14,7 +14,8 @@ Kintyre's Splunk scripts for various admin tasks.
         diff                Compares settings differences of two .conf files. This
                             command ignores textual differences (like order,
                             spacing, and comments) and focuses strictly on
-                            comparing stanzas, keys, and values.
+                            comparing stanzas, keys, and values. Note that spaces
+                            within any given value will be compared.
         patch               Patch .conf settings from one file into another either
                             automatically (all changes) or interactively allowing
                             the user to pick which stanzas and keys to integrate
@@ -65,16 +66,19 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### kast.py diff
-    usage: kast.py diff [-h] [--comments] FILE FILE
+    usage: kast.py diff [-h] [-o FILE] [--comments] FILE FILE
     
     positional arguments:
-      FILE            Left side of the comparison
-      FILE            Right side of the comparison
+      FILE                  Left side of the comparison
+      FILE                  Right side of the comparison
     
     optional arguments:
-      -h, --help      show this help message and exit
-      --comments, -C  Enable comparison of comments. (Unlikely to work
-                      consistently.
+      -h, --help            show this help message and exit
+      -o FILE, --output FILE
+                            File where difference is stored. Defaults to standard
+                            out.
+      --comments, -C        Enable comparison of comments. (Unlikely to work
+                            consistently.
 
 
 ### kast.py patch
