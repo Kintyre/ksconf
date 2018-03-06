@@ -106,6 +106,13 @@ from copy import deepcopy
 from StringIO import StringIO
 
 
+# Use consistent exit codes for scriptability
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_BAD_CONF_FILE = 1
+EXIT_CODE_FAILED_SAFETY_CHECK = 2
+EXIT_CODE_NOTHING_TO_DO = 3
+EXIT_CODE_INTERNAL_ERROR = 99
+
 
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
@@ -230,6 +237,9 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
 
 
 def write_conf(stream, conf, stanza_delim="\n"):
+    if not hasattr(stream, "write"):
+        # Assume it's a filename
+        stream = open(stream, "w")
     conf = dict(conf)
 
     def write_stanza_body(items):
@@ -444,7 +454,7 @@ def do_check(args):
     else:
         confs = args.conf
     c = Counter()
-    exit_code = 0
+    exit_code = EXIT_CODE_SUCCESS
     for conf in confs:
         c["checked"] += 1
         if not os.path.isfile(conf):
@@ -459,13 +469,13 @@ def do_check(args):
         except ConfParserException, e:
             sys.stderr.write("Error in file {0}:  {1}\n".format(conf, e))
             sys.stderr.flush()
-            exit_code = 1
+            exit_code = EXIT_CODE_BAD_CONF_FILE
             # TODO:  Break out counts by error type/category (there's only a few of them)
             c["error"] += 1
         except Exception, e:
             sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
                              "Aborting.\n{1}".format(conf, e))
-            exit_code = 2
+            exit_code = EXIT_CODE_INTERNAL_ERROR
             c["error"] += 1
             break
     if True:    #show stats or verbose
@@ -576,32 +586,123 @@ def do_diff(args):
                 show_value(op.a, stanza, key, "+")
         elif op.tag == DIFF_OP_EQUAL:
             show_value(op.b, stanza, key, " ")
-
-        '''
-        if key:
-            print "{0} {1}={2}".format(p, key, v)
-        else:
-            v = "\n".join(["{0}{1} = {2}".format(p, x,y) for x, y in v.iteritems()])
-            print "{0} {1}={2}".format(p, op.location[-1], v)
-        '''
-        '''
-        if key:
-            prefix = "{0} = ".format(key)
-        else:
-            prefix = " "
-        '''
-    """
-    for op in diffs:
-        p = prefix[op.tag]
-        print "{0} {1:40}    {2:20} <=> {3:20}".format(op.tag, op.location[1:], op.a, op.b)
-    """
     stream.flush()
 
 
-def do_patch(args):
-    ''' Interactively "patch" settings from one configuration file into another '''
-    # Todo: Implement
-    pass
+
+def do_promote(args):
+    # Todo:  Check if 'source' file changed during interactive patch ('local' folder on live system)
+    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
+                      keep_comments=False, strict=True)  #args.comments)
+
+    # Todo: Add a safety check prevent accidental merge of unrelated files.
+    # Scenario: promote local/props.conf into default/transforms.conf
+    # Possible check (1) Are basenames are different?  (props.conf vs transforms.conf)
+    # Possible check (2) Are there key's in common? (DEST_KEY vs REPORT)
+    # Using #1 for now, consider if there's value in #2
+    bn_source = os.path.basename(args.source)
+    bn_target = os.path.basename(args.target)
+    if bn_source != bn_target:
+        # Todo: Allow for interactive prompting when in interactive but not force mode.
+        if args.force:
+            sys.stderr.write("Promoting content across conf file types ({0} --> {1}) because the "
+                             "'--force' CLI option was set.\n".format(bn_source, bn_target))
+        else:
+            sys.stderr.write("Refusing to promote content between different types of configuration "
+                             "files.  {0} --> {1}  If this is intentional, override this safety"
+                             "check with '--force'\n".format(bn_source, bn_target))
+            sys.exit(EXIT_CODE_FAILED_SAFETY_CHECK)
+    # Parse all config files
+    cfg_src = parse_conf(args.source, **parse_args)
+    cfg_tgt = parse_conf(args.target, **parse_args)
+
+    if not cfg_src:
+        sys.stderr.write("No settings found in {0}.  No content to promote.\n".format(args.source))
+        sys.exit(EXIT_CODE_NOTHING_TO_DO)
+
+    if args.interactive:
+        (cfg_final_src, cfg_final_tgt) = _do_promote_interactive(cfg_src, cfg_tgt, args)
+    else:
+        (cfg_final_src, cfg_final_tgt) = _do_promote_automatic(cfg_src, cfg_tgt, args)
+
+    # Minimize race condition:  Do file mtime/hash check here.  Abort if external change detected.
+    # Todo: Eventually use temporary files and atomic renames to further minimize the risk
+    # Todo: Make backup '.bak' files (user configurable)
+    # Todo: Avoid rewriting files if NO changes were made. (preserve prior backups)
+    # Todo: Restore file modes and such
+
+    # Reminder:  conf entries are being removed from source and promoted into target
+    write_conf(args.target, cfg_final_tgt)
+    if not args.keep:
+        write_conf(args.source, cfg_final_src)
+
+
+def _do_promote_automatic(cfg_src, cfg_tgt, args):
+    # Promote ALL entries in
+
+    final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
+    return ({}, final_cfg)
+
+
+
+def _do_promote_interactive(cfg_src, cfg_tgt, args):
+    ''' Interactively "promote" settings from one configuration file into another
+
+    Model after git's "patch" mode, from git docs:
+
+   This lets you choose one path out of a status like selection. After choosing the path, it
+   presents the diff between the index and the working tree file and asks you if you want to stage
+   the change of each hunk. You can select one of the following options and type return:
+
+       y - stage this hunk
+       n - do not stage this hunk
+       q - quit; do not stage this hunk or any of the remaining ones
+       a - stage this hunk and all later hunks in the file
+       d - do not stage this hunk or any of the later hunks in the file
+       g - select a hunk to go to
+       / - search for a hunk matching the given regex
+       j - leave this hunk undecided, see next undecided hunk
+       J - leave this hunk undecided, see next hunk
+       k - leave this hunk undecided, see previous undecided hunk
+       K - leave this hunk undecided, see previous hunk
+       s - split the current hunk into smaller hunks
+       e - manually edit the current hunk
+       ? - print help
+
+
+    Note:  In git's "edit" mode you are literally editing a patch file, so you can modify both the
+    working tree file as well as the file that's being staged.  While this is nifty, as git's own
+    documentation points out (in other places), that "some changes may have confusing results".
+    Therefore, it probably makes sense to let the user edit ONLY the what is going to
+
+    ================================================================================================
+
+    Options we may be able to support:
+
+       Pri k   Description
+       --- -   -----------
+       [1] y - stage this section or key
+       [1] n - do not stage this section or key
+       [1] q - quit; do not stage this or any of the remaining sections or keys
+       [2] a - stage this section or key and all later sections in the file
+       [2] d - do not stage this section or key or any of the later section or key in the file
+       [1] s - split the section into individual keys
+       [3] e - edit the current section or key
+       [2] ? - print help
+
+    Q:  Is it less confusing to the user to adopt the 'local' and 'default' paradigm here?  Even
+    though we know that change promotions will not *always* be between default and local.  (We can
+    and should assume some familiarity with Splunk conf, less so than familiarity with git lingo.)
+    '''
+
+    final_src = deepcopy(cfg_src)
+    final_cfg = deepcopy(cfg_tgt)
+
+    ### IMPLEMENT A MANUAL MERGE/DIFF HERE:
+    # What ever is migrated, move it OUT of cfg_src, and into cfg_tgt
+    raise NotImplementedError
+    return (final_src, final_cfg)
+
 
 def do_sort(args):
     ''' Sort a single configuration file. '''
@@ -634,7 +735,7 @@ def do_sort(args):
                 sort_conf(conf, args.target, stanza_delim=stanza_delims, parse_args=parse_args)
             except ConfParserException, e:
                 print "Error trying processing {0}.  Error:  {1}".format(conf.name, e)
-                sys.exit(-1)
+                sys.exit(EXIT_CODE_BAD_CONF_FILE)
 
 def do_combine(args):
     pass
@@ -718,21 +819,35 @@ def cli():
                          help="Enable comparison of comments.  (Unlikely to work consistently.")
 
 
-    # SUBCOMMAND:  splconf patch --target=<CONF> <CONF>
-    sp_ptch = subparsers.add_parser("patch",
-                                    help="Patch .conf settings from one file into another either "
+    # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
+    sp_prmt = subparsers.add_parser("promote",
+                                    help="Promote .conf settings from one file into another either "
                                          "automatically (all changes) or interactively allowing "
-                                         "the user to pick which stanzas and keys to integrate")
-    sp_ptch.set_defaults(funct=do_patch)
-    sp_ptch.add_argument("source", metavar="FILE",
-                         help="The source configuration file to pull changes from.")
-    sp_ptch.add_argument("--target", "-t", metavar="FILE",
-                         type=argparse.FileType('w'), default=sys.stdout,
-                         help="Save the merged configuration files to this target file.  If not "
-                              "given, the default is to write the merged conf to standard output.")
-    sp_ptch.add_argument("--interactive", "-i",
+                                         "the user to pick which stanzas and keys to integrate. "
+                                         "This can be used to push changes made via the UI, which"
+                                         "are stored in a 'local' file, to the version-controlled "
+                                         "default file.  Note that the normal operation is to move "
+                                         "the changes from the source file to the destination. "
+                                         "The interactive version of this command is modeled after "
+                                         "git's '--patch' mode")
+    sp_prmt.set_defaults(funct=do_promote)
+    sp_prmt.add_argument("source", metavar="SOURCE",
+                         help="The source configuration file to pull changes from.  Traditionally "
+                              "the 'local' file.")
+    sp_prmt.add_argument("target", metavar="TARGET",
+                         help="Configuration file to push the changes into.  Traditionally this "
+                              "will be the conf file in the default folder.")
+    sp_prmt.add_argument("--interactive", "-i",
                          action="store_true", default=False,
                          help="Enable interactive mode (like git '--patch' or add '-i' mode.)")
+    sp_prmt.add_argument("--force", "-f",
+                         action="store_true", default=False,
+                         help="Disable safety checks.")
+    sp_prmt.add_argument("--keep", "-k",
+                         action="store_true", default=False,
+                         help="Keep conf settings in the source file.  This means that changes "
+                              "will be copied into the target file instead of moved there.")
+
 
     """ Possible behaviors.... thinking through what CLI options make the most sense...
     

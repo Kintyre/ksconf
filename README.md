@@ -2,10 +2,11 @@
 Kintyre's Splunk scripts for various admin tasks.
 ## ksconf.py
     usage: ksconf.py [-h] [-S MODE] [-K MODE]
-                     {check,combine,diff,patch,merge,minimize,sort,unarchive} ...
+                     {check,combine,diff,promote,merge,minimize,sort,unarchive}
+                     ...
     
     positional arguments:
-      {check,combine,diff,patch,merge,minimize,sort,unarchive}
+      {check,combine,diff,promote,merge,minimize,sort,unarchive}
         check               Perform a basic syntax and sanity check on .conf files
         combine             Combine .conf settings from across multiple
                             directories into a single consolidated target
@@ -16,9 +17,15 @@ Kintyre's Splunk scripts for various admin tasks.
                             spacing, and comments) and focuses strictly on
                             comparing stanzas, keys, and values. Note that spaces
                             within any given value will be compared.
-        patch               Patch .conf settings from one file into another either
-                            automatically (all changes) or interactively allowing
-                            the user to pick which stanzas and keys to integrate
+        promote             Promote .conf settings from one file into another
+                            either automatically (all changes) or interactively
+                            allowing the user to pick which stanzas and keys to
+                            integrate. This can be used to push changes made via
+                            the UI, whichare stored in a 'local' file, to the
+                            version-controlled default file. Note that the normal
+                            operation is to move the changes from the source file
+                            to the destination. The interactive version of this
+                            command is modeled after git's '--patch' mode
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s) provided.
@@ -81,20 +88,24 @@ Kintyre's Splunk scripts for various admin tasks.
                             consistently.
 
 
-### ksconf.py patch
-    usage: ksconf.py patch [-h] [--target FILE] [--interactive] FILE
+### ksconf.py promote
+    usage: ksconf.py promote [-h] [--interactive] [--force] [--keep] SOURCE TARGET
     
     positional arguments:
-      FILE                  The source configuration file to pull changes from.
+      SOURCE             The source configuration file to pull changes from.
+                         Traditionally the 'local' file.
+      TARGET             Configuration file to push the changes into.
+                         Traditionally this will be the conf file in the default
+                         folder.
     
     optional arguments:
-      -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            Save the merged configuration files to this target
-                            file. If not given, the default is to write the merged
-                            conf to standard output.
-      --interactive, -i     Enable interactive mode (like git '--patch' or add
-                            '-i' mode.)
+      -h, --help         show this help message and exit
+      --interactive, -i  Enable interactive mode (like git '--patch' or add '-i'
+                         mode.)
+      --force, -f        Disable safety checks.
+      --keep, -k         Keep conf settings in the source file. This means that
+                         changes will be copied into the target file instead of
+                         moved there.
 
 
 ### ksconf.py merge
