@@ -22,10 +22,11 @@ Kintyre's Splunk scripts for various admin tasks.
                             allowing the user to pick which stanzas and keys to
                             integrate. This can be used to push changes made via
                             the UI, whichare stored in a 'local' file, to the
-                            version-controlled default file. Note that the normal
-                            operation is to move the changes from the source file
-                            to the destination. The interactive version of this
-                            command is modeled after git's '--patch' mode
+                            version-controlled 'default' file. Note that the
+                            normal operation moves changes from the SOURCE file to
+                            the TARGET, updating both files in the process. But
+                            it's also possible to preserve the local file, if
+                            desired.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s) provided.
@@ -85,27 +86,41 @@ Kintyre's Splunk scripts for various admin tasks.
                             File where difference is stored. Defaults to standard
                             out.
       --comments, -C        Enable comparison of comments. (Unlikely to work
-                            consistently.
+                            consistently)
 
 
 ### ksconf.py promote
-    usage: ksconf.py promote [-h] [--interactive] [--force] [--keep] SOURCE TARGET
+    usage: ksconf.py promote [-h] [--interactive] [--force] [--keep]
+                             [--keep-empty KEEP_EMPTY]
+                             SOURCE TARGET
     
     positional arguments:
-      SOURCE             The source configuration file to pull changes from.
-                         Traditionally the 'local' file.
-      TARGET             Configuration file to push the changes into.
-                         Traditionally this will be the conf file in the default
-                         folder.
+      SOURCE                The source configuration file to pull changes from.
+                            (Typically the 'local' conf file)
+      TARGET                Configuration file or directory to push the changes
+                            into. (Typically the 'default' folder) When a
+                            directory is given instead of a file then the same
+                            file name is assumed for both SOURCE and TARGET
     
     optional arguments:
-      -h, --help         show this help message and exit
-      --interactive, -i  Enable interactive mode (like git '--patch' or add '-i'
-                         mode.)
-      --force, -f        Disable safety checks.
-      --keep, -k         Keep conf settings in the source file. This means that
-                         changes will be copied into the target file instead of
-                         moved there.
+      -h, --help            show this help message and exit
+      --interactive, -i     Enable interactive mode where the user will be
+                            prompted to approve the promotion of specific stanzas
+                            and keys. The user will be able to apply, skip, or
+                            edit the changes being promoted. (This functionality
+                            was inspired by 'git add --patch'). In non-interactive
+                            mode, the default, all changes are moved from the
+                            source to the target file.
+      --force, -f           Disable safety checks.
+      --keep, -k            Keep conf settings in the source file. This means that
+                            changes will be copied into the target file instead of
+                            moved there.
+      --keep-empty KEEP_EMPTY
+                            Keep the source file, even if after the settings
+                            promotions the file has no content. By default, SOURCE
+                            will be removed if all content has been moved into the
+                            TARGET location. Splunk will re-create any necessary
+                            local files on the fly.
 
 
 ### ksconf.py merge

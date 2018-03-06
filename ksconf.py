@@ -324,8 +324,11 @@ DIFF_OP_EQUAL   = "equal"
 
 
 DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
+DiffGlobal = namedtuple("DiffGlobal", ("level",))
+DiffStanza = namedtuple("DiffStanza", ("level", "stanza"))
+DiffStzKey = namedtuple("DiffStzKey", ("level", "stanza", "key"))
 
-def compare_cfgs(a, b):
+def compare_cfgs(a, b, allow_level0=True):
     '''
     Opcode tags borrowed from difflib.SequenceMatcher
 
@@ -355,19 +358,20 @@ def compare_cfgs(a, b):
 
     '''
 
-    # Level 1 - Compare entire file
-    stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
     delta = []
-    if a == b:
-        return [DiffOp(DIFF_OP_EQUAL, (0,), a, b)]
 
-    if not stanza_common:
-        # Q:  Does this specific output make the consumer's job more difficult?
-        # Nothing in common between these two files
-        # Note:  Stanza renames are not detected and are out of scope.
-        return [DiffOp(DIFF_OP_REPLACE, (0,), a, b)]
+    # Level 0 - Compare entire file
+    if allow_level0:
+        stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
+        if a == b:
+            return [DiffOp(DIFF_OP_EQUAL, DiffGlobal(0), a, b)]
+        if not stanza_common:
+            # Q:  Does this specific output make the consumer's job more difficult?
+            # Nothing in common between these two files
+            # Note:  Stanza renames are not detected and are out of scope.
+            return [DiffOp(DIFF_OP_REPLACE, DiffGlobal(0), a, b)]
 
-    # Level 2 - Compare stanzas
+    # Level 1 - Compare stanzas
 
     # Make sure GLOBAL stanza is output first
     all_stanzas = set(a.keys()).union(b.keys())
@@ -384,32 +388,32 @@ def compare_cfgs(a, b):
             b_ = b[stanza]
             # Note: make sure that '==' operator continues work with custom conf parsing classes.
             if a_ == b_:
-                delta.append(DiffOp(DIFF_OP_EQUAL, (1, stanza), a_, b_))
+                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza(1, stanza), a_, b_))
                 continue
             kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
             if not kv_common:
                 # No keys in common, just swap
-                delta.append(DiffOp(DIFF_OP_REPLACE, (1, stanza), a_, b_))
+                delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza(1, stanza), a_, b_))
                 continue
 
-            # Level 3 - Key comparisons
+            # Level 2 - Key comparisons
             for key in kv_a:
-                delta.append(DiffOp(DIFF_OP_DELETE, (2, stanza, key), None, a_[key]))
+                delta.append(DiffOp(DIFF_OP_DELETE, DiffStzKey(2, stanza, key), None, a_[key]))
             for key in kv_b:
-                delta.append(DiffOp(DIFF_OP_INSERT, (2, stanza, key), b_[key], None))
+                delta.append(DiffOp(DIFF_OP_INSERT, DiffStzKey(2, stanza, key), b_[key], None))
             for key in kv_common:
                 a__ = a_[key]
                 b__ = b_[key]
                 if a__ == b__:
-                    delta.append(DiffOp(DIFF_OP_EQUAL, (2, stanza, key), a__, b__))
+                    delta.append(DiffOp(DIFF_OP_EQUAL, DiffStzKey(2, stanza, key), a__, b__))
                 else:
-                    delta.append(DiffOp(DIFF_OP_REPLACE, (2, stanza, key), a__, b__))
+                    delta.append(DiffOp(DIFF_OP_REPLACE, DiffStzKey(2, stanza, key), a__, b__))
         elif stanza in a:
             # A only
-            delta.append(DiffOp(DIFF_OP_DELETE, (1, stanza), None, a[stanza]))
+            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza(1, stanza), None, a[stanza]))
         else:
             # B only
-            delta.append(DiffOp(DIFF_OP_INSERT, (1, stanza), b[stanza], None))
+            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza(1, stanza), b[stanza], None))
     return delta
 
 
@@ -595,6 +599,11 @@ def do_promote(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=False, strict=True)  #args.comments)
 
+    if os.path.isdir(args.target):
+        # If a directory is given instead of a target file, then assume the source filename is the
+        # same as the target filename.
+        args.target = os.path.join(args.target, os.path.basename(args.source))
+
     # Todo: Add a safety check prevent accidental merge of unrelated files.
     # Scenario: promote local/props.conf into default/transforms.conf
     # Possible check (1) Are basenames are different?  (props.conf vs transforms.conf)
@@ -634,12 +643,19 @@ def do_promote(args):
     # Reminder:  conf entries are being removed from source and promoted into target
     write_conf(args.target, cfg_final_tgt)
     if not args.keep:
-        write_conf(args.source, cfg_final_src)
+        # If --keep is set, we never touch the source file.
+        if cfg_final_src:
+            write_conf(args.source, cfg_final_src)
+        else:
+            # Config file is empty.  Should we write an empty file, or remove it?
+            if args.keep_empty:
+                write_conf(args.source, cfg_final_src)
+            else:
+                os.unlink(args.source)
 
 
 def _do_promote_automatic(cfg_src, cfg_tgt, args):
-    # Promote ALL entries in
-
+    # Promote ALL entries;  simply, isn't it...  ;-)
     final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
     return ({}, final_cfg)
 
@@ -650,9 +666,9 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
 
     Model after git's "patch" mode, from git docs:
 
-   This lets you choose one path out of a status like selection. After choosing the path, it
-   presents the diff between the index and the working tree file and asks you if you want to stage
-   the change of each hunk. You can select one of the following options and type return:
+    This lets you choose one path out of a status like selection. After choosing the path, it
+    presents the diff between the index and the working tree file and asks you if you want to stage
+    the change of each hunk. You can select one of the following options and type return:
 
        y - stage this hunk
        n - do not stage this hunk
@@ -695,13 +711,54 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
     and should assume some familiarity with Splunk conf, less so than familiarity with git lingo.)
     '''
 
-    final_src = deepcopy(cfg_src)
-    final_cfg = deepcopy(cfg_tgt)
 
+    def prompt_yes_no(prompt):
+        while True:
+            r = raw_input(prompt + " (y/n)")
+            if r.lower().startswith("y"):
+                return True
+            elif r.lower().startswith("n"):
+                return False
+
+    out_src = deepcopy(cfg_src)
+    out_cfg = deepcopy(cfg_tgt)
     ### IMPLEMENT A MANUAL MERGE/DIFF HERE:
     # What ever is migrated, move it OUT of cfg_src, and into cfg_tgt
-    raise NotImplementedError
-    return (final_src, final_cfg)
+
+    diff = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+    for op in diff:
+        if op.tag == DIFF_OP_DELETE:
+            # This is normal.  We don't expect all the content in default to be mirrored into local.
+            continue
+        elif op.tag == DIFF_OP_EQUAL:
+            # Q:  Should we simply remove everything from the source file that already lines
+            #     up with the target?  (Probably?)  For now just skip...
+            if prompt_yes_no("Remove matching entry {0}  ".format(op.location)):
+                if isinstance(op.location, DiffStanza):
+                    del out_src[op.location.stanza]
+                else:
+                    del out_src[op.location.stanza][op.location.key]
+        else:
+            sys.stderr.write("Found change:  <{0}> {1!r}\n-{2!r}\n+{3!r}\n\n\n".format(op.tag,
+                                                                                      op.location,
+                                                                                      op.b, op.a))
+            if isinstance(op.location, DiffStanza):
+                sys.stderr.write("Considering:  [{0}]\n{1!r}\n\n".format(op.location.stanza, op.a))
+                # Move entire stanza
+                if prompt_yes_no("Apply  [{0}]".format(op.location.stanza)):
+                    out_cfg[op.location.stanza] = op.a
+                    del out_src[op.location.stanza]
+            else:
+                sys.stderr.write("Considering:  [{0}]\n key={1} value={2!r}\n\n"
+                                 "".format(op.location.stanza, op.location.key, op.a))
+                if prompt_yes_no("Apply [{0}] {1}".format(op.location.stanza, op.location.key)):
+                    # Move key
+                    out_cfg[op.location.stanza][op.location.key] = op.a
+                    del out_src[op.location.stanza][op.location.key]
+                    # If that was the last remaining key in the src stanza, delete the entire stanza
+                    if not out_src[op.location.stanza]:
+                        del out_src[op.location.stanza]
+    return (out_src, out_cfg)
 
 
 def do_sort(args):
@@ -816,7 +873,7 @@ def cli():
                          help="File where difference is stored.  Defaults to standard out.")
     sp_diff.add_argument("--comments", "-C",
                          action="store_true", default=False,
-                         help="Enable comparison of comments.  (Unlikely to work consistently.")
+                         help="Enable comparison of comments.  (Unlikely to work consistently)")
 
 
     # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
@@ -826,20 +883,27 @@ def cli():
                                          "the user to pick which stanzas and keys to integrate. "
                                          "This can be used to push changes made via the UI, which"
                                          "are stored in a 'local' file, to the version-controlled "
-                                         "default file.  Note that the normal operation is to move "
-                                         "the changes from the source file to the destination. "
-                                         "The interactive version of this command is modeled after "
-                                         "git's '--patch' mode")
+                                         "'default' file.  Note that the normal operation moves "
+                                         "changes from the SOURCE file to the TARGET, updating "
+                                         "both files in the process.  But it's also possible to "
+                                         "preserve the local file, if desired.")
     sp_prmt.set_defaults(funct=do_promote)
     sp_prmt.add_argument("source", metavar="SOURCE",
-                         help="The source configuration file to pull changes from.  Traditionally "
-                              "the 'local' file.")
+                         help="The source configuration file to pull changes from.  (Typically the "
+                              "'local' conf file)")
     sp_prmt.add_argument("target", metavar="TARGET",
-                         help="Configuration file to push the changes into.  Traditionally this "
-                              "will be the conf file in the default folder.")
+                         help="Configuration file or directory to push the changes into. "
+                              "(Typically the 'default' folder) "
+                              "When a directory is given instead of a file then the same file name "
+                              "is assumed for both SOURCE and TARGET")
     sp_prmt.add_argument("--interactive", "-i",
                          action="store_true", default=False,
-                         help="Enable interactive mode (like git '--patch' or add '-i' mode.)")
+                         help="Enable interactive mode where the user will be prompted to approve "
+                              "the promotion of specific stanzas and keys.  The user will be able "
+                              "to apply, skip, or edit the changes being promoted.  (This "
+                              "functionality was inspired by 'git add --patch'). "
+                              "In non-interactive mode, the default, all changes are moved from "
+                              "the source to the target file.")
     sp_prmt.add_argument("--force", "-f",
                          action="store_true", default=False,
                          help="Disable safety checks.")
@@ -847,7 +911,11 @@ def cli():
                          action="store_true", default=False,
                          help="Keep conf settings in the source file.  This means that changes "
                               "will be copied into the target file instead of moved there.")
-
+    sp_prmt.add_argument("--keep-empty", default=False,
+                         help="Keep the source file, even if after the settings promotions the "
+                              "file has no content.  By default, SOURCE will be removed if all "
+                              "content has been moved into the TARGET location.  "
+                              "Splunk will re-create any necessary local files on the fly.")
 
     """ Possible behaviors.... thinking through what CLI options make the most sense...
     
