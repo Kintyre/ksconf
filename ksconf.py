@@ -33,7 +33,7 @@ Design goals:
 Merge magic:
 
  * Allow certain keys to be suppressed by subsequent layers by using some kind of sentinel value,
-   like "<<BLANK>>" or something.  Use case:  Disabling a transformer defined in the upstream layer.
+   like "<<UNSET>>" or something.  Use case:  Disabling a transformer defined in the upstream layer.
    So instead of "TRANSFORMS-class=" being shown in the output, the entire key is removed from the
    destination.)
  * Allow stanzas to be suppressed with some kind of special key value token.  Use case:  Removing
@@ -41,7 +41,9 @@ Merge magic:
    instead of having to suppress individual keys (difficult to maintain).
  * Allow a special wildcard stanzas that globally apply one or more keys to all subsequent stanzas.
    Use Case:  set "index=os_<ORG>" on all existing stanzas in an inputs.conf file.  Perhaps this
-   could be setup like [*] index=os_prod;  or [<<COPY_TO_ALL>>] index=os_prod
+   could be setup like [*] index=os_prod;  or [<<COPY_TO_ALL>>] index=os_prod;  Assume this will
+   apply to all currently-known stanzas.  (Immediately applied, during the merging process, not
+   held and applied after all layers have been combined.)
  * (Maybe) allow list augmentation (or subtraction?) to comma or semicolon separated lists.
         TRANSFORMS-syslog = <<APPEND>> ciso-asa-sourcetype-rewrite   OR
         TRANSFORMS-syslog = <<REMOVE>> ciso-asa-sourcetype-rewrite
@@ -86,11 +88,14 @@ To do (Someday):
    (3) improve syntax error reporting (line numbers), and (4) preserve original ordering.
    For example, it would be nice to run patch in away that only applies changes and doesn't re-sort
    and loose/mangle all comments.
- * Allow config stanzas to be sorted without sorting the stanza content.  Useful for typically 
+ * Allow config stanzas to be sorted without sorting the stanza content.  Useful for typically
    hand-created file like props.conf or transforms.conf where there's mixed comments and keys and a
    preferred reading order.
  * Find a good way to unit test this.  Probably requires a stub class (based on the above)
    Keep unit-test in a separate file (keep size under control.)
+ * Split out all file operations to a VFS layer so that (1) this code can be used as a library, and
+   (2) in complex deployments updates to certain files could be proxied to elsewhere (SHC member
+   sending changes to the deployer?)
 
 
 """
@@ -101,17 +106,35 @@ import os
 import re
 import sys
 import difflib
+import shutil
 from collections import namedtuple, defaultdict, Counter
 from copy import deepcopy
+from glob import glob
 from StringIO import StringIO
 
 
-# Use consistent exit codes for scriptability
+# EXIT_CODE_* constants:  Use consistent exit codes for scriptability
+#
+#   0-9    Normal/successful conditions
+#   20-49  Error conditions (user caused)
+#   50-59  Externally caused (should retry)
+#   100+   Internal error (developer required)
+
+# Success codes (no need to retry)
 EXIT_CODE_SUCCESS = 0
-EXIT_CODE_BAD_CONF_FILE = 1
-EXIT_CODE_FAILED_SAFETY_CHECK = 2
-EXIT_CODE_NOTHING_TO_DO = 3
-EXIT_CODE_INTERNAL_ERROR = 99
+EXIT_CODE_NOTHING_TO_DO = 1
+EXIT_CODE_USER_QUIT = 2
+
+# Errors caused by users
+EXIT_CODE_BAD_CONF_FILE = 20
+EXIT_CODE_FAILED_SAFETY_CHECK = 22
+EXIT_CODE_COMBINE_MARKER_MISSING = 30
+
+# Retry or temporary failure
+EXIT_CODE_EXTERNAL_FILE_EDIT = 50
+
+# Unresolvable issues (developer required)
+EXIT_CODE_INTERNAL_ERROR = 100
 
 
 class Token(object):
@@ -127,6 +150,19 @@ DUP_EXCEPTION = "exception"
 DUP_MERGE = "merge"
 
 
+
+CONTROLLED_DIR_MARKER = ".ksconf_controlled"
+
+
+
+SMART_CREATE = "created"
+SMART_UPDATE = "updated"
+SMART_NOCHANGE = "unchanged"
+
+
+
+####################################################################################################
+## Core parsing / conf file writing logic
 
 class ConfParserException(Exception):
     pass
@@ -236,14 +272,19 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
     return sections
 
 
-def write_conf(stream, conf, stanza_delim="\n"):
+def write_conf(stream, conf, stanza_delim="\n", sort=True):
     if not hasattr(stream, "write"):
         # Assume it's a filename
         stream = open(stream, "w")
     conf = dict(conf)
 
+    if sort:
+        sorter = sorted
+    else:
+        sorter = iter
+
     def write_stanza_body(items):
-        for (key, value) in sorted(items.iteritems()):
+        for (key, value) in sorter(items.iteritems()):
             if key.startswith("#"):
                 stream.write("{0}\n".format(value))
             else:
@@ -255,19 +296,37 @@ def write_conf(stream, conf, stanza_delim="\n"):
         write_stanza_body(conf[GLOBAL_STANZA])
         # Remove from our shallow copy of conf, to prevent dup output
         del conf[GLOBAL_STANZA]
-    for (section, cfg) in sorted(conf.iteritems()):
+    for (section, cfg) in sorter(conf.iteritems()):
         stream.write("[{0}]\n".format(section))
         write_stanza_body(cfg)
 
 
-def sort_conf(instream, outstream, stanza_delim="\n", parse_args=None):
-    if parse_args is None:
-        parse_args = {}
-    if "keep_comments" not in parse_args:
-        parse_args["keep_comments"] = True
-    conf = parse_conf(instream, **parse_args)
-    write_conf(outstream, conf, stanza_delim=stanza_delim)
+def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix=".tmp"):
+    if os.path.isfile(filename):
+        temp = StringIO()
+        write_conf(temp, conf, stanza_delim, sort)
+        with open(filename, "rb") as dest:
+            file_diff = fileobj_compare(temp, dest)
+        if file_diff:
+            return SMART_NOCHANGE
+        else:
+            tempfile = filename + temp_suffix
+            with open(tempfile, "w") as dest:
+                dest.write(temp.getvalue())
+            os.unlink(filename)
+            os.rename(tempfile, filename)
+            return SMART_UPDATE
+    else:
+        tempfile = filename + temp_suffix
+        with open(tempfile, "w") as dest:
+            write_conf(dest, conf, stanza_delim, sort)
+        os.rename(tempfile, filename)
+        return SMART_CREATE
 
+
+
+####################################################################################################
+## Merging logic
 
 # TODO: Replace this with "<<DROP_STANZA>>" on ANY key.  Let's use just ONE mechanism for all of
 # these merge hints/customizations
@@ -306,6 +365,20 @@ def merge_conf_dicts(*dicts):
             _merge_conf_dicts(result, d)
     return result
 
+def merge_conf_files(dest_file, configs, parse_args):
+    # Parse all config files
+    cfgs = [ parse_conf(conf, **parse_args) for conf in configs ]
+    # Merge all config files:
+    merged_cfg = merge_conf_dicts(*cfgs)
+    if hasattr(dest_file, "write"):
+        write_conf(dest_file, merged_cfg)
+        return SMART_CREATE
+    else:
+        return smart_write_conf(dest_file, merged_cfg)
+
+
+####################################################################################################
+## Diff logic
 
 def _cmp_sets(a, b):
     """ Result tuples in format (a-only, common, b-only) """
@@ -417,7 +490,31 @@ def compare_cfgs(a, b, allow_level0=True):
     return delta
 
 
-def do_cmp(f1, f2):
+def summarize_cfg_diffs(delta, stream):
+    """ Summarize a delta into a human readable format.   The input `delta` is in the format
+    produced by the compare_cfgs() function.
+    """
+    stanza_stats = defaultdict(set)
+    key_stats = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+    c = Counter()
+    for op in delta:
+        c[op.tag] += 1
+        if isinstance(op.location, DiffStanza):
+            stanza_stats[op.tag].add(op.location.stanza)
+        elif isinstance(op.location, DiffStzKey):
+            key_stats[op.tag][op.location.stanza][op.location.key].add(op.location.key)
+
+    for tag in sorted(c.keys()): # (DIFF_OP_EQUAL, DIFF_OP_REPLACE, DIFF_OP_INSERT, DIFF_OP_DELETE):
+        stream.write("Have {0} '{1}' operations:\n".format(c[tag], tag))
+        for entry in sorted(stanza_stats[tag]):
+            stream.write("\t[{0}]\n".format(entry))
+        for entry in sorted(key_stats[tag]):
+            stream.write("\t[{0}]  {1} keys\n".format(entry, len(key_stats[tag][entry])))
+        stream.write("\n")
+
+
+
+def fileobj_compare(f1, f2):
     # Borrowed from filecmp
     f1.seek(0)
     f2.seek(0)
@@ -429,6 +526,25 @@ def do_cmp(f1, f2):
             return False
         if not b1:
             return True
+
+def file_compare(fn1, fn2):
+    with open(fn1, "rb") as f1,\
+         open(fn2, "rb") as f2:
+        return fileobj_compare(f1, f2)
+
+
+def smart_copy(src, dest):
+    """ Copy (overwrite) file only if the contents have changed. """
+    ret = SMART_CREATE
+    if os.path.isfile(dest):
+        if file_compare(src, dest):
+            # Files already match.  Nothing to do.
+            return SMART_NOCHANGE
+        else:
+            ret = SMART_UPDATE
+            os.unlink(dest)
+    shutil.copy2(src, dest)
+    return ret
 
 
 def _stdin_iter(stream=None):
@@ -445,8 +561,35 @@ def _format_stanza(stanza):
     else:
         return stanza
 
-# ==================================================================================================
 
+def file_fingerprint(path, compare_to=None):
+    stat = os.stat(path)
+    fp = (stat.st_mtime, stat.st_size)
+    if compare_to:
+        return fp != compare_to
+    else:
+        return fp
+
+def _expand_glob_list(iterable):
+    for item in iterable:
+        if "*" in item or "?" in item:
+            for match in glob(item):
+                yield match
+        else:
+            yield item
+
+
+def relwalk(top, topdown=True, onerror=None, followlinks=False):
+    """ Relative path walker
+    Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
+    """
+    prefix = len(top) + 1
+    for (dirpath, dirnames, filenames) in os.walk(top, topdown, onerror, followlinks):
+        dirpath = dirpath[prefix:]
+        yield (dirpath, dirnames, filenames)
+
+####################################################################################################
+## CLI do_*() functions
 
 def do_check(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
@@ -489,15 +632,13 @@ def do_check(args):
     sys.exit(exit_code)
 
 
+
+
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=True, strict=True)
-    # Parse all config files
-    cfgs = [ parse_conf(conf, **parse_args) for conf in args.conf ]
-    # Merge all config files:
-    merged_cfg = merge_conf_dicts(*cfgs)
-    write_conf(args.target, merged_cfg)
+    merge_conf_files(args.target, args.conf, parse_args)
 
 
 def do_diff(args):
@@ -604,6 +745,10 @@ def do_promote(args):
         # same as the target filename.
         args.target = os.path.join(args.target, os.path.basename(args.source))
 
+    fp_source = file_fingerprint(args.source)
+    fp_target = file_fingerprint(args.target)
+
+
     # Todo: Add a safety check prevent accidental merge of unrelated files.
     # Scenario: promote local/props.conf into default/transforms.conf
     # Possible check (1) Are basenames are different?  (props.conf vs transforms.conf)
@@ -620,16 +765,38 @@ def do_promote(args):
             sys.stderr.write("Refusing to promote content between different types of configuration "
                              "files.  {0} --> {1}  If this is intentional, override this safety"
                              "check with '--force'\n".format(bn_source, bn_target))
-            sys.exit(EXIT_CODE_FAILED_SAFETY_CHECK)
+            return EXIT_CODE_FAILED_SAFETY_CHECK
     # Parse all config files
     cfg_src = parse_conf(args.source, **parse_args)
     cfg_tgt = parse_conf(args.target, **parse_args)
 
     if not cfg_src:
         sys.stderr.write("No settings found in {0}.  No content to promote.\n".format(args.source))
-        sys.exit(EXIT_CODE_NOTHING_TO_DO)
+        return EXIT_CODE_NOTHING_TO_DO
 
-    if args.interactive:
+    if args.mode == "ask":
+        # Todo:  Show a summary of changes to the user here
+        # Show a summary of how many new stanzas would be copied across; how many key changes.
+        # ANd either accept all (batch) or pick selectively (batch)
+
+        #delta = compare_cfgs(cfg_tgt, merge_conf_dicts(cfg_tgt, cfg_src), allow_level0=False)
+        delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+        delta = [ op for op in delta if op.tag!=DIFF_OP_DELETE ]
+        summarize_cfg_diffs(delta, sys.stderr)
+
+        while True:
+            input = raw_input("Would you like to apply changes?  (y/n/q)")
+            input = input[:1].lower()
+            if input == 'q':
+                return EXIT_CODE_USER_QUIT
+            elif input == 'y':
+                args.mode = "batch"
+                break
+            elif input == 'n':
+                args.mode = "interactive"
+                break
+
+    if args.mode == "interactive":
         (cfg_final_src, cfg_final_tgt) = _do_promote_interactive(cfg_src, cfg_tgt, args)
     else:
         (cfg_final_src, cfg_final_tgt) = _do_promote_automatic(cfg_src, cfg_tgt, args)
@@ -640,12 +807,18 @@ def do_promote(args):
     # Todo: Avoid rewriting files if NO changes were made. (preserve prior backups)
     # Todo: Restore file modes and such
 
+    if file_fingerprint(args.source, fp_source):
+        sys.stderr.write("Aborting!  External source file changed: {0}\n".format(args.source))
+        return EXIT_CODE_EXTERNAL_FILE_EDIT
+    if file_fingerprint(args.target, fp_target):
+        sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target))
+        return EXIT_CODE_EXTERNAL_FILE_EDIT
     # Reminder:  conf entries are being removed from source and promoted into target
-    write_conf(args.target, cfg_final_tgt)
+    smart_write_conf(args.target, cfg_final_tgt)
     if not args.keep:
         # If --keep is set, we never touch the source file.
         if cfg_final_src:
-            write_conf(args.source, cfg_final_src)
+            smart_write_conf(args.source, cfg_final_src)
         else:
             # Config file is empty.  Should we write an empty file, or remove it?
             if args.keep_empty:
@@ -658,7 +831,6 @@ def _do_promote_automatic(cfg_src, cfg_tgt, args):
     # Promote ALL entries;  simply, isn't it...  ;-)
     final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
     return ({}, final_cfg)
-
 
 
 def _do_promote_interactive(cfg_src, cfg_tgt, args):
@@ -767,35 +939,109 @@ def do_sort(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=True)
     if args.inplace:
+        failure = False
         for conf in args.conf:
-            temp = StringIO()
             try:
-                sort_conf(conf, temp, stanza_delim=stanza_delims, parse_args=parse_args)
-            except ConfParserException, e:
-                print "Error trying to process file {0}.  Error:  {1}".format(conf.name, e)
-
-            if do_cmp(conf, temp):
-                print "Nothing to update.  File %s is already sorted." % (conf.name)
-            else:
-                dest = conf.name
-                t = dest + ".tmp"
+                data = parse_conf(conf, **parse_args)
                 conf.close()
-                open(t, "w").write(temp.getvalue())
-                print "Replacing file %s with sorted content." % (dest,)
-                os.unlink(dest)
-                os.rename(t, dest)
+                smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
+            except ConfParserException, e:
+                sys.stderr.write("Error trying to process file {0}.  "
+                                 "Error:  {1}\n".format(conf.name, e))
+                failure = True
+            if smart_rc == SMART_NOCHANGE:
+                sys.stderr.write("Nothing to update.  "
+                                 "File {0} is already sorted\n".format(conf.name))
+            else:
+                sys.stderr.write("Replaced file {0} with sorted content.\n".format(conf.name))
+        if failure:
+            return EXIT_CODE_BAD_CONF_FILE
     else:
         for conf in args.conf:
             if len(args.conf) > 1:
                 args.target.write("---------------- [ {0} ] ----------------\n\n".format(conf.name))
             try:
-                sort_conf(conf, args.target, stanza_delim=stanza_delims, parse_args=parse_args)
+                data = parse_conf(conf, **parse_args)
+                write_conf(args.target, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
-                print "Error trying processing {0}.  Error:  {1}".format(conf.name, e)
-                sys.exit(EXIT_CODE_BAD_CONF_FILE)
+                sys.stderr.write("Error trying processing {0}.  Error:  {1}\n".format(conf.name, e))
+                return EXIT_CODE_BAD_CONF_FILE
+
 
 def do_combine(args):
-    pass
+    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
+                      keep_comments=True, strict=True)
+    # Ignores case sensitivity topics.  If you're on Windows, name your files right.
+    conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
+
+    sys.stderr.write("Combining conf files into {}\n".format(args.target))
+    args.source = list(_expand_glob_list(args.source))
+    for src in args.source:
+        sys.stderr.write("Reading conf files from {}\n".format(src))
+
+    marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
+    if os.path.isdir(args.target):
+        if not os.path.isfile(os.path.join(args.target, CONTROLLED_DIR_MARKER)):
+            sys.stderr.write("Target directory already exists, but it appears to have been created "
+                             "by some other means.  Marker file missing.\n")
+            return EXIT_CODE_COMBINE_MARKER_MISSING
+    else:
+        sys.stderr.write("Creating destination folder {0}\n".format(args.target))
+        os.mkdir(args.target)
+        open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
+
+    # Build a common tree of all src files.
+    src_file_index = defaultdict(list)
+    for src_root in args.source:
+        for (root, dirs, files) in relwalk(src_root):
+            for fn in files:
+                # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
+                if fn.endswith(".swp") or fn.endswith("*.bak"):
+                    continue
+                src_file = os.path.join(root, fn)
+                src_path = os.path.join(src_root, root, fn)
+                src_file_index[src_file].append(src_path)
+
+    # Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
+    target_extra_files = set()
+    for (root, dirs, files) in relwalk(args.target):
+        for fn in files:
+            tgt_file = os.path.join(root, fn)
+            if tgt_file not in src_file_index:
+                # Todo:  Add support for additional blacklist wildcards (using fnmatch)
+                if fn == CONTROLLED_DIR_MARKER or fn.endswith(".bak"):
+                    continue
+                target_extra_files.add(tgt_file)
+
+    for (dest_fn, src_files) in sorted(src_file_index.items()):
+        dest_path = os.path.join(args.target, dest_fn)
+
+        # Make missing destination folder, if missing
+        dest_dir = os.path.dirname(dest_path)
+        if not os.path.isdir(dest_dir):
+            os.makedirs(dest_dir)
+
+        # Handle conf files and non-conf files separately
+        if not conf_file_re.search(dest_fn):
+            #sys.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
+            # Always use the last file in the list (since last directory always wins)
+            src_file = src_files[-1]
+            smart_rc = smart_copy(src_file, dest_path)
+            if smart_rc != SMART_NOCHANGE:
+                sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
+        else:
+            #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
+            smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args)
+            if smart_rc != SMART_NOCHANGE:
+                sys.stderr.write("Merge <{0}>   {1:50}  from {2:r}\n".format(smart_rc, dest_path, src_files))
+
+    if True and target_extra_files:     # Todo: Allow for cleanup to be disabled via CLI
+        sys.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".format(
+            len(target_extra_files)))
+        for dest_fn in target_extra_files:
+            sys.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
+            os.unlink(os.path.join(args.target, dest_fn))
+
 
 
 
@@ -808,9 +1054,29 @@ def do_unarchive(args):
     pass
 
 
+
+####################################################################################################
+## CLI definition
+
+
+# ------------------------------------------ wrap to 80 chars ----------------v
+_cli_description= """Kintyre Splunk CONFig tool.
+
+This utility handles a number of common Splunk app maintenance tasks in a small
+and easy to relocate package.  Specifically, this tools deals with many of the
+nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
+repository.  Merging changes from the live system's (local) folder to the
+version controlled (default) folder, and dealing with more than one layer of 
+"default" (which splunk can't handle natively) are all supported tasks.
+"""
+# ------------------------------------------ wrap to 80 chars ----------------^
+
+
 def cli():
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(fromfile_prefix_chars="@",
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     description=_cli_description)
 
     # Common settings
     #'''
@@ -855,8 +1121,19 @@ def cli():
                                     help="Combine .conf settings from across multiple directories "
                                          "into a single consolidated target directory.  This is "
                                          "similar to running 'merge' recursively against a set of "
-                                         "directories.")
+                                         "directories.",
+                                    description=
+                                    "Common use case:  ksconf combine default.d/* --target=default")
     sp_comb.set_defaults(funct=do_combine)
+    sp_comb.add_argument("source", nargs="+",
+                         help="The source directory where configuration files will be merged from. "
+                              "When multiple sources directories are provided, start with the most "
+                              "general and end with the specific;  later sources will override "
+                              "values from the earlier ones. Supports wildcards so a typical Unix "
+                              "conf.d/##-NAME directory structure works well.")
+    sp_comb.add_argument("--target", "-t",
+                         help="Directory where the merged files will be stored.  Typically either "
+                              "'default' or 'local'")
 
     # SUBCOMMAND:  splconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
@@ -879,15 +1156,27 @@ def cli():
     # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
     sp_prmt = subparsers.add_parser("promote",
                                     help="Promote .conf settings from one file into another either "
-                                         "automatically (all changes) or interactively allowing "
+                                         "in batch mode (all changes) or interactively allowing "
                                          "the user to pick which stanzas and keys to integrate. "
                                          "This can be used to push changes made via the UI, which"
                                          "are stored in a 'local' file, to the version-controlled "
                                          "'default' file.  Note that the normal operation moves "
                                          "changes from the SOURCE file to the TARGET, updating "
                                          "both files in the process.  But it's also possible to "
-                                         "preserve the local file, if desired.")
-    sp_prmt.set_defaults(funct=do_promote)
+                                         "preserve the local file, if desired.",
+                                    description=
+                                    "The promote sub command is used to propigate .conf settings "
+                                    "applied in one file (typically local) to another (typically "
+                                    "default)\n\n"
+                                    "This can be done in two different modes:  In batch mode "
+                                    "(all changes) or interactively allowing the user to pick "
+                                    "which stanzas and keys to integrate. This can be used to push "
+                                    "changes made via the UI, which are stored in a 'local' file, "
+                                    "to the version-controlled 'default' file.  Note that the "
+                                    "normal operation moves changes from the SOURCE file to the "
+                                    "TARGET, updating both files in the process.  But it's also "
+                                    "possible to preserve the local file, if desired.")
+    sp_prmt.set_defaults(funct=do_promote, mode="ask")
     sp_prmt.add_argument("source", metavar="SOURCE",
                          help="The source configuration file to pull changes from.  (Typically the "
                               "'local' conf file)")
@@ -896,14 +1185,20 @@ def cli():
                               "(Typically the 'default' folder) "
                               "When a directory is given instead of a file then the same file name "
                               "is assumed for both SOURCE and TARGET")
-    sp_prmt.add_argument("--interactive", "-i",
-                         action="store_true", default=False,
+    sp_prg1 = sp_prmt.add_mutually_exclusive_group()
+    sp_prg1.add_argument("--batch", "-b",
+                         action="store_const",
+                         dest="mode", const="batch",
+                         help="Use batch mode where all configuration settings are automatically "
+                              "promoted.  All changes are moved from the source to the target "
+                              "file and the source file will be blanked or removed.")
+    sp_prg1.add_argument("--interactive", "-i",
+                         action="store_const",
+                         dest="mode", const="interactive",
                          help="Enable interactive mode where the user will be prompted to approve "
                               "the promotion of specific stanzas and keys.  The user will be able "
                               "to apply, skip, or edit the changes being promoted.  (This "
-                              "functionality was inspired by 'git add --patch'). "
-                              "In non-interactive mode, the default, all changes are moved from "
-                              "the source to the target file.")
+                              "functionality was inspired by 'git add --patch').")
     sp_prmt.add_argument("--force", "-f",
                          action="store_true", default=False,
                          help="Disable safety checks.")
@@ -948,17 +1243,8 @@ def cli():
         3 action options:
             Integrate/Accept: Move content from the source to the target  (e.g., local to default)
             Reject/Remove:    Discard content from the source; destructive (e.g., rm local setting)
-            Skip/Keep:        Don't move content from
+            Skip/Keep:        Don't push to target or remove from source (no change)
     
-    
-    sp_ptch.add_argument("--preview", action="store_true", default=False,
-                         help="")
-    sp_ptch.add_argument("--copy", action="store_true", default=False,
-                         help="Copy settings from the source configuration file instead of "
-                              "migrating the selected settings from the source to the target, "
-                              "which is the default behavior if the target is a file rather than "
-                              "standard out.")
-    sp_ptch.add_argument("--keep-empty")
     """
 
     # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
@@ -1041,11 +1327,12 @@ def cli():
 
 
     try:
-        args.funct(args)
+        return_code = args.funct(args)
     except Exception, e:
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         raise
-        sys.exit(99)
+        return_code = EXIT_CODE_INTERNAL_ERROR
+    sys.exit(return_code or 0)
 
 
 

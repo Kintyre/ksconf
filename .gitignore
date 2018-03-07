@@ -1,0 +1,5 @@
+.DS_store
+.*.swp
+*.py[co]
+*.bak
+.idea

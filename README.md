@@ -5,6 +5,15 @@ Kintyre's Splunk scripts for various admin tasks.
                      {check,combine,diff,promote,merge,minimize,sort,unarchive}
                      ...
     
+    Kintyre Splunk CONFig tool.
+    
+    This utility handles a number of common Splunk app maintenance tasks in a small
+    and easy to relocate package.  Specifically, this tools deals with many of the
+    nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
+    repository.  Merging changes from the live system's (local) folder to the
+    version controlled (default) folder, and dealing with more than one layer of 
+    "default" (which splunk can't handle natively) are all supported tasks.
+    
     positional arguments:
       {check,combine,diff,promote,merge,minimize,sort,unarchive}
         check               Perform a basic syntax and sanity check on .conf files
@@ -18,7 +27,7 @@ Kintyre's Splunk scripts for various admin tasks.
                             comparing stanzas, keys, and values. Note that spaces
                             within any given value will be compared.
         promote             Promote .conf settings from one file into another
-                            either automatically (all changes) or interactively
+                            either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
                             integrate. This can be used to push changes made via
                             the UI, whichare stored in a 'local' file, to the
@@ -67,10 +76,23 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py combine
-    usage: ksconf.py combine [-h]
+    usage: ksconf.py combine [-h] [--target TARGET] source [source ...]
+    
+    Common use case: ksconf combine default.d/* --target=default
+    
+    positional arguments:
+      source                The source directory where configuration files will be
+                            merged from. When multiple sources directories are
+                            provided, start with the most general and end with the
+                            specific; later sources will override values from the
+                            earlier ones. Supports wildcards so a typical Unix
+                            conf.d/##-NAME directory structure works well.
     
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help            show this help message and exit
+      --target TARGET, -t TARGET
+                            Directory where the merged files will be stored.
+                            Typically either 'default' or 'local'
 
 
 ### ksconf.py diff
@@ -90,9 +112,18 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py promote
-    usage: ksconf.py promote [-h] [--interactive] [--force] [--keep]
+    usage: ksconf.py promote [-h] [--batch | --interactive] [--force] [--keep]
                              [--keep-empty KEEP_EMPTY]
                              SOURCE TARGET
+    
+    The promote sub command is used to propigate .conf settings applied in one
+    file (typically local) to another (typically default) This can be done in two
+    different modes: In batch mode (all changes) or interactively allowing the
+    user to pick which stanzas and keys to integrate. This can be used to push
+    changes made via the UI, which are stored in a 'local' file, to the version-
+    controlled 'default' file. Note that the normal operation moves changes from
+    the SOURCE file to the TARGET, updating both files in the process. But it's
+    also possible to preserve the local file, if desired.
     
     positional arguments:
       SOURCE                The source configuration file to pull changes from.
@@ -104,13 +135,15 @@ Kintyre's Splunk scripts for various admin tasks.
     
     optional arguments:
       -h, --help            show this help message and exit
+      --batch, -b           Use batch mode where all configuration settings are
+                            automatically promoted. All changes are moved from the
+                            source to the target file and the source file will be
+                            blanked or removed.
       --interactive, -i     Enable interactive mode where the user will be
                             prompted to approve the promotion of specific stanzas
                             and keys. The user will be able to apply, skip, or
                             edit the changes being promoted. (This functionality
-                            was inspired by 'git add --patch'). In non-interactive
-                            mode, the default, all changes are moved from the
-                            source to the target file.
+                            was inspired by 'git add --patch').
       --force, -f           Disable safety checks.
       --keep, -k            Keep conf settings in the source file. This means that
                             changes will be copied into the target file instead of
