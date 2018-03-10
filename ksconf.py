@@ -401,9 +401,9 @@ DIFF_OP_EQUAL   = "equal"
 
 
 DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
-DiffGlobal = namedtuple("DiffGlobal", ("level",))
-DiffStanza = namedtuple("DiffStanza", ("level", "stanza"))
-DiffStzKey = namedtuple("DiffStzKey", ("level", "stanza", "key"))
+DiffGlobal = namedtuple("DiffGlobal", ("type",))
+DiffStanza = namedtuple("DiffStanza", ("type", "stanza"))
+DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
 
 def compare_cfgs(a, b, allow_level0=True):
     '''
@@ -441,12 +441,12 @@ def compare_cfgs(a, b, allow_level0=True):
     if allow_level0:
         stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
         if a == b:
-            return [DiffOp(DIFF_OP_EQUAL, DiffGlobal(0), a, b)]
+            return [DiffOp(DIFF_OP_EQUAL, DiffGlobal("global"), a, b)]
         if not stanza_common:
             # Q:  Does this specific output make the consumer's job more difficult?
             # Nothing in common between these two files
             # Note:  Stanza renames are not detected and are out of scope.
-            return [DiffOp(DIFF_OP_REPLACE, DiffGlobal(0), a, b)]
+            return [DiffOp(DIFF_OP_REPLACE, DiffGlobal("global"), a, b)]
 
     # Level 1 - Compare stanzas
 
@@ -465,32 +465,32 @@ def compare_cfgs(a, b, allow_level0=True):
             b_ = b[stanza]
             # Note: make sure that '==' operator continues work with custom conf parsing classes.
             if a_ == b_:
-                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza(1, stanza), a_, b_))
+                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza), a_, b_))
                 continue
             kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
             if not kv_common:
                 # No keys in common, just swap
-                delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza(1, stanza), a_, b_))
+                delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza), a_, b_))
                 continue
 
             # Level 2 - Key comparisons
             for key in kv_a:
-                delta.append(DiffOp(DIFF_OP_DELETE, DiffStzKey(2, stanza, key), None, a_[key]))
+                delta.append(DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza, key), None, a_[key]))
             for key in kv_b:
-                delta.append(DiffOp(DIFF_OP_INSERT, DiffStzKey(2, stanza, key), b_[key], None))
+                delta.append(DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza, key), b_[key], None))
             for key in kv_common:
                 a__ = a_[key]
                 b__ = b_[key]
                 if a__ == b__:
-                    delta.append(DiffOp(DIFF_OP_EQUAL, DiffStzKey(2, stanza, key), a__, b__))
+                    delta.append(DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza, key), a__, b__))
                 else:
-                    delta.append(DiffOp(DIFF_OP_REPLACE, DiffStzKey(2, stanza, key), a__, b__))
+                    delta.append(DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza, key), a__, b__))
         elif stanza in a:
             # A only
-            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza(1, stanza), None, a[stanza]))
+            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
         else:
             # B only
-            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza(1, stanza), b[stanza], None))
+            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), b[stanza], None))
     return delta
 
 
@@ -695,65 +695,56 @@ def do_diff(args):
 
     diffs = compare_cfgs(cfg1, cfg2)
 
-    # No changes between files
-    if len(diffs) == 1:
-        if diffs[0].tag == DIFF_OP_EQUAL:
+    # Global result:  no changes between files or no commonality between files
+    if len(diffs) == 1 and isinstance(diffs[0].location, DiffGlobal):
+        op = diffs[0]
+        if op.tag == DIFF_OP_EQUAL:
             sys.stderr.write("Files are the same.\n")
             return EXIT_CODE_DIFF_EQUAL
         else:
-            t = "global"
+            header("-", args.conf1)
+            header("+", args.conf2)
+            for (prefix, d) in [("-", op.a), ("+", op.b)]:
+                for (stanza, keys) in sorted(d.items()):
+                    show_value(keys, stanza, None, prefix)
+            stream.flush()
             sys.stderr.write("No common stanzas between files.\n")
+            return EXIT_CODE_DIFF_NO_COMMON
 
     header("-", args.conf1)
     header("+", args.conf2)
 
     last_stanza = None
     for op in diffs:
-        l = op.location[0]
-        if l == 1:
-            t = "stanza"
-            stanza = op.location[1]
-            key = None
-        elif l == 2:
-            t = "key"
-            stanza, key = op.location[1:]
-
-        if t == "global":
-            for (prefix, d) in [("-", op.a), ("+", op.b)]:
-                for (stanza, keys) in sorted(d.items()):
-                    show_value(keys, stanza, None, prefix)
-            return EXIT_CODE_DIFF_NO_COMMON
-
-        if t == "stanza":
+        if isinstance(op.location, DiffStanza):
             if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
-                show_value(op.b, stanza, key, "-")
+                show_value(op.b, op.location.stanza, None, "-")
             if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
-                show_value(op.a, stanza, key, "+")
+                show_value(op.a, op.location.stanza, None, "+")
             continue
 
-        if stanza != last_stanza:
+        if op.location.stanza != last_stanza:
             if last_stanza is not None:
                 # Line break after last stanza
                 stream.write("\n")
                 stream.flush()
-            stream.write(" [{0}]\n".format(_format_stanza(stanza)))
-            last_stanza = stanza
+            stream.write(" [{0}]\n".format(_format_stanza(op.location.stanza)))
+            last_stanza = op.location.stanza
 
         if op.tag == DIFF_OP_INSERT:
-            show_value(op.a, stanza, key, "+")
+            show_value(op.a, op.location.stanza, op.location.key, "+")
         elif op.tag == DIFF_OP_DELETE:
-            show_value(op.b, stanza, key, "-")
+            show_value(op.b,  op.location.stanza,  op.location.key, "-")
         elif op.tag == DIFF_OP_REPLACE:
             if "\n" in op.a or "\n" in op.b:
-                show_multiline_diff(op.a, op.b, key)
+                show_multiline_diff(op.a, op.b, op.location.key)
             else:
-                show_value(op.b, stanza, key, "-")
-                show_value(op.a, stanza, key, "+")
+                show_value(op.b, op.location.stanza, op.location.key, "-")
+                show_value(op.a, op.location.stanza, op.location.key, "+")
         elif op.tag == DIFF_OP_EQUAL:
-            show_value(op.b, stanza, key, " ")
+            show_value(op.b, op.location.stanza, op.location.key, " ")
     stream.flush()
     return EXIT_CODE_DIFF_CHANGE
-
 
 
 def do_promote(args):
