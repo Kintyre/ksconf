@@ -125,6 +125,10 @@ EXIT_CODE_SUCCESS = 0
 EXIT_CODE_NOTHING_TO_DO = 1
 EXIT_CODE_USER_QUIT = 2
 
+EXIT_CODE_DIFF_EQUAL = 0
+EXIT_CODE_DIFF_CHANGE = 3
+EXIT_CODE_DIFF_NO_COMMON = 4
+
 # Errors caused by users
 EXIT_CODE_BAD_CONF_FILE = 20
 EXIT_CODE_FAILED_SAFETY_CHECK = 22
@@ -527,6 +531,7 @@ def fileobj_compare(f1, f2):
         if not b1:
             return True
 
+
 def file_compare(fn1, fn2):
     with open(fn1, "rb") as f1,\
          open(fn2, "rb") as f2:
@@ -658,17 +663,21 @@ def do_diff(args):
         ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
         stream.write("{0} {1:19} {2}\n".format(sign*3, filename, ts))
 
+    def write_multiline_key(key, value, prefix=" "):
+        lines = value.replace("\n", "\\\n").split("\n")
+        stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
+        for line in lines:
+            stream.write("{0}{1}\n".format(prefix, line))
+
     def show_value(value, stanza, key, prefix=""):
         if isinstance(value, dict):
             stream.write("{0}[{1}]\n".format(prefix, _format_stanza(stanza)))
-            lines = [ "{0}{1} = {2}".format(prefix, x, y) for x, y in value.iteritems() ]
-            stream.write("\n".join(lines) + "\n\n")
+            for x, y in value.iteritems():
+                write_multiline_key(x, y, prefix)
+            stream.write("\n")
         else:
             if "\n" in value:
-                lines = value.replace("\n", "\\\n").split("\n")
-                stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
-                for line in lines:
-                    stream.write(" {0}\n".format(line))
+                write_multiline_key(key, value, prefix)
             else:
                 stream.write("{0}{1} = {2}\n".format(prefix, key, value))
 
@@ -687,8 +696,13 @@ def do_diff(args):
     diffs = compare_cfgs(cfg1, cfg2)
 
     # No changes between files
-    if len(diffs) == 1 and diffs[0].tag == DIFF_OP_EQUAL:
-        return
+    if len(diffs) == 1:
+        if diffs[0].tag == DIFF_OP_EQUAL:
+            sys.stderr.write("Files are the same.\n")
+            return EXIT_CODE_DIFF_EQUAL
+        else:
+            t = "global"
+            sys.stderr.write("No common stanzas between files.\n")
 
     header("-", args.conf1)
     header("+", args.conf2)
@@ -703,6 +717,12 @@ def do_diff(args):
         elif l == 2:
             t = "key"
             stanza, key = op.location[1:]
+
+        if t == "global":
+            for (prefix, d) in [("-", op.a), ("+", op.b)]:
+                for (stanza, keys) in sorted(d.items()):
+                    show_value(keys, stanza, None, prefix)
+            return EXIT_CODE_DIFF_NO_COMMON
 
         if t == "stanza":
             if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
@@ -732,6 +752,7 @@ def do_diff(args):
         elif op.tag == DIFF_OP_EQUAL:
             show_value(op.b, stanza, key, " ")
     stream.flush()
+    return EXIT_CODE_DIFF_CHANGE
 
 
 
