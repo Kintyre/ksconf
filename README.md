@@ -171,10 +171,35 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py minimize
-    usage: ksconf.py minimize [-h]
+    usage: ksconf.py minimize [-h] [--target FILE] [--output OUTPUT]
+                              [-k PRESERVE_KEY]
+                              FILE [FILE ...]
+    
+    The minimize command will allow for the removal of all default-ish settings
+    from a target configuration files. In theory, this allows for a cleaner
+    upgrade, and fewer duplicate settings.
+    
+    positional arguments:
+      FILE                  The default configuration file(s) used to determine
+                            what base settings are unncessary to keep in the
+                            target file.
     
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help            show this help message and exit
+      --target FILE, -t FILE
+                            This is the local file that you with to remove the
+                            duplicate settings from. By default, this file will be
+                            read and the updatedwith a minimized version.
+      --output OUTPUT       When this option is used, the new minimized file will
+                            be saved to this file instead of updating TARGET. This
+                            can be use to preview changes or helpful in other
+                            workflows.
+      -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
+                            Specify a key that should be allowed to be a
+                            duplication but should be preserved within the
+                            minimized output. For example the it'soften desirable
+                            keep the 'disabled' settings in the local file, even
+                            if it's enabled by default.
 
 
 ### ksconf.py sort

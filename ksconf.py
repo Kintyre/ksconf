@@ -584,6 +584,18 @@ def _expand_glob_list(iterable):
             yield item
 
 
+def match_bwlist(value, bwlist):
+    if value in bwlist:
+        return True
+    for pattern in bwlist:
+        if "*" in pattern or "?" in pattern:
+            # Escape all characters.  And then replace the escaped "*" with a ".*"
+            regex = re.escape(pattern).replace(r"\*", r".*").replace("\?", ".")
+            if re.match(regex, value):
+                return True
+    return False
+
+
 def relwalk(top, topdown=True, onerror=None, followlinks=False):
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
@@ -746,6 +758,60 @@ def do_diff(args):
     stream.flush()
     return EXIT_CODE_DIFF_CHANGE
 
+
+def do_minimize(args):
+    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
+                      keep_comments=True, strict=True)
+    cfgs = [ parse_conf(conf, **parse_args) for conf in args.conf ]
+    # Merge all config files:
+    default_cfg = merge_conf_dicts(*cfgs)
+    del cfgs
+    local_cfg = parse_conf(args.target, **parse_args)
+
+    minz_cfg = dict(local_cfg)
+
+    diffs = compare_cfgs(default_cfg, local_cfg, allow_level0=False)
+
+    for op in diffs:
+        if op.tag == DIFF_OP_DELETE:
+            # This is normal.  We don't expect all the content in default to be mirrored into local.
+            continue
+        elif op.tag == DIFF_OP_EQUAL:
+            if isinstance(op.location, DiffStanza):
+                del minz_cfg[op.location.stanza]
+            else:
+                if match_bwlist(op.location.key, args.preserve_key):
+                    '''
+                    sys.stderr.write("Skiping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
+                                 "".format(op.location.stanza, op.location.key, op.a))
+                    '''
+                    continue
+                del minz_cfg[op.location.stanza][op.location.key]
+                # If that was the last remaining key in the stanza, delete the entire stanza
+                if not minz_cfg[op.location.stanza]:
+                    del minz_cfg[op.location.stanza]
+        elif op.tag == DIFF_OP_INSERT:
+            '''
+            sys.stderr.write("Keeping local change:  <{0}> {1!r}\n-{2!r}\n+{3!r}\n\n\n".format(
+                op.tag, op.location, op.b, op.a))
+            '''
+            continue
+        elif op.tag == DIFF_OP_REPLACE:
+            '''
+            sys.stderr.write("Keep change:  <{0}> {1!r}\n-{2!r}\n+{3!r}\n\n\n".format(
+                op.tag, op.location, op.b, op.a))
+            '''
+            continue
+
+    if args.output:
+        write_conf(args.output, minz_cfg)
+    else:
+        smart_write_conf(args.target, minz_cfg)
+        '''
+        # Makes it really hard to test if you keep overwriting the source file...
+        print "Writing config to STDOUT...."
+        write_conf(sys.stdout, minz_cfg)
+        '''
 
 def do_promote(args):
     # Todo:  Check if 'source' file changed during interactive patch ('local' folder on live system)
@@ -1281,7 +1347,32 @@ def cli():
     # and removing any SHOULD_LINEMERGE = true entries (for example)
     sp_minz = subparsers.add_parser("minimize",
                                     help="Minimize the target file by removing entries duplicated "
-                                         "in the default conf(s) provided.  ")
+                                         "in the default conf(s) provided.  ",
+                                    description=
+                                    "The minimize command will allow for the removal of all "
+                                    "default-ish settings from a target configuration files.  "
+                                    "In theory, this allows for a cleaner upgrade, and fewer "
+                                    "duplicate settings.")
+    sp_minz.set_defaults(funct=do_minimize)
+    sp_minz.add_argument("conf", metavar="FILE", nargs="+",
+                         help="The default configuration file(s) used to determine what base "
+                              "settings are unncessary to keep in the target file.")
+    sp_minz.add_argument("--target", "-t", metavar="FILE",
+                         help="This is the local file that you with to remove the duplicate "
+                              "settings from.  By default, this file will be read and the updated"
+                              "with a minimized version.")
+    sp_minz.add_argument("--output", type=argparse.FileType("w"),
+                         default=None,
+                         help="When this option is used, the new minimized file will be saved to "
+                              "this file instead of updating TARGET.  This can be use to preview "
+                              "changes or helpful in other workflows.")
+    sp_minz.add_argument("-k", "--preserve-key",
+                         action="append", default=[],
+                         help="Specify a key that should be allowed to be a duplication but should "
+                              "be preserved within the minimized output.  For example the it's"
+                              "often desirable keep the 'disabled' settings in the local file, "
+                              "even if it's enabled by default.")
+
 
 
     # SUBCOMMAND:  splconf sort <CONF>
