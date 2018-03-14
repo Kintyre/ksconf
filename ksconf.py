@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 """ksconf - Kintyre Splunk CONFig tool
 
 kast - Kintyre's Awesome Splunk Tool
@@ -671,17 +672,42 @@ def do_diff(args):
 
     import datetime
 
+    ANSI_COLOR = "\x1b[{0}m"
+    ANSI_RED   = "31"
+    ANSI_GREEN = "32"
+    ANSI_RESET = "0"
+
+    # \x1B[31m RED \x1B[32m GREEN \x1B[0m;RESET
+
+    if hasattr(stream, "isatty") and stream.isatty():
+        def set_color(*codes):
+            stream.write("\x1b[{}m".format(";".join(codes)))
+    else:
+        def set_color(*codes):
+            pass
+
+    cm = {
+        " " : ANSI_RESET,
+        "+" : ANSI_GREEN,
+        "-" : ANSI_RED,
+    }
+
     def header(sign, filename):
         ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
+        set_color(cm[sign])
         stream.write("{0} {1:19} {2}\n".format(sign*3, filename, ts))
+        set_color(ANSI_RESET)
 
     def write_multiline_key(key, value, prefix=" "):
         lines = value.replace("\n", "\\\n").split("\n")
+        set_color(cm.get(prefix))
         stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
         for line in lines:
             stream.write("{0}{1}\n".format(prefix, line))
+        set_color(ANSI_RESET)
 
     def show_value(value, stanza, key, prefix=""):
+        set_color(cm.get(prefix))
         if isinstance(value, dict):
             stream.write("{0}[{1}]\n".format(prefix, _format_stanza(stanza)))
             for x, y in value.iteritems():
@@ -692,6 +718,7 @@ def do_diff(args):
                 write_multiline_key(key, value, prefix)
             else:
                 stream.write("{0}{1} = {2}\n".format(prefix, key, value))
+        set_color(ANSI_RESET)
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
@@ -702,7 +729,9 @@ def do_diff(args):
         b = f(value_b)
         differ = difflib.Differ()
         for d in differ.compare(a, b):
+            set_color(cm.get(d[0],0))
             stream.write(d)
+            set_color(ANSI_RESET)
             stream.write("\n")
 
     diffs = compare_cfgs(cfg1, cfg2)
@@ -1425,6 +1454,13 @@ def cli():
                               "process starts.  "
                               "(This check is automatically disabled if git is not in use or " 
                               "not installed.)")
+    try:
+        import argcomplete
+        argcomplete.autocomplete(parser)
+    except ImportError:
+        print "autocomplete disabled..."
+        pass
+
     args = parser.parse_args()
 
 
