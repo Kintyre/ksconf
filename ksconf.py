@@ -108,6 +108,7 @@ import re
 import sys
 import difflib
 import shutil
+import datetime
 from collections import namedtuple, defaultdict, Counter
 from copy import deepcopy
 from glob import glob
@@ -512,10 +513,20 @@ def summarize_cfg_diffs(delta, stream):
     for tag in sorted(c.keys()): # (DIFF_OP_EQUAL, DIFF_OP_REPLACE, DIFF_OP_INSERT, DIFF_OP_DELETE):
         stream.write("Have {0} '{1}' operations:\n".format(c[tag], tag))
         for entry in sorted(stanza_stats[tag]):
-            stream.write("\t[{0}]\n".format(entry))
+            stream.write("\t[{0}]\n".format(_format_stanza(entry)))
         for entry in sorted(key_stats[tag]):
-            stream.write("\t[{0}]  {1} keys\n".format(entry, len(key_stats[tag][entry])))
+            stream.write("\t[{0}]  {1} keys\n".format(_format_stanza(entry),
+                                                      len(key_stats[tag][entry])))
         stream.write("\n")
+
+# ANSI_COLOR = "\x1b[{0}m"
+ANSI_RED   = 31
+ANSI_GREEN = 32
+ANSI_RESET = 0
+
+def tty_color(stream, *codes):
+    if codes and hasattr(stream, "isatty") and stream.isatty():
+        stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
 
 
 
@@ -669,23 +680,29 @@ def do_diff(args):
     # Parse all config files
     cfg1 = parse_conf(args.conf1, **parse_args)
     cfg2 = parse_conf(args.conf2, **parse_args)
+    diffs = compare_cfgs(cfg1, cfg2)
+    rc = show_diff(args.output, diffs, headers=(args.conf1, args.conf2))
+    if rc == EXIT_CODE_DIFF_EQUAL:
+        sys.stderr.write("Files are the same.\n")
+    elif rc == EXIT_CODE_DIFF_NO_COMMON:
+        sys.stderr.write("No common stanzas between files.\n")
 
-    import datetime
 
-    ANSI_COLOR = "\x1b[{0}m"
-    ANSI_RED   = "31"
-    ANSI_GREEN = "32"
-    ANSI_RESET = "0"
+# ANSI_COLOR = "\x1b[{0}m"
+ANSI_RED   = 31
+ANSI_GREEN = 32
+ANSI_RESET = 0
 
-    # \x1B[31m RED \x1B[32m GREEN \x1B[0m;RESET
+def tty_color(stream, *codes):
+    if codes and hasattr(stream, "isatty") and stream.isatty():
+        stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
 
-    if hasattr(stream, "isatty") and stream.isatty():
-        def set_color(*codes):
-            stream.write("\x1b[{}m".format(";".join(codes)))
-    else:
-        def set_color(*codes):
-            pass
 
+def show_diff(stream, diffs, headers=None):
+    def set_color(*codes):
+        tty_color(stream, *codes)
+
+    # Color mapping
     cm = {
         " " : ANSI_RESET,
         "+" : ANSI_GREEN,
@@ -734,26 +751,24 @@ def do_diff(args):
             set_color(ANSI_RESET)
             stream.write("\n")
 
-    diffs = compare_cfgs(cfg1, cfg2)
-
     # Global result:  no changes between files or no commonality between files
     if len(diffs) == 1 and isinstance(diffs[0].location, DiffGlobal):
         op = diffs[0]
         if op.tag == DIFF_OP_EQUAL:
-            sys.stderr.write("Files are the same.\n")
             return EXIT_CODE_DIFF_EQUAL
         else:
-            header("-", args.conf1)
-            header("+", args.conf2)
+            if headers:
+                header("-", headers[0])
+                header("+", headers[1])
             for (prefix, d) in [("-", op.a), ("+", op.b)]:
                 for (stanza, keys) in sorted(d.items()):
                     show_value(keys, stanza, None, prefix)
             stream.flush()
-            sys.stderr.write("No common stanzas between files.\n")
             return EXIT_CODE_DIFF_NO_COMMON
 
-    header("-", args.conf1)
-    header("+", args.conf2)
+    if headers:
+        header("-", headers[0])
+        header("+", headers[1])
 
     last_stanza = None
     for op in diffs:
@@ -843,7 +858,6 @@ def do_minimize(args):
         '''
 
 def do_promote(args):
-    # Todo:  Check if 'source' file changed during interactive patch ('local' folder on live system)
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=False, strict=True)  #args.comments)
 
@@ -892,10 +906,12 @@ def do_promote(args):
         summarize_cfg_diffs(delta, sys.stderr)
 
         while True:
-            input = raw_input("Would you like to apply changes?  (y/n/q)")
+            input = raw_input("Would you like to apply changes?  (y/n/d/q)")
             input = input[:1].lower()
             if input == 'q':
                 return EXIT_CODE_USER_QUIT
+            elif input == 'd':
+                show_diff(sys.stdout, delta, headers=(args.source, args.target))
             elif input == 'y':
                 args.mode = "batch"
                 break
@@ -1018,18 +1034,19 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
                 else:
                     del out_src[op.location.stanza][op.location.key]
         else:
+            '''
             sys.stderr.write("Found change:  <{0}> {1!r}\n-{2!r}\n+{3!r}\n\n\n".format(op.tag,
                                                                                       op.location,
                                                                                       op.b, op.a))
+            '''
             if isinstance(op.location, DiffStanza):
-                sys.stderr.write("Considering:  [{0}]\n{1!r}\n\n".format(op.location.stanza, op.a))
                 # Move entire stanza
+                show_diff(sys.stdout, [op])
                 if prompt_yes_no("Apply  [{0}]".format(op.location.stanza)):
                     out_cfg[op.location.stanza] = op.a
                     del out_src[op.location.stanza]
             else:
-                sys.stderr.write("Considering:  [{0}]\n key={1} value={2!r}\n\n"
-                                 "".format(op.location.stanza, op.location.key, op.a))
+                show_diff(sys.stdout, [op])
                 if prompt_yes_no("Apply [{0}] {1}".format(op.location.stanza, op.location.key)):
                     # Move key
                     out_cfg[op.location.stanza][op.location.key] = op.a
