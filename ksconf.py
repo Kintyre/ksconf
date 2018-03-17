@@ -1066,6 +1066,10 @@ def do_sort(args):
         failure = False
         for conf in args.conf:
             try:
+                # KISS:  Look for the KSCONF-NO-SORT string in the first 4k of this file.
+                if not args.force and "KSCONF-NO-SORT" in open(conf.name).read(4096):
+                    sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
+                    continue
                 data = parse_conf(conf, **parse_args)
                 conf.close()
                 smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
@@ -1437,6 +1441,9 @@ def cli():
                        action="store_true", default=False,
                        help="Replace the input file with a sorted version.  Warning this a "
                             "potentially destructive operation that may move/remove comments.")
+    sp_sort.add_argument("-F", "--force", action="store_true",
+                         help="Force file storing even of files that contain the special "
+                              "'KSCONF-NO-SORT' marker.  This only prevents an in-place sort.")
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
 
@@ -1475,7 +1482,6 @@ def cli():
         import argcomplete
         argcomplete.autocomplete(parser)
     except ImportError:
-        print "autocomplete disabled..."
         pass
 
     args = parser.parse_args()
