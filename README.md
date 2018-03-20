@@ -16,33 +16,28 @@ Kintyre's Splunk scripts for various admin tasks.
     
     positional arguments:
       {check,combine,diff,promote,merge,minimize,sort,unarchive}
-        check               Perform a basic syntax and sanity check on .conf files
-        combine             Combine .conf settings from across multiple
-                            directories into a single consolidated target
-                            directory. This is similar to running 'merge'
-                            recursively against a set of directories.
-        diff                Compares settings differences of two .conf files. This
-                            command ignores textual differences (like order,
-                            spacing, and comments) and focuses strictly on
-                            comparing stanzas, keys, and values. Note that spaces
-                            within any given value will be compared.
+        check               Perform basic syntax and sanity checks on .conf files
+        combine             Merge configuration files from one or more source
+                            directories into a combined destination directory.
+                            This allows for an arbitrary number of splunk's
+                            configuration layers within a single app. Think of
+                            this as a Unix-style '/etc/*.d' layer for Splunk apps
+        diff                Compares settings differences of two .conf files
+                            ignoring textual and sorting differences
         promote             Promote .conf settings from one file into another
                             either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
-                            integrate. This can be used to push changes made via
-                            the UI, whichare stored in a 'local' file, to the
-                            version-controlled 'default' file. Note that the
-                            normal operation moves changes from the SOURCE file to
-                            the TARGET, updating both files in the process. But
-                            it's also possible to preserve the local file, if
-                            desired.
+                            integrate. Changes made via the UI (stored in the
+                            local folder) can be promoted (moved) to a version-
+                            controlled directory.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s) provided.
-        sort                Sort a Splunk .conf file
+        sort                Sort a Splunk .conf file. Sorted output can be echoed
+                            or files can be sorted inplace.
         unarchive           Install or overwrite an existing app in a git-friendly
                             way. If the app already exist, steps will be taken to
-                            upgrade it in a sane way.
+                            upgrade it safely.
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -66,6 +61,10 @@ Kintyre's Splunk scripts for various admin tasks.
 ### ksconf.py check
     usage: ksconf.py check [-h] FILE [FILE ...]
     
+    Provide basic syntax and sanity checking for Splunk's .conf files. Use
+    Splunk's builtin 'btool check' for a more robust validation of keys and
+    values. Consider using this utility as part of a pre-commit hook.
+    
     positional arguments:
       FILE        One or more configuration files to check. If the special value
                   of '-' is given, then the list of files to validate is read from
@@ -78,7 +77,92 @@ Kintyre's Splunk scripts for various admin tasks.
 ### ksconf.py combine
     usage: ksconf.py combine [-h] [--target TARGET] source [source ...]
     
-    Common use case: ksconf combine default.d/* --target=default
+    Merge .conf settings from multiple source directories into a combined target
+    directory.   Configuration files can be stored in a '/etc/*.d' like directory
+    structure and consolidated back into a single 'default' directory.
+    
+    The 'combine' command takes your logical layers of configs (upstream,
+    corporate, splunk admin fixes, and power user knowledge objects, ...)
+    expressed as individual folders and merges them all back into the single
+    'default' folder that Splunk reads from.  One way to keep the 'default'
+    folder up-to-date is using client-side git hooks.
+    
+    No directory layout is mandatory, but but one simple approach is to model your
+    layers using a prioritized 'default.d' directory structure. (This idea is
+    borrowed from the Unix System V concept where many services natively read
+    their config files from '/etc/*.d' directories.)
+    
+    THE PROBLEM:
+    
+    In a typical enterprise deployment of Splunk, a single app can easily have
+    multiple logical sources of configuration:  (1) The upstream app developer,
+    (2) local developer app-developer  adds organization-specific customizations
+    or fixes, (3) splunk admin tweaks the inappropriate ''indexes.conf' settings,
+    and (4) custom knowledge objects added by your subject matter experts.
+    Ideally we'd like to version control these, but doing so is complicated
+    because normally you have to manage all 4 of these logical layers in one
+    'default' folder.  (Splunk requires that app settings be located either in
+    'default' or 'local'; and managing local files with version control leads to
+    merge conflicts; so effectively, all version controlled settings need to be in
+    'default', or risk merge conflicts.)  So when a new upstream version is
+    released, someone has to manually upgrade the app being careful to preserve
+    all custom configurations.  The solution provided by the 'combine'
+    functionality is that all of these logical sources can be stored separately in
+    their own physical directories allowing changes to be managed independently.
+    (This also allows for different layers to be mixed-and-matched by selectively
+    including which layers to combine.)  While this doesn't completely remove the
+    need for a human to review app upgrades, it does lower the overhead enough
+    that updates can be pulled in more frequently, thus reducing the divergence
+    potential.  (Merge frequently.)
+    
+    NOTES:
+    
+    The 'combine' command is similar to running the 'merge' subcommand recursively
+    against a set of directories.  One key difference is that this command will
+    gracefully handle non-conf files intelligently too.
+    
+    EXAMPLE:
+    
+        Splunk_CiscoSecuritySuite/
+        ├── README
+        ├── default.d
+        │   ├── 10-upstream
+        │   │   ├── app.conf
+        │   │   ├── data
+        │   │   │   └── ui
+        │   │   │       ├── nav
+        │   │   │       │   └── default.xml
+        │   │   │       └── views
+        │   │   │           ├── authentication_metrics.xml
+        │   │   │           ├── cisco_security_overview.xml
+        │   │   │           ├── getting_started.xml
+        │   │   │           ├── search_ip_profile.xml
+        │   │   │           ├── upgrading.xml
+        │   │   │           └── user_tracking.xml
+        │   │   ├── eventtypes.conf
+        │   │   ├── macros.conf
+        │   │   ├── savedsearches.conf
+        │   │   └── transforms.conf
+        │   ├── 20-my-org
+        │   │   └── savedsearches.conf
+        │   ├── 50-splunk-admin
+        │   │   ├── indexes.conf
+        │   │   ├── macros.conf
+        │   │   └── transforms.conf
+        │   └── 70-firewall-admins
+        │       ├── data
+        │       │   └── ui
+        │       │       └── views
+        │       │           ├── attacks_noc_bigscreen.xml
+        │       │           ├── device_health.xml
+        │       │           └── user_tracking.xml
+        │       └── eventtypes.conf
+    
+    Commands:
+    
+        cd Splunk_CiscoSecuritySuite
+        ksconf combine default.d/* --target=default
+        
     
     positional arguments:
       source                The source directory where configuration files will be
@@ -98,6 +182,14 @@ Kintyre's Splunk scripts for various admin tasks.
 ### ksconf.py diff
     usage: ksconf.py diff [-h] [-o FILE] [--comments] FILE FILE
     
+    Compares the content differences of two .conf files
+    
+    This command ignores textual differences (like order, spacing, and comments)
+    and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
+    within any given value will be compared.  Multiline fields are compared in are
+    compared in a more traditional 'diff' output so that long savedsearches and
+    macros can be compared more easily.
+    
     positional arguments:
       FILE                  Left side of the comparison
       FILE                  Right side of the comparison
@@ -116,14 +208,24 @@ Kintyre's Splunk scripts for various admin tasks.
                              [--keep-empty KEEP_EMPTY]
                              SOURCE TARGET
     
-    The promote sub command is used to propigate .conf settings applied in one
-    file (typically local) to another (typically default) This can be done in two
-    different modes: In batch mode (all changes) or interactively allowing the
-    user to pick which stanzas and keys to integrate. This can be used to push
-    changes made via the UI, which are stored in a 'local' file, to the version-
-    controlled 'default' file. Note that the normal operation moves changes from
-    the SOURCE file to the TARGET, updating both files in the process. But it's
-    also possible to preserve the local file, if desired.
+    Propagate .conf settings applied in one file to another.  Typically this is
+    used to take local changes made via the UI and push them into a default (or
+    default.d/) location.
+    
+    NOTICE:  By default, changes are *MOVED*, not just copied.
+    
+    Promote has two different modes:  batch and interactive.  In batch mode all
+    changes are applied automatically and the (now empty) source file is removed.
+    In interactive mode the user is prompted to pick which stanzas and keys to
+    integrate.  This can be used to push  changes made via the UI, which are
+    stored in a 'local' file, to the version-controlled 'default' file.  Note that
+    the normal operation moves changes from the SOURCE file to the TARGET,
+    updating both files in the process.  But it's also possible to preserve the
+    local file, if desired.
+    
+    If either the source file or target file is modified while a promotion is
+    under progress, changes will be aborted.  And any custom selections you made
+    will be lost.  (This needs improvement.)
     
     positional arguments:
       SOURCE                The source configuration file to pull changes from.
@@ -175,13 +277,14 @@ Kintyre's Splunk scripts for various admin tasks.
                               [-k PRESERVE_KEY]
                               FILE [FILE ...]
     
-    The minimize command will allow for the removal of all default-ish settings
-    from a target configuration files. In theory, this allows for a cleaner
-    upgrade, and fewer duplicate settings.
+    The minimize command will allow for the removal of all 
+    default-ish settings from a target configuration files.  
+    In theory, this allows for a cleaner upgrade, and fewer 
+    duplicate settings.
     
     positional arguments:
       FILE                  The default configuration file(s) used to determine
-                            what base settings are unncessary to keep in the
+                            what base settings are unnecessary to keep in the
                             target file.
     
     optional arguments:
@@ -205,6 +308,18 @@ Kintyre's Splunk scripts for various admin tasks.
 ### ksconf.py sort
     usage: ksconf.py sort [-h] [--target FILE | --inplace] [-F] [-n LINES]
                           FILE [FILE ...]
+    
+    Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
+    config file will be echoed to the screen.  (2) the config files are updated
+    inplace when the '-i' option is used.
+    
+    Conf files that are manually managed that you don't ever want sorted can be
+    'blacklisted' by placing the string 'KSCONF-NO-SORT' in a comment at the top
+    of the .conf file.
+    
+    To recursively sort all files:
+    
+        find . -name '*.conf' | xargs ksconf sort -i
     
     positional arguments:
       FILE                  Input file to sort, or standard input.
@@ -254,7 +369,7 @@ Kintyre's Splunk scripts for various admin tasks.
       --exclude EXCLUDE, -e EXCLUDE
                             Add a list of file patterns to exclude. Splunk's
                             psudo-glob patterns are supported here. '*' for any
-                            non-diretory match,'...' for ANY (including
+                            non-directory match,'...' for ANY (including
                             directories), and '?' for a single character.
       --allow-local         Allow local/ and local.meta files to be extracted from
                             the archive. This is a Splunk packaging violation and

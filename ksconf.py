@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
 """ksconf - Kintyre Splunk CONFig tool
 
@@ -936,6 +937,7 @@ def show_diff(stream, diffs, headers=None):
             r = "{0} = {1}".format(key, v)
             r = r.replace("\n", "\\\n")
             return r.splitlines()
+
         a = f(value_a)
         b = f(value_b)
         differ = difflib.Differ()
@@ -1645,9 +1647,34 @@ version controlled (default) folder, and dealing with more than one layer of
 
 def cli():
     import argparse
+    import textwrap
+
+    # For now, just effectily a copy of RawDescriptionHelpFormatter
+    class MyDescriptionHelpFormatter(argparse.HelpFormatter):
+        def _fill_text(self, text, width, indent):
+            # Looks like this one is ONLY used for the top-level description
+            return ''.join([indent + line for line in text.splitlines(True)])
+
+        def _split_lines(self, text, width):
+            text = self._whitespace_matcher.sub(' ', text).strip()
+            return textwrap.wrap(text, width)
+
     parser = argparse.ArgumentParser(fromfile_prefix_chars="@",
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     formatter_class=MyDescriptionHelpFormatter,
                                      description=_cli_description)
+    # Optional argcomplete library for CLI (BASH-based) tab completion
+    # pip install argcomplete
+    # activate-global-python-argcomplete  (in ~/.bashrc)
+    try:
+        from argcomplete import autocomplete
+        from argcomplete.completers import FilesCompleter, DirectoriesCompleter
+    except ImportError:
+        def _argcomplete_noop(*args, **kwargs): pass
+        autocomplete = _argcomplete_noop
+        FilesCompleter = DirectoriesCompleter = _argcomplete_noop
+
+    # Someday add *.meta (once more testing is done with those files
+    conf_files_completer = FilesCompleter(allowednames=["*.conf"])
 
     # Common settings
     #'''
@@ -1674,12 +1701,18 @@ def cli():
 
     # SUBCOMMAND:  splconf check <CONF>
     sp_chck = subparsers.add_parser("check",
-                                    help="Perform a basic syntax and sanity check on .conf files")
+                                    help="Perform basic syntax and sanity checks on .conf files",
+                                    description=
+                                    "Provide basic syntax and sanity checking for Splunk's .conf "
+                                    "files.  Use Splunk's builtin 'btool check' for a more robust "
+                                    "validation of keys and values.\n\n"
+                                    "Consider using this utility as part of a pre-commit hook.")
     sp_chck.set_defaults(funct=do_check)
     sp_chck.add_argument("conf", metavar="FILE", nargs="+",
                          help="One or more configuration files to check.  If the special value of "
                               "'-' is given, then the list of files to validate is read from "
-                              "standard input")
+                              "standard input"
+                         ).completer = conf_files_completer
     ''' # Do we really need this?
     sp_chck.add_argument("--max-errors", metavar="INT", type=int, default=0,
                          help="Abort check if more than this many files fail validation.  Useful 
@@ -1689,33 +1722,135 @@ def cli():
 
     # SUBCOMMAND:  splconf combine --target=<DIR> <SRC1> [ <SRC-n> ]
     sp_comb = subparsers.add_parser("combine",
-                                    help="Combine .conf settings from across multiple directories "
-                                         "into a single consolidated target directory.  This is "
-                                         "similar to running 'merge' recursively against a set of "
-                                         "directories.",
-                                    description=
-                                    "Common use case:  ksconf combine default.d/* --target=default")
+                                    help=
+                                    "Merge configuration files from one or more source directories "
+                                    "into a combined destination directory.  This allows for an "
+                                    "arbitrary number of splunk's configuration layers within a "
+                                    "single app.  Think of this as a Unix-style '/etc/*.d' layer "
+                                    "for Splunk apps",
+                                    description="""\
+Merge .conf settings from multiple source directories into a combined target
+directory.   Configuration files can be stored in a '/etc/*.d' like directory
+structure and consolidated back into a single 'default' directory.
+
+The 'combine' command takes your logical layers of configs (upstream,
+corporate, splunk admin fixes, and power user knowledge objects, ...)
+expressed as individual folders and merges them all back into the single
+'default' folder that Splunk reads from.  One way to keep the 'default'
+folder up-to-date is using client-side git hooks.
+
+No directory layout is mandatory, but but one simple approach is to model your
+layers using a prioritized 'default.d' directory structure. (This idea is
+borrowed from the Unix System V concept where many services natively read
+their config files from '/etc/*.d' directories.)
+
+
+THE PROBLEM:
+
+In a typical enterprise deployment of Splunk, a single app can easily have
+multiple logical sources of configuration:  (1) The upstream app developer,
+(2) local developer app-developer  adds organization-specific customizations
+or fixes, (3) splunk admin tweaks the inappropriate ''indexes.conf' settings,
+and (4) custom knowledge objects added by your subject matter experts.
+Ideally we'd like to version control these, but doing so is complicated
+because normally you have to manage all 4 of these logical layers in one
+'default' folder.  (Splunk requires that app settings be located either in
+'default' or 'local'; and managing local files with version control leads to
+merge conflicts; so effectively, all version controlled settings need to be in
+'default', or risk merge conflicts.)  So when a new upstream version is
+released, someone has to manually upgrade the app being careful to preserve
+all custom configurations.  The solution provided by the 'combine'
+functionality is that all of these logical sources can be stored separately in
+their own physical directories allowing changes to be managed independently.
+(This also allows for different layers to be mixed-and-matched by selectively
+including which layers to combine.)  While this doesn't completely remove the
+need for a human to review app upgrades, it does lower the overhead enough
+that updates can be pulled in more frequently, thus reducing the divergence
+potential.  (Merge frequently.)
+
+
+NOTES:
+
+The 'combine' command is similar to running the 'merge' subcommand recursively
+against a set of directories.  One key difference is that this command will
+gracefully handle non-conf files intelligently too.
+
+EXAMPLE:
+
+    Splunk_CiscoSecuritySuite/
+    ├── README
+    ├── default.d
+    │   ├── 10-upstream
+    │   │   ├── app.conf
+    │   │   ├── data
+    │   │   │   └── ui
+    │   │   │       ├── nav
+    │   │   │       │   └── default.xml
+    │   │   │       └── views
+    │   │   │           ├── authentication_metrics.xml
+    │   │   │           ├── cisco_security_overview.xml
+    │   │   │           ├── getting_started.xml
+    │   │   │           ├── search_ip_profile.xml
+    │   │   │           ├── upgrading.xml
+    │   │   │           └── user_tracking.xml
+    │   │   ├── eventtypes.conf
+    │   │   ├── macros.conf
+    │   │   ├── savedsearches.conf
+    │   │   └── transforms.conf
+    │   ├── 20-my-org
+    │   │   └── savedsearches.conf
+    │   ├── 50-splunk-admin
+    │   │   ├── indexes.conf
+    │   │   ├── macros.conf
+    │   │   └── transforms.conf
+    │   └── 70-firewall-admins
+    │       ├── data
+    │       │   └── ui
+    │       │       └── views
+    │       │           ├── attacks_noc_bigscreen.xml
+    │       │           ├── device_health.xml
+    │       │           └── user_tracking.xml
+    │       └── eventtypes.conf
+
+Commands:
+
+    cd Splunk_CiscoSecuritySuite
+    ksconf combine default.d/* --target=default
+    
+""",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_comb.set_defaults(funct=do_combine)
     sp_comb.add_argument("source", nargs="+",
                          help="The source directory where configuration files will be merged from. "
                               "When multiple sources directories are provided, start with the most "
                               "general and end with the specific;  later sources will override "
                               "values from the earlier ones. Supports wildcards so a typical Unix "
-                              "conf.d/##-NAME directory structure works well.")
+                              "conf.d/##-NAME directory structure works well."
+                         ).completer = DirectoriesCompleter()
     sp_comb.add_argument("--target", "-t",
                          help="Directory where the merged files will be stored.  Typically either "
-                              "'default' or 'local'")
+                              "'default' or 'local'"
+                         ).completer = DirectoriesCompleter()
 
     # SUBCOMMAND:  splconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
-                                    help="Compares settings differences of two .conf files.  "
-                                         "This command ignores textual differences (like order, "
-                                         "spacing, and comments) and focuses strictly on comparing "
-                                         "stanzas, keys, and values.  Note that spaces within any "
-                                         "given value will be compared.")
+                                    help="Compares settings differences of two .conf files "
+                                         "ignoring textual and sorting differences",
+                                         description="""\
+Compares the content differences of two .conf files
+
+This command ignores textual differences (like order, spacing, and comments)
+and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
+within any given value will be compared.  Multiline fields are compared in are
+compared in a more traditional 'diff' output so that long savedsearches and
+macros can be compared more easily.
+""",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_diff.set_defaults(funct=do_diff)
-    sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison")
-    sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison")
+    sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison"
+                         ).completer = conf_files_completer
+    sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison"
+                         ).completer = conf_files_completer
     sp_diff.add_argument("-o", "--output", metavar="FILE",
                          type=argparse.FileType('w'), default=sys.stdout,
                          help="File where difference is stored.  Defaults to standard out.")
@@ -1729,33 +1864,41 @@ def cli():
                                     help="Promote .conf settings from one file into another either "
                                          "in batch mode (all changes) or interactively allowing "
                                          "the user to pick which stanzas and keys to integrate. "
-                                         "This can be used to push changes made via the UI, which"
-                                         "are stored in a 'local' file, to the version-controlled "
-                                         "'default' file.  Note that the normal operation moves "
-                                         "changes from the SOURCE file to the TARGET, updating "
-                                         "both files in the process.  But it's also possible to "
-                                         "preserve the local file, if desired.",
-                                    description=
-                                    "The promote sub command is used to propigate .conf settings "
-                                    "applied in one file (typically local) to another (typically "
-                                    "default)\n\n"
-                                    "This can be done in two different modes:  In batch mode "
-                                    "(all changes) or interactively allowing the user to pick "
-                                    "which stanzas and keys to integrate. This can be used to push "
-                                    "changes made via the UI, which are stored in a 'local' file, "
-                                    "to the version-controlled 'default' file.  Note that the "
-                                    "normal operation moves changes from the SOURCE file to the "
-                                    "TARGET, updating both files in the process.  But it's also "
-                                    "possible to preserve the local file, if desired.")
+                                         "Changes made via the UI (stored in the local folder) "
+                                         "can be promoted (moved) to a version-controlled "
+                                         "directory.",
+                                    description="""\
+Propagate .conf settings applied in one file to another.  Typically this is
+used to take local changes made via the UI and push them into a default (or
+default.d/) location.
+
+NOTICE:  By default, changes are *MOVED*, not just copied.
+
+Promote has two different modes:  batch and interactive.  In batch mode all
+changes are applied automatically and the (now empty) source file is removed.
+In interactive mode the user is prompted to pick which stanzas and keys to
+integrate.  This can be used to push  changes made via the UI, which are
+stored in a 'local' file, to the version-controlled 'default' file.  Note that
+the normal operation moves changes from the SOURCE file to the TARGET,
+updating both files in the process.  But it's also possible to preserve the
+local file, if desired.
+
+If either the source file or target file is modified while a promotion is
+under progress, changes will be aborted.  And any custom selections you made
+will be lost.  (This needs improvement.)
+""",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_prmt.set_defaults(funct=do_promote, mode="ask")
     sp_prmt.add_argument("source", metavar="SOURCE",
                          help="The source configuration file to pull changes from.  (Typically the "
-                              "'local' conf file)")
+                              "'local' conf file)"
+                         ).completer = conf_files_completer
     sp_prmt.add_argument("target", metavar="TARGET",
                          help="Configuration file or directory to push the changes into. "
                               "(Typically the 'default' folder) "
                               "When a directory is given instead of a file then the same file name "
-                              "is assumed for both SOURCE and TARGET")
+                              "is assumed for both SOURCE and TARGET"
+                         ).completer = conf_files_completer
     sp_prg1 = sp_prmt.add_mutually_exclusive_group()
     sp_prg1.add_argument("--batch", "-b",
                          action="store_const",
@@ -1820,16 +1963,18 @@ def cli():
 
     # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
     sp_merg = subparsers.add_parser("merge",
-                                    help="Merge two or more .conf files")
+                                    help="Merge two or more .conf files",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_merg.set_defaults(funct=do_merge)
     sp_merg.add_argument("conf", metavar="FILE", nargs="+",
-                         help="The source configuration file to pull changes from.")
+                         help="The source configuration file to pull changes from."
+                         ).completer = conf_files_completer
 
     sp_merg.add_argument("--target", "-t", metavar="FILE",
                          type=argparse.FileType('w'), default=sys.stdout,
                          help="Save the merged configuration files to this target file.  If not "
-                              "given, the default is to write the merged conf to standard output.")
-
+                              "given, the default is to write the merged conf to standard output."
+                         ).completer = conf_files_completer
 
     # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
     # Example workflow:
@@ -1841,24 +1986,28 @@ def cli():
     sp_minz = subparsers.add_parser("minimize",
                                     help="Minimize the target file by removing entries duplicated "
                                          "in the default conf(s) provided.  ",
-                                    description=
-                                    "The minimize command will allow for the removal of all "
-                                    "default-ish settings from a target configuration files.  "
-                                    "In theory, this allows for a cleaner upgrade, and fewer "
-                                    "duplicate settings.")
+                                    description="""\
+The minimize command will allow for the removal of all 
+default-ish settings from a target configuration files.  
+In theory, this allows for a cleaner upgrade, and fewer 
+duplicate settings.""",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_minz.set_defaults(funct=do_minimize)
     sp_minz.add_argument("conf", metavar="FILE", nargs="+",
                          help="The default configuration file(s) used to determine what base "
-                              "settings are unncessary to keep in the target file.")
+                              "settings are unnecessary to keep in the target file."
+                         ).completer = conf_files_completer
     sp_minz.add_argument("--target", "-t", metavar="FILE",
                          help="This is the local file that you with to remove the duplicate "
                               "settings from.  By default, this file will be read and the updated"
-                              "with a minimized version.")
+                              "with a minimized version."
+                         ).completer = conf_files_completer
     sp_minz.add_argument("--output", type=argparse.FileType("w"),
                          default=None,
                          help="When this option is used, the new minimized file will be saved to "
                               "this file instead of updating TARGET.  This can be use to preview "
-                              "changes or helpful in other workflows.")
+                              "changes or helpful in other workflows."
+                         ).completer = conf_files_completer
     sp_minz.add_argument("-k", "--preserve-key",
                          action="append", default=[],
                          help="Specify a key that should be allowed to be a duplication but should "
@@ -1867,19 +2016,35 @@ def cli():
                               "even if it's enabled by default.")
 
 
-
     # SUBCOMMAND:  splconf sort <CONF>
     sp_sort = subparsers.add_parser("sort",
-                                    help="Sort a Splunk .conf file")
+                                    help="Sort a Splunk .conf file.  Sorted output can be echoed "
+                                         "or files can be sorted inplace.",
+                                    description="""\
+Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
+config file will be echoed to the screen.  (2) the config files are updated
+inplace when the '-i' option is used.
+
+Conf files that are manually managed that you don't ever want sorted can be
+'blacklisted' by placing the string 'KSCONF-NO-SORT' in a comment at the top
+of the .conf file.
+
+To recursively sort all files:
+
+    find . -name '*.conf' | xargs ksconf sort -i
+""",
+                                    formatter_class=MyDescriptionHelpFormatter)
     sp_sort.set_defaults(funct=do_sort)
 
     sp_sort.add_argument("conf", metavar="FILE", nargs="+",
                          type=argparse.FileType('r'), default=[sys.stdin],
-                         help="Input file to sort, or standard input.")
+                         help="Input file to sort, or standard input."
+                         ).completer = conf_files_completer
     group = sp_sort.add_mutually_exclusive_group()
     group.add_argument("--target", "-t", metavar="FILE",
                        type=argparse.FileType('w'), default=sys.stdout,
-                       help="File to write results to.  Defaults to standard output.")
+                       help="File to write results to.  Defaults to standard output."
+                       ).completer = conf_files_completer
     group.add_argument("--inplace", "-i",
                        action="store_true", default=False,
                        help="Replace the input file with a sorted version.  Warning this a "
@@ -1894,18 +2059,20 @@ def cli():
     sp_unar = subparsers.add_parser("unarchive",
                                     help="Install or overwrite an existing app in a git-friendly "
                                          "way.  If the app already exist, steps will be taken to "
-                                         "upgrade it in a sane way.")
+                                         "upgrade it safely.",
+                                    formatter_class=MyDescriptionHelpFormatter)
     # Q:  Should this also work for fresh installs?
     sp_unar.set_defaults(funct=do_unarchive)
-    a_unar_tarball = \
     sp_unar.add_argument("tarball", metavar="SPL",
-                         help="The path to the archive to install.")
+                         help="The path to the archive to install."
+                         ).completer = FilesCompleter(allowednames=("*.tgz", "*.tar.gz", "*.spl",
+                                                                    "*.zip"))
     sp_unar.add_argument("--dest", metavar="DIR", default=".",
                          help="Set the destination path where the archive will be extracted.  "
                               "By default the current directory is used, but sane values include "
                               "etc/apps, etc/deployment-apps, and so on.  This could also be a "
-                              "git repository working tree where splunk apps are stored.")
-    a_unar_app_name = \
+                              "git repository working tree where splunk apps are stored."
+                         ).completer = DirectoriesCompleter()
     sp_unar.add_argument("--app-name", metavar="NAME", default=None,
                          help="The app name to use when expanding the archive.  By default, the "
                               "app name is taken from the archive as the top-level path included "
@@ -1914,10 +2081,11 @@ def cli():
     sp_unar.add_argument("--default-dir", default="default", metavar="DIR",
                          help="Name of the directory where the default contents will be stored.  "
                               "This is a useful feature for apps that use a dynamic default "
-                              "directory that's created by the 'combine' mode.")
+                              "directory that's created by the 'combine' mode."
+                         ).completer = DirectoriesCompleter()
     sp_unar.add_argument("--exclude", "-e", action="append", default=[],
                          help="Add a list of file patterns to exclude.  Splunk's psudo-glob "
-                              "patterns are supported here.  '*' for any non-diretory match,"
+                              "patterns are supported here.  '*' for any non-directory match,"
                               "'...' for ANY (including directories), and '?' for a single "
                               "character.")
     sp_unar.add_argument("--allow-local", default=False, action="store_true",
@@ -1957,21 +2125,8 @@ def cli():
                               "the first place, right?)")
     sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
 
-    try:
-        import argcomplete
-        from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-    except ImportError:
-        raise
-        argcomplete = None
-
-    if argcomplete:
-        a_unar_tarball.completer = FilesCompleter(
-            allowednames=("*.tgz", "*.tar.gz", "*.spl", "*.zip"))
-        a_unar_app_name.completer = DirectoriesCompleter()
-        argcomplete.autocomplete(parser)
-
+    autocomplete(parser)
     args = parser.parse_args()
-
 
 
     try:
