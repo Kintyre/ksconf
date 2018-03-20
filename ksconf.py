@@ -136,6 +136,9 @@ EXIT_CODE_BAD_CONF_FILE = 20
 EXIT_CODE_FAILED_SAFETY_CHECK = 22
 EXIT_CODE_COMBINE_MARKER_MISSING = 30
 
+# Errors caused by GIT interactions
+EXIT_CODE_GIT_FAILURE = 40
+
 # Retry or temporary failure
 EXIT_CODE_EXTERNAL_FILE_EDIT = 50
 
@@ -549,6 +552,16 @@ def file_compare(fn1, fn2):
          open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
 
+_dir_exists_cache = set()
+def dir_exists(directory):
+    """ Ensure that the directory exists """
+    # This works as long as we never call os.chdir()
+    if directory in _dir_exists_cache:
+        return
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    _dir_exists_cache.add(directory)
+
 
 def smart_copy(src, dest):
     """ Copy (overwrite) file only if the contents have changed. """
@@ -596,13 +609,24 @@ def _expand_glob_list(iterable):
             yield item
 
 
+_glob_to_regex = {
+    r"\*":   r"[^/\\]*",
+    r"\?":   r".",
+    r"\.\.\.": r".*",
+}
+_is_glob_re = re.compile("({})".format("|".join(_glob_to_regex.keys())))
+
 def match_bwlist(value, bwlist):
+    # Return direct matches first  (most efficient)
     if value in bwlist:
         return True
+    # Now see if anything in the bwlist contains a glob pattern
     for pattern in bwlist:
-        if "*" in pattern or "?" in pattern:
+        if _is_glob_re.search(pattern):
             # Escape all characters.  And then replace the escaped "*" with a ".*"
-            regex = re.escape(pattern).replace(r"\*", r".*").replace("\?", ".")
+            regex = re.escape(pattern)
+            for (find, replace) in _glob_to_regex.items():
+                regex = regex.replace(find, replace)
             if re.match(regex, value):
                 return True
     return False
@@ -616,6 +640,176 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
     for (dirpath, dirnames, filenames) in os.walk(top, topdown, onerror, followlinks):
         dirpath = dirpath[prefix:]
         yield (dirpath, dirnames, filenames)
+
+
+GenArchFile = namedtuple("GenericArchiveEntry", ("path", "mode", "size", "payload"))
+
+def extract_archive(archive_name, extract_filter=None):
+    if extract_filter is not None and not callable(extract_filter):
+        raise ValueError("extract_filter must be a callable!")
+    if archive_name.lower().endswith(".zip"):
+        return _extract_zip(archive_name, extract_filter)
+    else:
+        return _extract_tar(archive_name, extract_filter)
+
+def gaf_filter_name_like(pattern):
+    from fnmatch import fnmatch
+    def filter(gaf):
+        filename = os.path.basename(gaf.path)
+        return fnmatch(filename, pattern)
+    return filter
+
+
+def _extract_tar(path, extract_filter=None):
+    import tarfile
+    with tarfile.open(path, "r") as tar:
+        for ti in tar:
+            if not ti.isreg():
+                '''
+                print "Skipping {}  ({})".format(ti.name, ti.type)
+                '''
+                continue
+            mode = ti.mode & 0777
+            if extract_filter is None or \
+               extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
+                tar_file_fp = tar.extractfile(ti)
+                buf = tar_file_fp.read()
+            else:
+                buf = None
+            yield GenArchFile(ti.name, mode, ti.size, buf)
+
+
+def file_hash(path, algorithm="sha256"):
+    import hashlib
+    h = hashlib.new(algorithm)
+    with open(path, "rb") as fp:
+        buf = fp.read(4096)
+        while buf:
+            h.update(buf)
+            buf = fp.read(4096)
+    return h.hexdigest()
+
+
+def _extract_zip(path, extract_filter=None, mode=0644):
+    import zipfile
+    with zipfile.ZipFile(path, mode="r") as zipf:
+        for zi in zipf.infolist():
+            if zi.filename.endswith('/'):
+                # Skip directories
+                continue
+            if extract_filter is None or \
+               extract_filter(GenArchFile(zi.filename, mode, zi.file_size, None)):
+                payload = zipf.read(zi)
+            else:
+                payload = None
+            yield GenArchFile(zi.filename, mode, zi.file_size, payload)
+
+def sanity_checker(iter):
+    # Todo:  make this better....   write a regex for the types of things that are valid?
+    for gaf in iter:
+        if gaf.path.startswith("/") or ".." in gaf.path:
+            raise ValueError("Bad path found in archive:  {}".format(gaf.path))
+        yield gaf
+
+
+# This gets properly supported in Python 3.6, but until then....
+RegexType = type(re.compile(r'.'))
+
+def gen_arch_file_remapper(iter, mapping):
+    # Mapping is assumed to be a sequence of (find,replace) strings (may eventually support re.sub?)
+    for gaf in iter:
+        path = gaf.path
+        for (find, replace) in mapping:
+            if isinstance(find, RegexType):
+                path = find.sub(replace, path)
+            else:
+                path = path.replace(find, replace)
+        if gaf.path == path:
+            yield gaf
+        else:
+            yield GenArchFile(path, gaf.mode, gaf.size, gaf.payload)
+
+
+GIT_BIN = "git"
+GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
+
+
+def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
+    if combine_std:
+        # Should return "lines" instead of stderr/stdout streams
+        raise NotImplementedError
+    from subprocess import Popen, PIPE
+    cmdline_args = [ GIT_BIN ] + args
+    if capture_std:
+        out = PIPE
+    else:
+        out = None
+    proc = Popen(cmdline_args, stdout=out, stderr=out, shell=shell, cwd=cwd)
+    (stdout, stderr) = proc.communicate()
+    return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
+
+def git_status_summary(path):
+    c = Counter()
+    cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
+    if cmd.returncode != 0:
+        raise RuntimeError("git command returned exit code {}.".format(cmd.returncode))
+    # XY:  X=index, Y=working tree.   For our simplistic approach we consider them together.
+    for line in cmd.stdout.splitlines():
+        state = line[0:2]
+        if state == "??":
+            c["untracked"] += 1
+        elif state == "!!":
+            c["ignored"] += 1
+        else:
+            c["changed"] += 1
+    return c
+
+def git_is_working_tree(path=None):
+    return git_cmd(["rev-parse", "--is-inside-work-tree"], cwd=path).returncode == 0
+
+'''
+def get_gitdir(path=None):
+    # May not need this.  the 'git status' was missing '.' to make it specific to JUST the app folder
+    # I thought I needed this because of my local testing git-inside-of-git scenario...
+    p = git_cmd(["rev-parse", "--git-dir"], cwd=path)
+    if p.returncode == 0:
+        gitdir = p.stdout.strip()
+        return gitdir
+    # Then later you can use  git --git-dir=apps/.git --working-tree apps Splunk_TA_aws
+'''
+
+def git_is_clean(path=None, check_untracked=True, check_ignored=False):
+    # ANY change to the index or working tree is considered unclean.
+    c = git_status_summary(path)
+    total_changes = c["changed"]
+    if check_untracked:
+        total_changes += c["untracked"]
+    if check_ignored:
+        total_changes += c["ignored"]
+    '''
+    print "GIT IS CLEAN?:   path={} check_untracked={} check_ignored={} total_changes={} c={}".format(
+        path, check_untracked, check_ignored, total_changes, c)
+    '''
+    return total_changes == 0
+
+
+def git_ls_files(path, *modifiers):
+    # staged=True
+    args = [ "ls-files" ]
+    for m in modifiers:
+        args.append("--" + m)
+    proc = git_cmd(args, cwd=path)
+    if proc.returncode != 0:
+        raise RuntimeError("Bad return code from git... {} add better exception handling here.."
+                           .format(proc.retuncode))
+    return proc.stdout.splitlines()
+
+def git_status_ui(path, *args):
+    from subprocess import call
+    # Don't redirect the std* streams; let the output go straight to the console
+    cmd = [GIT_BIN, "status", "."]
+    cmd.extend(args)
+    call(cmd, cwd=path)
 
 ####################################################################################################
 ## CLI do_*() functions
@@ -1175,12 +1369,261 @@ def do_combine(args):
 
 def do_unarchive(args):
     """ Install / upgrade a Splunk app from an archive file """
-    # Must support tgz, tar, and zip
-    # TODO: Make this work well if git hold many apps, or if the destination folder IS the git app.
-    # TODO: Have git check for a clean status before doing anything (if in a git working tree)
     # Handle ignored files by preserving them as much as possible.
-    pass
 
+    from subprocess import list2cmdline
+    if not os.path.isdir(args.dest):
+        sys.stderr.write("Destination directory does not exist: {}\n".format(args.dest))
+        return EXIT_CODE_FAILED_SAFETY_CHECK
+
+    f_hash = file_hash(args.tarball)
+    sys.stdout.write("Inspecting archive:               {}\n".format(args.tarball))
+
+    new_app_name = args.app_name
+    # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
+    app_name = set()
+    app_conf = {}
+    files = 0
+    local_files = set()
+    a = extract_archive(args.tarball, extract_filter=gaf_filter_name_like("app.conf"))
+    for gaf in sanity_checker(a):
+        gaf_app, gaf_relpath = gaf.path.split("/", 1)
+        files += 1
+        if gaf.path.endswith("app.conf") and gaf.payload:
+            app_conf = parse_conf(StringIO(gaf.payload))
+        elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
+            local_files.add(gaf_relpath)
+        app_name.add(gaf.path.split("/", 1)[0])
+    if len(app_name) > 1:
+        sys.stderr.write("The 'unarchive' command only supports extracting a single splunk app at "
+                         "a time.\nHowever the archive {} contains {} apps:  {}\n"
+                         "".format(args.tarball, len(app_name), ", ".join(app_name)))
+        return EXIT_CODE_FAILED_SAFETY_CHECK
+    else:
+        app_name = app_name.pop()
+    del a, gaf_app, gaf_relpath
+    if local_files:
+        sys.stderr.write("Local {} files found in the archive.  ".format(len(local_files)))
+        if args.allow_local:
+            sys.stderr.write("Keeping these due to the '--allow-local' flag\n")
+        else:
+            sys.stderr.write("Excluding these files by default.  Use '--allow-local' to override.")
+
+    if not new_app_name and True:        # if not --no-app-name-fixes
+        if app_name.endswith("-master"):
+            sys.stdout.write("Automatically dropping '-master' from the app name.  This is often "
+                             "the result of a github export.\n")
+            # Trick, but it works...
+            new_app_name = app_name[:-7]
+        mo = re.search(r"(.*)-\d+\.[\d.-]+$", app_name)
+        if mo:
+            sys.stdout.write("Automatically removing the version suffix from the app name.  '{}' "
+                             "will be extracted as '{}'\n".format(app_name, mo.group(1)))
+            new_app_name = mo.group(1)
+
+    dest_app = os.path.join(args.dest, new_app_name or app_name)
+    sys.stdout.write("Inspecting destination folder:    {}\n".format(os.path.abspath(dest_app)))
+
+    # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
+    app_name_msg = app_name
+    vc_msg = "without version control support"
+
+    old_app_conf = {}
+    if os.path.isdir(dest_app):
+        mode = "upgrade"
+        is_git = git_is_working_tree(dest_app)
+        try:
+            # Ignoring the 'local' entries since distributed apps should never modify local anyways
+            old_app_conf = parse_conf(os.path.join(dest_app, "default", "app.conf"))
+        except:
+            sys.stderr.write("Unable to read app.conf from existing install.\n")
+    else:
+        mode = "install"
+        is_git = git_is_working_tree(args.dest)
+    if is_git:
+        vc_msg = "with git support"
+    if new_app_name and new_app_name != app_name:
+        app_name_msg = "{} (renamed from {})".format(new_app_name, app_name)
+
+    def show_pkg_info(conf, label):
+        sys.stdout.write("{} packaging info:    '{}' by {} (version {})\n".format(
+            label,
+            conf.get("ui", {}).get("label", "Unknown"),
+            conf.get("launcher", {}).get("author", "Unknown"),
+            conf.get("launcher", {}).get("version", "Unknown")))
+    if old_app_conf:
+        show_pkg_info(old_app_conf, " Installed app")
+    if app_conf:
+        show_pkg_info(app_conf, "   Tarball app")
+
+    sys.stdout.write("About to {} the {} app {}.\n".format(mode, app_name_msg, vc_msg))
+
+    existing_files = set()
+    if mode == "upgrade":
+        if is_git:
+            existing_files.update(git_ls_files(dest_app))
+            if not existing_files:
+                sys.stderr.write("App appears to be in a git repository but no files have been "
+                                 "staged or committed.  Either commit or remove '{}' and try "
+                                 "again.\n".format(dest_app))
+                return EXIT_CODE_FAILED_SAFETY_CHECK
+            if args.git_sanity_check == "off":
+                sys.stdout.write("The 'git status' safety checks have been disabled via CLI"
+                                 "argument.  Skipping.\n")
+            else:
+                d = {
+                #                untracked, ignored
+                    "changed" :     (False, False),
+                    "untracked" :   (True, False),
+                    "ignored":      (True, True)
+                }
+                is_clean = git_is_clean(dest_app, *d[args.git_sanity_check])
+                del d
+                if is_clean:
+                    sys.stdout.write("Git folder is clean.   Okay to proceed with the upgrade.\n")
+                else:
+                    sys.stderr.write("Unable to move forward without a clean working directory.\n"
+                                     "Clean up and try again.  Modifications are listed below.\n\n")
+                    sys.stderr.flush()
+                    if args.git_sanity_check == "changed":
+                        git_status_ui(dest_app, "--untracked-files=no")
+                    elif args.git_sanity_check == "ignored":
+                        git_status_ui(dest_app, "--ignored")
+                    else:
+                        git_status_ui(dest_app)
+                    return EXIT_CODE_FAILED_SAFETY_CHECK
+        else:
+            for (root, dirs, filenames) in os.walk(dest_app):
+                for fn in filenames:
+                    existing_files.add(os.path.join(root, fn))
+        sys.stdout.write("Before upgrade.  App has {} files\n".format(len(existing_files)))
+    else:
+        sys.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
+
+    # PREP ARCHIVE EXTRACTION
+    installed_files = set()
+    excludes = []
+    for pattern in args.exclude:
+        # If a pattern like 'default.meta' or '*.bak' is provided, assume it's a basename match.
+        if "/" not in pattern:
+            excludes.append(".../" + pattern)
+        else:
+            excludes.append(pattern)
+    if not args.allow_local:
+        for pattern in local_files:
+            excludes.append("*/" + pattern)
+    path_rewrites = []
+    files_iter = extract_archive(args.tarball)
+    if True:
+        files_iter = sanity_checker(files_iter)
+    if args.default_dir:
+        rep = "/{}/".format(args.default_dir.strip("/"))
+        path_rewrites.append(("/default/", rep))
+    if new_app_name:
+        # We do have the "app_name" extracted from our first pass above, but
+        regex = re.compile(r'^([^/]+)(?=/)')
+        path_rewrites.append((regex, new_app_name))
+    if path_rewrites:
+        files_iter = gen_arch_file_remapper(files_iter, path_rewrites)
+
+    sys.stdout.write("Extracting app now...\n")
+    for gaf in files_iter:
+        if match_bwlist(gaf.path, excludes):
+            continue
+        if not is_git or args.git_mode in ("nochange", "stage"):
+            print "{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode)
+        installed_files.add(gaf.path.split("/",1)[1])
+        full_path = os.path.join(args.dest, gaf.path)
+        dir_exists(os.path.dirname(full_path))
+        with open(full_path, "wb") as fp:
+            fp.write(gaf.payload)
+        os.chmod(full_path, gaf.mode)
+
+    files_new = installed_files.difference(existing_files)
+    files_upd = installed_files.intersection(existing_files)
+    files_del = existing_files.difference(installed_files)
+    '''
+    print "New: \n\t{}".format("\n\t".join(sorted(files_new)))
+    print "Existing: \n\t{}".format("\n\t".join(sorted(files_upd)))
+    print "Removed:  \n\t{}".format("\n\t".join(sorted(files_del)))
+    '''
+
+    sys.stdout.write("Extracted {} files:  {} new, {} existing, and {} removed\n".format(
+        len(installed_files), len(files_new), len(files_upd), len(files_del)))
+
+    # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
+    # include things like local, ".gitignore", ".gitattributes" and so on
+
+    if files_del:
+        sys.stdout.write("Removing files that are no longer in the upgrade version of the app.\n")
+    for fn in files_del:
+        basename = os.path.basename(fn)
+        path = os.path.join(dest_app, fn)
+        if fn.startswith(".git"):
+            sys.stdout.write("Keeping {}\n".format(path))
+            continue
+        if not args.allow_local and (basename == "local.meta" or fn.startswith("local")):
+            sys.stdout.write("Keeping {}\n".format(path))
+            continue
+        if is_git and args.git_mode in ("stage", "commit"):
+            # Todo:  Should 'xargs' these so that multiple file are deleted per system call
+            print "git rm -rf {}".format(path)
+            git_cmd(["rm", fn], cwd=dest_app)
+        else:
+            print "rm -rf {}".format(path)
+            os.unlink(path)
+
+    if is_git:
+        if args.git_mode in ("stage", "commit"):
+            git_cmd(["add", os.path.basename(dest_app)], cwd=os.path.dirname(dest_app))
+            #sys.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
+        '''
+        else:
+            sys.stdout.write("git add {}\n".format(dest_app))
+        '''
+        git_commit_app_name = app_conf.get("ui", {}).get("label", os.path.basename(dest_app))
+        git_commit_new_version = app_conf.get("launcher", {}).get("version", None)
+        if mode == "install":
+            git_commit_message = "Install {}".format(git_commit_app_name)
+            if git_commit_new_version:
+                git_commit_message += " version {}".format(git_commit_new_version)
+        else:
+            git_commit_message = "Upgrade {}".format(
+                git_commit_app_name)
+            git_commit_old_version = old_app_conf.get("launcher", {}).get("version", None)
+            if git_commit_old_version and git_commit_new_version:
+                git_commit_message += " version {} (was {})".format(git_commit_new_version,
+                                                                    git_commit_old_version)
+            elif git_commit_new_version:
+                git_commit_message += " to version {}".format(git_commit_new_version)
+        # Could possibly include some CLI arg details, like what file patterns were excluded
+        git_commit_message += "\n\nSHA256 {} {}".format(f_hash, os.path.basename(args.tarball))
+        git_commit_cmd = [ "commit", os.path.basename(dest_app), "-m", git_commit_message ]
+
+        git_commit_cmd.append("--edit")    # Edit the message provided on the CLI
+
+        git_commit_cmd.extend(args.git_commit_args)
+
+        if args.git_mode == "commit":
+            proc = git_cmd(git_commit_cmd, cwd=os.path.dirname(dest_app), capture_std=False)
+            if proc.returncode == 0:
+                sys.stderr.write("You changes have been committed.  Please review before pushing "
+                                 "If you find any issues, here are some helpful options:\n\n"
+                                 "To fix some minor issues in the last commit, edit and add the "
+                                 "files to be fixed, then run:\n"
+                                 "\tgit commit --amend\n\n"
+                                 "To roll back the last commit but KEEP the app upgrade, run:\n"
+                                 "\t git reset --soft HEAD^1\n\n"
+                                 "To roll back the last commit and REVERT the app upgrade, run:\n"
+                                 "\tgit reset --hard HEAD^1\n\n")
+            else:
+                sys.stderr.write("Git commit failed.  Return code {}. Git args:  git {}\n"
+                                 .format(proc.returncode, list2cmdline(git_commit_cmd)))
+                return EXIT_CODE_GIT_FAILURE
+        elif args.git_mode == "stage":
+            sys.stdout.write("To commit later, use the following\n")
+            sys.stdout.write("\tgit {}\n".format(list2cmdline(git_commit_cmd).replace("\n", "\\n")))
+        # When in 'nochange' mode, no point in even noting these options to the user.
 
 
 ####################################################################################################
@@ -1448,41 +1891,84 @@ def cli():
                          help="Lines between stanzas.")
 
     # SUBCOMMAND:  splconf upgrade tarball
-    sp_upgr = subparsers.add_parser("unarchive",
+    sp_unar = subparsers.add_parser("unarchive",
                                     help="Install or overwrite an existing app in a git-friendly "
                                          "way.  If the app already exist, steps will be taken to "
                                          "upgrade it in a sane way.")
     # Q:  Should this also work for fresh installs?
-    sp_upgr.set_defaults(funct=do_unarchive)
-    sp_upgr.add_argument("tarball", metavar="SPL",
+    sp_unar.set_defaults(funct=do_unarchive)
+    a_unar_tarball = \
+    sp_unar.add_argument("tarball", metavar="SPL",
                          help="The path to the archive to install.")
-    sp_upgr.add_argument("--dest", metavar="DIR", default=".",
+    sp_unar.add_argument("--dest", metavar="DIR", default=".",
                          help="Set the destination path where the archive will be extracted.  "
                               "By default the current directory is used, but sane values include "
                               "etc/apps, etc/deployment-apps, and so on.  This could also be a "
                               "git repository working tree where splunk apps are stored.")
-    sp_upgr.add_argument("--app-name", metavar="NAME", default=None,
+    a_unar_app_name = \
+    sp_unar.add_argument("--app-name", metavar="NAME", default=None,
                          help="The app name to use when expanding the archive.  By default, the "
                               "app name is taken from the archive as the top-level path included "
                               "in the archive (by convention)  Expanding archives that contain "
                               "multiple (ITSI) or nested apps (NIX, ES) is not supported.")
-    sp_upgr.add_argument("--default-dir", default="default", metavar="DIR",
+    sp_unar.add_argument("--default-dir", default="default", metavar="DIR",
                          help="Name of the directory where the default contents will be stored.  "
                               "This is a useful feature for apps that use a dynamic default "
                               "directory that's created by the 'combine' mode.")
-    sp_upgr.add_argument("--git-sanity-check",
-                         choices=["all", "disable", "changes", "untracked"],
-                         default="all",
+    sp_unar.add_argument("--exclude", "-e", action="append", default=[],
+                         help="Add a list of file patterns to exclude.  Splunk's psudo-glob "
+                              "patterns are supported here.  '*' for any non-diretory match,"
+                              "'...' for ANY (including directories), and '?' for a single "
+                              "character.")
+    sp_unar.add_argument("--allow-local", default=False, action="store_true",
+                         help="Allow local/ and local.meta files to be extracted from the archive. "
+                              "This is a Splunk packaging violation and therefore by default these "
+                              "files are excluded.")
+    sp_unar.add_argument("--git-sanity-check",
+                         choices=["off", "changed", "untracked", "ignored"],
+                         default="untracked",
                          help="By default a 'git status' is run on the destination folder to see "
-                              "if the working tree has any modifications before the unarchive "
+                              "if the working tree or index has modifications before the unarchive "
                               "process starts.  "
-                              "(This check is automatically disabled if git is not in use or " 
-                              "not installed.)")
+                              "The choices go from least restrictive to most thorough: "
+                              "Use 'off' to prevent any 'git status' safely checks. "
+                              "Use 'changed' to abort only upon local modifications to files "
+                              "tracked by git. "
+                              "Use 'untracked' (by default) to look for changed and untracked "
+                              "files before considering the tree clean. "
+                              "Use 'ignored' to enable the most intense safety check which will "
+                              "abort if local changes, untracked, or ignored files are found. "
+                              "(These checks are automatically disabled if the app is not in a git"
+                              "working tree, or git is not present.)")
+    sp_unar.add_argument("--git-mode", default="stage",
+                         choices=["nochange", "stage", "commit"],
+                         help="Set the desired level of git integration.  "
+                              "The default mode is 'stage', where any new, updated, or removed file"
+                              "is automatically handled for you.  If 'commit' mode is selected, "
+                              "then files are not only staged, but they are also committed with an "
+                              "autogenerated commit message.  To prevent any 'git add' or 'git rm'"
+                              "commands from being run, pick the 'nochange' mode. "
+                              "  Notes:  "
+                              "(1) The git mode is irrelevant if the app is not in a git working "
+                              "tree.  "
+                              "(2) If a git commit is incorrect, simply roll it back with "
+                              "'git reset' or fix it with a 'git commit --ammend' before the "
+                              "changes are pushed anywhere else.  (That's why you're using git in "
+                              "the first place, right?)")
+    sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
+
     try:
         import argcomplete
-        argcomplete.autocomplete(parser)
+        from argcomplete.completers import FilesCompleter, DirectoriesCompleter
     except ImportError:
-        pass
+        raise
+        argcomplete = None
+
+    if argcomplete:
+        a_unar_tarball.completer = FilesCompleter(
+            allowednames=("*.tgz", "*.tar.gz", "*.spl", "*.zip"))
+        a_unar_app_name.completer = DirectoriesCompleter()
+        argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
 
