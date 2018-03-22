@@ -98,6 +98,9 @@ To do (Someday):
  * Split out all file operations to a VFS layer so that (1) this code can be used as a library, and
    (2) in complex deployments updates to certain files could be proxied to elsewhere (SHC member
    sending changes to the deployer?)
+ * Expand compare_cfgs() to detect stanza renames.  Lots of challenges with this such as how
+   DiffOp currently doesn't allow for such output.  Could use difflib.get_close_matches with a high
+   cutoff=0.9? (and only done on no common names between the two.
 
 
 
@@ -137,7 +140,6 @@ Make normal diffs show the 'stanza' on the @@ output lines
 
     git check-attr -a -- *.conf
 
-# Todo:  Research the GIT_EXTERNAL_DIFF options too [diff "conf"] program = 
 """
 
 
@@ -397,6 +399,10 @@ def _merge_conf_dicts(base, new_layer):
                 continue
         if section in base:
             # TODO:  Support other magic here...
+            # Rip all the comments out of the new_layer, and prepend them (sequentially) to base
+            comments = _extract_comments(items)
+            if comments:
+                inject_section_comments(base[section], prepend=comments)
             base[section].update(items)
         else:
             # TODO:  Support other magic here too..., though with no parent info
@@ -416,17 +422,23 @@ def merge_conf_dicts(*dicts):
     return result
 
 
+def _extract_comments(section):
+    "Return a sequental list of comments REMOVED from a section dictionary"
+    comments = []
+    for key, value in sorted(section.items()):
+        if key.startswith("#-"):
+            comments.append(value)
+            del section[key]
+    return comments
+
+
 def inject_section_comments(section, prepend=None, append=None):
     # Extract existing comments from section dict (in order; and remove them)
     # Add in any prepend/append comments (if that comment isn't already present)
     # Re-inject comments back into the section dict with fresh numbering
     #
     # Yes, this is really hacky, but the only way to make the diffs work correctly ;-(
-    comments = []
-    for key, value in sorted(section.items()):
-        if key.startswith("#-"):
-            comments.append(value)
-            del section[key]
+    comments = _extract_comments(section)
     new_comments = []
     if prepend:
         for c in prepend:
@@ -1063,6 +1075,8 @@ def show_diff(stream, diffs, headers=None):
         b = f(value_b)
         differ = difflib.Differ()
         for d in differ.compare(a, b):
+            # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+            # previous (one or two) lines.  (Google and see if somebody else solved this one already)
             set_color(cm.get(d[0], 0))
             stream.write(d)
             set_color(ANSI_RESET)
