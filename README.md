@@ -293,7 +293,7 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py minimize
-    usage: ksconf.py minimize [-h] [--target FILE] [--output OUTPUT]
+    usage: ksconf.py minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
                               [-k PRESERVE_KEY]
                               FILE [FILE ...]
     
@@ -313,6 +313,9 @@ Kintyre's Splunk scripts for various admin tasks.
                             This is the local file that you with to remove the
                             duplicate settings from. By default, this file will be
                             read and the updatedwith a minimized version.
+      --dry-run, -D         Enable dry-run mode. Instead of writing the minimized
+                            value to TARGET, show a 'diff' of what would be
+                            removed.
       --output OUTPUT       When this option is used, the new minimized file will
                             be saved to this file instead of updating TARGET. This
                             can be use to preview changes or helpful in other

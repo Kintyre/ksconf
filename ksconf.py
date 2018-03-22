@@ -650,6 +650,15 @@ def file_compare(fn1, fn2):
          open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
 
+
+def _is_binary_file(filename, peek=2048):
+    # https://stackoverflow.com/a/7392391/315892; modified for Python 2.6 compatibility
+    textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
+    with open(filename, "rb") as f:
+        b = f.read(peek)
+        return bool(b.translate(None, textchars))
+
+
 _dir_exists_cache = set()
 def dir_exists(directory):
     """ Ensure that the directory exists """
@@ -976,7 +985,8 @@ def do_merge(args):
 
 def do_diff(args):
     ''' Compare two configuration files. '''
-    global FORCE_TTY_COLOR
+    # Todo:  Allow fallback to text comparisons for non-conf files.
+    # Todo:  Eventually support directory (or recursive?) diffs too.
     stream = args.output
 
     FORCE_TTY_COLOR = args.force_color
@@ -1007,35 +1017,32 @@ def tty_color(stream, *codes):
     if codes and FORCE_TTY_COLOR or hasattr(stream, "isatty") and stream.isatty():
         stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
 
+# Color mapping
+_diff_color_mapping = {
+    " ": ANSI_RESET,
+    "+": ANSI_GREEN,
+    "-": ANSI_RED,
+}
 
-def show_diff(stream, diffs, headers=None):
-    def set_color(*codes):
-        tty_color(stream, *codes)
-
-    # Color mapping
-    cm = {
-        " " : ANSI_RESET,
-        "+" : ANSI_GREEN,
-        "-" : ANSI_RED,
-    }
-
-    def show_diff_header(files):
-        set_color(ANSI_YELLOW, ANSI_BOLD)
-        stream.write("diff --ksconf {} {}\n".format(files[0], files[1]))
-        set_color(ANSI_RESET)
-        header("-", files[0])
-        header("+", files[1])
-
+def _show_diff_header(stream, files, diff_line=None):
     def header(sign, filename):
         try:
             mtime = os.stat(filename).st_mtime
         except OSError:
             mtime = 0
         ts = datetime.datetime.fromtimestamp(mtime)
-        set_color(cm[sign], ANSI_BOLD)
-        stream.write("{0} {1:50} {2}\n".format(sign*3, filename, ts))
-        set_color(ANSI_RESET)
+        stream.write("{0} {1:50} {2}\n".format(sign * 3, filename, ts))
+        tty_color(stream, ANSI_RESET)
 
+    tty_color(stream, ANSI_YELLOW, ANSI_BOLD)
+    if diff_line:
+        stream.write("diff {} {} {}\n".format(diff_line, files[0], files[1]))
+    tty_color(stream, ANSI_RESET)
+    header("-", files[0])
+    header("+", files[1])
+
+
+def show_diff(stream, diffs, headers=None):
     def write_key(key, value, prefix=" "):
         if "\n" in value:
             write_multiline_key(key, value, prefix)
@@ -1048,14 +1055,14 @@ def show_diff(stream, diffs, headers=None):
 
     def write_multiline_key(key, value, prefix=" "):
         lines = value.replace("\n", "\\\n").split("\n")
-        set_color(cm.get(prefix))
+        tty_color(stream, _diff_color_mapping.get(prefix))
         stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
         for line in lines:
             stream.write("{0}{1}\n".format(prefix, line))
-        set_color(ANSI_RESET)
+        tty_color(stream, ANSI_RESET)
 
     def show_value(value, stanza, key, prefix=""):
-        set_color(cm.get(prefix))
+        tty_color(stream, _diff_color_mapping.get(prefix))
         if isinstance(value, dict):
             if stanza is not GLOBAL_STANZA:
                 stream.write("{0}[{1}]\n".format(prefix, stanza))
@@ -1064,7 +1071,7 @@ def show_diff(stream, diffs, headers=None):
             stream.write("\n")
         else:
             write_key(key, value, prefix)
-        set_color(ANSI_RESET)
+        tty_color(stream, ANSI_RESET)
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
@@ -1077,9 +1084,10 @@ def show_diff(stream, diffs, headers=None):
         for d in differ.compare(a, b):
             # Someday add "?" highlighting.  Trick is this should change color mid-line on the
             # previous (one or two) lines.  (Google and see if somebody else solved this one already)
-            set_color(cm.get(d[0], 0))
+            # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+            tty_color(stream, _diff_color_mapping.get(d[0], 0))
             stream.write(d)
-            set_color(ANSI_RESET)
+            tty_color(stream, ANSI_RESET)
             stream.write("\n")
 
     # Global result:  no changes between files or no commonality between files
@@ -1089,7 +1097,7 @@ def show_diff(stream, diffs, headers=None):
             return EXIT_CODE_DIFF_EQUAL
         else:
             if headers:
-                show_diff_header(headers)
+                _show_diff_header(stream, headers, "--ksconf -global")
             # This is the only place where a gets '-' and b gets '+'
             for (prefix, d) in [("-", op.a), ("+", op.b)]:
                 for (stanza, keys) in sorted(d.items()):
@@ -1098,7 +1106,7 @@ def show_diff(stream, diffs, headers=None):
             return EXIT_CODE_DIFF_NO_COMMON
 
     if headers:
-        show_diff_header(headers)
+        _show_diff_header(stream, headers, "--ksconf")
 
     last_stanza = None
     for op in diffs:
@@ -1132,6 +1140,20 @@ def show_diff(stream, diffs, headers=None):
             show_value(op.b, op.location.stanza, op.location.key, " ")
     stream.flush()
     return EXIT_CODE_DIFF_CHANGE
+
+
+def show_text_diff(stream, a, b):
+    _show_diff_header(stream, (a, b), "--text")
+    differ = difflib.Differ()
+    lines_a = open(a, "rb").readlines()
+    lines_b = open(b, "rb").readlines()
+    for d in differ.compare(lines_a, lines_b):
+        # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+        # previous (one or two) lines.  (Google and see if somebody else solved this one already)
+        # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+        tty_color(stream, _diff_color_mapping.get(d[0], 0))
+        stream.write(d)
+        tty_color(stream, ANSI_RESET)
 
 
 def do_minimize(args):
@@ -1177,6 +1199,11 @@ def do_minimize(args):
                 op.tag, op.location, op.b, op.a))
             '''
             continue
+
+    if args.dry_run:
+        rc =show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
+                  headers=(args.target, args.target + "-new"))
+        return rc
 
     if args.output:
         write_conf(args.output, minz_cfg)
@@ -1490,8 +1517,12 @@ def do_combine(args):
                     if file_compare(src_file, dest_path):
                         smart_rc = SMART_NOCHANGE
                     else:
-                        # Todo:  Add textual 'diff' functionality in dry-run mode; exclude binary
-                        smart_rc = "DRY-RUN (DIFF)"
+                        if (_is_binary_file(src_file) or _is_binary_file(dest_path)):
+                            # Binary files.  Can't compare...
+                            smart_rc = "DRY-RUN (NO-DIFF=BIN)"
+                        else:
+                            show_text_diff(sys.stdout, src_file, dest_path)
+                            smart_rc = "DRY-RUN (DIFF)"
                 else:
                     smart_rc = "DRY-RUN (NEW)"
             else:
@@ -1518,6 +1549,7 @@ def do_combine(args):
 def do_unarchive(args):
     """ Install / upgrade a Splunk app from an archive file """
     # Handle ignored files by preserving them as much as possible.
+    # Add --dry-run mode?  j/k - that's what git is for!
 
     from subprocess import list2cmdline
     if not os.path.isdir(args.dest):
@@ -2167,7 +2199,11 @@ duplicate settings.""",
                               "settings from.  By default, this file will be read and the updated"
                               "with a minimized version."
                          ).completer = conf_files_completer
-    sp_minz.add_argument("--output", type=argparse.FileType("w"),
+    sp_mzg1 = sp_minz.add_mutually_exclusive_group()
+    sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
+                         help="Enable dry-run mode.  Instead of writing the minimized value to "
+                              "TARGET, show a 'diff' of what would be removed.")
+    sp_mzg1.add_argument("--output", type=argparse.FileType("w"),
                          default=None,
                          help="When this option is used, the new minimized file will be saved to "
                               "this file instead of updating TARGET.  This can be use to preview "
