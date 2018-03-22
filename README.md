@@ -1,7 +1,7 @@
 # Kintyre Splunk Admin Script with CLI interfaces
 Kintyre's Splunk scripts for various admin tasks.
 ## ksconf.py
-    usage: ksconf.py [-h] [-S MODE] [-K MODE]
+    usage: ksconf.py [-h] [-S MODE] [-K MODE] [--force-color]
                      {check,combine,diff,promote,merge,minimize,sort,unarchive}
                      ...
     
@@ -56,26 +56,30 @@ Kintyre's Splunk scripts for various admin tasks.
                             silently ignore duplicate keys, keeping the latest.
                             Mode 'exception', the default, aborts if duplicate
                             keys are found.
+      --force-color         Force TTY color mode on. Useful if piping the output a
+                            color-awarepager, like 'less -R'
 
 
 ### ksconf.py check
-    usage: ksconf.py check [-h] FILE [FILE ...]
+    usage: ksconf.py check [-h] [--quiet] FILE [FILE ...]
     
     Provide basic syntax and sanity checking for Splunk's .conf files. Use
     Splunk's builtin 'btool check' for a more robust validation of keys and
     values. Consider using this utility as part of a pre-commit hook.
     
     positional arguments:
-      FILE        One or more configuration files to check. If the special value
-                  of '-' is given, then the list of files to validate is read from
-                  standard input
+      FILE         One or more configuration files to check. If the special value
+                   of '-' is given, then the list of files to validate is read
+                   from standard input
     
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help   show this help message and exit
+      --quiet, -q  Reduce the volume of output.
 
 
 ### ksconf.py combine
-    usage: ksconf.py combine [-h] [--target TARGET] source [source ...]
+    usage: ksconf.py combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
+                             source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
     directory.   Configuration files can be stored in a '/etc/*.d' like directory
@@ -177,6 +181,13 @@ Kintyre's Splunk scripts for various admin tasks.
       --target TARGET, -t TARGET
                             Directory where the merged files will be stored.
                             Typically either 'default' or 'local'
+      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
+                            show what changes would be made to it in the form of a
+                            'diff'. If TARGET doesn't exist, then show the merged
+                            file.
+      --banner BANNER, -b BANNER
+                            A warning banner telling discouraging editing of conf
+                            files.
 
 
 ### ksconf.py diff
@@ -259,7 +270,8 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py merge
-    usage: ksconf.py merge [-h] [--target FILE] FILE [FILE ...]
+    usage: ksconf.py merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
+                           FILE [FILE ...]
     
     positional arguments:
       FILE                  The source configuration file to pull changes from.
@@ -270,6 +282,14 @@ Kintyre's Splunk scripts for various admin tasks.
                             Save the merged configuration files to this target
                             file. If not given, the default is to write the merged
                             conf to standard output.
+      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
+                            show what changes would be made to it in the form of a
+                            'diff'. If TARGET doesn't exist, then show the merged
+                            file.
+      --banner BANNER, -b BANNER
+                            A banner or warning comment to add to the TARGET file.
+                            Often used to warn Splunk admins from editing a auto-
+                            generated file.
 
 
 ### ksconf.py minimize

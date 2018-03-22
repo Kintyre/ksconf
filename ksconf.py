@@ -100,6 +100,44 @@ To do (Someday):
    sending changes to the deployer?)
 
 
+
+-------------------------------------------------
+
+Git configuration tweaks
+
+
+Setup ksconf as an external difftool provider:
+
+    ~/.gitconfig:
+
+        [difftool "ksconf"]
+            cmd = "ksconf --force-color diff \"$LOCAL\" \"$REMOTE\" | less -R"
+        [difftool]
+            prompt = false
+        [alias]
+            ksdiff = "difftool --tool=ksconf"
+
+    Now can run:  git ksdiff props.conf
+    Test command: git config diff.conf.xfuncname
+    
+
+
+Make normal diffs show the 'stanza' on the @@ output lines
+
+    ~/.gitconfig
+
+        [diff "conf"]
+            xfuncname = "^(\\[.*\\])$"
+
+    attributes:
+        *.conf diff=conf
+        *.meta diff=conf
+
+    Test command:
+
+    git check-attr -a -- *.conf
+
+# Todo:  Research the GIT_EXTERNAL_DIFF options too [diff "conf"] program = 
 """
 
 
@@ -225,10 +263,12 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
 
 
 def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False, strict=False):
-    for (i, entry) in enumerate(lines):
+    comment = 0
+    for entry in lines:
         if comments_re.search(entry):
             if keep_comments:
-                yield ("#-%06d" % i, entry)
+                comment += 1
+                yield ("#-%06d" % comment, entry)
             continue
         if "=" in entry:
             k, v = entry.split("=", 1)
@@ -375,12 +415,57 @@ def merge_conf_dicts(*dicts):
             _merge_conf_dicts(result, d)
     return result
 
-def merge_conf_files(dest_file, configs, parse_args):
+
+def inject_section_comments(section, prepend=None, append=None):
+    # Extract existing comments from section dict (in order; and remove them)
+    # Add in any prepend/append comments (if that comment isn't already present)
+    # Re-inject comments back into the section dict with fresh numbering
+    #
+    # Yes, this is really hacky, but the only way to make the diffs work correctly ;-(
+    comments = []
+    for key, value in sorted(section.items()):
+        if key.startswith("#-"):
+            comments.append(value)
+            del section[key]
+    new_comments = []
+    if prepend:
+        for c in prepend:
+            if c not in comments:
+                new_comments.append(c)
+    new_comments.extend(comments)
+    if append:
+        for c in append:
+            if c not in comments:
+                new_comments.append(c)
+    for (i, comment) in enumerate(new_comments, 1):
+        section["#-%06d" % i] = comment
+
+
+
+def merge_conf_files(dest_file, configs, parse_args, dry_run=False, banner_comment=None):
     # Parse all config files
     cfgs = [ parse_conf(conf, **parse_args) for conf in configs ]
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
-    if hasattr(dest_file, "write"):
+    dest_is_stream = hasattr(dest_file, "write")
+    if banner_comment:
+        if not banner_comment.startswith("#"):
+            banner_comment = "#" + banner_comment
+            inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}),
+                                    prepend=[banner_comment])
+
+    # Either show the diff (dry-run mode) or write to the destination file
+    if dry_run and not dest_is_stream:
+        if os.path.isfile(dest_file):
+            dest_cfg = parse_conf(dest_file, **parse_args)
+        else:
+            dest_cfg = {}
+        show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
+                  headers=(dest_file, dest_file+"-new"))
+        return
+
+    # This causes some chaos with the dry-run diff....
+    if dest_is_stream:
         write_conf(dest_file, merged_cfg)
         return SMART_CREATE
     else:
@@ -749,6 +834,7 @@ def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
     (stdout, stderr) = proc.communicate()
     return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
 
+
 def git_status_summary(path):
     c = Counter()
     cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
@@ -764,6 +850,7 @@ def git_status_summary(path):
         else:
             c["changed"] += 1
     return c
+
 
 def git_is_working_tree(path=None):
     return git_cmd(["rev-parse", "--is-inside-work-tree"], cwd=path).returncode == 0
@@ -805,6 +892,7 @@ def git_ls_files(path, *modifiers):
                            .format(proc.retuncode))
     return proc.stdout.splitlines()
 
+
 def git_status_ui(path, *args):
     from subprocess import call
     # Don't redirect the std* streams; let the output go straight to the console
@@ -812,8 +900,10 @@ def git_status_ui(path, *args):
     cmd.extend(args)
     call(cmd, cwd=path)
 
+
 ####################################################################################################
 ## CLI do_*() functions
+
 
 def do_check(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
@@ -834,7 +924,7 @@ def do_check(args):
         try:
             parse_conf(conf, **parse_args)
             c["okay"] += 1
-            if True:    # verbose
+            if not args.quiet:
                 sys.stdout.write("Successfully parsed {0}\n".format(conf))
                 sys.stdout.flush()
         except ConfParserException, e:
@@ -862,16 +952,25 @@ def do_merge(args):
     ''' Merge multiple configuration files into one '''
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=True, strict=True)
-    merge_conf_files(args.target, args.conf, parse_args)
+    if args.dry_run and (args.target == "-" or not os.path.isfile(args.target)):
+        sys.stderr.write("Dry-run only works of '--target' is a normal file.  "
+                         "Outputting to the screen.\n")
+        args.target = sys.stdout
+    elif args.target == "-":
+        args.target = sys.stdout
+    merge_conf_files(args.target, args.conf, parse_args, dry_run=args.dry_run,
+                     banner_comment=args.banner)
 
 
 def do_diff(args):
     ''' Compare two configuration files. '''
-
+    global FORCE_TTY_COLOR
     stream = args.output
 
+    FORCE_TTY_COLOR = args.force_color
+
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False, strict=True)  #args.comments)
+                      keep_comments=args.comments, strict=True)
     # Parse all config files
     cfg1 = parse_conf(args.conf1, **parse_args)
     cfg2 = parse_conf(args.conf2, **parse_args)
@@ -884,12 +983,16 @@ def do_diff(args):
 
 
 # ANSI_COLOR = "\x1b[{0}m"
+ANSI_BOLD = 1
 ANSI_RED   = 31
 ANSI_GREEN = 32
+ANSI_YELLOW = 33
 ANSI_RESET = 0
+FORCE_TTY_COLOR = False
+
 
 def tty_color(stream, *codes):
-    if codes and hasattr(stream, "isatty") and stream.isatty():
+    if codes and FORCE_TTY_COLOR or hasattr(stream, "isatty") and stream.isatty():
         stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
 
 
@@ -904,11 +1007,32 @@ def show_diff(stream, diffs, headers=None):
         "-" : ANSI_RED,
     }
 
-    def header(sign, filename):
-        ts = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
-        set_color(cm[sign])
-        stream.write("{0} {1:19} {2}\n".format(sign*3, filename, ts))
+    def show_diff_header(files):
+        set_color(ANSI_YELLOW, ANSI_BOLD)
+        stream.write("diff --ksconf {} {}\n".format(files[0], files[1]))
         set_color(ANSI_RESET)
+        header("-", files[0])
+        header("+", files[1])
+
+    def header(sign, filename):
+        try:
+            mtime = os.stat(filename).st_mtime
+        except OSError:
+            mtime = 0
+        ts = datetime.datetime.fromtimestamp(mtime)
+        set_color(cm[sign], ANSI_BOLD)
+        stream.write("{0} {1:50} {2}\n".format(sign*3, filename, ts))
+        set_color(ANSI_RESET)
+
+    def write_key(key, value, prefix=" "):
+        if "\n" in value:
+            write_multiline_key(key, value, prefix)
+        else:
+            if key.startswith("#-"):
+                template = "{0}{2}\n"
+            else:
+                template = "{0}{1} = {2}\n"
+            stream.write(template.format(prefix, key, value))
 
     def write_multiline_key(key, value, prefix=" "):
         lines = value.replace("\n", "\\\n").split("\n")
@@ -921,15 +1045,13 @@ def show_diff(stream, diffs, headers=None):
     def show_value(value, stanza, key, prefix=""):
         set_color(cm.get(prefix))
         if isinstance(value, dict):
-            stream.write("{0}[{1}]\n".format(prefix, _format_stanza(stanza)))
-            for x, y in value.iteritems():
-                write_multiline_key(x, y, prefix)
+            if stanza is not GLOBAL_STANZA:
+                stream.write("{0}[{1}]\n".format(prefix, stanza))
+            for x, y in sorted(value.iteritems()):
+                write_key(x, y, prefix)
             stream.write("\n")
         else:
-            if "\n" in value:
-                write_multiline_key(key, value, prefix)
-            else:
-                stream.write("{0}{1} = {2}\n".format(prefix, key, value))
+            write_key(key, value, prefix)
         set_color(ANSI_RESET)
 
     def show_multiline_diff(value_a, value_b, key):
@@ -937,12 +1059,11 @@ def show_diff(stream, diffs, headers=None):
             r = "{0} = {1}".format(key, v)
             r = r.replace("\n", "\\\n")
             return r.splitlines()
-
         a = f(value_a)
         b = f(value_b)
         differ = difflib.Differ()
         for d in differ.compare(a, b):
-            set_color(cm.get(d[0],0))
+            set_color(cm.get(d[0], 0))
             stream.write(d)
             set_color(ANSI_RESET)
             stream.write("\n")
@@ -954,8 +1075,8 @@ def show_diff(stream, diffs, headers=None):
             return EXIT_CODE_DIFF_EQUAL
         else:
             if headers:
-                header("-", headers[0])
-                header("+", headers[1])
+                show_diff_header(headers)
+            # This is the only place where a gets '-' and b gets '+'
             for (prefix, d) in [("-", op.a), ("+", op.b)]:
                 for (stanza, keys) in sorted(d.items()):
                     show_value(keys, stanza, None, prefix)
@@ -963,8 +1084,7 @@ def show_diff(stream, diffs, headers=None):
             return EXIT_CODE_DIFF_NO_COMMON
 
     if headers:
-        header("-", headers[0])
-        header("+", headers[1])
+        show_diff_header(headers)
 
     last_stanza = None
     for op in diffs:
@@ -980,7 +1100,8 @@ def show_diff(stream, diffs, headers=None):
                 # Line break after last stanza
                 stream.write("\n")
                 stream.flush()
-            stream.write(" [{0}]\n".format(_format_stanza(op.location.stanza)))
+            if op.location.stanza is not GLOBAL_STANZA:
+                stream.write(" [{0}]\n".format(op.location.stanza))
             last_stanza = op.location.stanza
 
         if op.tag == DIFF_OP_INSERT:
@@ -1350,14 +1471,25 @@ def do_combine(args):
             #sys.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
             # Always use the last file in the list (since last directory always wins)
             src_file = src_files[-1]
-            smart_rc = smart_copy(src_file, dest_path)
+            if args.dry_run:
+                if os.path.isfile(dest_path):
+                    if file_compare(src_file, dest_path):
+                        smart_rc = SMART_NOCHANGE
+                    else:
+                        # Todo:  Add textual 'diff' functionality in dry-run mode; exclude binary
+                        smart_rc = "DRY-RUN (DIFF)"
+                else:
+                    smart_rc = "DRY-RUN (NEW)"
+            else:
+                smart_rc = smart_copy(src_file, dest_path)
             if smart_rc != SMART_NOCHANGE:
                 sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
             #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
-            smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args)
+            smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args,
+                                        dry_run=args.dry_run, banner_comment=args.banner)
             if smart_rc != SMART_NOCHANGE:
-                sys.stderr.write("Merge <{0}>   {1:50}  from {2:r}\n".format(smart_rc, dest_path, src_files))
+                sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path, src_files))
 
     if True and target_extra_files:     # Todo: Allow for cleanup to be disabled via CLI
         sys.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".format(
@@ -1436,7 +1568,7 @@ def do_unarchive(args):
         is_git = git_is_working_tree(dest_app)
         try:
             # Ignoring the 'local' entries since distributed apps should never modify local anyways
-            old_app_conf = parse_conf(os.path.join(dest_app, "default", "app.conf"))
+            old_app_conf = parse_conf(os.path.join(dest_app, args.default_dir or "default", "app.conf"))
         except:
             sys.stderr.write("Unable to read app.conf from existing install.\n")
     else:
@@ -1541,9 +1673,7 @@ def do_unarchive(args):
             fp.write(gaf.payload)
         os.chmod(full_path, gaf.mode)
 
-    files_new = installed_files.difference(existing_files)
-    files_upd = installed_files.intersection(existing_files)
-    files_del = existing_files.difference(installed_files)
+    files_new, files_upd, files_del = _cmp_sets(installed_files, existing_files)
     '''
     print "New: \n\t{}".format("\n\t".join(sorted(files_new)))
     print "Existing: \n\t{}".format("\n\t".join(sorted(files_upd)))
@@ -1692,6 +1822,10 @@ def cli():
                              "stanza.  Mode of 'overwrite' silently ignore duplicate keys, "
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
+    parser.add_argument("--force-color", action="store_true", default=False,
+                        help="Force TTY color mode on.  Useful if piping the output a color-aware"
+                             "pager, like 'less -R'")
+
     #'''
     
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
@@ -1713,6 +1847,8 @@ def cli():
                               "'-' is given, then the list of files to validate is read from "
                               "standard input"
                          ).completer = conf_files_completer
+    sp_chck.add_argument("--quiet", "-q", default=False, action="store_true",
+                         help="Reduce the volume of output.")
     ''' # Do we really need this?
     sp_chck.add_argument("--max-errors", metavar="INT", type=int, default=0,
                          help="Abort check if more than this many files fail validation.  Useful 
@@ -1831,6 +1967,15 @@ Commands:
                          help="Directory where the merged files will be stored.  Typically either "
                               "'default' or 'local'"
                          ).completer = DirectoriesCompleter()
+    sp_comb.add_argument("--dry-run", "-D", default=False, action="store_true",
+                         help="Enable dry-run mode.  Instead of writing to TARGET, show what "
+                              "changes would be made to it in the form of a 'diff'. "
+                              "If TARGET doesn't exist, then show the merged file.")
+    sp_comb.add_argument("--banner", "-b",
+                         default=" **** WARNING: This file is managed by 'ksconf combine', do not "
+                                 "edit hand-edit this file! ****",
+                         help="A warning banner telling discouraging editing of conf files.")
+
 
     # SUBCOMMAND:  splconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
@@ -1969,12 +2114,18 @@ will be lost.  (This needs improvement.)
     sp_merg.add_argument("conf", metavar="FILE", nargs="+",
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
-
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         type=argparse.FileType('w'), default=sys.stdout,
+                         default="-",
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."
                          ).completer = conf_files_completer
+    sp_merg.add_argument("--dry-run", "-D", default=False, action="store_true",
+                         help="Enable dry-run mode.  Instead of writing to TARGET, show what "
+                              "changes would be made to it in the form of a 'diff'. "
+                              "If TARGET doesn't exist, then show the merged file.")
+    sp_merg.add_argument("--banner", "-b", default="",
+                         help="A banner or warning comment to add to the TARGET file.  Often used "
+                              "to warn Splunk admins from editing a auto-generated file.")
 
     # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
     # Example workflow:
@@ -2128,6 +2279,8 @@ To recursively sort all files:
     autocomplete(parser)
     args = parser.parse_args()
 
+    global FORCE_TTY_COLOR
+    FORCE_TTY_COLOR = args.force_color
 
     try:
         return_code = args.funct(args)
