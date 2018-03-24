@@ -167,6 +167,7 @@ from StringIO import StringIO
 EXIT_CODE_SUCCESS = 0
 EXIT_CODE_NOTHING_TO_DO = 1
 EXIT_CODE_USER_QUIT = 2
+EXIT_CODE_NO_SUCH_FILE = 5
 
 EXIT_CODE_DIFF_EQUAL = 0
 EXIT_CODE_DIFF_CHANGE = 3
@@ -285,6 +286,10 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
     if not hasattr(stream, "read"):
         # Assume it's a filename
         stream = open(stream)
+    if hasattr(stream, "name"):
+        stream_name = stream.name
+    else:
+        stream_name = repr(stream)
 
     sections = {}
     # Q: What's the value of allowing line continuations to be disabled?
@@ -301,7 +306,7 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
             elif dup_stanza == DUP_EXCEPTION:
                 raise DuplicateStanzaException("Stanza [{0}] found more than once in config "
                                                "file {1}".format(_format_stanza(section),
-                                                                 stream.name))
+                                                                 stream_name))
             elif dup_stanza == DUP_MERGE:
                 s = sections[section]
         else:
@@ -317,7 +322,7 @@ def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                 elif dup_key == DUP_EXCEPTION:
                     raise DuplicateKeyException("Stanza [{0}] has duplicate key '{1}' in file "
                                                 "{2}".format(_format_stanza(section),
-                                                             key, stream.name))
+                                                             key, stream_name))
             else:
                 local_stanza[key] = value
                 s[key] = value
@@ -1219,10 +1224,23 @@ def do_promote(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=False, strict=True)  #args.comments)
 
+    if not os.path.isfile(args.source):
+        sys.stderr.write("Aborting.  Missing source file {}.".format(args.source))
+        return EXIT_CODE_NO_SUCH_FILE
+
     if os.path.isdir(args.target):
         # If a directory is given instead of a target file, then assume the source filename is the
         # same as the target filename.
         args.target = os.path.join(args.target, os.path.basename(args.source))
+
+    if not os.path.isfile(args.target):
+        sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
+                         .format(args.target, args.source))
+        if args.keep:
+            shutil.copy2(args.source, args.target)
+        else:
+            shutil.move(args.source, args.target)
+        return
 
     fp_source = file_fingerprint(args.source)
     fp_target = file_fingerprint(args.target)
@@ -1264,7 +1282,7 @@ def do_promote(args):
         summarize_cfg_diffs(delta, sys.stderr)
 
         while True:
-            input = raw_input("Would you like to apply changes?  (y/n/d/q)")
+            input = raw_input("Would you like to apply ALL changes?  (y/n/d/q)")
             input = input[:1].lower()
             if input == 'q':
                 return EXIT_CODE_USER_QUIT
@@ -1570,7 +1588,10 @@ def do_unarchive(args):
         gaf_app, gaf_relpath = gaf.path.split("/", 1)
         files += 1
         if gaf.path.endswith("app.conf") and gaf.payload:
-            app_conf = parse_conf(StringIO(gaf.payload))
+            conffile = StringIO(gaf.payload)
+            conffile.name = os.path.join(args.tarball, gaf.path)
+            app_conf = parse_conf(conffile, dup_stanza=DUP_MERGE, strict=False)
+            del conffile
         elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
             local_files.add(gaf_relpath)
         app_name.add(gaf.path.split("/", 1)[0])
@@ -1614,7 +1635,8 @@ def do_unarchive(args):
         is_git = git_is_working_tree(dest_app)
         try:
             # Ignoring the 'local' entries since distributed apps should never modify local anyways
-            old_app_conf = parse_conf(os.path.join(dest_app, args.default_dir or "default", "app.conf"))
+            old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
+            old_app_conf = parse_conf(old_app_conf_file, dup_stanza=DUP_MERGE, strict=False)
         except:
             sys.stderr.write("Unable to read app.conf from existing install.\n")
     else:
