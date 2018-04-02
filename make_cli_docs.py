@@ -42,6 +42,8 @@ subcommands = {
 for script in glob("*.py"):
     if "make_cli_docs" in script:
         continue  # Don't fork bomb
+    if script.startswith("test_"):
+        continue
     print "Building docs for {}".format(script)
     write_doc_for(readme, script)
     for subcmds in subcommands.get(script, []):
