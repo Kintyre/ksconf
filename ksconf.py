@@ -468,8 +468,7 @@ def merge_conf_files(dest_file, configs, parse_args, dry_run=False, banner_comme
     if banner_comment:
         if not banner_comment.startswith("#"):
             banner_comment = "#" + banner_comment
-            inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}),
-                                    prepend=[banner_comment])
+        inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}), prepend=[banner_comment])
 
     # Either show the diff (dry-run mode) or write to the destination file
     if dry_run and not dest_is_stream:
@@ -625,16 +624,6 @@ def summarize_cfg_diffs(delta, stream):
                                                       len(key_stats[tag][entry])))
         stream.write("\n")
 
-# ANSI_COLOR = "\x1b[{0}m"
-ANSI_RED   = 31
-ANSI_GREEN = 32
-ANSI_RESET = 0
-
-def tty_color(stream, *codes):
-    if codes and hasattr(stream, "isatty") and stream.isatty():
-        stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
-
-
 
 def fileobj_compare(f1, f2):
     # Borrowed from filecmp
@@ -748,7 +737,9 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
     """
-    prefix = len(top) + 1
+    if not top.endswith(os.path.sep):
+        top += os.path.sep
+    prefix = len(top)
     for (dirpath, dirnames, filenames) in os.walk(top, topdown, onerror, followlinks):
         dirpath = dirpath[prefix:]
         yield (dirpath, dirnames, filenames)
@@ -915,7 +906,7 @@ def git_ls_files(path, *modifiers):
     proc = git_cmd(args, cwd=path)
     if proc.returncode != 0:
         raise RuntimeError("Bad return code from git... {} add better exception handling here.."
-                           .format(proc.retuncode))
+                           .format(proc.returncode))
     return proc.stdout.splitlines()
 
 
@@ -992,15 +983,19 @@ def do_diff(args):
     ''' Compare two configuration files. '''
     # Todo:  Allow fallback to text comparisons for non-conf files.
     # Todo:  Eventually support directory (or recursive?) diffs too.
-    stream = args.output
-
-    FORCE_TTY_COLOR = args.force_color
-
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=args.comments, strict=True)
     # Parse all config files
-    cfg1 = parse_conf(args.conf1, **parse_args)
-    cfg2 = parse_conf(args.conf2, **parse_args)
+    try:
+        cfg1 = parse_conf(args.conf1, **parse_args)
+        cfg2 = parse_conf(args.conf2, **parse_args)
+    except IOError, e:
+        sys.stderr.write("Unable to open conf file.  {}\n".format(e.message))
+        return EXIT_CODE_NO_SUCH_FILE
+    except ConfParserException, e:
+        sys.stderr.write("Unable to parse conf file.  {}\n".format(e))
+        # We don't distinguish between bad conf files and safety checks here.
+        return EXIT_CODE_BAD_CONF_FILE
     diffs = compare_cfgs(cfg1, cfg2)
     rc = show_diff(args.output, diffs, headers=(args.conf1, args.conf2))
     if rc == EXIT_CODE_DIFF_EQUAL:
@@ -1253,7 +1248,10 @@ def do_promote(args):
     # Using #1 for now, consider if there's value in #2
     bn_source = os.path.basename(args.source)
     bn_target = os.path.basename(args.target)
-    if bn_source != bn_target:
+    if bn_source.endswith(".meta") and bn_target.endswith(".meta"):
+        # Allow local.meta -> default.meta without --force or a warning message
+        pass
+    elif bn_source != bn_target:
         # Todo: Allow for interactive prompting when in interactive but not force mode.
         if args.force:
             sys.stderr.write("Promoting content across conf file types ({0} --> {1}) because the "
@@ -1450,6 +1448,7 @@ def do_sort(args):
                 conf.close()
                 smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
+                smart_rc = None
                 sys.stderr.write("Error trying to process file {0}.  "
                                  "Error:  {1}\n".format(conf.name, e))
                 failure = True
@@ -1475,7 +1474,7 @@ def do_sort(args):
 def do_combine(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
                       keep_comments=True, strict=True)
-    # Ignores case sensitivity topics.  If you're on Windows, name your files right.
+    # Ignores case sensitivity.  If you're on Windows, name your files right.
     conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
 
     sys.stderr.write("Combining conf files into {}\n".format(args.target))
@@ -1489,6 +1488,8 @@ def do_combine(args):
             sys.stderr.write("Target directory already exists, but it appears to have been created "
                              "by some other means.  Marker file missing.\n")
             return EXIT_CODE_COMBINE_MARKER_MISSING
+    elif args.dry_run:
+        sys.stderr.write("Skipping creating destination folder {0} (dry-run)\n".format(args.target))
     else:
         sys.stderr.write("Creating destination folder {0}\n".format(args.target))
         os.mkdir(args.target)
@@ -1522,7 +1523,7 @@ def do_combine(args):
 
         # Make missing destination folder, if missing
         dest_dir = os.path.dirname(dest_path)
-        if not os.path.isdir(dest_dir):
+        if not os.path.isdir(dest_dir) and not args.dry_run:
             os.makedirs(dest_dir)
 
         # Handle conf files and non-conf files separately
@@ -1595,6 +1596,7 @@ def do_unarchive(args):
         elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
             local_files.add(gaf_relpath)
         app_name.add(gaf.path.split("/", 1)[0])
+        del gaf_app, gaf_relpath
     if len(app_name) > 1:
         sys.stderr.write("The 'unarchive' command only supports extracting a single splunk app at "
                          "a time.\nHowever the archive {} contains {} apps:  {}\n"
@@ -1602,7 +1604,7 @@ def do_unarchive(args):
         return EXIT_CODE_FAILED_SAFETY_CHECK
     else:
         app_name = app_name.pop()
-    del a, gaf_app, gaf_relpath
+    del a
     if local_files:
         sys.stderr.write("Local {} files found in the archive.  ".format(len(local_files)))
         if args.allow_local:
@@ -1867,8 +1869,9 @@ def cli():
         from argcomplete import autocomplete
         from argcomplete.completers import FilesCompleter, DirectoriesCompleter
     except ImportError:
-        def _argcomplete_noop(*args, **kwargs): pass
+        def _argcomplete_noop(*args, **kwargs): del args, kwargs
         autocomplete = _argcomplete_noop
+        # noinspection PyPep8Naming
         FilesCompleter = DirectoriesCompleter = _argcomplete_noop
 
     # Someday add *.meta (once more testing is done with those files
