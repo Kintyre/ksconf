@@ -1,0 +1,36 @@
+# See http://pre-commit.com for more information
+# See http://pre-commit.com/hooks.html for more hooks
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  sha: v1.2.3
+  hooks:
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-ast
+    - id: check-added-large-files
+      args: [ '--maxkb=200' ]
+    - id: check-merge-conflict
+    - id: detect-private-key
+    - id: detect-aws-credentials
+    - id: mixed-line-ending
+      args: [ '--fix=lf' ]
+
+- repo: local
+  hooks:
+    - id: make-cli-docs
+      name: Build CLI docs to - generate top-level README.md
+      language: script
+      entry: make_cli_docs.py
+      type: [ python ]
+      pass_filenames: false
+
+# Way too much noise.... (or I just have bad code, either way it's too much)
+#- repo: https://github.com/pre-commit/mirrors-pylint
+#  sha: master
+#  hooks:
+#    - id: pylint
+
+#- repo: https://github.com/jorisroovers/gitlint
+#  sha: master
+#  hooks:
+#    - id: gitlint

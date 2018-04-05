@@ -2,6 +2,7 @@
 
 import os
 import sys
+import filecmp
 from glob import glob
 from subprocess import Popen, PIPE
 
@@ -28,14 +29,14 @@ def write_doc_for(stream, script, *subcmds):
         stream.write(line)
     stream.write("\n\n")
 
-readme = open("README.md", "w")
+readme = open("README.md.tmp", "w")
 readme.write("""\
 # Kintyre Splunk Admin Script with CLI interfaces
 Kintyre's Splunk scripts for various admin tasks.
 """)
 
 subcommands = {
-    "ksconf.py" : 
+    "ksconf.py" :
         [ "check", "combine", "diff", "promote" ,"merge", "minimize", "sort", "unarchive"]
 }
 
@@ -52,3 +53,12 @@ for script in glob("*.py"):
 
 readme.close()
 
+if filecmp.cmp("README.md.tmp", "README.md"):
+    print "No changes made to file."
+    os.unlink("README.md.tmp")
+    sys.exit(0)
+else:
+    print "README.md updated"
+    os.unlink("README.md")
+    os.rename("README.md.tmp", "README.md")
+    sys.exit(1)
