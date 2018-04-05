@@ -172,6 +172,7 @@ EXIT_CODE_NO_SUCH_FILE = 5
 EXIT_CODE_DIFF_EQUAL = 0
 EXIT_CODE_DIFF_CHANGE = 3
 EXIT_CODE_DIFF_NO_COMMON = 4
+EXIT_CODE_SORT_APPLIED = 9
 
 # Errors caused by users
 EXIT_CODE_BAD_CONF_FILE = 20
@@ -1438,6 +1439,7 @@ def do_sort(args):
                       keep_comments=True)
     if args.inplace:
         failure = False
+        changes = 0
         for conf in args.conf:
             try:
                 # KISS:  Look for the KSCONF-NO-SORT string in the first 4k of this file.
@@ -1457,8 +1459,11 @@ def do_sort(args):
                                  "File {0} is already sorted\n".format(conf.name))
             else:
                 sys.stderr.write("Replaced file {0} with sorted content.\n".format(conf.name))
+                changes += 1
         if failure:
             return EXIT_CODE_BAD_CONF_FILE
+        if changes:
+            return EXIT_CODE_SORT_APPLIED
     else:
         for conf in args.conf:
             if len(args.conf) > 1:

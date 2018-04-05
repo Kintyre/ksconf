@@ -1,0 +1,12 @@
+- id: ksconf-check
+  name: Kintyre Splunk CONF - Check syntax
+  description: Check that all .conf files are syntactically valid
+  entry: ksconf check -q
+  language: python
+  files: (\.conf|(local|default)\.meta)$
+- id: ksconf-sort
+  name: Kintyre Splunk CONF - Sort conf files
+  description: Sort all stanzas and keys in .conf files.  Files can be skipped by adding a comment with KSCONF-NO-SORT
+  entry: ksconf sort -i
+  language: python
+  files: (\.conf|(local|default)\.meta)$
