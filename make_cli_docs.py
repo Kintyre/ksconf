@@ -6,7 +6,7 @@ from glob import glob
 from subprocess import Popen, PIPE
 
 def cmd_output(*cmd):
-    p = Popen(cmd, stdout=PIPE)
+    p = Popen(cmd, stdout=PIPE, env={"PYTHONWARNINGS":"ignore"})
     p.wait()
     for line in p.stdout.readlines():
         yield line
@@ -42,7 +42,7 @@ subcommands = {
 for script in glob("*.py"):
     if "make_cli_docs" in script:
         continue  # Don't fork bomb
-    if script.startswith("test_"):
+    if script.startswith("test_") or script == "setup.py":
         continue
     print "Building docs for {}".format(script)
     write_doc_for(readme, script)

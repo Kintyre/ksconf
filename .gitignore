@@ -3,5 +3,12 @@
 *.py[co]
 *.bak
 .idea
+
+# Python dev tools
 .coverage
 *.py,cover
+
+# Python setuptools artifacts
+build
+dist
+*.egg-info
