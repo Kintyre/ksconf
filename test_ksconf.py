@@ -76,7 +76,7 @@ class ParserTestCase(unittest.TestCase):
         key1 = yes
         key2 = no
         [stanza2]
-        
+
         [stanza3]
         has_key = true
         """)
@@ -128,11 +128,11 @@ class ParserTestCase(unittest.TestCase):
         LINE_BREAKER=([\r\n]+)\d{4}-\d{2}-\d{2}
         sourcetype = aws:sns:alert:log
         priority = 1
-        
+
         [source::...[/\\]var[/\\]log[/\\]splunk[/\\]s3util*.log*]
         sourcetype = aws:s3util:log
         priority = 10
-        
+
         [My cool search [COOLNESS]]
         search = ...
         """)
@@ -200,10 +200,10 @@ class ParserTestCase(unittest.TestCase):
         [jungle]
         animal = monkey
         key2 = 01
-        
+
         [forest]
         animal = wolf
-        
+
         [jungle]
         animal = snake
         """
@@ -306,7 +306,7 @@ class ConfigDiffTestCase(unittest.TestCase):
 
     cfg_props_imapsync_2 = r"""
     [other2]
-    
+
     [imapsync]
     LINE_BREAKER = ([\r\n]+)(?:msg |PID|Writing|Folders |Host[12]|\+\+\++|Command|Log|Sending:|Modules version list)
     TRUNCATE = 1000000
@@ -383,7 +383,7 @@ class ConfigMergeTestCase(unittest.TestCase):
 
 
 class UtilFunctionTestCase(unittest.TestCase):
-    
+
     def test_relwalk_prefix_preserve(self):
         a = list(relwalk("."))
         b = list(relwalk("." + os.path.sep))

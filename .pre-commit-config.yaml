@@ -5,7 +5,9 @@ repos:
   sha: v1.2.3
   hooks:
     - id: trailing-whitespace
+      exclude: README\.md$
     - id: end-of-file-fixer
+      exclude: README\.md$
     - id: check-ast
     - id: check-added-large-files
       args: [ '--maxkb=200' ]

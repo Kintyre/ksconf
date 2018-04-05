@@ -11,7 +11,7 @@ Kintyre's Splunk scripts for various admin tasks.
     and easy to relocate package.  Specifically, this tools deals with many of the
     nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
     repository.  Merging changes from the live system's (local) folder to the
-    version controlled (default) folder, and dealing with more than one layer of 
+    version controlled (default) folder, and dealing with more than one layer of
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
@@ -166,7 +166,6 @@ Kintyre's Splunk scripts for various admin tasks.
     
         cd Splunk_CiscoSecuritySuite
         ksconf combine default.d/* --target=default
-        
     
     positional arguments:
       source                The source directory where configuration files will be
@@ -297,9 +296,9 @@ Kintyre's Splunk scripts for various admin tasks.
                               [-k PRESERVE_KEY]
                               FILE [FILE ...]
     
-    The minimize command will allow for the removal of all 
-    default-ish settings from a target configuration files.  
-    In theory, this allows for a cleaner upgrade, and fewer 
+    The minimize command will allow for the removal of all
+    default-ish settings from a target configuration files.
+    In theory, this allows for a cleaner upgrade, and fewer
     duplicate settings.
     
     positional arguments:

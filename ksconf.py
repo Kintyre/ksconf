@@ -122,7 +122,7 @@ Setup ksconf as an external difftool provider:
 
     Now can run:  git ksdiff props.conf
     Test command: git config diff.conf.xfuncname
-    
+
 
 
 Make normal diffs show the 'stanza' on the @@ output lines
@@ -1844,7 +1844,7 @@ This utility handles a number of common Splunk app maintenance tasks in a small
 and easy to relocate package.  Specifically, this tools deals with many of the
 nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
 repository.  Merging changes from the live system's (local) folder to the
-version controlled (default) folder, and dealing with more than one layer of 
+version controlled (default) folder, and dealing with more than one layer of
 "default" (which splunk can't handle natively) are all supported tasks.
 """
 # ------------------------------------------ wrap to 80 chars ----------------^
@@ -1903,7 +1903,7 @@ def cli():
                              "pager, like 'less -R'")
 
     #'''
-    
+
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
@@ -1927,7 +1927,7 @@ def cli():
                          help="Reduce the volume of output.")
     ''' # Do we really need this?
     sp_chck.add_argument("--max-errors", metavar="INT", type=int, default=0,
-                         help="Abort check if more than this many files fail validation.  Useful 
+                         help="Abort check if more than this many files fail validation.  Useful
                          for a pre-commit hook where any failure is unacceptable.")
     '''
     # Usage example:   find . -name '*.conf' | splconf check -  (Nice little pre-commit script)
@@ -2028,7 +2028,7 @@ Commands:
 
     cd Splunk_CiscoSecuritySuite
     ksconf combine default.d/* --target=default
-    
+
 """,
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_comb.set_defaults(funct=do_combine)
@@ -2148,13 +2148,13 @@ will be lost.  (This needs improvement.)
                               "Splunk will re-create any necessary local files on the fly.")
 
     """ Possible behaviors.... thinking through what CLI options make the most sense...
-    
+
     Things we may want to control:
 
         Q: What mode of operation?
             1.)  Automatic (merge all)
             2.)  Interactive (user guided / sub-shell)
-            3.)  Batch mode:  CLI driven based on a stanza or key using either a name or pattern to 
+            3.)  Batch mode:  CLI driven based on a stanza or key using either a name or pattern to
                  select which content should be integrated.
 
         Q: What happens to the original?
@@ -2171,15 +2171,15 @@ will be lost.  (This needs improvement.)
             2.)  Place in a "discard" file.  (Allow the user to select the location of the file.)
             3.)  Automatically backup discards to a internal store, and/or log.  (More difficult to
                  recover, but content is always logged/recoverable with some effort.)
-    
-    
+
+
     Interactive approach:
-    
+
         3 action options:
             Integrate/Accept: Move content from the source to the target  (e.g., local to default)
             Reject/Remove:    Discard content from the source; destructive (e.g., rm local setting)
             Skip/Keep:        Don't push to target or remove from source (no change)
-    
+
     """
 
     # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
@@ -2214,9 +2214,9 @@ will be lost.  (This needs improvement.)
                                     help="Minimize the target file by removing entries duplicated "
                                          "in the default conf(s) provided.  ",
                                     description="""\
-The minimize command will allow for the removal of all 
-default-ish settings from a target configuration files.  
-In theory, this allows for a cleaner upgrade, and fewer 
+The minimize command will allow for the removal of all
+default-ish settings from a target configuration files.
+In theory, this allows for a cleaner upgrade, and fewer
 duplicate settings.""",
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_minz.set_defaults(funct=do_minimize)
