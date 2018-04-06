@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import unittest
 from textwrap import dedent
 
@@ -387,7 +389,6 @@ class UtilFunctionTestCase(unittest.TestCase):
     def test_relwalk_prefix_preserve(self):
         a = list(relwalk("."))
         b = list(relwalk("." + os.path.sep))
-        print b
         self.assertListEqual(a, b, "should return the same paths with or without a trailing slash")
 
 

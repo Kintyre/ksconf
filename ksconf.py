@@ -345,18 +345,26 @@ def write_conf(stream, conf, stanza_delim="\n", sort=True):
         for (key, value) in sorter(items.iteritems()):
             if key.startswith("#"):
                 stream.write("{0}\n".format(value))
-            else:
+            elif value:
                 stream.write("{0} = {1}\n".format(key, value.replace("\n", "\\\n")))
-        stream.write(stanza_delim)
+            else:
+                # Avoid a trailing whitespace to keep the git gods happy
+                stream.write("{0} =\n".format(key))
 
+    keys = sorter(conf)
     # Global MUST be written first
-    if GLOBAL_STANZA in conf:
+    if GLOBAL_STANZA in keys:
+        keys.remove(GLOBAL_STANZA)
         write_stanza_body(conf[GLOBAL_STANZA])
-        # Remove from our shallow copy of conf, to prevent dup output
-        del conf[GLOBAL_STANZA]
-    for (section, cfg) in sorter(conf.iteritems()):
+        if keys:
+            stream.write(stanza_delim)
+    while keys:
+        section = keys.pop(0)
+        cfg = conf[section]
         stream.write("[{0}]\n".format(section))
         write_stanza_body(cfg)
+        if keys:
+            stream.write(stanza_delim)
 
 
 def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix=".tmp"):
@@ -1444,7 +1452,8 @@ def do_sort(args):
             try:
                 # KISS:  Look for the KSCONF-NO-SORT string in the first 4k of this file.
                 if not args.force and "KSCONF-NO-SORT" in open(conf.name).read(4096):
-                    sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
+                    if not args.quiet:
+                        sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
                     continue
                 data = parse_conf(conf, **parse_args)
                 conf.close()
@@ -1455,8 +1464,9 @@ def do_sort(args):
                                  "Error:  {1}\n".format(conf.name, e))
                 failure = True
             if smart_rc == SMART_NOCHANGE:
-                sys.stderr.write("Nothing to update.  "
-                                 "File {0} is already sorted\n".format(conf.name))
+                if not args.quiet:
+                    sys.stderr.write("Nothing to update.  "
+                                    "File {0} is already sorted\n".format(conf.name))
             else:
                 sys.stderr.write("Replaced file {0} with sorted content.\n".format(conf.name))
                 changes += 1
@@ -2283,6 +2293,9 @@ To recursively sort all files:
     sp_sort.add_argument("-F", "--force", action="store_true",
                          help="Force file storing even of files that contain the special "
                               "'KSCONF-NO-SORT' marker.  This only prevents an in-place sort.")
+    sp_sort.add_argument("-q", "--quiet", action="store_true",
+                         help="Reduce the amount of output.  In '--inplace' only files that were "
+                              "updated or contained errors are reported.")
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
 

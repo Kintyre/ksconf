@@ -328,7 +328,7 @@ Kintyre's Splunk scripts for various admin tasks.
 
 
 ### ksconf.py sort
-    usage: ksconf.py sort [-h] [--target FILE | --inplace] [-F] [-n LINES]
+    usage: ksconf.py sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
                           FILE [FILE ...]
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
@@ -356,6 +356,8 @@ Kintyre's Splunk scripts for various admin tasks.
       -F, --force           Force file storing even of files that contain the
                             special 'KSCONF-NO-SORT' marker. This only prevents an
                             in-place sort.
+      -q, --quiet           Reduce the amount of output. In '--inplace' only files
+                            that were updated or contained errors are reported.
       -n LINES, --newlines LINES
                             Lines between stanzas.
 

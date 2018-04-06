@@ -25,6 +25,12 @@ repos:
       entry: make_cli_docs.py
       type: [ python ]
       pass_filenames: false
+    - id: ksconf-unittest
+      name: Run all unit tests for ksconf
+      language: script
+      entry: test_ksconf.py
+      type: [ python ]
+      pass_filenames: false
 
 # Way too much noise.... (or I just have bad code, either way it's too much)
 #- repo: https://github.com/pre-commit/mirrors-pylint
