@@ -31,13 +31,22 @@ def write_doc_for(stream, script, *subcmds):
 
 readme = open("README.md.tmp", "w")
 readme.write("""\
-# Kintyre Splunk Admin Script with CLI interfaces
-Kintyre's Splunk scripts for various admin tasks.
+# Kintyre Splunk Configuration tool
+
+
+Install with
+
+    git clone https://github.com/Kintyre/ksconf.git
+    cd ksconf
+    pip install .
+
+The following documents the CLI options
+
 """)
 
 subcommands = {
     "ksconf.py" :
-        [ "check", "combine", "diff", "promote" ,"merge", "minimize", "sort", "unarchive"]
+        [ "check", "combine", "diff", "promote" ,"merge", "minimize", "sort", "unarchive" ],
 }
 
 for script in glob("*.py"):
@@ -53,6 +62,10 @@ for script in glob("*.py"):
 
 readme.close()
 
+if not os.path.isfile("README.md"):
+    print "Make fresh README.md"
+    os.rename("README.md.tmp", "README.md")
+    sys.exit(1)
 if filecmp.cmp("README.md.tmp", "README.md"):
     print "No changes made to file."
     os.unlink("README.md.tmp")
