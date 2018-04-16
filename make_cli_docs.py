@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 import filecmp
 from glob import glob
 from subprocess import Popen, PIPE
@@ -9,25 +10,34 @@ from subprocess import Popen, PIPE
 def cmd_output(*cmd):
     p = Popen(cmd, stdout=PIPE, env={"PYTHONWARNINGS":"ignore"})
     p.wait()
-    for line in p.stdout.readlines():
-        yield line
+    return p.stdout.readlines()
+
+def parse_subcommand(lines):
+    #text = "\n".join([l.rstrip() for l in lines])
+    text = "\n".join(lines)
+    match = re.search(r'[\r\n]+positional arguments:\s*\{([\w,-]+)\}', text)
+    if match:
+        subcommands = match.group(1).split(",")
+        return subcommands
+    return []
 
 def prefix(iterable, indent=4):
     p = " " * indent
     for line in iterable:
         yield p + line
 
-def write_doc_for(stream, script, *subcmds):
-    level = 2 + len(subcmds)
+def write_doc_for(stream, script, level=2, *subcmds):
     subcmds = list(subcmds)
     args = [ sys.executable, script ] + subcmds + [ "--help" ]
-    #args.extend(list(subcmds))
-    #args.append("--help")
-    out = cmd_output(*args)
+    out = list(cmd_output(*args))
     stream.write("{} {}\n".format("#" * level, " ".join([script] + subcmds)))
     for line in prefix(out):
         stream.write(line)
     stream.write("\n\n")
+    for subcmd in parse_subcommand(out):
+        sc = subcmds + [ subcmd ]
+        print "  Subcmd docs for {} {}".format(script, " ".join(sc))
+        write_doc_for(stream, script, level+1, *sc)
 
 readme = open("README.md.tmp", "w")
 readme.write("""\
@@ -44,10 +54,6 @@ The following documents the CLI options
 
 """)
 
-subcommands = {
-    "ksconf.py" :
-        [ "check", "combine", "diff", "promote" ,"merge", "minimize", "sort", "unarchive" ],
-}
 
 for script in glob("*.py"):
     if "make_cli_docs" in script:
@@ -56,9 +62,6 @@ for script in glob("*.py"):
         continue
     print "Building docs for {}".format(script)
     write_doc_for(readme, script)
-    for subcmds in subcommands.get(script, []):
-        print "  Subcmd docs for {} {}".format(script, subcmds)
-        write_doc_for(readme, script, *subcmds.split(" "))
 
 readme.close()
 

@@ -1,5 +1,14 @@
-# Kintyre Splunk Admin Script with CLI interfaces
-Kintyre's Splunk scripts for various admin tasks.
+# Kintyre Splunk Configuration tool
+
+
+Install with
+
+    git clone https://github.com/Kintyre/ksconf.git
+    cd ksconf
+    pip install .
+
+The following documents the CLI options
+
 ## ksconf.py
     usage: ksconf.py [-h] [-S MODE] [-K MODE] [--force-color]
                      {check,combine,diff,promote,merge,minimize,sort,unarchive}
