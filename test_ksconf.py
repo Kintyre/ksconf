@@ -28,17 +28,11 @@ class ParserTestCase(unittest.TestCase):
 
     # List of test to add yet:
 
-    # Todo:  Test comments in general...  Don't go too deep into this beacuse we don't care too much, and eventually better comment support will break the API.
+    # Todo:  Test comments in general...  Don't go too deep into this because we don't care too much, and eventually better comment support will break the API.
     # Todo:  Test trailing comments on stanzas
     # Todo:  Test trailing comments on key=value lines
     # Todo:  Test copy/deepcopy support:  Parse a string, copy, change origional, confirm copy wasn't altered.
 
-    # Helper methods
-    @staticmethod
-    def parse_string(text, **kwargs):
-        text = dedent(text)
-        f = StringIO(text)
-        return parse_conf(f, **kwargs)
 
     def test_read_file(self):
         """ Confirm that parse_conf() works with an OS-level file. """
@@ -191,9 +185,9 @@ class ParserTestCase(unittest.TestCase):
         animal = wolf
         """
         with self.assertRaises(DuplicateKeyException):
-            self.parse_string(t, dup_key=DUP_EXCEPTION)
+            parse_string(t, dup_key=DUP_EXCEPTION)
 
-        c = self.parse_string(t, dup_key=DUP_MERGE)
+        c = parse_string(t, dup_key=DUP_MERGE)
         self.assertEqual(c["jungle"]["animal"], "snake")
         self.assertEqual(c["forest"]["animal"], "wolf")
 

@@ -1017,7 +1017,7 @@ def do_diff(args):
 
 # ANSI_COLOR = "\x1b[{0}m"
 ANSI_BOLD = 1
-ANSI_RED   = 31
+ANSI_RED = 31
 ANSI_GREEN = 32
 ANSI_YELLOW = 33
 ANSI_RESET = 0
@@ -1190,7 +1190,7 @@ def do_minimize(args):
             else:
                 if match_bwlist(op.location.key, args.preserve_key):
                     '''
-                    sys.stderr.write("Skiping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
+                    sys.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
                                  "".format(op.location.stanza, op.location.key, op.a))
                     '''
                     continue
@@ -1278,6 +1278,8 @@ def do_promote(args):
                              "files.  {0} --> {1}  If this is intentional, override this safety"
                              "check with '--force'\n".format(bn_source, bn_target))
             return EXIT_CODE_FAILED_SAFETY_CHECK
+
+    # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
     # Parse all config files
     cfg_src = parse_conf(args.source, **parse_args)
     cfg_tgt = parse_conf(args.target, **parse_args)
@@ -1576,11 +1578,13 @@ def do_combine(args):
             if smart_rc != SMART_NOCHANGE:
                 sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
+            # Handle merging conf files
             #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
             smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args,
                                         dry_run=args.dry_run, banner_comment=args.banner)
             if smart_rc != SMART_NOCHANGE:
-                sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path, src_files))
+                sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
+                                                                             src_files))
 
     if True and target_extra_files:     # Todo: Allow for cleanup to be disabled via CLI
         sys.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".format(
@@ -1799,7 +1803,7 @@ def do_unarchive(args):
             print "git rm -rf {}".format(path)
             git_cmd(["rm", fn], cwd=dest_app)
         else:
-            print "rm -rf {}".format(path)
+            print "rm -f {}".format(path)
             os.unlink(path)
 
     if is_git:
@@ -1876,7 +1880,7 @@ def cli():
     import argparse
     import textwrap
 
-    # For now, just effectily a copy of RawDescriptionHelpFormatter
+    # For now, just effectively a copy of RawDescriptionHelpFormatter
     class MyDescriptionHelpFormatter(argparse.HelpFormatter):
         def _fill_text(self, text, width, indent):
             # Looks like this one is ONLY used for the top-level description
@@ -2257,7 +2261,7 @@ duplicate settings.""",
                          ).completer = conf_files_completer
     sp_minz.add_argument("--target", "-t", metavar="FILE",
                          help="This is the local file that you with to remove the duplicate "
-                              "settings from.  By default, this file will be read and the updated"
+                              "settings from.  By default, this file will be read and the updated "
                               "with a minimized version."
                          ).completer = conf_files_completer
     sp_mzg1 = sp_minz.add_mutually_exclusive_group()
@@ -2311,12 +2315,13 @@ To recursively sort all files:
                        action="store_true", default=False,
                        help="Replace the input file with a sorted version.  Warning this a "
                             "potentially destructive operation that may move/remove comments.")
-    sp_sort.add_argument("-F", "--force", action="store_true",
-                         help="Force file storing even of files that contain the special "
-                              "'KSCONF-NO-SORT' marker.  This only prevents an in-place sort.")
-    sp_sort.add_argument("-q", "--quiet", action="store_true",
-                         help="Reduce the amount of output.  In '--inplace' only files that were "
-                              "updated or contained errors are reported.")
+    sp_sog1 = sp_sort.add_argument_group("In-place update arguments")
+    sp_sog1.add_argument("-F", "--force", action="store_true",
+                         help="Force file sorting for all files, even for files containing the "
+                              "special 'KSCONF-NO-SORT' marker.")
+    sp_sog1.add_argument("-q", "--quiet", action="store_true",
+                         help="Reduce the output.  Reports only updated or invalid files.  "
+                              "This is useful for pre-commit hooks, for example.")
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
 

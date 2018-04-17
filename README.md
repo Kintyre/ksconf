@@ -327,7 +327,7 @@ The following documents the CLI options
       --target FILE, -t FILE
                             This is the local file that you with to remove the
                             duplicate settings from. By default, this file will be
-                            read and the updatedwith a minimized version.
+                            read and the updated with a minimized version.
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimized
                             value to TARGET, show a 'diff' of what would be
                             removed.
@@ -369,13 +369,15 @@ The following documents the CLI options
       --inplace, -i         Replace the input file with a sorted version. Warning
                             this a potentially destructive operation that may
                             move/remove comments.
-      -F, --force           Force file storing even of files that contain the
-                            special 'KSCONF-NO-SORT' marker. This only prevents an
-                            in-place sort.
-      -q, --quiet           Reduce the amount of output. In '--inplace' only files
-                            that were updated or contained errors are reported.
       -n LINES, --newlines LINES
                             Lines between stanzas.
+    
+    In-place update arguments:
+      -F, --force           Force file sorting for all files, even for files
+                            containing the special 'KSCONF-NO-SORT' marker.
+      -q, --quiet           Reduce the output. Reports only updated or invalid
+                            files. This is useful for pre-commit hooks, for
+                            example.
 
 
 ### ksconf.py unarchive
