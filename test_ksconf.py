@@ -387,8 +387,9 @@ class ConfigMergeTestCase(unittest.TestCase):
 class UtilFunctionTestCase(unittest.TestCase):
 
     def test_relwalk_prefix_preserve(self):
-        a = list(relwalk("."))
-        b = list(relwalk("." + os.path.sep))
+        cwd = os.path.realpath(os.getcwd())
+        a = list(relwalk(cwd))
+        b = list(relwalk(cwd + os.path.sep))
         self.assertListEqual(a, b, "should return the same paths with or without a trailing slash")
 
 

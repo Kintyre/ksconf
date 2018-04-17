@@ -29,8 +29,9 @@ The following documents the CLI options
         combine             Merge configuration files from one or more source
                             directories into a combined destination directory.
                             This allows for an arbitrary number of splunk's
-                            configuration layers within a single app. Think of
-                            this as a Unix-style '/etc/*.d' layer for Splunk apps
+                            configuration layers within a single app. Ad-hoc uses
+                            include merging the 'users' directory across several
+                            instances after a phased servermigration.
         diff                Compares settings differences of two .conf files
                             ignoring textual and sorting differences
         promote             Promote .conf settings from one file into another
@@ -93,6 +94,13 @@ The following documents the CLI options
     Merge .conf settings from multiple source directories into a combined target
     directory.   Configuration files can be stored in a '/etc/*.d' like directory
     structure and consolidated back into a single 'default' directory.
+    
+    This command supports both one-time operations and recurring merge jobs.
+    For example, this command can be used to combine all users knowledge objects
+    (stored in 'etc/users') after a server migration, or to merge a single user's
+    settings after an their account has been renamed.  Recurring operations assume
+    some type of external scheduler is being used.  A best-effort is made to only
+    write to target files as needed.
     
     The 'combine' command takes your logical layers of configs (upstream,
     corporate, splunk admin fixes, and power user knowledge objects, ...)
@@ -224,7 +232,7 @@ The following documents the CLI options
 
 ### ksconf.py promote
     usage: ksconf.py promote [-h] [--batch | --interactive] [--force] [--keep]
-                             [--keep-empty KEEP_EMPTY]
+                             [--keep-empty]
                              SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is
@@ -247,34 +255,33 @@ The following documents the CLI options
     will be lost.  (This needs improvement.)
     
     positional arguments:
-      SOURCE                The source configuration file to pull changes from.
-                            (Typically the 'local' conf file)
-      TARGET                Configuration file or directory to push the changes
-                            into. (Typically the 'default' folder) When a
-                            directory is given instead of a file then the same
-                            file name is assumed for both SOURCE and TARGET
+      SOURCE             The source configuration file to pull changes from.
+                         (Typically the 'local' conf file)
+      TARGET             Configuration file or directory to push the changes into.
+                         (Typically the 'default' folder) When a directory is
+                         given instead of a file then the same file name is
+                         assumed for both SOURCE and TARGET
     
     optional arguments:
-      -h, --help            show this help message and exit
-      --batch, -b           Use batch mode where all configuration settings are
-                            automatically promoted. All changes are moved from the
-                            source to the target file and the source file will be
-                            blanked or removed.
-      --interactive, -i     Enable interactive mode where the user will be
-                            prompted to approve the promotion of specific stanzas
-                            and keys. The user will be able to apply, skip, or
-                            edit the changes being promoted. (This functionality
-                            was inspired by 'git add --patch').
-      --force, -f           Disable safety checks.
-      --keep, -k            Keep conf settings in the source file. This means that
-                            changes will be copied into the target file instead of
-                            moved there.
-      --keep-empty KEEP_EMPTY
-                            Keep the source file, even if after the settings
-                            promotions the file has no content. By default, SOURCE
-                            will be removed if all content has been moved into the
-                            TARGET location. Splunk will re-create any necessary
-                            local files on the fly.
+      -h, --help         show this help message and exit
+      --batch, -b        Use batch mode where all configuration settings are
+                         automatically promoted. All changes are moved from the
+                         source to the target file and the source file will be
+                         blanked or removed.
+      --interactive, -i  Enable interactive mode where the user will be prompted
+                         to approve the promotion of specific stanzas and keys.
+                         The user will be able to apply, skip, or edit the changes
+                         being promoted. (This functionality was inspired by 'git
+                         add --patch').
+      --force, -f        Disable safety checks.
+      --keep, -k         Keep conf settings in the source file. This means that
+                         changes will be copied into the target file instead of
+                         moved there.
+      --keep-empty       Keep the source file, even if after the settings
+                         promotions the file has no content. By default, SOURCE
+                         will be removed if all content has been moved into the
+                         TARGET location. Splunk will re-create any necessary
+                         local files on the fly.
 
 
 ### ksconf.py merge

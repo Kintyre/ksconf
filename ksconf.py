@@ -168,6 +168,7 @@ EXIT_CODE_SUCCESS = 0
 EXIT_CODE_NOTHING_TO_DO = 1
 EXIT_CODE_USER_QUIT = 2
 EXIT_CODE_NO_SUCH_FILE = 5
+EXIT_CODE_MISSING_ARG = 6
 
 EXIT_CODE_DIFF_EQUAL = 0
 EXIT_CODE_DIFF_CHANGE = 3
@@ -741,7 +742,6 @@ def match_bwlist(value, bwlist):
                 return True
     return False
 
-
 def relwalk(top, topdown=True, onerror=None, followlinks=False):
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
@@ -947,6 +947,7 @@ def do_check(args):
         if not os.path.isfile(conf):
             sys.stderr.write("Skipping missing file:  {0}\n".format(conf))
             c["missing"] += 1
+            continue
         try:
             parse_conf(conf, **parse_args)
             c["okay"] += 1
@@ -961,7 +962,7 @@ def do_check(args):
             c["error"] += 1
         except Exception, e:
             sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
-                             "Aborting.\n{1}".format(conf, e))
+                             "Aborting.\n{1}\n".format(conf, e))
             exit_code = EXIT_CODE_INTERNAL_ERROR
             c["error"] += 1
             break
@@ -1011,6 +1012,7 @@ def do_diff(args):
         sys.stderr.write("Files are the same.\n")
     elif rc == EXIT_CODE_DIFF_NO_COMMON:
         sys.stderr.write("No common stanzas between files.\n")
+    return rc
 
 
 # ANSI_COLOR = "\x1b[{0}m"
@@ -1223,6 +1225,7 @@ def do_minimize(args):
         print "Writing config to STDOUT...."
         write_conf(sys.stdout, minz_cfg)
         '''
+    # Todo:  return ?  Should only be updating target if there's a change; RC should reflect this
 
 def do_promote(args):
     parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
@@ -1236,6 +1239,11 @@ def do_promote(args):
         # If a directory is given instead of a target file, then assume the source filename is the
         # same as the target filename.
         args.target = os.path.join(args.target, os.path.basename(args.source))
+
+    # If src/dest are the same, then the file ends up being deleted.  Whoops!
+    if os.path.samefile(args.source, args.target):
+        sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
+        return EXIT_CODE_FAILED_SAFETY_CHECK
 
     if not os.path.isfile(args.target):
         sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
@@ -1491,6 +1499,10 @@ def do_combine(args):
                       keep_comments=True, strict=True)
     # Ignores case sensitivity.  If you're on Windows, name your files right.
     conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
+
+    if args.target is None:
+        sys.stderr.write("Must provide the '--target' directory.\n")
+        return EXIT_CODE_MISSING_ARG
 
     sys.stderr.write("Combining conf files into {}\n".format(args.target))
     args.source = list(_expand_glob_list(args.source))
@@ -1948,12 +1960,20 @@ def cli():
                                     "Merge configuration files from one or more source directories "
                                     "into a combined destination directory.  This allows for an "
                                     "arbitrary number of splunk's configuration layers within a "
-                                    "single app.  Think of this as a Unix-style '/etc/*.d' layer "
-                                    "for Splunk apps",
+                                    "single app.  Ad-hoc uses include merging the 'users' "
+                                    "directory across several instances after a phased server"
+                                    "migration.",
                                     description="""\
 Merge .conf settings from multiple source directories into a combined target
 directory.   Configuration files can be stored in a '/etc/*.d' like directory
 structure and consolidated back into a single 'default' directory.
+
+This command supports both one-time operations and recurring merge jobs.
+For example, this command can be used to combine all users knowledge objects
+(stored in 'etc/users') after a server migration, or to merge a single user's
+settings after an their account has been renamed.  Recurring operations assume
+some type of external scheduler is being used.  A best-effort is made to only
+write to target files as needed.
 
 The 'combine' command takes your logical layers of configs (upstream,
 corporate, splunk admin fixes, and power user knowledge objects, ...)
@@ -2151,7 +2171,8 @@ will be lost.  (This needs improvement.)
                          action="store_true", default=False,
                          help="Keep conf settings in the source file.  This means that changes "
                               "will be copied into the target file instead of moved there.")
-    sp_prmt.add_argument("--keep-empty", default=False,
+    sp_prmt.add_argument("--keep-empty",
+                         action="store_true", default=False,
                          help="Keep the source file, even if after the settings promotions the "
                               "file has no content.  By default, SOURCE will be removed if all "
                               "content has been moved into the TARGET location.  "
