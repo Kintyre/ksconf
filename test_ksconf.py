@@ -16,11 +16,14 @@ import warnings
 warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
 
 
-def parse_string(text, **kwargs):
+def parse_string(text, profile=None, **kwargs):
     text = dedent(text)
     f = StringIO(text)
-    return parse_conf(f, **kwargs)
-
+    if profile:
+        return parse_conf(f, profile)
+    else:
+        from ksconf import _parse_conf
+        return _parse_conf(f, **kwargs)
 
 
 class ParserTestCase(unittest.TestCase):
@@ -32,7 +35,6 @@ class ParserTestCase(unittest.TestCase):
     # Todo:  Test trailing comments on stanzas
     # Todo:  Test trailing comments on key=value lines
     # Todo:  Test copy/deepcopy support:  Parse a string, copy, change origional, confirm copy wasn't altered.
-
 
     def test_read_file(self):
         """ Confirm that parse_conf() works with an OS-level file. """

@@ -10,7 +10,7 @@ Install with
 The following documents the CLI options
 
 ## ksconf.py
-    usage: ksconf.py [-h] [-S MODE] [-K MODE] [--force-color]
+    usage: ksconf.py [-h] [--force-color]
                      {check,combine,diff,promote,merge,minimize,sort,unarchive}
                      ...
     
@@ -51,21 +51,6 @@ The following documents the CLI options
     
     optional arguments:
       -h, --help            show this help message and exit
-      -S MODE, --duplicate-stanza MODE
-                            Set duplicate stanza handling mode. If [stanza] exists
-                            more than once in a single .conf file: Mode
-                            'overwrite' will keep the last stanza found. Mode
-                            'merge' will merge keys from across all stanzas,
-                            keeping the the value form the latest key. Mode
-                            'exception' (default) will abort if duplicate stanzas
-                            are found.
-      -K MODE, --duplicate-key MODE
-                            Set duplicate key handling mode. A duplicate key is a
-                            condition that occurs when the same key (key=value) is
-                            set within the same stanza. Mode of 'overwrite'
-                            silently ignore duplicate keys, keeping the latest.
-                            Mode 'exception', the default, aborts if duplicate
-                            keys are found.
       --force-color         Force TTY color mode on. Useful if piping the output a
                             color-awarepager, like 'less -R'
 
@@ -207,7 +192,7 @@ The following documents the CLI options
 
 
 ### ksconf.py diff
-    usage: ksconf.py diff [-h] [-o FILE] [--comments] FILE FILE
+    usage: ksconf.py diff [-h] [-o FILE] [--comments] CONF1 CONF2
     
     Compares the content differences of two .conf files
     
@@ -218,8 +203,8 @@ The following documents the CLI options
     macros can be compared more easily.
     
     positional arguments:
-      FILE                  Left side of the comparison
-      FILE                  Right side of the comparison
+      CONF1                 Left side of the comparison
+      CONF2                 Right side of the comparison
     
     optional arguments:
       -h, --help            show this help message and exit

@@ -283,7 +283,44 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False
             raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
 
-def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
+# Parsing configuration profiles
+PARSECONF_STRICT = dict(
+    keep_comments=True,
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_EXCEPTION,
+    strict=True)
+
+PARSECONF_STRICT_NC = dict(
+    keep_comments=False,        # No comment
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_EXCEPTION,
+    strict=True)
+
+PARSECONF_MID = dict(
+    keep_comments=True,
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_OVERWRITE,
+    strict=True)
+
+PARSECONF_MID_NC = dict(
+    keep_comments=False,         # No comments
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_OVERWRITE,
+    strict=True)
+
+PARSECONF_LOOSE = dict(
+    keep_comments=False,
+    dup_stanza=DUP_MERGE,
+    dup_key=DUP_MERGE,
+    strict=False)
+
+
+
+def parse_conf(stream, profile=PARSECONF_MID):
+    # Placeholder stub for an eventual migration to proper class-oriented parser
+    return _parse_conf(stream, **profile)
+
+def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if not hasattr(stream, "read"):
         # Assume it's a filename
@@ -468,34 +505,27 @@ def inject_section_comments(section, prepend=None, append=None):
         section["#-%06d" % i] = comment
 
 
-
-def merge_conf_files(dest_file, configs, parse_args, dry_run=False, banner_comment=None):
+def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
     # Parse all config files
-    cfgs = [ parse_conf(conf, **parse_args) for conf in configs ]
+    cfgs = [conf.data for conf in configs]
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
-    dest_is_stream = hasattr(dest_file, "write")
     if banner_comment:
         if not banner_comment.startswith("#"):
             banner_comment = "#" + banner_comment
         inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}), prepend=[banner_comment])
 
     # Either show the diff (dry-run mode) or write to the destination file
-    if dry_run and not dest_is_stream:
-        if os.path.isfile(dest_file):
-            dest_cfg = parse_conf(dest_file, **parse_args)
+    if dry_run and dest.is_file():
+        if os.path.isfile(dest.name):
+            dest_cfg = dest.data
         else:
             dest_cfg = {}
         show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
-                  headers=(dest_file, dest_file+"-new"))
+                  headers=(dest.name, dest.name + "-new"))
         return
+    return dest.dump(merged_cfg)
 
-    # This causes some chaos with the dry-run diff....
-    if dest_is_stream:
-        write_conf(dest_file, merged_cfg)
-        return SMART_CREATE
-    else:
-        return smart_write_conf(dest_file, merged_cfg)
 
 
 ####################################################################################################
@@ -932,9 +962,6 @@ def git_status_ui(path, *args):
 
 
 def do_check(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False, strict=True)
-
     # Should we read a list of conf files from STDIN?
     if len(args.conf) == 1 and args.conf[0] == "-":
         confs = _stdin_iter()
@@ -949,7 +976,7 @@ def do_check(args):
             c["missing"] += 1
             continue
         try:
-            parse_conf(conf, **parse_args)
+            parse_conf(conf, profile=PARSECONF_STRICT_NC)
             c["okay"] += 1
             if not args.quiet:
                 sys.stdout.write("Successfully parsed {0}\n".format(conf))
@@ -977,37 +1004,21 @@ def do_check(args):
 
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
-    if args.dry_run and (args.target == "-" or not os.path.isfile(args.target)):
-        sys.stderr.write("Dry-run only works of '--target' is a normal file.  "
-                         "Outputting to the screen.\n")
-        args.target = sys.stdout
-    elif args.target == "-":
-        args.target = sys.stdout
-    merge_conf_files(args.target, args.conf, parse_args, dry_run=args.dry_run,
-                     banner_comment=args.banner)
+    return merge_conf_files(args.target, args.conf, dry_run=args.dry_run, banner_comment=args.banner)
 
 
 def do_diff(args):
     ''' Compare two configuration files. '''
     # Todo:  Allow fallback to text comparisons for non-conf files.
     # Todo:  Eventually support directory (or recursive?) diffs too.
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=args.comments, strict=True)
-    # Parse all config files
-    try:
-        cfg1 = parse_conf(args.conf1, **parse_args)
-        cfg2 = parse_conf(args.conf2, **parse_args)
-    except IOError, e:
-        sys.stderr.write("Unable to open conf file.  {}\n".format(e.message))
-        return EXIT_CODE_NO_SUCH_FILE
-    except ConfParserException, e:
-        sys.stderr.write("Unable to parse conf file.  {}\n".format(e))
-        # We don't distinguish between bad conf files and safety checks here.
-        return EXIT_CODE_BAD_CONF_FILE
+    args.conf1.set_parser_option(keep_comments=args.comments)
+    args.conf2.set_parser_option(keep_comments=args.comments)
+
+    cfg1 = args.conf1.data
+    cfg2 = args.conf2.data
+
     diffs = compare_cfgs(cfg1, cfg2)
-    rc = show_diff(args.output, diffs, headers=(args.conf1, args.conf2))
+    rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
     if rc == EXIT_CODE_DIFF_EQUAL:
         sys.stderr.write("Files are the same.\n")
     elif rc == EXIT_CODE_DIFF_NO_COMMON:
@@ -1168,13 +1179,11 @@ def show_text_diff(stream, a, b):
 
 
 def do_minimize(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
-    cfgs = [ parse_conf(conf, **parse_args) for conf in args.conf ]
+    cfgs = [ conf.data for conf in args.conf ]
     # Merge all config files:
     default_cfg = merge_conf_dicts(*cfgs)
     del cfgs
-    local_cfg = parse_conf(args.target, **parse_args)
+    local_cfg = args.target.data
 
     minz_cfg = dict(local_cfg)
 
@@ -1212,14 +1221,14 @@ def do_minimize(args):
             continue
 
     if args.dry_run:
-        rc =show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
-                  headers=(args.target, args.target + "-new"))
+        rc = show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
+                       headers=(args.target.name, args.target.name + "-new"))
         return rc
 
     if args.output:
-        write_conf(args.output, minz_cfg)
+        args.output.dump(minz_cfg)
     else:
-        smart_write_conf(args.target, minz_cfg)
+        args.target.dump(minz_cfg)
         '''
         # Makes it really hard to test if you keep overwriting the source file...
         print "Writing config to STDOUT...."
@@ -1227,35 +1236,29 @@ def do_minimize(args):
         '''
     # Todo:  return ?  Should only be updating target if there's a change; RC should reflect this
 
+
 def do_promote(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False, strict=True)  #args.comments)
-
-    if not os.path.isfile(args.source):
-        sys.stderr.write("Aborting.  Missing source file {}.".format(args.source))
-        return EXIT_CODE_NO_SUCH_FILE
-
-    if os.path.isdir(args.target):
+    if isinstance(args.target, ConfDirProxy):
         # If a directory is given instead of a target file, then assume the source filename is the
         # same as the target filename.
-        args.target = os.path.join(args.target, os.path.basename(args.source))
+        args.target = args.target.get_file(os.path.basename(args.source.name))
 
     # If src/dest are the same, then the file ends up being deleted.  Whoops!
-    if os.path.samefile(args.source, args.target):
+    if os.path.samefile(args.source.name, args.target.name):
         sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
         return EXIT_CODE_FAILED_SAFETY_CHECK
 
-    if not os.path.isfile(args.target):
+    if not os.path.isfile(args.target.name):
         sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
-                         .format(args.target, args.source))
+                         .format(args.target.name, args.source.name))
         if args.keep:
-            shutil.copy2(args.source, args.target)
+            shutil.copy2(args.source.name, args.target.name)
         else:
-            shutil.move(args.source, args.target)
+            shutil.move(args.source.name, args.target.name)
         return
 
-    fp_source = file_fingerprint(args.source)
-    fp_target = file_fingerprint(args.target)
+    fp_source = file_fingerprint(args.source.name)
+    fp_target = file_fingerprint(args.target.name)
 
 
     # Todo: Add a safety check prevent accidental merge of unrelated files.
@@ -1263,8 +1266,8 @@ def do_promote(args):
     # Possible check (1) Are basenames are different?  (props.conf vs transforms.conf)
     # Possible check (2) Are there key's in common? (DEST_KEY vs REPORT)
     # Using #1 for now, consider if there's value in #2
-    bn_source = os.path.basename(args.source)
-    bn_target = os.path.basename(args.target)
+    bn_source = os.path.basename(args.source.name)
+    bn_target = os.path.basename(args.target.name)
     if bn_source.endswith(".meta") and bn_target.endswith(".meta"):
         # Allow local.meta -> default.meta without --force or a warning message
         pass
@@ -1281,11 +1284,11 @@ def do_promote(args):
 
     # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
     # Parse all config files
-    cfg_src = parse_conf(args.source, **parse_args)
-    cfg_tgt = parse_conf(args.target, **parse_args)
+    cfg_src = args.source.data
+    cfg_tgt = args.target.data
 
     if not cfg_src:
-        sys.stderr.write("No settings found in {0}.  No content to promote.\n".format(args.source))
+        sys.stderr.write("No settings in {0}.  No content to promote.\n".format(args.source.name))
         return EXIT_CODE_NOTHING_TO_DO
 
     if args.mode == "ask":
@@ -1304,7 +1307,7 @@ def do_promote(args):
             if input == 'q':
                 return EXIT_CODE_USER_QUIT
             elif input == 'd':
-                show_diff(sys.stdout, delta, headers=(args.source, args.target))
+                show_diff(sys.stdout, delta, headers=(args.source.name, args.target.name))
             elif input == 'y':
                 args.mode = "batch"
                 break
@@ -1323,24 +1326,24 @@ def do_promote(args):
     # Todo: Avoid rewriting files if NO changes were made. (preserve prior backups)
     # Todo: Restore file modes and such
 
-    if file_fingerprint(args.source, fp_source):
-        sys.stderr.write("Aborting!  External source file changed: {0}\n".format(args.source))
+    if file_fingerprint(args.source.name, fp_source):
+        sys.stderr.write("Aborting!  External source file changed: {0}\n".format(args.source.name))
         return EXIT_CODE_EXTERNAL_FILE_EDIT
-    if file_fingerprint(args.target, fp_target):
-        sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target))
+    if file_fingerprint(args.target.name, fp_target):
+        sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target.name))
         return EXIT_CODE_EXTERNAL_FILE_EDIT
     # Reminder:  conf entries are being removed from source and promoted into target
-    smart_write_conf(args.target, cfg_final_tgt)
+    smart_write_conf(args.target.name, cfg_final_tgt)
     if not args.keep:
         # If --keep is set, we never touch the source file.
         if cfg_final_src:
-            smart_write_conf(args.source, cfg_final_src)
+            args.source.dump(cfg_final_src)
         else:
             # Config file is empty.  Should we write an empty file, or remove it?
             if args.keep_empty:
-                write_conf(args.source, cfg_final_src)
+                args.source.dump(cfg_final_src)
             else:
-                os.unlink(args.source)
+                args.source.unlink()
 
 
 def _do_promote_automatic(cfg_src, cfg_tgt, args):
@@ -1453,8 +1456,6 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
 def do_sort(args):
     ''' Sort a single configuration file. '''
     stanza_delims = "\n" * args.newlines
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True)
     if args.inplace:
         failure = False
         changes = 0
@@ -1465,7 +1466,7 @@ def do_sort(args):
                     if not args.quiet:
                         sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
                     continue
-                data = parse_conf(conf, **parse_args)
+                data = parse_conf(conf, profile=PARSECONF_STRICT)
                 conf.close()
                 smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
@@ -1489,7 +1490,7 @@ def do_sort(args):
             if len(args.conf) > 1:
                 args.target.write("---------------- [ {0} ] ----------------\n\n".format(conf.name))
             try:
-                data = parse_conf(conf, **parse_args)
+                data = parse_conf(conf, profile=PARSECONF_STRICT)
                 write_conf(args.target, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
                 sys.stderr.write("Error trying processing {0}.  Error:  {1}\n".format(conf.name, e))
@@ -1497,8 +1498,6 @@ def do_sort(args):
 
 
 def do_combine(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
     # Ignores case sensitivity.  If you're on Windows, name your files right.
     conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
 
@@ -1579,9 +1578,12 @@ def do_combine(args):
                 sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
             # Handle merging conf files
+            dest = ConfFileProxy(os.path.join(args.target, dest_fn), "rw",
+                                 parse_profile=PARSECONF_MID)
+            srcs = [ ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files ]
             #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
-            smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args,
-                                        dry_run=args.dry_run, banner_comment=args.banner)
+            smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
+                                        banner_comment=args.banner)
             if smart_rc != SMART_NOCHANGE:
                 sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
                                                                              src_files))
@@ -1622,7 +1624,7 @@ def do_unarchive(args):
         if gaf.path.endswith("app.conf") and gaf.payload:
             conffile = StringIO(gaf.payload)
             conffile.name = os.path.join(args.tarball, gaf.path)
-            app_conf = parse_conf(conffile, dup_stanza=DUP_MERGE, strict=False)
+            app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
             del conffile
         elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
             local_files.add(gaf_relpath)
@@ -1669,7 +1671,7 @@ def do_unarchive(args):
         try:
             # Ignoring the 'local' entries since distributed apps should never modify local anyways
             old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
-            old_app_conf = parse_conf(old_app_conf_file, dup_stanza=DUP_MERGE, strict=False)
+            old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
         except:
             sys.stderr.write("Unable to read app.conf from existing install.\n")
     else:
@@ -1859,6 +1861,181 @@ def do_unarchive(args):
         # When in 'nochange' mode, no point in even noting these options to the user.
 
 
+class ConfDirProxy(object):
+    def __init__(self, name, mode, parse_profile=None):
+        self.name = name
+        self._mode = mode
+        self._parse_profile = parse_profile
+
+    def get_file(self, relpath):
+        path = os.path.join(self.name, relpath)
+        return ConfFileProxy(path, self._mode, parse_profile=self._parse_profile, is_file=True)
+
+
+class ConfFileProxy(object):
+    def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
+        self.name = name
+        if is_file is not None:
+            self._is_file = is_file
+        elif stream:
+            self._is_file = False
+        else:
+            self._is_file = True
+        self._stream = stream
+        self._mode = mode
+        # Not sure if there's a good reason to keep a copy of the data locally?
+        self._data = None
+        self._parse_profile = parse_profile or {}
+
+    def is_file(self):
+        return self._is_file
+
+    def _type(self):
+        if self._is_file:
+            return "file"
+        else:
+            return "stream"
+
+    def _close_stream(self):
+        if self._stream:
+            if not self._stream.closed:
+                self._stream.close()
+        self._stream = None
+
+    def set_parser_option(self, **kwargs):
+        """ Setting a key to None will remove that setting. """
+        changed = False
+        for (k, v) in kwargs.items():
+            if v is None:
+                if k in self._parse_profile:
+                    del self._parse_profile[k]
+                    changed = True
+            else:
+                cv = self._parse_profile.get(k, None)
+                if cv != v:
+                    self._parse_profile[k] = v
+                    changed = True
+        if changed:
+            self._data = None
+
+    @property
+    def stream(self):
+        if self._stream is None:
+            self._stream = open(self.name, self._mode)
+        return self._stream
+
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = self.load()
+        return self._data
+
+    def load(self, profile=None):
+        if "r" not in self._mode:
+            # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
+            raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
+                                                                              self._mode))
+        parse_profile = dict(self._parse_profile)
+        if profile:
+            parse_profile.update(profile)
+        data = parse_conf(self.stream, profile=parse_profile)
+        return data
+
+    def dump(self, data):
+        if "w" not in self._mode:
+            raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
+                                                                            self._mode))
+        # Feels like the right thing to do????  OR self._data = data
+        self._data = None
+        # write vs smart write here ----
+        if self._is_file:
+            self._close_stream()
+            return smart_write_conf(self.name, data)
+        else:
+            write_conf(self._stream, data)
+            return SMART_CREATE
+
+    def unlink(self):
+        # Eventually this could trigger some kind of backup or recovery mechanism
+        # self._close_stream()
+        return os.unlink(self.name)
+
+    def backup(self, bkname=None):
+        raise NotImplementedError
+
+    def checksum(self, hash="sha256"):
+        raise NotImplementedError
+
+
+
+class ConfFileType(object):
+    """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
+
+    Started from argparse.FileType() and then changed everything.   With our use case, it's often
+    necessary to delay writing, or read before writing to a conf file (depending on weather or not
+    --dry-run mode is enabled, for example.)
+
+    Instances of FileType are typically passed as type= arguments to the
+    ArgumentParser add_argument() method.
+
+    Keyword Arguments:
+        - mode      A string indicating how the file is to be opened.  Accepts "r", "w", and "rw".
+        - action    'none', 'open', 'load'.   'none' means no preparation or tests;  'open' means
+                    make sure the file exists/openable;  'load' means make sure the file can be
+                    opened and parsed successfully.
+    """
+
+    def __init__(self, mode='r', action="open", parse_profile=None, accept_dir=False):
+        self._mode = mode
+        self._action = action
+        self._parse_profile = parse_profile or {}
+        self._accept_dir = accept_dir
+
+    def __call__(self, string):
+        from argparse import ArgumentTypeError
+        # the special argument "-" means sys.std{in,out}
+        if string == '-':
+            if 'r' in self._mode:
+                cfp = ConfFileProxy("<stdin>", "r", stream=sys.stdin, is_file=False)
+                if self._action == "load":
+                    try:
+                        d = cfp.data
+                        del d
+                    except ConfParserException, e:
+                        raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
+                return cfp
+            elif 'w' in self._mode:
+                return ConfFileProxy("<stdout>", "w", stream=sys.stdout, is_file=False)
+            else:
+                raise ValueError('argument "-" with mode {}'.format(self._mode))
+        if self._accept_dir and os.path.isdir(string):
+            return ConfDirProxy(string, self._mode, parse_profile=self._parse_profile)
+        if self._action == "none":
+            return ConfFileProxy(string, self._mode, parse_profile=self._parse_profile)
+        else:
+            try:
+                stream = open(string, self._mode)
+                cfp = ConfFileProxy(string, self._mode, stream=stream,
+                                    parse_profile=self._parse_profile, is_file=True)
+                if self._action == "load":
+                    # Force file to be parsed by accessing the 'data' property
+                    d = cfp.data
+                    del d
+                return cfp
+            except IOError as e:
+                message = "can't open '%s': %s"
+                raise ArgumentTypeError(message % (string, e))
+            except ConfParserException, e:
+                raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
+            except TypeError, e:
+                raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
+
+    def __repr__(self):
+        args = self._mode, self._action, self._parse_profile
+        args_str = ', '.join(repr(arg) for arg in args if arg != -1)
+        return '%s(%s)' % (type(self).__name__, args_str)
+
+
 ####################################################################################################
 ## CLI definition
 
@@ -1909,7 +2086,8 @@ def cli():
     conf_files_completer = FilesCompleter(allowednames=["*.conf"])
 
     # Common settings
-    #'''
+    '''
+    ### DEPRECATE THESE
     parser.add_argument("-S", "--duplicate-stanza", default=DUP_EXCEPTION, metavar="MODE",
                         choices=[DUP_MERGE, DUP_OVERWRITE, DUP_EXCEPTION],
                         help="Set duplicate stanza handling mode.  If [stanza] exists more than "
@@ -1924,11 +2102,10 @@ def cli():
                              "stanza.  Mode of 'overwrite' silently ignore duplicate keys, "
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
+    '''
     parser.add_argument("--force-color", action="store_true", default=False,
                         help="Force TTY color mode on.  Useful if piping the output a color-aware"
                              "pager, like 'less -R'")
-
-    #'''
 
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
@@ -2102,9 +2279,11 @@ macros can be compared more easily.
 """,
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_diff.set_defaults(funct=do_diff)
-    sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison"
+    sp_diff.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
                          ).completer = conf_files_completer
-    sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison"
+    sp_diff.add_argument("conf2", metavar="CONF2", help="Right side of the comparison",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
                          ).completer = conf_files_completer
     sp_diff.add_argument("-o", "--output", metavar="FILE",
                          type=argparse.FileType('w'), default=sys.stdout,
@@ -2145,10 +2324,13 @@ will be lost.  (This needs improvement.)
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_prmt.set_defaults(funct=do_promote, mode="ask")
     sp_prmt.add_argument("source", metavar="SOURCE",
+                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT_NC),
                          help="The source configuration file to pull changes from.  (Typically the "
                               "'local' conf file)"
                          ).completer = conf_files_completer
     sp_prmt.add_argument("target", metavar="TARGET",
+                         type=ConfFileType("rw", "load", accept_dir=True,
+                                           parse_profile=PARSECONF_STRICT),
                          help="Configuration file or directory to push the changes into. "
                               "(Typically the 'default' folder) "
                               "When a directory is given instead of a file then the same file name "
@@ -2223,10 +2405,12 @@ will be lost.  (This needs improvement.)
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_merg.set_defaults(funct=do_merge)
     sp_merg.add_argument("conf", metavar="FILE", nargs="+",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID),
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         default="-",
+                         type=ConfFileType("rw", "none", parse_profile=PARSECONF_STRICT),
+                         default=ConfFileProxy("<stdout>", "w", sys.stdout),
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."
                          ).completer = conf_files_completer
@@ -2256,10 +2440,12 @@ duplicate settings.""",
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_minz.set_defaults(funct=do_minimize)
     sp_minz.add_argument("conf", metavar="FILE", nargs="+",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_STRICT),
                          help="The default configuration file(s) used to determine what base "
                               "settings are unnecessary to keep in the target file."
                          ).completer = conf_files_completer
     sp_minz.add_argument("--target", "-t", metavar="FILE",
+                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT),
                          help="This is the local file that you with to remove the duplicate "
                               "settings from.  By default, this file will be read and the updated "
                               "with a minimized version."
@@ -2268,7 +2454,8 @@ duplicate settings.""",
     sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
                          help="Enable dry-run mode.  Instead of writing the minimized value to "
                               "TARGET, show a 'diff' of what would be removed.")
-    sp_mzg1.add_argument("--output", type=argparse.FileType("w"),
+    sp_mzg1.add_argument("--output",
+                         type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                          default=None,
                          help="When this option is used, the new minimized file will be saved to "
                               "this file instead of updating TARGET.  This can be use to preview "
