@@ -11,6 +11,8 @@ function RUN() {
     fi
 }
 
+DOWNLOADS=$PWD/app_archive
+
 coverage run test_ksconf.py || { echo "Unit test failed.  Stopping."; exit 2; }
 #coverage report ksconf.py
 
@@ -53,16 +55,16 @@ RC=3 RUN minimize TEST_APPS/search/default.d/05-*/savedsearches.conf --target=sa
 RUN minimize TEST_APPS/search/default.d/05-*/savedsearches.conf --target=savedsearches.conf
 
 # Test with a .zip file
-#( cd apps || exit 9 ; git rm -rf TA_RSA_SecurIdApp; git commit TA_RSA_SecurIdApp -m "Deleted stuff"; )
-#RUN unarchive --dest=apps --allow-local --git-mode=stage --app-name=TA_RSA_SecurIdApp technology-add-on-for-rsa-securid_01.zip
-#(cd apps || exit 9; git commit . -m "Blind commit."; )
+( cd apps || exit 9 ; git rm -rf TA_RSA_SecurIdApp; git commit TA_RSA_SecurIdApp -m "Deleted stuff"; )
+RUN unarchive --dest=apps --allow-local --git-mode=stage --app-name=TA_RSA_SecurIdApp $DOWNLOADS/technology-add-on-for-rsa-securid_01.zip
+(cd apps || exit 9; git commit . -m "Blind commit."; )
 
-#( cd apps || exit 9 ; git rm -rf cisco_ios; git commit cisco_ios -m "Deleted stuff"; )
-#RUN unarchive --dest=apps/ --default-dir="default.d/10-splunk" --exclude 'samples/...' --git-mode=commit cisco-ios_200.tgz --no-edit
+( cd apps || exit 9 ; git rm -rf cisco_ios; git commit cisco_ios -m "Deleted stuff"; )
+RUN unarchive --dest=apps/ --default-dir="default.d/10-splunk" --exclude 'samples/...' --git-mode=commit $DOWNLOADS/cisco-ios_200.tgz --no-edit
 
-#for app in splunk-add-on-for-*.tgz; do RUN unarchive --dest=apps/ --default-dir="default.d/10-splunk" --exclude 'samples/*' --exclude eventgen.conf --exclude "static/..." --git-mode=commit --exclude=eventgen.com --keep='default.d/...' --no-edit $app; done
+for app in $DOWNLOADS/splunk-add-on-for-*.tgz; do RUN unarchive --dest=apps/ --default-dir="default.d/10-splunk" --exclude 'samples/*' --exclude eventgen.conf --exclude "static/..." --git-mode=commit --exclude=eventgen.com --keep='default.d/...' --keep=CUSTOM_MAGIC.txt --no-edit $app; done
 
-#[[ -f apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf ]] && RC=3 RUN diff apps/Splunk_TA_aws/default.d/10-splunk/savedsearches.conf apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf
+[[ -f apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf ]] && RC=3 RUN diff apps/Splunk_TA_aws/default.d/10-splunk/savedsearches.conf apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf
 
 coverage report ksconf.py
 coverage html ksconf.py

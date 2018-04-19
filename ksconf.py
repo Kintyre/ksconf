@@ -154,6 +154,7 @@ from collections import namedtuple, defaultdict, Counter
 from copy import deepcopy
 from glob import glob
 from StringIO import StringIO
+from subprocess import list2cmdline
 
 
 # EXIT_CODE_* constants:  Use consistent exit codes for scriptability
@@ -757,7 +758,7 @@ _glob_to_regex = {
 }
 _is_glob_re = re.compile("({})".format("|".join(_glob_to_regex.keys())))
 
-def match_bwlist(value, bwlist):
+def match_bwlist(value, bwlist, escape=True):
     # Return direct matches first  (most efficient)
     if value in bwlist:
         return True
@@ -765,7 +766,10 @@ def match_bwlist(value, bwlist):
     for pattern in bwlist:
         if _is_glob_re.search(pattern):
             # Escape all characters.  And then replace the escaped "*" with a ".*"
-            regex = re.escape(pattern)
+            if escape:
+                regex = re.escape(pattern)
+            else:
+                regex = pattern
             for (find, replace) in _glob_to_regex.items():
                 regex = regex.replace(find, replace)
             if re.match(regex, value):
@@ -889,6 +893,30 @@ def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
     proc = Popen(cmdline_args, stdout=out, stderr=out, shell=shell, cwd=cwd)
     (stdout, stderr) = proc.communicate()
     return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
+
+def _xargs(iterable, cmd_len=1024):
+    fn_len = 0
+    buf = []
+    iterable = list(iterable)
+    while iterable:
+        s = iterable.pop(0)
+        l = len(s) + 1
+        if fn_len +l >= cmd_len:
+            yield buf
+            buf = []
+            fn_len = 0
+        buf.append(s)
+        fn_len += l
+    if buf:
+        yield buf
+
+def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
+    base_len = sum([len(s)+1 for s in args])
+    for chunk in _xargs(iterable, cmd_len-base_len):
+        p = git_cmd(args + chunk, cwd=cwd)
+        if p.returncode != 0:
+            raise RuntimeError("git exited with code {}.  Command: {}".format(
+                               p.returncode, list2cmdline(args+chunk)))
 
 
 def git_status_summary(path):
@@ -1603,7 +1631,10 @@ def do_unarchive(args):
     # Handle ignored files by preserving them as much as possible.
     # Add --dry-run mode?  j/k - that's what git is for!
 
-    from subprocess import list2cmdline
+    if not os.path.isfile(args.tarball):
+        sys.stderr.write("No such file or directory {}\n".format(args.tarball))
+        return EXIT_CODE_FAILED_SAFETY_CHECK
+
     if not os.path.isdir(args.dest):
         sys.stderr.write("Destination directory does not exist: {}\n".format(args.dest))
         return EXIT_CODE_FAILED_SAFETY_CHECK
@@ -1657,7 +1688,8 @@ def do_unarchive(args):
                              "will be extracted as '{}'\n".format(app_name, mo.group(1)))
             new_app_name = mo.group(1)
 
-    dest_app = os.path.join(args.dest, new_app_name or app_name)
+    app_basename = new_app_name or app_name
+    dest_app = os.path.join(args.dest, app_basename)
     sys.stdout.write("Inspecting destination folder:    {}\n".format(os.path.abspath(dest_app)))
 
     # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
@@ -1737,18 +1769,38 @@ def do_unarchive(args):
     else:
         sys.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
 
+    def fixup_pattern_bw(patterns, prefix=None):
+        modified = []
+        for pattern in patterns:
+            if pattern.startswith("./"):
+                if prefix:
+                    pattern = "{0}/{1}".format(prefix, pattern[2:])
+                else:
+                    pattern = pattern[2:]
+                modified.append(pattern)
+            # If a pattern like 'tags.conf' or '*.bak' is provided, assume basename match (any dir)
+            elif "/" not in pattern:
+                modified.append("(^|.../)" + pattern)
+            else:
+                modified.append(pattern)
+        return modified
+
     # PREP ARCHIVE EXTRACTION
     installed_files = set()
-    excludes = []
+    excludes = list(args.exclude)
+    '''
     for pattern in args.exclude:
         # If a pattern like 'default.meta' or '*.bak' is provided, assume it's a basename match.
         if "/" not in pattern:
             excludes.append(".../" + pattern)
         else:
             excludes.append(pattern)
+    '''
     if not args.allow_local:
         for pattern in local_files:
-            excludes.append("*/" + pattern)
+            excludes.append("./" + pattern)
+    excludes = fixup_pattern_bw(excludes, app_basename)
+    sys.stderr.write("Extraction exclude patterns:  {!r}\n".format(excludes))
     path_rewrites = []
     files_iter = extract_archive(args.tarball)
     if True:
@@ -1756,6 +1808,7 @@ def do_unarchive(args):
     if args.default_dir:
         rep = "/{}/".format(args.default_dir.strip("/"))
         path_rewrites.append(("/default/", rep))
+        del rep
     if new_app_name:
         # We do have the "app_name" extracted from our first pass above, but
         regex = re.compile(r'^([^/]+)(?=/)')
@@ -1765,7 +1818,8 @@ def do_unarchive(args):
 
     sys.stdout.write("Extracting app now...\n")
     for gaf in files_iter:
-        if match_bwlist(gaf.path, excludes):
+        if match_bwlist(gaf.path, excludes, escape=False):
+            print "Skipping [blacklist] {}".format(gaf.path)
             continue
         if not is_git or args.git_mode in ("nochange", "stage"):
             print "{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode)
@@ -1775,6 +1829,7 @@ def do_unarchive(args):
         with open(full_path, "wb") as fp:
             fp.write(gaf.payload)
         os.chmod(full_path, gaf.mode)
+        del fp, full_path
 
     files_new, files_upd, files_del = _cmp_sets(installed_files, existing_files)
     '''
@@ -1789,24 +1844,45 @@ def do_unarchive(args):
     # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
     # include things like local, ".gitignore", ".gitattributes" and so on
 
-    if files_del:
-        sys.stdout.write("Removing files that are no longer in the upgrade version of the app.\n")
+    keep_list = [ ".git*" ]
+    keep_list.extend(args.keep)
+    if not args.allow_local:
+        keep_list += [ "local/...", "local.meta" ]
+    keep_list = fixup_pattern_bw(keep_list)
+    sys.stderr.write("Keep file patterns:  {!r}\n".format(keep_list))
+
+    files_to_delete = []
+    files_to_keep = []
     for fn in files_del:
-        basename = os.path.basename(fn)
+        if match_bwlist(fn, keep_list, escape=False):
+            # How to handle a keep of "default.d/..." when we DO want to cleanup the default
+            # redirect folder of "default.d/10-upstream"?
+            # Practially this probably isn't mucn of an issue since most apps will continue to send
+            # an ever increasing list of default files (to mask out old/unused ones)
+            sys.stdout.write("Keeping {}\n".format(fn))
+            files_to_keep.append(fn)
+        else:
+            files_to_delete.append(fn)
+    if files_to_keep:
+        sys.stdout.write("Keeping {} of {} files marked for deletion due to whitelist.\n"
+                         .format(len(files_to_keep), len(files_del)))
+    git_rm_queue = []
+
+    if files_to_delete:
+        sys.stdout.write("Removing files that are no longer in the upgraded version of the app.\n")
+    for fn in files_to_delete:
         path = os.path.join(dest_app, fn)
-        if fn.startswith(".git"):
-            sys.stdout.write("Keeping {}\n".format(path))
-            continue
-        if not args.allow_local and (basename == "local.meta" or fn.startswith("local")):
-            sys.stdout.write("Keeping {}\n".format(path))
-            continue
         if is_git and args.git_mode in ("stage", "commit"):
-            # Todo:  Should 'xargs' these so that multiple file are deleted per system call
-            print "git rm -rf {}".format(path)
-            git_cmd(["rm", fn], cwd=dest_app)
+            print "git rm -f {}".format(path)
+            git_rm_queue.append(fn)
         else:
             print "rm -f {}".format(path)
             os.unlink(path)
+
+    if git_rm_queue:
+        # Run 'git rm file1 file2 file3 ..." (using an xargs like mechanism)
+        git_cmd_iterable(["rm"], git_rm_queue, cwd=dest_app)
+    del git_rm_queue
 
     if is_git:
         if args.git_mode in ("stage", "commit"):
@@ -1816,13 +1892,21 @@ def do_unarchive(args):
         else:
             sys.stdout.write("git add {}\n".format(dest_app))
         '''
+
+        # Is there anything to stage/commit?
+        if git_is_clean(os.path.dirname(dest_app), check_untracked=False):
+            sys.stderr.write("No changes detected.  Nothing to {}\n".format(args.git_mode))
+            return
+
         git_commit_app_name = app_conf.get("ui", {}).get("label", os.path.basename(dest_app))
         git_commit_new_version = app_conf.get("launcher", {}).get("version", None)
         if mode == "install":
             git_commit_message = "Install {}".format(git_commit_app_name)
+
             if git_commit_new_version:
                 git_commit_message += " version {}".format(git_commit_new_version)
         else:
+            # Todo:  Specify Upgrade/Downgrade/Refresh
             git_commit_message = "Upgrade {}".format(
                 git_commit_app_name)
             git_commit_old_version = old_app_conf.get("launcher", {}).get("version", None)
@@ -1832,10 +1916,12 @@ def do_unarchive(args):
             elif git_commit_new_version:
                 git_commit_message += " to version {}".format(git_commit_new_version)
         # Could possibly include some CLI arg details, like what file patterns were excluded
-        git_commit_message += "\n\nSHA256 {} {}".format(f_hash, os.path.basename(args.tarball))
+        git_commit_message += "\n\nSHA256 {} {}\n\nSplunk-App-managed-by: ksconf" \
+                                .format(f_hash, os.path.basename(args.tarball))
         git_commit_cmd = [ "commit", os.path.basename(dest_app), "-m", git_commit_message ]
 
-        git_commit_cmd.append("--edit")    # Edit the message provided on the CLI
+        if not args.no_edit:
+            git_commit_cmd.append("--edit")
 
         git_commit_cmd.extend(args.git_commit_args)
 
@@ -2541,10 +2627,12 @@ To recursively sort all files:
                               "directory that's created by the 'combine' mode."
                          ).completer = DirectoriesCompleter()
     sp_unar.add_argument("--exclude", "-e", action="append", default=[],
-                         help="Add a list of file patterns to exclude.  Splunk's psudo-glob "
-                              "patterns are supported here.  '*' for any non-directory match,"
+                         help="Add a file pattern to exclude.  Splunk's psudo-glob "
+                              "patterns are supported here.  '*' for any non-directory match, "
                               "'...' for ANY (including directories), and '?' for a single "
                               "character.")
+    sp_unar.add_argument("--keep", "-k", action="append", default=[],
+                         help="Add a pattern of file to preserve during an upgrade.")
     sp_unar.add_argument("--allow-local", default=False, action="store_true",
                          help="Allow local/ and local.meta files to be extracted from the archive. "
                               "This is a Splunk packaging violation and therefore by default these "
@@ -2563,23 +2651,28 @@ To recursively sort all files:
                               "files before considering the tree clean. "
                               "Use 'ignored' to enable the most intense safety check which will "
                               "abort if local changes, untracked, or ignored files are found. "
-                              "(These checks are automatically disabled if the app is not in a git"
+                              "(These checks are automatically disabled if the app is not in a git "
                               "working tree, or git is not present.)")
     sp_unar.add_argument("--git-mode", default="stage",
                          choices=["nochange", "stage", "commit"],
                          help="Set the desired level of git integration.  "
-                              "The default mode is 'stage', where any new, updated, or removed file"
-                              "is automatically handled for you.  If 'commit' mode is selected, "
-                              "then files are not only staged, but they are also committed with an "
-                              "autogenerated commit message.  To prevent any 'git add' or 'git rm'"
-                              "commands from being run, pick the 'nochange' mode. "
+                              "The default mode is 'stage', where new, updated, or removed files "
+                              "are automatically handled for you.  If 'commit' mode is selected, "
+                              "then files are committed with an  auto-generated commit message.  "
+                              "To prevent any 'git add' or 'git rm' commands from being run, pick "
+                              "the 'nochange' mode. "
                               "  Notes:  "
                               "(1) The git mode is irrelevant if the app is not in a git working "
                               "tree.  "
                               "(2) If a git commit is incorrect, simply roll it back with "
-                              "'git reset' or fix it with a 'git commit --ammend' before the "
+                              "'git reset' or fix it with a 'git commit --amend' before the "
                               "changes are pushed anywhere else.  (That's why you're using git in "
                               "the first place, right?)")
+    sp_unar.add_argument("--no-edit",
+                         action="store_true", default=False,
+                         help="Tell git to skip opening your editor.  By default you will be "
+                              "prompted to review/edit the commit message.  (Git Tip:  Delete the "
+                              "content of the message to abort the commit.)")
     sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
 
     autocomplete(parser)
