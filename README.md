@@ -10,7 +10,7 @@ Install with
 The following documents the CLI options
 
 ## ksconf.py
-    usage: ksconf.py [-h] [-S MODE] [-K MODE] [--force-color]
+    usage: ksconf.py [-h] [--force-color]
                      {check,combine,diff,promote,merge,minimize,sort,unarchive}
                      ...
     
@@ -51,21 +51,6 @@ The following documents the CLI options
     
     optional arguments:
       -h, --help            show this help message and exit
-      -S MODE, --duplicate-stanza MODE
-                            Set duplicate stanza handling mode. If [stanza] exists
-                            more than once in a single .conf file: Mode
-                            'overwrite' will keep the last stanza found. Mode
-                            'merge' will merge keys from across all stanzas,
-                            keeping the the value form the latest key. Mode
-                            'exception' (default) will abort if duplicate stanzas
-                            are found.
-      -K MODE, --duplicate-key MODE
-                            Set duplicate key handling mode. A duplicate key is a
-                            condition that occurs when the same key (key=value) is
-                            set within the same stanza. Mode of 'overwrite'
-                            silently ignore duplicate keys, keeping the latest.
-                            Mode 'exception', the default, aborts if duplicate
-                            keys are found.
       --force-color         Force TTY color mode on. Useful if piping the output a
                             color-awarepager, like 'less -R'
 
@@ -207,7 +192,7 @@ The following documents the CLI options
 
 
 ### ksconf.py diff
-    usage: ksconf.py diff [-h] [-o FILE] [--comments] FILE FILE
+    usage: ksconf.py diff [-h] [-o FILE] [--comments] CONF1 CONF2
     
     Compares the content differences of two .conf files
     
@@ -218,8 +203,8 @@ The following documents the CLI options
     macros can be compared more easily.
     
     positional arguments:
-      FILE                  Left side of the comparison
-      FILE                  Right side of the comparison
+      CONF1                 Left side of the comparison
+      CONF2                 Right side of the comparison
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -327,7 +312,7 @@ The following documents the CLI options
       --target FILE, -t FILE
                             This is the local file that you with to remove the
                             duplicate settings from. By default, this file will be
-                            read and the updatedwith a minimized version.
+                            read and the updated with a minimized version.
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimized
                             value to TARGET, show a 'diff' of what would be
                             removed.
@@ -369,21 +354,23 @@ The following documents the CLI options
       --inplace, -i         Replace the input file with a sorted version. Warning
                             this a potentially destructive operation that may
                             move/remove comments.
-      -F, --force           Force file storing even of files that contain the
-                            special 'KSCONF-NO-SORT' marker. This only prevents an
-                            in-place sort.
-      -q, --quiet           Reduce the amount of output. In '--inplace' only files
-                            that were updated or contained errors are reported.
       -n LINES, --newlines LINES
                             Lines between stanzas.
+    
+    In-place update arguments:
+      -F, --force           Force file sorting for all files, even for files
+                            containing the special 'KSCONF-NO-SORT' marker.
+      -q, --quiet           Reduce the output. Reports only updated or invalid
+                            files. This is useful for pre-commit hooks, for
+                            example.
 
 
 ### ksconf.py unarchive
     usage: ksconf.py unarchive [-h] [--dest DIR] [--app-name NAME]
                                [--default-dir DIR] [--exclude EXCLUDE]
-                               [--allow-local]
+                               [--keep KEEP] [--allow-local]
                                [--git-sanity-check {off,changed,untracked,ignored}]
-                               [--git-mode {nochange,stage,commit}]
+                               [--git-mode {nochange,stage,commit}] [--no-edit]
                                [--git-commit-args GIT_COMMIT_ARGS]
                                SPL
     
@@ -407,10 +394,11 @@ The following documents the CLI options
                             a dynamic default directory that's created by the
                             'combine' mode.
       --exclude EXCLUDE, -e EXCLUDE
-                            Add a list of file patterns to exclude. Splunk's
-                            psudo-glob patterns are supported here. '*' for any
-                            non-directory match,'...' for ANY (including
-                            directories), and '?' for a single character.
+                            Add a file pattern to exclude. Splunk's psudo-glob
+                            patterns are supported here. '*' for any non-directory
+                            match, '...' for ANY (including directories), and '?'
+                            for a single character.
+      --keep KEEP, -k KEEP  Add a pattern of file to preserve during an upgrade.
       --allow-local         Allow local/ and local.meta files to be extracted from
                             the archive. This is a Splunk packaging violation and
                             therefore by default these files are excluded.
@@ -427,21 +415,24 @@ The following documents the CLI options
                             the most intense safety check which will abort if
                             local changes, untracked, or ignored files are found.
                             (These checks are automatically disabled if the app is
-                            not in a gitworking tree, or git is not present.)
+                            not in a git working tree, or git is not present.)
       --git-mode {nochange,stage,commit}
                             Set the desired level of git integration. The default
-                            mode is 'stage', where any new, updated, or removed
-                            fileis automatically handled for you. If 'commit' mode
-                            is selected, then files are not only staged, but they
-                            are also committed with an autogenerated commit
-                            message. To prevent any 'git add' or 'git rm'commands
-                            from being run, pick the 'nochange' mode. Notes: (1)
-                            The git mode is irrelevant if the app is not in a git
-                            working tree. (2) If a git commit is incorrect, simply
-                            roll it back with 'git reset' or fix it with a 'git
-                            commit --ammend' before the changes are pushed
-                            anywhere else. (That's why you're using git in the
-                            first place, right?)
+                            mode is 'stage', where new, updated, or removed files
+                            are automatically handled for you. If 'commit' mode is
+                            selected, then files are committed with an auto-
+                            generated commit message. To prevent any 'git add' or
+                            'git rm' commands from being run, pick the 'nochange'
+                            mode. Notes: (1) The git mode is irrelevant if the app
+                            is not in a git working tree. (2) If a git commit is
+                            incorrect, simply roll it back with 'git reset' or fix
+                            it with a 'git commit --amend' before the changes are
+                            pushed anywhere else. (That's why you're using git in
+                            the first place, right?)
+      --no-edit             Tell git to skip opening your editor. By default you
+                            will be prompted to review/edit the commit message.
+                            (Git Tip: Delete the content of the message to abort
+                            the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
 
 

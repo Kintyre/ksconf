@@ -74,6 +74,7 @@ from collections import namedtuple, defaultdict, Counter
 from copy import deepcopy
 from glob import glob
 from StringIO import StringIO
+from subprocess import list2cmdline
 
 
 # EXIT_CODE_* constants:  Use consistent exit codes for scriptability
@@ -203,7 +204,44 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False
             raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
 
-def parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
+# Parsing configuration profiles
+PARSECONF_STRICT = dict(
+    keep_comments=True,
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_EXCEPTION,
+    strict=True)
+
+PARSECONF_STRICT_NC = dict(
+    keep_comments=False,        # No comment
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_EXCEPTION,
+    strict=True)
+
+PARSECONF_MID = dict(
+    keep_comments=True,
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_OVERWRITE,
+    strict=True)
+
+PARSECONF_MID_NC = dict(
+    keep_comments=False,         # No comments
+    dup_stanza=DUP_EXCEPTION,
+    dup_key=DUP_OVERWRITE,
+    strict=True)
+
+PARSECONF_LOOSE = dict(
+    keep_comments=False,
+    dup_stanza=DUP_MERGE,
+    dup_key=DUP_MERGE,
+    strict=False)
+
+
+
+def parse_conf(stream, profile=PARSECONF_MID):
+    # Placeholder stub for an eventual migration to proper class-oriented parser
+    return _parse_conf(stream, **profile)
+
+def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if not hasattr(stream, "read"):
         # Assume it's a filename
@@ -388,34 +426,27 @@ def inject_section_comments(section, prepend=None, append=None):
         section["#-%06d" % i] = comment
 
 
-
-def merge_conf_files(dest_file, configs, parse_args, dry_run=False, banner_comment=None):
+def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
     # Parse all config files
-    cfgs = [ parse_conf(conf, **parse_args) for conf in configs ]
+    cfgs = [conf.data for conf in configs]
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
-    dest_is_stream = hasattr(dest_file, "write")
     if banner_comment:
         if not banner_comment.startswith("#"):
             banner_comment = "#" + banner_comment
         inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}), prepend=[banner_comment])
 
     # Either show the diff (dry-run mode) or write to the destination file
-    if dry_run and not dest_is_stream:
-        if os.path.isfile(dest_file):
-            dest_cfg = parse_conf(dest_file, **parse_args)
+    if dry_run and dest.is_file():
+        if os.path.isfile(dest.name):
+            dest_cfg = dest.data
         else:
             dest_cfg = {}
         show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
-                  headers=(dest_file, dest_file+"-new"))
+                  headers=(dest.name, dest.name + "-new"))
         return
+    return dest.dump(merged_cfg)
 
-    # This causes some chaos with the dry-run diff....
-    if dest_is_stream:
-        write_conf(dest_file, merged_cfg)
-        return SMART_CREATE
-    else:
-        return smart_write_conf(dest_file, merged_cfg)
 
 
 ####################################################################################################
@@ -647,7 +678,7 @@ _glob_to_regex = {
 }
 _is_glob_re = re.compile("({})".format("|".join(_glob_to_regex.keys())))
 
-def match_bwlist(value, bwlist):
+def match_bwlist(value, bwlist, escape=True):
     # Return direct matches first  (most efficient)
     if value in bwlist:
         return True
@@ -655,7 +686,10 @@ def match_bwlist(value, bwlist):
     for pattern in bwlist:
         if _is_glob_re.search(pattern):
             # Escape all characters.  And then replace the escaped "*" with a ".*"
-            regex = re.escape(pattern)
+            if escape:
+                regex = re.escape(pattern)
+            else:
+                regex = pattern
             for (find, replace) in _glob_to_regex.items():
                 regex = regex.replace(find, replace)
             if re.match(regex, value):
@@ -779,6 +813,30 @@ def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
     (stdout, stderr) = proc.communicate()
     return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
 
+def _xargs(iterable, cmd_len=1024):
+    fn_len = 0
+    buf = []
+    iterable = list(iterable)
+    while iterable:
+        s = iterable.pop(0)
+        l = len(s) + 1
+        if fn_len +l >= cmd_len:
+            yield buf
+            buf = []
+            fn_len = 0
+        buf.append(s)
+        fn_len += l
+    if buf:
+        yield buf
+
+def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
+    base_len = sum([len(s)+1 for s in args])
+    for chunk in _xargs(iterable, cmd_len-base_len):
+        p = git_cmd(args + chunk, cwd=cwd)
+        if p.returncode != 0:
+            raise RuntimeError("git exited with code {}.  Command: {}".format(
+                               p.returncode, list2cmdline(args+chunk)))
+
 
 def git_status_summary(path):
     c = Counter()
@@ -851,9 +909,6 @@ def git_status_ui(path, *args):
 
 
 def do_check(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False, strict=True)
-
     # Should we read a list of conf files from STDIN?
     if len(args.conf) == 1 and args.conf[0] == "-":
         confs = _stdin_iter()
@@ -868,7 +923,7 @@ def do_check(args):
             c["missing"] += 1
             continue
         try:
-            parse_conf(conf, **parse_args)
+            parse_conf(conf, profile=PARSECONF_STRICT_NC)
             c["okay"] += 1
             if not args.quiet:
                 sys.stdout.write("Successfully parsed {0}\n".format(conf))
@@ -896,35 +951,19 @@ def do_check(args):
 
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
-    if args.dry_run and (args.target == "-" or not os.path.isfile(args.target)):
-        sys.stderr.write("Dry-run only works of '--target' is a normal file.  "
-                         "Outputting to the screen.\n")
-        args.target = sys.stdout
-    elif args.target == "-":
-        args.target = sys.stdout
-    merge_conf_files(args.target, args.conf, parse_args, dry_run=args.dry_run,
-                     banner_comment=args.banner)
+    return merge_conf_files(args.target, args.conf, dry_run=args.dry_run, banner_comment=args.banner)
 
 
 def do_diff(args):
     ''' Compare two configuration files. '''
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=args.comments, strict=True)
-    # Parse all config files
-    try:
-        cfg1 = parse_conf(args.conf1, **parse_args)
-        cfg2 = parse_conf(args.conf2, **parse_args)
-    except IOError, e:
-        sys.stderr.write("Unable to open conf file.  {}\n".format(e.message))
-        return EXIT_CODE_NO_SUCH_FILE
-    except ConfParserException, e:
-        sys.stderr.write("Unable to parse conf file.  {}\n".format(e))
-        # We don't distinguish between bad conf files and safety checks here.
-        return EXIT_CODE_BAD_CONF_FILE
+    args.conf1.set_parser_option(keep_comments=args.comments)
+    args.conf2.set_parser_option(keep_comments=args.comments)
+
+    cfg1 = args.conf1.data
+    cfg2 = args.conf2.data
+    
     diffs = compare_cfgs(cfg1, cfg2)
-    rc = show_diff(args.output, diffs, headers=(args.conf1, args.conf2))
+    rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
     if rc == EXIT_CODE_DIFF_EQUAL:
         sys.stderr.write("Files are the same.\n")
     elif rc == EXIT_CODE_DIFF_NO_COMMON:
@@ -934,7 +973,7 @@ def do_diff(args):
 
 # ANSI_COLOR = "\x1b[{0}m"
 ANSI_BOLD = 1
-ANSI_RED   = 31
+ANSI_RED = 31
 ANSI_GREEN = 32
 ANSI_YELLOW = 33
 ANSI_RESET = 0
@@ -1085,13 +1124,11 @@ def show_text_diff(stream, a, b):
 
 
 def do_minimize(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
-    cfgs = [ parse_conf(conf, **parse_args) for conf in args.conf ]
+    cfgs = [ conf.data for conf in args.conf ]
     # Merge all config files:
     default_cfg = merge_conf_dicts(*cfgs)
     del cfgs
-    local_cfg = parse_conf(args.target, **parse_args)
+    local_cfg = args.target.data
 
     minz_cfg = dict(local_cfg)
 
@@ -1107,7 +1144,7 @@ def do_minimize(args):
             else:
                 if match_bwlist(op.location.key, args.preserve_key):
                     '''
-                    sys.stderr.write("Skiping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
+                    sys.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
                                  "".format(op.location.stanza, op.location.key, op.a))
                     '''
                     continue
@@ -1129,14 +1166,14 @@ def do_minimize(args):
             continue
 
     if args.dry_run:
-        rc =show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
-                  headers=(args.target, args.target + "-new"))
+        rc = show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
+                       headers=(args.target.name, args.target.name + "-new"))
         return rc
 
     if args.output:
-        write_conf(args.output, minz_cfg)
+        args.output.dump(minz_cfg)
     else:
-        smart_write_conf(args.target, minz_cfg)
+        args.target.dump(minz_cfg)
         '''
         # Makes it really hard to test if you keep overwriting the source file...
         print "Writing config to STDOUT...."
@@ -1144,35 +1181,29 @@ def do_minimize(args):
         '''
     # Todo:  return ?  Should only be updating target if there's a change; RC should reflect this
 
+
 def do_promote(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=False, strict=True)  #args.comments)
-
-    if not os.path.isfile(args.source):
-        sys.stderr.write("Aborting.  Missing source file {}.".format(args.source))
-        return EXIT_CODE_NO_SUCH_FILE
-
-    if os.path.isdir(args.target):
+    if isinstance(args.target, ConfDirProxy):
         # If a directory is given instead of a target file, then assume the source filename is the
         # same as the target filename.
-        args.target = os.path.join(args.target, os.path.basename(args.source))
+        args.target = args.target.get_file(os.path.basename(args.source.name))
 
     # If src/dest are the same, then the file ends up being deleted.  Whoops!
-    if os.path.samefile(args.source, args.target):
+    if os.path.samefile(args.source.name, args.target.name):
         sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
         return EXIT_CODE_FAILED_SAFETY_CHECK
 
-    if not os.path.isfile(args.target):
+    if not os.path.isfile(args.target.name):
         sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
-                         .format(args.target, args.source))
+                         .format(args.target.name, args.source.name))
         if args.keep:
-            shutil.copy2(args.source, args.target)
+            shutil.copy2(args.source.name, args.target.name)
         else:
-            shutil.move(args.source, args.target)
+            shutil.move(args.source.name, args.target.name)
         return
 
-    fp_source = file_fingerprint(args.source)
-    fp_target = file_fingerprint(args.target)
+    fp_source = file_fingerprint(args.source.name)
+    fp_target = file_fingerprint(args.target.name)
 
 
     # Todo: Add a safety check prevent accidental merge of unrelated files.
@@ -1180,8 +1211,8 @@ def do_promote(args):
     # Possible check (1) Are basenames are different?  (props.conf vs transforms.conf)
     # Possible check (2) Are there key's in common? (DEST_KEY vs REPORT)
     # Using #1 for now, consider if there's value in #2
-    bn_source = os.path.basename(args.source)
-    bn_target = os.path.basename(args.target)
+    bn_source = os.path.basename(args.source.name)
+    bn_target = os.path.basename(args.target.name)
     if bn_source.endswith(".meta") and bn_target.endswith(".meta"):
         # Allow local.meta -> default.meta without --force or a warning message
         pass
@@ -1195,12 +1226,14 @@ def do_promote(args):
                              "files.  {0} --> {1}  If this is intentional, override this safety"
                              "check with '--force'\n".format(bn_source, bn_target))
             return EXIT_CODE_FAILED_SAFETY_CHECK
+
+    # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
     # Parse all config files
-    cfg_src = parse_conf(args.source, **parse_args)
-    cfg_tgt = parse_conf(args.target, **parse_args)
+    cfg_src = args.source.data
+    cfg_tgt = args.target.data
 
     if not cfg_src:
-        sys.stderr.write("No settings found in {0}.  No content to promote.\n".format(args.source))
+        sys.stderr.write("No settings in {0}.  No content to promote.\n".format(args.source.name))
         return EXIT_CODE_NOTHING_TO_DO
 
     if args.mode == "ask":
@@ -1216,7 +1249,7 @@ def do_promote(args):
             if input == 'q':
                 return EXIT_CODE_USER_QUIT
             elif input == 'd':
-                show_diff(sys.stdout, delta, headers=(args.source, args.target))
+                show_diff(sys.stdout, delta, headers=(args.source.name, args.target.name))
             elif input == 'y':
                 args.mode = "batch"
                 break
@@ -1235,24 +1268,24 @@ def do_promote(args):
     # Todo: Avoid rewriting files if NO changes were made. (preserve prior backups)
     # Todo: Restore file modes and such
 
-    if file_fingerprint(args.source, fp_source):
-        sys.stderr.write("Aborting!  External source file changed: {0}\n".format(args.source))
+    if file_fingerprint(args.source.name, fp_source):
+        sys.stderr.write("Aborting!  External source file changed: {0}\n".format(args.source.name))
         return EXIT_CODE_EXTERNAL_FILE_EDIT
-    if file_fingerprint(args.target, fp_target):
-        sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target))
+    if file_fingerprint(args.target.name, fp_target):
+        sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target.name))
         return EXIT_CODE_EXTERNAL_FILE_EDIT
     # Reminder:  conf entries are being removed from source and promoted into target
-    smart_write_conf(args.target, cfg_final_tgt)
+    smart_write_conf(args.target.name, cfg_final_tgt)
     if not args.keep:
         # If --keep is set, we never touch the source file.
         if cfg_final_src:
-            smart_write_conf(args.source, cfg_final_src)
+            args.source.dump(cfg_final_src)
         else:
             # Config file is empty.  Should we write an empty file, or remove it?
             if args.keep_empty:
-                write_conf(args.source, cfg_final_src)
+                args.source.dump(cfg_final_src)
             else:
-                os.unlink(args.source)
+                args.source.unlink()
 
 
 def _do_promote_automatic(cfg_src, cfg_tgt, args):
@@ -1365,8 +1398,6 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
 def do_sort(args):
     ''' Sort a single configuration file. '''
     stanza_delims = "\n" * args.newlines
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True)
     if args.inplace:
         failure = False
         changes = 0
@@ -1377,7 +1408,7 @@ def do_sort(args):
                     if not args.quiet:
                         sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
                     continue
-                data = parse_conf(conf, **parse_args)
+                data = parse_conf(conf, profile=PARSECONF_STRICT)
                 conf.close()
                 smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
@@ -1401,7 +1432,7 @@ def do_sort(args):
             if len(args.conf) > 1:
                 args.target.write("---------------- [ {0} ] ----------------\n\n".format(conf.name))
             try:
-                data = parse_conf(conf, **parse_args)
+                data = parse_conf(conf, profile=PARSECONF_STRICT)
                 write_conf(args.target, data, stanza_delim=stanza_delims, sort=True)
             except ConfParserException, e:
                 sys.stderr.write("Error trying processing {0}.  Error:  {1}\n".format(conf.name, e))
@@ -1409,8 +1440,6 @@ def do_sort(args):
 
 
 def do_combine(args):
-    parse_args = dict(dup_stanza=args.duplicate_stanza, dup_key=args.duplicate_key,
-                      keep_comments=True, strict=True)
     # Ignores case sensitivity.  If you're on Windows, name your files right.
     conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
 
@@ -1490,11 +1519,16 @@ def do_combine(args):
             if smart_rc != SMART_NOCHANGE:
                 sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
+            # Handle merging conf files
+            dest = ConfFileProxy(os.path.join(args.target, dest_fn), "rw",
+                                 parse_profile=PARSECONF_MID)
+            srcs = [ ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files ]
             #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
-            smart_rc = merge_conf_files(os.path.join(args.target, dest_fn), src_files, parse_args,
-                                        dry_run=args.dry_run, banner_comment=args.banner)
+            smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
+                                        banner_comment=args.banner)
             if smart_rc != SMART_NOCHANGE:
-                sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path, src_files))
+                sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
+                                                                             src_files))
 
     if True and target_extra_files:     # Todo: Allow for cleanup to be disabled via CLI
         sys.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".format(
@@ -1511,7 +1545,10 @@ def do_unarchive(args):
     # Handle ignored files by preserving them as much as possible.
     # Add --dry-run mode?  j/k - that's what git is for!
 
-    from subprocess import list2cmdline
+    if not os.path.isfile(args.tarball):
+        sys.stderr.write("No such file or directory {}\n".format(args.tarball))
+        return EXIT_CODE_FAILED_SAFETY_CHECK
+
     if not os.path.isdir(args.dest):
         sys.stderr.write("Destination directory does not exist: {}\n".format(args.dest))
         return EXIT_CODE_FAILED_SAFETY_CHECK
@@ -1532,7 +1569,7 @@ def do_unarchive(args):
         if gaf.path.endswith("app.conf") and gaf.payload:
             conffile = StringIO(gaf.payload)
             conffile.name = os.path.join(args.tarball, gaf.path)
-            app_conf = parse_conf(conffile, dup_stanza=DUP_MERGE, strict=False)
+            app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
             del conffile
         elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
             local_files.add(gaf_relpath)
@@ -1565,7 +1602,8 @@ def do_unarchive(args):
                              "will be extracted as '{}'\n".format(app_name, mo.group(1)))
             new_app_name = mo.group(1)
 
-    dest_app = os.path.join(args.dest, new_app_name or app_name)
+    app_basename = new_app_name or app_name
+    dest_app = os.path.join(args.dest, app_basename)
     sys.stdout.write("Inspecting destination folder:    {}\n".format(os.path.abspath(dest_app)))
 
     # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
@@ -1579,7 +1617,7 @@ def do_unarchive(args):
         try:
             # Ignoring the 'local' entries since distributed apps should never modify local anyways
             old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
-            old_app_conf = parse_conf(old_app_conf_file, dup_stanza=DUP_MERGE, strict=False)
+            old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
         except:
             sys.stderr.write("Unable to read app.conf from existing install.\n")
     else:
@@ -1645,18 +1683,38 @@ def do_unarchive(args):
     else:
         sys.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
 
+    def fixup_pattern_bw(patterns, prefix=None):
+        modified = []
+        for pattern in patterns:
+            if pattern.startswith("./"):
+                if prefix:
+                    pattern = "{0}/{1}".format(prefix, pattern[2:])
+                else:
+                    pattern = pattern[2:]
+                modified.append(pattern)
+            # If a pattern like 'tags.conf' or '*.bak' is provided, assume basename match (any dir)
+            elif "/" not in pattern:
+                modified.append("(^|.../)" + pattern)
+            else:
+                modified.append(pattern)
+        return modified
+
     # PREP ARCHIVE EXTRACTION
     installed_files = set()
-    excludes = []
+    excludes = list(args.exclude)
+    '''
     for pattern in args.exclude:
         # If a pattern like 'default.meta' or '*.bak' is provided, assume it's a basename match.
         if "/" not in pattern:
             excludes.append(".../" + pattern)
         else:
             excludes.append(pattern)
+    '''
     if not args.allow_local:
         for pattern in local_files:
-            excludes.append("*/" + pattern)
+            excludes.append("./" + pattern)
+    excludes = fixup_pattern_bw(excludes, app_basename)
+    sys.stderr.write("Extraction exclude patterns:  {!r}\n".format(excludes))
     path_rewrites = []
     files_iter = extract_archive(args.tarball)
     if True:
@@ -1664,6 +1722,7 @@ def do_unarchive(args):
     if args.default_dir:
         rep = "/{}/".format(args.default_dir.strip("/"))
         path_rewrites.append(("/default/", rep))
+        del rep
     if new_app_name:
         # We do have the "app_name" extracted from our first pass above, but
         regex = re.compile(r'^([^/]+)(?=/)')
@@ -1673,7 +1732,8 @@ def do_unarchive(args):
 
     sys.stdout.write("Extracting app now...\n")
     for gaf in files_iter:
-        if match_bwlist(gaf.path, excludes):
+        if match_bwlist(gaf.path, excludes, escape=False):
+            print "Skipping [blacklist] {}".format(gaf.path)
             continue
         if not is_git or args.git_mode in ("nochange", "stage"):
             print "{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode)
@@ -1683,6 +1743,7 @@ def do_unarchive(args):
         with open(full_path, "wb") as fp:
             fp.write(gaf.payload)
         os.chmod(full_path, gaf.mode)
+        del fp, full_path
 
     files_new, files_upd, files_del = _cmp_sets(installed_files, existing_files)
     '''
@@ -1697,24 +1758,45 @@ def do_unarchive(args):
     # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
     # include things like local, ".gitignore", ".gitattributes" and so on
 
-    if files_del:
-        sys.stdout.write("Removing files that are no longer in the upgrade version of the app.\n")
+    keep_list = [ ".git*" ]
+    keep_list.extend(args.keep)
+    if not args.allow_local:
+        keep_list += [ "local/...", "local.meta" ]
+    keep_list = fixup_pattern_bw(keep_list)
+    sys.stderr.write("Keep file patterns:  {!r}\n".format(keep_list))
+
+    files_to_delete = []
+    files_to_keep = []
     for fn in files_del:
-        basename = os.path.basename(fn)
-        path = os.path.join(dest_app, fn)
-        if fn.startswith(".git"):
-            sys.stdout.write("Keeping {}\n".format(path))
-            continue
-        if not args.allow_local and (basename == "local.meta" or fn.startswith("local")):
-            sys.stdout.write("Keeping {}\n".format(path))
-            continue
-        if is_git and args.git_mode in ("stage", "commit"):
-            # Todo:  Should 'xargs' these so that multiple file are deleted per system call
-            print "git rm -rf {}".format(path)
-            git_cmd(["rm", fn], cwd=dest_app)
+        if match_bwlist(fn, keep_list, escape=False):
+            # How to handle a keep of "default.d/..." when we DO want to cleanup the default
+            # redirect folder of "default.d/10-upstream"?
+            # Practially this probably isn't mucn of an issue since most apps will continue to send
+            # an ever increasing list of default files (to mask out old/unused ones)
+            sys.stdout.write("Keeping {}\n".format(fn))
+            files_to_keep.append(fn)
         else:
-            print "rm -rf {}".format(path)
+            files_to_delete.append(fn)
+    if files_to_keep:
+        sys.stdout.write("Keeping {} of {} files marked for deletion due to whitelist.\n"
+                         .format(len(files_to_keep), len(files_del)))
+    git_rm_queue = []
+
+    if files_to_delete:
+        sys.stdout.write("Removing files that are no longer in the upgraded version of the app.\n")
+    for fn in files_to_delete:
+        path = os.path.join(dest_app, fn)
+        if is_git and args.git_mode in ("stage", "commit"):
+            print "git rm -f {}".format(path)
+            git_rm_queue.append(fn)
+        else:
+            print "rm -f {}".format(path)
             os.unlink(path)
+
+    if git_rm_queue:
+        # Run 'git rm file1 file2 file3 ..." (using an xargs like mechanism)
+        git_cmd_iterable(["rm"], git_rm_queue, cwd=dest_app)
+    del git_rm_queue
 
     if is_git:
         if args.git_mode in ("stage", "commit"):
@@ -1724,13 +1806,21 @@ def do_unarchive(args):
         else:
             sys.stdout.write("git add {}\n".format(dest_app))
         '''
+
+        # Is there anything to stage/commit?
+        if git_is_clean(os.path.dirname(dest_app), check_untracked=False):
+            sys.stderr.write("No changes detected.  Nothing to {}\n".format(args.git_mode))
+            return
+
         git_commit_app_name = app_conf.get("ui", {}).get("label", os.path.basename(dest_app))
         git_commit_new_version = app_conf.get("launcher", {}).get("version", None)
         if mode == "install":
             git_commit_message = "Install {}".format(git_commit_app_name)
+
             if git_commit_new_version:
                 git_commit_message += " version {}".format(git_commit_new_version)
         else:
+            # Todo:  Specify Upgrade/Downgrade/Refresh
             git_commit_message = "Upgrade {}".format(
                 git_commit_app_name)
             git_commit_old_version = old_app_conf.get("launcher", {}).get("version", None)
@@ -1740,10 +1830,12 @@ def do_unarchive(args):
             elif git_commit_new_version:
                 git_commit_message += " to version {}".format(git_commit_new_version)
         # Could possibly include some CLI arg details, like what file patterns were excluded
-        git_commit_message += "\n\nSHA256 {} {}".format(f_hash, os.path.basename(args.tarball))
+        git_commit_message += "\n\nSHA256 {} {}\n\nSplunk-App-managed-by: ksconf" \
+                                .format(f_hash, os.path.basename(args.tarball))
         git_commit_cmd = [ "commit", os.path.basename(dest_app), "-m", git_commit_message ]
 
-        git_commit_cmd.append("--edit")    # Edit the message provided on the CLI
+        if not args.no_edit:
+            git_commit_cmd.append("--edit")
 
         git_commit_cmd.extend(args.git_commit_args)
 
@@ -1769,6 +1861,181 @@ def do_unarchive(args):
         # When in 'nochange' mode, no point in even noting these options to the user.
 
 
+class ConfDirProxy(object):
+    def __init__(self, name, mode, parse_profile=None):
+        self.name = name
+        self._mode = mode
+        self._parse_profile = parse_profile
+
+    def get_file(self, relpath):
+        path = os.path.join(self.name, relpath)
+        return ConfFileProxy(path, self._mode, parse_profile=self._parse_profile, is_file=True)
+
+
+class ConfFileProxy(object):
+    def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
+        self.name = name
+        if is_file is not None:
+            self._is_file = is_file
+        elif stream:
+            self._is_file = False
+        else:
+            self._is_file = True
+        self._stream = stream
+        self._mode = mode
+        # Not sure if there's a good reason to keep a copy of the data locally?
+        self._data = None
+        self._parse_profile = parse_profile or {}
+
+    def is_file(self):
+        return self._is_file
+
+    def _type(self):
+        if self._is_file:
+            return "file"
+        else:
+            return "stream"
+
+    def _close_stream(self):
+        if self._stream:
+            if not self._stream.closed:
+                self._stream.close()
+        self._stream = None
+
+    def set_parser_option(self, **kwargs):
+        """ Setting a key to None will remove that setting. """
+        changed = False
+        for (k, v) in kwargs.items():
+            if v is None:
+                if k in self._parse_profile:
+                    del self._parse_profile[k]
+                    changed = True
+            else:
+                cv = self._parse_profile.get(k, None)
+                if cv != v:
+                    self._parse_profile[k] = v
+                    changed = True
+        if changed:
+            self._data = None
+
+    @property
+    def stream(self):
+        if self._stream is None:
+            self._stream = open(self.name, self._mode)
+        return self._stream
+
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = self.load()
+        return self._data
+
+    def load(self, profile=None):
+        if "r" not in self._mode:
+            # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
+            raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
+                                                                              self._mode))
+        parse_profile = dict(self._parse_profile)
+        if profile:
+            parse_profile.update(profile)
+        data = parse_conf(self.stream, profile=parse_profile)
+        return data
+
+    def dump(self, data):
+        if "w" not in self._mode:
+            raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
+                                                                            self._mode))
+        # Feels like the right thing to do????  OR self._data = data
+        self._data = None
+        # write vs smart write here ----
+        if self._is_file:
+            self._close_stream()
+            return smart_write_conf(self.name, data)
+        else:
+            write_conf(self._stream, data)
+            return SMART_CREATE
+
+    def unlink(self):
+        # Eventually this could trigger some kind of backup or recovery mechanism
+        # self._close_stream()
+        return os.unlink(self.name)
+
+    def backup(self, bkname=None):
+        raise NotImplementedError
+
+    def checksum(self, hash="sha256"):
+        raise NotImplementedError
+
+
+
+class ConfFileType(object):
+    """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
+
+    Started from argparse.FileType() and then changed everything.   With our use case, it's often
+    necessary to delay writing, or read before writing to a conf file (depending on weather or not
+    --dry-run mode is enabled, for example.)
+
+    Instances of FileType are typically passed as type= arguments to the
+    ArgumentParser add_argument() method.
+
+    Keyword Arguments:
+        - mode      A string indicating how the file is to be opened.  Accepts "r", "w", and "rw".
+        - action    'none', 'open', 'load'.   'none' means no preparation or tests;  'open' means
+                    make sure the file exists/openable;  'load' means make sure the file can be
+                    opened and parsed successfully.
+    """
+
+    def __init__(self, mode='r', action="open", parse_profile=None, accept_dir=False):
+        self._mode = mode
+        self._action = action
+        self._parse_profile = parse_profile or {}
+        self._accept_dir = accept_dir
+
+    def __call__(self, string):
+        from argparse import ArgumentTypeError
+        # the special argument "-" means sys.std{in,out}
+        if string == '-':
+            if 'r' in self._mode:
+                cfp = ConfFileProxy("<stdin>", "r", stream=sys.stdin, is_file=False)
+                if self._action == "load":
+                    try:
+                        d = cfp.data
+                        del d
+                    except ConfParserException, e:
+                        raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
+                return cfp
+            elif 'w' in self._mode:
+                return ConfFileProxy("<stdout>", "w", stream=sys.stdout, is_file=False)
+            else:
+                raise ValueError('argument "-" with mode {}'.format(self._mode))
+        if self._accept_dir and os.path.isdir(string):
+            return ConfDirProxy(string, self._mode, parse_profile=self._parse_profile)
+        if self._action == "none":
+            return ConfFileProxy(string, self._mode, parse_profile=self._parse_profile)
+        else:
+            try:
+                stream = open(string, self._mode)
+                cfp = ConfFileProxy(string, self._mode, stream=stream,
+                                    parse_profile=self._parse_profile, is_file=True)
+                if self._action == "load":
+                    # Force file to be parsed by accessing the 'data' property
+                    d = cfp.data
+                    del d
+                return cfp
+            except IOError as e:
+                message = "can't open '%s': %s"
+                raise ArgumentTypeError(message % (string, e))
+            except ConfParserException, e:
+                raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
+            except TypeError, e:
+                raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
+
+    def __repr__(self):
+        args = self._mode, self._action, self._parse_profile
+        args_str = ', '.join(repr(arg) for arg in args if arg != -1)
+        return '%s(%s)' % (type(self).__name__, args_str)
+
+
 ####################################################################################################
 ## CLI definition
 
@@ -1790,7 +2057,7 @@ def cli():
     import argparse
     import textwrap
 
-    # For now, just effectily a copy of RawDescriptionHelpFormatter
+    # For now, just effectively a copy of RawDescriptionHelpFormatter
     class MyDescriptionHelpFormatter(argparse.HelpFormatter):
         def _fill_text(self, text, width, indent):
             # Looks like this one is ONLY used for the top-level description
@@ -1819,7 +2086,8 @@ def cli():
     conf_files_completer = FilesCompleter(allowednames=["*.conf"])
 
     # Common settings
-    #'''
+    '''
+    ### DEPRECATE THESE
     parser.add_argument("-S", "--duplicate-stanza", default=DUP_EXCEPTION, metavar="MODE",
                         choices=[DUP_MERGE, DUP_OVERWRITE, DUP_EXCEPTION],
                         help="Set duplicate stanza handling mode.  If [stanza] exists more than "
@@ -1834,11 +2102,10 @@ def cli():
                              "stanza.  Mode of 'overwrite' silently ignore duplicate keys, "
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
+    '''
     parser.add_argument("--force-color", action="store_true", default=False,
                         help="Force TTY color mode on.  Useful if piping the output a color-aware"
                              "pager, like 'less -R'")
-
-    #'''
 
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
@@ -2012,9 +2279,11 @@ macros can be compared more easily.
 """,
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_diff.set_defaults(funct=do_diff)
-    sp_diff.add_argument("conf1", metavar="FILE", help="Left side of the comparison"
+    sp_diff.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
                          ).completer = conf_files_completer
-    sp_diff.add_argument("conf2", metavar="FILE", help="Right side of the comparison"
+    sp_diff.add_argument("conf2", metavar="CONF2", help="Right side of the comparison",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
                          ).completer = conf_files_completer
     sp_diff.add_argument("-o", "--output", metavar="FILE",
                          type=argparse.FileType('w'), default=sys.stdout,
@@ -2055,10 +2324,13 @@ will be lost.  (This needs improvement.)
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_prmt.set_defaults(funct=do_promote, mode="ask")
     sp_prmt.add_argument("source", metavar="SOURCE",
+                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT_NC),
                          help="The source configuration file to pull changes from.  (Typically the "
                               "'local' conf file)"
                          ).completer = conf_files_completer
     sp_prmt.add_argument("target", metavar="TARGET",
+                         type=ConfFileType("rw", "load", accept_dir=True,
+                                           parse_profile=PARSECONF_STRICT),
                          help="Configuration file or directory to push the changes into. "
                               "(Typically the 'default' folder) "
                               "When a directory is given instead of a file then the same file name "
@@ -2133,10 +2405,12 @@ will be lost.  (This needs improvement.)
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_merg.set_defaults(funct=do_merge)
     sp_merg.add_argument("conf", metavar="FILE", nargs="+",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID),
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         default="-",
+                         type=ConfFileType("rw", "none", parse_profile=PARSECONF_STRICT),
+                         default=ConfFileProxy("<stdout>", "w", sys.stdout),
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."
                          ).completer = conf_files_completer
@@ -2166,19 +2440,22 @@ duplicate settings.""",
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_minz.set_defaults(funct=do_minimize)
     sp_minz.add_argument("conf", metavar="FILE", nargs="+",
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_STRICT),
                          help="The default configuration file(s) used to determine what base "
                               "settings are unnecessary to keep in the target file."
                          ).completer = conf_files_completer
     sp_minz.add_argument("--target", "-t", metavar="FILE",
+                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT),
                          help="This is the local file that you with to remove the duplicate "
-                              "settings from.  By default, this file will be read and the updated"
+                              "settings from.  By default, this file will be read and the updated "
                               "with a minimized version."
                          ).completer = conf_files_completer
     sp_mzg1 = sp_minz.add_mutually_exclusive_group()
     sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
                          help="Enable dry-run mode.  Instead of writing the minimized value to "
                               "TARGET, show a 'diff' of what would be removed.")
-    sp_mzg1.add_argument("--output", type=argparse.FileType("w"),
+    sp_mzg1.add_argument("--output",
+                         type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                          default=None,
                          help="When this option is used, the new minimized file will be saved to "
                               "this file instead of updating TARGET.  This can be use to preview "
@@ -2225,12 +2502,13 @@ To recursively sort all files:
                        action="store_true", default=False,
                        help="Replace the input file with a sorted version.  Warning this a "
                             "potentially destructive operation that may move/remove comments.")
-    sp_sort.add_argument("-F", "--force", action="store_true",
-                         help="Force file storing even of files that contain the special "
-                              "'KSCONF-NO-SORT' marker.  This only prevents an in-place sort.")
-    sp_sort.add_argument("-q", "--quiet", action="store_true",
-                         help="Reduce the amount of output.  In '--inplace' only files that were "
-                              "updated or contained errors are reported.")
+    sp_sog1 = sp_sort.add_argument_group("In-place update arguments")
+    sp_sog1.add_argument("-F", "--force", action="store_true",
+                         help="Force file sorting for all files, even for files containing the "
+                              "special 'KSCONF-NO-SORT' marker.")
+    sp_sog1.add_argument("-q", "--quiet", action="store_true",
+                         help="Reduce the output.  Reports only updated or invalid files.  "
+                              "This is useful for pre-commit hooks, for example.")
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
 
@@ -2263,10 +2541,12 @@ To recursively sort all files:
                               "directory that's created by the 'combine' mode."
                          ).completer = DirectoriesCompleter()
     sp_unar.add_argument("--exclude", "-e", action="append", default=[],
-                         help="Add a list of file patterns to exclude.  Splunk's psudo-glob "
-                              "patterns are supported here.  '*' for any non-directory match,"
+                         help="Add a file pattern to exclude.  Splunk's psudo-glob "
+                              "patterns are supported here.  '*' for any non-directory match, "
                               "'...' for ANY (including directories), and '?' for a single "
                               "character.")
+    sp_unar.add_argument("--keep", "-k", action="append", default=[],
+                         help="Add a pattern of file to preserve during an upgrade.")
     sp_unar.add_argument("--allow-local", default=False, action="store_true",
                          help="Allow local/ and local.meta files to be extracted from the archive. "
                               "This is a Splunk packaging violation and therefore by default these "
@@ -2285,23 +2565,28 @@ To recursively sort all files:
                               "files before considering the tree clean. "
                               "Use 'ignored' to enable the most intense safety check which will "
                               "abort if local changes, untracked, or ignored files are found. "
-                              "(These checks are automatically disabled if the app is not in a git"
+                              "(These checks are automatically disabled if the app is not in a git "
                               "working tree, or git is not present.)")
     sp_unar.add_argument("--git-mode", default="stage",
                          choices=["nochange", "stage", "commit"],
                          help="Set the desired level of git integration.  "
-                              "The default mode is 'stage', where any new, updated, or removed file"
-                              "is automatically handled for you.  If 'commit' mode is selected, "
-                              "then files are not only staged, but they are also committed with an "
-                              "autogenerated commit message.  To prevent any 'git add' or 'git rm'"
-                              "commands from being run, pick the 'nochange' mode. "
+                              "The default mode is 'stage', where new, updated, or removed files "
+                              "are automatically handled for you.  If 'commit' mode is selected, "
+                              "then files are committed with an  auto-generated commit message.  "
+                              "To prevent any 'git add' or 'git rm' commands from being run, pick "
+                              "the 'nochange' mode. "
                               "  Notes:  "
                               "(1) The git mode is irrelevant if the app is not in a git working "
                               "tree.  "
                               "(2) If a git commit is incorrect, simply roll it back with "
-                              "'git reset' or fix it with a 'git commit --ammend' before the "
+                              "'git reset' or fix it with a 'git commit --amend' before the "
                               "changes are pushed anywhere else.  (That's why you're using git in "
                               "the first place, right?)")
+    sp_unar.add_argument("--no-edit",
+                         action="store_true", default=False,
+                         help="Tell git to skip opening your editor.  By default you will be "
+                              "prompted to review/edit the commit message.  (Git Tip:  Delete the "
+                              "content of the message to abort the commit.)")
     sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
 
     autocomplete(parser)

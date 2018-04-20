@@ -13,7 +13,6 @@ def cmd_output(*cmd):
     return p.stdout.readlines()
 
 def parse_subcommand(lines):
-    #text = "\n".join([l.rstrip() for l in lines])
     text = "\n".join(lines)
     match = re.search(r'[\r\n]+positional arguments:\s*\{([\w,-]+)\}', text)
     if match:
