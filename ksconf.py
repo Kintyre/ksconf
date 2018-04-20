@@ -3,17 +3,10 @@
 # PYTHON_ARGCOMPLETE_OK
 """ksconf - Kintyre Splunk CONFig tool
 
+
 kast - Kintyre's Awesome Splunk Tool
 
 splconf - SPLunk CONFig tool
-
-splkt - Splunk Konfig tool (K for Kintyre/Config...  yeah, it's bad.  why geeks shouldn't name things)
-
-kasc - Kintyre's Awesome Splunk Tool for Configs
-
-kasct - Kintyre's Awesome Splunk Config Tool
-
-ksconf - Kintyre Splunk CONFig tool
 
 kscfg - Kintyre Splunk ConFiG tool
 
@@ -28,79 +21,6 @@ Design goals:
  * No eternal dependencies (single source file, if possible; or packable as single file.)
  * Stable CLI
  * Good scripting interface for deployment scripts and/or git hooks
-
-
-
-
-Merge magic:
-
- * Allow certain keys to be suppressed by subsequent layers by using some kind of sentinel value,
-   like "<<UNSET>>" or something.  Use case:  Disabling a transformer defined in the upstream layer.
-   So instead of "TRANSFORMS-class=" being shown in the output, the entire key is removed from the
-   destination.)
- * Allow stanzas to be suppressed with some kind of special key value token.  Use case:  Removing
-   unwanted eventgen related source matching stanza's like "[source::...(osx.*|sample.*.osx)]"
-   instead of having to suppress individual keys (difficult to maintain).
- * Allow a special wildcard stanzas that globally apply one or more keys to all subsequent stanzas.
-   Use Case:  set "index=os_<ORG>" on all existing stanzas in an inputs.conf file.  Perhaps this
-   could be setup like [*] index=os_prod;  or [<<COPY_TO_ALL>>] index=os_prod;  Assume this will
-   apply to all currently-known stanzas.  (Immediately applied, during the merging process, not
-   held and applied after all layers have been combined.)
- * (Maybe) allow list augmentation (or subtraction?) to comma or semicolon separated lists.
-        TRANSFORMS-syslog = <<APPEND>> ciso-asa-sourcetype-rewrite   OR
-        TRANSFORMS-syslog = <<REMOVE>> ciso-asa-sourcetype-rewrite
-
-   Possible filter operators include:
-        <<APPEND>> string           Pure string concatenation
-        <<APPEND(sep=",")>> i1,i2   Handles situation where parent may be empty (no leading ",")
-        <<REMOVE>> string           Removes "string" from parent value; empty if no parent
-        <<ADD(sep=";")>> i1;i2      Does SET addition.  Preserves order where possible, squash dups.
-        <<SUBTRACT(sep=",")>> i1    Does SET reduction.  Preserves order where possible, squash dups.
-
-    Down the road stuff:        (Let's be careful NOT to build yet another template language...)
-        <<LOOKUP(envvar="HOSTNAME")>>               <<-- setting host in inputs.conf, part of a monitor stanza
-                                                         NOTE:  This is possibly bad or misleading example as HOSTAME maybe on a deployer not on the SHC memeber, for example.
-        <<LOOKUP(file="../regex.txt", line=2)>>     <<-- Can't thing of a legitimate use, currently
-        <<RE_SUB("pattern", "replace", count=2)>>   <<-- Parsing this will be a challenge, possibly allow flexible regex start/stop characters?
-        <<INTROSPECT(key, stanza="default")>>       <<-- Reference another value located within the current config file.
-
-    # May just make these easily registered via decorator; align with python function calling norms
-    @register_filter("APPEND")
-    def filter_op_APPEND(context, sep=","):
-        # context.op is the name of the filter, "APPEND" in this case.
-        # context.stanza is name of the current stanza
-        # context.key is the name of the key who's value is being operated on
-        # context.parent is the original string value.
-        # context.payload is the raw value of the current key, without magic text (may be blank)
-        #
-        # Allow for standard python style function argument passing; allowing for both positional
-        # and named parameters.            *args, **kwargs
-
-
-To do (Someday):
-
- * Separate the concepts of global and empty (anonymous) stanzas.  Entries at the top of the
-   file, vs stuff literally under a "[]" stanza (e.g., metadata files)
- * Add automatic metadata merging support so that when patching changes from local to default,
-   for example, the appropriate local metadata settings move from local.meta to default.meta.
-   There are quite a few complications to this idea.
- * Build a proper conf parser that tracks things correctly.  (Preferably one that has a dict-like
-   interface so existing code doesn't break, but that's a lower-priority).  This is necessary to
-   (1) improve comment handling, (2) edit a single stanza or key without rewrite the entire file,
-   (3) improve syntax error reporting (line numbers), and (4) preserve original ordering.
-   For example, it would be nice to run patch in away that only applies changes and doesn't re-sort
-   and loose/mangle all comments.
- * Allow config stanzas to be sorted without sorting the stanza content.  Useful for typically
-   hand-created file like props.conf or transforms.conf where there's mixed comments and keys and a
-   preferred reading order.
- * Find a good way to unit test this.  Probably requires a stub class (based on the above)
-   Keep unit-test in a separate file (keep size under control.)
- * Split out all file operations to a VFS layer so that (1) this code can be used as a library, and
-   (2) in complex deployments updates to certain files could be proxied to elsewhere (SHC member
-   sending changes to the deployer?)
- * Expand compare_cfgs() to detect stanza renames.  Lots of challenges with this such as how
-   DiffOp currently doesn't allow for such output.  Could use difflib.get_close_matches with a high
-   cutoff=0.9? (and only done on no common names between the two.
 
 
 
@@ -851,7 +771,6 @@ def _extract_zip(path, extract_filter=None, mode=0644):
             yield GenArchFile(zi.filename, mode, zi.file_size, payload)
 
 def sanity_checker(iter):
-    # Todo:  make this better....   write a regex for the types of things that are valid?
     for gaf in iter:
         if gaf.path.startswith("/") or ".." in gaf.path:
             raise ValueError("Bad path found in archive:  {}".format(gaf.path))
@@ -1037,14 +956,12 @@ def do_merge(args):
 
 def do_diff(args):
     ''' Compare two configuration files. '''
-    # Todo:  Allow fallback to text comparisons for non-conf files.
-    # Todo:  Eventually support directory (or recursive?) diffs too.
     args.conf1.set_parser_option(keep_comments=args.comments)
     args.conf2.set_parser_option(keep_comments=args.comments)
 
     cfg1 = args.conf1.data
     cfg2 = args.conf2.data
-
+    
     diffs = compare_cfgs(cfg1, cfg2)
     rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
     if rc == EXIT_CODE_DIFF_EQUAL:
@@ -1320,11 +1237,8 @@ def do_promote(args):
         return EXIT_CODE_NOTHING_TO_DO
 
     if args.mode == "ask":
-        # Todo:  Show a summary of changes to the user here
         # Show a summary of how many new stanzas would be copied across; how many key changes.
         # ANd either accept all (batch) or pick selectively (batch)
-
-        #delta = compare_cfgs(cfg_tgt, merge_conf_dicts(cfg_tgt, cfg_src), allow_level0=False)
         delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
         delta = [ op for op in delta if op.tag!=DIFF_OP_DELETE ]
         summarize_cfg_diffs(delta, sys.stderr)
