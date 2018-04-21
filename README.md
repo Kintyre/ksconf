@@ -293,7 +293,8 @@ The following documents the CLI options
 
 
 ### ksconf.py minimize
-    usage: ksconf.py minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
+    usage: ksconf.py minimize [-h] [--target FILE]
+                              [--dry-run | --explode-default | --output OUTPUT]
                               [-k PRESERVE_KEY]
                               FILE [FILE ...]
     
@@ -316,6 +317,13 @@ The following documents the CLI options
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimized
                             value to TARGET, show a 'diff' of what would be
                             removed.
+      --explode-default, -E
+                            Along with minimizing the same stanza across multiple
+                            config files, also take into consideration the
+                            [default] or global stanza values. This can often be
+                            use to trim out cruft in savedsearches.conf by
+                            pointing to etc/system/default/savedsearches.conf, for
+                            example.
       --output OUTPUT       When this option is used, the new minimized file will
                             be saved to this file instead of updating TARGET. This
                             can be use to preview changes or helpful in other

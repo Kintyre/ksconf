@@ -275,6 +275,21 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(len(c["Knowledge Object backup to CSV"]["search"].splitlines()), 7)
 
 
+    @unittest.expectedFailure
+    def test_splksysdfltjunk(self):
+        # This is copied from Splunk's system/default/props.conf file.  (We are CERTAINLY more
+        #picky than splunk when it comes to parsing these files.
+        # WHoops, semi-colons aren't comments!
+        t = """
+        [sar]
+        ; break on blanklines, clock-resets, or common headers attributes (/s, %, or alpha-)
+        BREAK_ONLY_BEFORE = (?:^\s*$)|00:00:0|/s|%|[a-z]-
+        MAX_EVENTS = 1000
+        """
+        c = parse_string(t, profile=PARSECONF_MID)
+
+
+
 #@unittest.expectedFailure()
 
 

@@ -961,7 +961,7 @@ def do_diff(args):
 
     cfg1 = args.conf1.data
     cfg2 = args.conf2.data
-    
+
     diffs = compare_cfgs(cfg1, cfg2)
     rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
     if rc == EXIT_CODE_DIFF_EQUAL:
@@ -1123,14 +1123,56 @@ def show_text_diff(stream, a, b):
         tty_color(stream, ANSI_RESET)
 
 
+def _drop_stanza_comments(stanza):
+    n = {}
+    for (key, value) in stanza.iteritems():
+        if key.startswith("#"):
+            continue
+        n[key] = value
+    return n
+
+def explode_default_stanza(conf, default_stanza=None):
+    """ Take the GLOBAL stanza, (aka [default]) and apply it's settings underneath ALL other
+    stanzas.  This is mostly only useful in minimizing and other comparison operations. """
+    if default_stanza is None:
+        default_stanza = conf.get(GLOBAL_STANZA, conf.get("default"))
+        if not default_stanza:
+            return conf
+    default_stanza = _drop_stanza_comments(default_stanza)
+    n = {}
+    for (stanza, content) in conf.iteritems():
+        new_content = dict(default_stanza)
+        new_content.update(content)
+        n[stanza] = new_content
+    return n
+
+
 def do_minimize(args):
-    cfgs = [ conf.data for conf in args.conf ]
+    explode_defaults = True
+    if args.explode_default:
+        # Is this the SAME as exploding the defaults AFTER the merge?;  I think NOT.  Needs testing
+        cfgs = [ explode_default_stanza(conf.data) for conf in args.conf ]
+    else:
+        cfgs = [ conf.data for conf in args.conf ]
     # Merge all config files:
     default_cfg = merge_conf_dicts(*cfgs)
     del cfgs
     local_cfg = args.target.data
 
+    if args.explode_default:
+        # Make a skeleton default dict; at the highest level, that ensure that all default
+        default_stanza = default_cfg.get(GLOBAL_STANZA, default_cfg.get("default"))
+        skeleton_default = dict([ (k,{}) for k in args.target.data])
+        skeleton_default = explode_default_stanza(skeleton_default, default_stanza)
+        default_cfg = merge_conf_dicts(skeleton_default, default_cfg)
+
+        local_cfg = explode_default_stanza(local_cfg)
+        local_cfg = explode_default_stanza(local_cfg, default_stanza)
+
     minz_cfg = dict(local_cfg)
+
+    # This may be a bit too simplistic.  Weird interplay may exit between if [default] stanza and
+    # local [Upstream] stanza line up, but [Upstream] in our default file does not.  Unit test!
 
     diffs = compare_cfgs(default_cfg, local_cfg, allow_level0=False)
 
@@ -2440,7 +2482,7 @@ duplicate settings.""",
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_minz.set_defaults(funct=do_minimize)
     sp_minz.add_argument("conf", metavar="FILE", nargs="+",
-                         type=ConfFileType("r", "load", parse_profile=PARSECONF_STRICT),
+                         type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                          help="The default configuration file(s) used to determine what base "
                               "settings are unnecessary to keep in the target file."
                          ).completer = conf_files_completer
@@ -2454,6 +2496,11 @@ duplicate settings.""",
     sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
                          help="Enable dry-run mode.  Instead of writing the minimized value to "
                               "TARGET, show a 'diff' of what would be removed.")
+    sp_mzg1.add_argument("--explode-default", "-E", default=False, action="store_true",
+                         help="Along with minimizing the same stanza across multiple config files, "
+                              "also take into consideration the [default] or global stanza values. "
+                              "This can often be use to trim out cruft in savedsearches.conf by "
+                              "pointing to etc/system/default/savedsearches.conf, for example.")
     sp_mzg1.add_argument("--output",
                          type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                          default=None,
@@ -2467,6 +2514,7 @@ duplicate settings.""",
                               "be preserved within the minimized output.  For example the it's"
                               "often desirable keep the 'disabled' settings in the local file, "
                               "even if it's enabled by default.")
+
 
 
     # SUBCOMMAND:  splconf sort <CONF>
