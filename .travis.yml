@@ -1,19 +1,23 @@
 language: python
 python:
-  - "2.6"
+#  - "2.6"
   - "2.7"
 #  - "3.4"
 #  - "3.5"
 #  - "3.6"
   # PyPy versions
-  - "pypy2.7"
+#  - "pypy2.7"
 #  - "pypy3.5"
 # command to install dependencies
-#install:
+install:
+  - pip install coverage
   - pip install .
 #  - pip install -r requirements.txt
 # command to run tests
-script: python -m unittest discover
+#script: nosetests --with-coverage
+script: coverage run -m unittest discover
+after_success:
+  - coveralls
 notifications:
   email:
     - lowell@kintyre.co
