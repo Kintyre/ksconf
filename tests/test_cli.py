@@ -234,8 +234,8 @@ class CliDiffTest(unittest.TestCase):
             ko = ksconf_cli("diff", conf1, conf2)
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
             self.assertRegexpMatches(ko.stdout, r"^diff ", "Missing diff header line")
-            self.assertRegexpMatches(ko.stdout, r"--- .*/savedsearches-1.conf \d{4}")
-            self.assertRegexpMatches(ko.stdout, r"\+\+\+ .*/savedsearches-2.conf \d{4}")
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]--- [^\r\n]+?[/\\]savedsearches-1.conf\s+\d{4}-\d\d-\d\d")
+            self.assertRegexpMatches(ko.stdout, r"\+\+\+ [^\r\n]+?[/\\]savedsearches-2.conf\s+\d{4}-\d\d-\d\d")
             self.assertRegexpMatches(ko.stdout, r"[\r\n]\+ \| stats")
             self.assertRegexpMatches(ko.stdout, r"[\r\n]- search = noop")
 
