@@ -15,7 +15,7 @@ install:
 #  - pip install -r requirements.txt
 # command to run tests
 #script: nosetests --with-coverage
-script: coverage run -m unittest discover
+script: coverage run -m unittest discover -s tests
 after_success:
   - coveralls
 notifications:

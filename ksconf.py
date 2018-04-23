@@ -2095,7 +2095,7 @@ version controlled (default) folder, and dealing with more than one layer of
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
-def cli():
+def cli(argv=None, _unittest=False):
     import argparse
     import textwrap
 
@@ -2638,7 +2638,7 @@ To recursively sort all files:
     sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
 
     autocomplete(parser)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     global FORCE_TTY_COLOR
     FORCE_TTY_COLOR = args.force_color
@@ -2649,7 +2649,11 @@ To recursively sort all files:
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         raise
         return_code = EXIT_CODE_INTERNAL_ERROR
-    sys.exit(return_code or 0)
+
+    if _unittest:
+        return return_code or 0
+    else:
+        sys.exit(return_code or 0)
 
 
 

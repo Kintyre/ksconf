@@ -59,7 +59,7 @@ The following documents the CLI options
 for script in glob("*.py"):
     if "make_cli_docs" in script:
         continue  # Don't fork bomb
-    if script.startswith("test_") or script == "setup.py":
+    if "test" in script or script == "setup.py":
         continue
     print "Building docs for {}".format(script)
     write_doc_for(readme, script)
