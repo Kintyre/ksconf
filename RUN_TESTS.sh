@@ -13,7 +13,7 @@ function RUN() {
 
 DOWNLOADS=$PWD/app_archive
 
-coverage run test_ksconf.py || { echo "Unit test failed.  Stopping."; exit 2; }
+coverage run run_tests.py || { echo "Unit test failed.  Stopping."; exit 2; }
 #coverage report ksconf.py
 
 RUN combine TEST_APPS/search/default.d/* --target=TEST_APPS/search/default --dry-run

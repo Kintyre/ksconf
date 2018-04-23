@@ -800,6 +800,8 @@ GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stder
 
 
 def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
+    if isinstance(args, tuple):
+        args = list(args)
     if combine_std:
         # Should return "lines" instead of stderr/stdout streams
         raise NotImplementedError
@@ -1882,7 +1884,8 @@ def do_unarchive(args):
         git_commit_cmd.extend(args.git_commit_args)
 
         if args.git_mode == "commit":
-            proc = git_cmd(git_commit_cmd, cwd=os.path.dirname(dest_app), capture_std=False)
+            capture_std = True if args.no_edit else False
+            proc = git_cmd(git_commit_cmd, cwd=os.path.dirname(dest_app), capture_std=capture_std)
             if proc.returncode == 0:
                 sys.stderr.write("You changes have been committed.  Please review before pushing "
                                  "If you find any issues, here are some helpful options:\n\n"
@@ -2111,7 +2114,8 @@ def cli(argv=None, _unittest=False):
 
     parser = argparse.ArgumentParser(fromfile_prefix_chars="@",
                                      formatter_class=MyDescriptionHelpFormatter,
-                                     description=_cli_description)
+                                     description=_cli_description,
+                                     prog="ksconf.py")
     # Optional argcomplete library for CLI (BASH-based) tab completion
     # pip install argcomplete
     # activate-global-python-argcomplete  (in ~/.bashrc)
