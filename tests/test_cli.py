@@ -17,16 +17,6 @@ def static_data(path):
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "data", *parts))
 
 
-def _stream_as(stream, as_):
-    stream.seek(0)
-    if as_ == "lines":
-        return stream.readlines()
-    elif as_ == "string":
-        return stream.read()
-    elif as_ == "stream":
-        return stream
-
-
 KsconfOutput = namedtuple("KsconfOutput", ["returncode", "stdout", "stderr"])
 
 '''
@@ -81,7 +71,8 @@ class _KsconfCli():
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
+        # Don't wory with coverage here.  It gets plenty of testing DURING unittest development ;-)
+        if exc_type is not None:  # pragma: no cover
             sys.stderr.write("Exception while running ksconf cli:  args={0!r}\n".format(self._last_args))
             ko = self._last_output
             if ko:
@@ -109,7 +100,7 @@ class TestWorkDir(object):
 
     def git(self, *args):
         o = git_cmd(args, cwd=self._path)
-        if o.returncode != 0:
+        if o.returncode != 0:       # pragma: no cover
             # Because, if we're using ksconf_cli, then we may be redirecting these...
             stderr = sys.__stderr__
             stderr.write("Git command 'git {0}' failed with exit code {1}\n{2}\n"
@@ -256,6 +247,22 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertRegexpMatches(ko.stderr, "Must provide [^\r\n]+--target")
 
 
+class CliMergeTest(unittest.TestCase):
+    def test_merge_to_stdout(self):
+        twd = TestWorkDir()
+        conf1 = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        conf2 = twd.write_file("inputs2.conf", """
+        [script://./bin/ps.sh]
+        disabled = FALSE
+        inverval = 97
+        index = os_linux
+        """)
+        twd.read_conf("inputs2.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("merge", "--target", "-", conf1, conf2)
+            #self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stdout, "[\r\n]disabled = FALSE")
+
 
 class CliDiffTest(unittest.TestCase):
     def test_diff_simple_savedsearch(self):
@@ -292,6 +299,28 @@ class CliDiffTest(unittest.TestCase):
             self.assertRegexpMatches(ko.stdout, r"\x1b\[\d+m", "No TTY color markers found")
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
 
+    '''
+    def test_diff_stdin(self):
+        twd = TestWorkDir()
+        conf1 = twd.write_file("savedsearches-1.conf", """
+        [x]
+        search = noop
+        """)
+        conf2 = twd.write_file("savedsearches-2.conf", r"""
+        [x]
+        search = tstats count where index=hippo by sourcetype, source \
+        | stats values(source) by sourcetype
+        """)
+        try:
+            _stdin = sys.stdin
+            sys.stdin = open(conf2, "r")
+            with ksconf_cli:
+                ko = ksconf_cli("diff", conf1, "-")
+                self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+        finally:
+            sys.stdin = _stdin
+        '''
+
     def test_diff_multiline(self):
         """ Force the generate of a multi-line value diff """
         twd = TestWorkDir()
@@ -301,7 +330,8 @@ class CliDiffTest(unittest.TestCase):
         action.summary_index.info = r3
         action.summary_index._name = summary_splunkidx
         cron_schedule = 29 * * * *
-        description = Hourly report showing index event count and license usage data
+        description = Hourly report showing index event count and license usage data\
+        All data is stored in a summary index for long term analysis.
         dispatch.earliest_time = 0
         enableSched = 1
         realtime_schedule = 0
@@ -328,7 +358,8 @@ class CliDiffTest(unittest.TestCase):
         action.summary_index.info = r4
         action.summary_index._name = summary_splunkidx
         cron_schedule = 29 * * * *
-        description = Hourly report showing index event count and license usage data
+        description = Hourly report showing index event count and license usage data\
+        All data is stored in a summary index for long term analysis.
         dispatch.earliest_time = -7d@h
         dispatch.latest_time = +21d@h
         enableSched = 1
@@ -360,6 +391,15 @@ class CliDiffTest(unittest.TestCase):
             self.assertRegexpMatches(ko.stdout, r'[\r\n][ ]\s*\| rename host as h, sourcetype as st, source as s, index as idx')
             self.assertRegexpMatches(ko.stdout, r'[\r\n][+]\s*\| eval h=if[^[\r\n]+,"\(SQUASHED\)"')
             self.assertRegexpMatches(ko.stdout, r'[\r\n][-]\s*[^\r\n]+show_timestamps="true"')
+
+    def test_diff_no_common(self):
+        with ksconf_cli:
+            ko = ksconf_cli("diff", #"--comments",
+                            static_data("savedsearches-sysdefault70.conf"),
+                            static_data("inputs-ta-nix-default.conf"))
+            #self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+            self.assertRegexpMatches(ko.stderr, "No common stanzas")
+
 
 
 class CliCheckTest(unittest.TestCase):
@@ -413,7 +453,7 @@ class CliCheckTest(unittest.TestCase):
             ko = ksconf_cli("check", self.conf_good, self.conf_bad)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
-    def test_mixed_quiet(self):
+    def test_mixed_quiet_missing(self):
         """ Test with a missing file """
         with ksconf_cli:
             # Yes, this may seem silly, a fresh temp dir ensures this file doesn't actually exist
@@ -529,6 +569,7 @@ class CliSortTest(unittest.TestCase):
 class CliMinimizeTest(unittest.TestCase):
 
     def test_minimize_cp_inputs(self):
+        """ Test typical usage:  copy default-> local, edit, minimize """
         twd = TestWorkDir()
         local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
         default = static_data("inputs-ta-nix-default.conf")
@@ -547,8 +588,23 @@ class CliMinimizeTest(unittest.TestCase):
             self.assertEqual(d["script://./bin/netstat.sh"]["interval"], "120")
             self.assertEqual(d["script://./bin/netstat.sh"]["disabled"], "0")
 
+    def test_minimize_reverse(self):
+        twd = TestWorkDir()
+        local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        default = static_data("inputs-ta-nix-default.conf")
+        inputs_min = twd.get_path("inputs-new.conf")
+        rebuilt = twd.get_path("inputs-rebuild.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--output", inputs_min,
+                            "--target", local, default)
+        with ksconf_cli:
+            ko = ksconf_cli("merge", "--target", rebuilt, default, inputs_min)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+        with ksconf_cli:
+            ko = ksconf_cli("diff", static_data("inputs-ta-nix-local.conf"), rebuilt)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
 
-    def test_minimize_explode_detauls(self):
+    def test_minimize_explode_defaults(self):
         twd = TestWorkDir()
         conf = twd.write_file("savedsearches.conf", """\
         [License usage trend by sourcetype]
@@ -577,6 +633,8 @@ class CliMinimizeTest(unittest.TestCase):
             ko = ksconf_cli("minimize", "--explode-default", "--target", conf, sysdefault)
             final_size = os.stat(conf).st_size
             self.assertTrue(orig_size > final_size)
+
+
 
 dummy_config = {
     "stanza" : { "any_content": "will do" }
@@ -707,6 +765,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
             kco = ksconf_cli("unarchive", static_data("apps/modsecurity-add-on-for-splunk_12.tgz"),
                              "--dest", twd.get_path("apps"), "--git-sanity-check=ignored",
                              "--git-mode=commit", "--no-edit")
+
             self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
 
     def _modsec01_upgrade(self, twd, app_tgz):
@@ -716,8 +775,17 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
             kco = ksconf_cli("unarchive", tgz, "--dest", twd.get_path("apps"),
                              "--git-mode=commit", "--no-edit")
             self.assertIn("About to upgrade", kco.stdout)
-            self.assertIn("ModSecurity Add-on", kco.stdout,
-                          "Should display app name during install")
+
+    def test_zip_file(self):
+        # Note:  Very minimal .zip testing since using the ZIP format is rare but does happen.
+        # Sometimes a user will grab a zip file from a GitHub download, so we cope if we can.
+        twd = TestWorkDir() # No git, keeping it as simple as possible (also, test that code path)
+        zfile = static_data("apps/technology-add-on-for-rsa-securid_01.zip")
+        with ksconf_cli:
+            kco = ksconf_cli("unarchive", zfile, "--dest", twd.makedir("apps"))
+            self.assertIn("About to install", kco.stdout)
+            self.assertIn("RSA Securid Splunk Addon", kco.stdout)
+            self.assertRegexpMatches(kco.stdout, "without version control support")
 
     def test_modsec_install_defaultd(self):
         twd = TestWorkDir(git_repo=True)
@@ -734,7 +802,8 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
                                  "--default-dir", "default.d/10-official",
                                  "--exclude", "README/inputs.conf.spec")
                 self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
+                self.assertRegexpMatches(kco.stdout, "with git support")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     unittest.main()

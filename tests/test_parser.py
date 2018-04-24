@@ -34,7 +34,7 @@ class ParserTestCase(unittest.TestCase):
     # Todo:  Test comments in general...  Don't go too deep into this because we don't care too much, and eventually better comment support will break the API.
     # Todo:  Test trailing comments on stanzas
     # Todo:  Test trailing comments on key=value lines
-    # Todo:  Test copy/deepcopy support:  Parse a string, copy, change origional, confirm copy wasn't altered.
+    # Todo:  Test copy/deepcopy support:  Parse a string, copy, change original, confirm copy wasn't altered.
 
     def test_read_file(self):
         """ Confirm that parse_conf() works with an OS-level file. """
@@ -98,6 +98,19 @@ class ParserTestCase(unittest.TestCase):
         # Todo:  Does this ever happen...
         self.assert_(c["stanza2"]["key with spaces"])
 
+    def test_missing_key(self):
+        c = parse_string("""\
+        [stanza1]
+        key1=yes
+        =  no
+        [stanza2]
+          = whoopsie
+          """)
+        self.assertEqual(c["stanza1"]["key1"], "yes")
+        # Todo:  Review if this should throw an error or not...
+        self.assertEqual(c["stanza1"][""], "no")
+        self.assertEqual(c["stanza2"][""], "whoopsie")
+
     def test_whitespace_stanza(self):
         c = parse_string("""
         [stanza 1]
@@ -147,7 +160,6 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c["jungle"]["animal"], "monkey")
         self.assertEqual(c["forest"]["animal"], "wolf")
 
-    @unittest.expectedFailure
     def test_bad_stanza(self):
         t1 = """
         [Errors in the last hour
@@ -279,15 +291,11 @@ class ParserTestCase(unittest.TestCase):
         """
         c = parse_string(t)
         # If an empty global stanza is created, that's an implementation detail not important here.
-        if GLOBAL_STANZA in c and not c[GLOBAL_STANZA]:
-            del c[GLOBAL_STANZA]
         self.assert_(c["Knowledge Object backup to CSV"])
         self.assertNotIn(" rest splunk_server=local /servicesNS/-/-/configs/conf-macros ", c)
         self.assertEqual(len(c), 1, "Should only have 1 stanza")
         self.assertEqual(len(c["Knowledge Object backup to CSV"]["search"].splitlines()), 7)
 
-
-    @unittest.expectedFailure
     def test_splksysdfltjunk(self):
         # This is copied from Splunk's system/default/props.conf file.  (We are CERTAINLY more
         #picky than splunk when it comes to parsing these files.
@@ -299,9 +307,10 @@ class ParserTestCase(unittest.TestCase):
         MAX_EVENTS = 1000
         """
         c = parse_string(t, profile=PARSECONF_MID)
+        self.assertEqual(c["sar"]["MAX_EVENTS"], "1000")
 
     def test_write_nonstr(self):
-        """ Make sure that other python primative types are writen out correctly.  """
+        """ Make sure that other python primitive types are writen out correctly.  """
         # Note:  Types will not be preserved, but values should not be lost
         d = {"stanza": {"boolean1": True, "boolean2": False, "int1": 99, "int2": 0,
                         "none": None}}
@@ -393,12 +402,20 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertIsNotNone(op.a)
         self.assertIsNone(op.b)
 
+    def test_summarize_compare_results(self):
+        c1 = parse_string(self.cfg_props_imapsync_1)
+        c2 = parse_string(self.cfg_props_imapsync_2)
+        diffs = compare_cfgs(c1, c2)
+        output = StringIO()
+        summarize_cfg_diffs(diffs, output)
+        out = output.getvalue()
+        # Very basic check for now.
+        self.assertRegexpMatches(out, r"\[imapsync\]\s*3 keys")
+        self.assertRegexpMatches(out, r"\[other2\]")
+
     def test_compare_no_common(self):
         c1 = parse_string(self.cfg_macros_1)
         c2 = parse_string(self.cfg_props_imapsync_1)
-        # Side-effect of our string parsing -- remove GLOBAL
-        del c1[GLOBAL_STANZA]
-        del c2[GLOBAL_STANZA]
         diffs = compare_cfgs(c1, c2)
         self.assertEqual(len(diffs), 1)
         self.assertEqual(diffs[0].location.type, "global")
@@ -458,5 +475,5 @@ class UtilFunctionTestCase(unittest.TestCase):
         self.assertListEqual(a, b, "should return the same paths with or without a trailing slash")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     unittest.main()

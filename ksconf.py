@@ -148,7 +148,7 @@ class DuplicateStanzaException(ConfParserException):
     pass
 
 
-def section_reader(stream, section_re=re.compile(r'^\[(.*)\]\s*$')):
+def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
     """
     Break a configuration file stream into 2 components sections.  Each section is yielded as
     (section_name, lines_of_text)
@@ -188,7 +188,7 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
         yield buf
 
 
-def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False, strict=False):
+def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=False, strict=False):
     comment = 0
     for entry in lines:
         if comments_re.search(entry):
@@ -198,6 +198,9 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False
         elif "=" in entry:
             k, v = entry.split("=", 1)
             yield k.rstrip(), v.lstrip()
+        elif re.search('^\s*\[|\]\s*$', entry):
+            # ToDo:  There should be a 'loose' mode that allows this to be ignored...
+            raise ConfParserException("Dangling stanza header:  {0}".format(entry))
         elif strict and entry.strip():
             raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
@@ -284,6 +287,12 @@ def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False
             else:
                 local_stanza[key] = value
                 s[key] = value
+    # If the global entry is just a blank line, drop it
+    if GLOBAL_STANZA in sections:
+        g = sections[GLOBAL_STANZA]
+        if not g:
+        #if len(g) == 1 and not g[0]:
+            del sections[GLOBAL_STANZA]
     return sections
 
 
@@ -314,6 +323,7 @@ def write_conf(stream, conf, stanza_delim="\n", sort=True):
 
     keys = sorter(conf)
     # Global MUST be written first
+    # Todo, "[default]" (case sensitive?) should go second...
     if GLOBAL_STANZA in keys:
         keys.remove(GLOBAL_STANZA)
         write_stanza_body(conf[GLOBAL_STANZA])
@@ -371,7 +381,7 @@ def _merge_conf_dicts(base, new_layer):
                 # If this section exist in a parent (base), then drop it now
                 if section in base:
                     del base[section]
-                continue
+                continue        # pragma: no cover  (peephole optimization)
         if section in base:
             # TODO:  Support other magic here...
             # Rip all the comments out of the new_layer, and prepend them (sequentially) to base
@@ -773,8 +783,8 @@ def _extract_zip(path, extract_filter=None, mode=0644):
                 payload = None
             yield GenArchFile(zi.filename, mode, zi.file_size, payload)
 
-def sanity_checker(iter):
-    for gaf in iter:
+def sanity_checker(interable):
+    for gaf in interable:
         if gaf.path.startswith("/") or ".." in gaf.path:
             raise ValueError("Bad path found in archive:  {}".format(gaf.path))
         yield gaf
@@ -783,9 +793,9 @@ def sanity_checker(iter):
 # This gets properly supported in Python 3.6, but until then....
 RegexType = type(re.compile(r'.'))
 
-def gen_arch_file_remapper(iter, mapping):
+def gen_arch_file_remapper(iterable, mapping):
     # Mapping is assumed to be a sequence of (find,replace) strings (may eventually support re.sub?)
-    for gaf in iter:
+    for gaf in iterable:
         path = gaf.path
         for (find, replace) in mapping:
             if isinstance(find, RegexType):
@@ -953,7 +963,8 @@ def do_check(args):
 
 def do_merge(args):
     ''' Merge multiple configuration files into one '''
-    return merge_conf_files(args.target, args.conf, dry_run=args.dry_run, banner_comment=args.banner)
+    merge_conf_files(args.target, args.conf, dry_run=args.dry_run, banner_comment=args.banner)
+    return EXIT_CODE_SUCCESS
 
 
 def do_diff(args):
@@ -1012,34 +1023,34 @@ def _show_diff_header(stream, files, diff_line=None):
 
 
 def show_diff(stream, diffs, headers=None):
-    def write_key(key, value, prefix=" "):
+    def write_key(key, value, prefix_=" "):
         if "\n" in value:
-            write_multiline_key(key, value, prefix)
+            write_multiline_key(key, value, prefix_)
         else:
             if key.startswith("#-"):
                 template = "{0}{2}\n"
             else:
                 template = "{0}{1} = {2}\n"
-            stream.write(template.format(prefix, key, value))
+            stream.write(template.format(prefix_, key, value))
 
-    def write_multiline_key(key, value, prefix=" "):
+    def write_multiline_key(key, value, prefix_=" "):
         lines = value.replace("\n", "\\\n").split("\n")
-        tty_color(stream, _diff_color_mapping.get(prefix))
-        stream.write("{0}{1} = {2}\n".format(prefix, key, lines.pop(0)))
+        tty_color(stream, _diff_color_mapping.get(prefix_))
+        stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
         for line in lines:
-            stream.write("{0}{1}\n".format(prefix, line))
+            stream.write("{0}{1}\n".format(prefix_, line))
         tty_color(stream, ANSI_RESET)
 
-    def show_value(value, stanza, key, prefix=""):
-        tty_color(stream, _diff_color_mapping.get(prefix))
+    def show_value(value, stanza_, key, prefix_=""):
+        tty_color(stream, _diff_color_mapping.get(prefix_))
         if isinstance(value, dict):
-            if stanza is not GLOBAL_STANZA:
-                stream.write("{0}[{1}]\n".format(prefix, stanza))
+            if stanza_ is not GLOBAL_STANZA:
+                stream.write("{0}[{1}]\n".format(prefix_, stanza_))
             for x, y in sorted(value.iteritems()):
-                write_key(x, y, prefix)
+                write_key(x, y, prefix_)
             stream.write("\n")
         else:
-            write_key(key, value, prefix)
+            write_key(key, value, prefix_)
         tty_color(stream, ANSI_RESET)
 
     def show_multiline_diff(value_a, value_b, key):
@@ -1068,8 +1079,8 @@ def show_diff(stream, diffs, headers=None):
             if headers:
                 _show_diff_header(stream, headers, "--ksconf -global")
             # This is the only place where a gets '-' and b gets '+'
-            for (prefix, d) in [("-", op.a), ("+", op.b)]:
-                for (stanza, keys) in sorted(d.items()):
+            for (prefix, data) in [("-", op.a), ("+", op.b)]:
+                for (stanza, keys) in sorted(data.items()):
                     show_value(keys, stanza, None, prefix)
             stream.flush()
             return EXIT_CODE_DIFF_NO_COMMON
@@ -1084,7 +1095,7 @@ def show_diff(stream, diffs, headers=None):
                 show_value(op.b, op.location.stanza, None, "-")
             if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
                 show_value(op.a, op.location.stanza, None, "+")
-            continue
+            continue  # pragma: no cover  (peephole optimization)
 
         if op.location.stanza != last_stanza:
             if last_stanza is not None:
@@ -1192,7 +1203,7 @@ def do_minimize(args):
                     sys.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
                                  "".format(op.location.stanza, op.location.key, op.a))
                     '''
-                    continue
+                    continue        # pragma: no cover  (peephole optimization)
                 del minz_cfg[op.location.stanza][op.location.key]
                 # If that was the last remaining key in the stanza, delete the entire stanza
                 if not _drop_stanza_comments(minz_cfg[op.location.stanza]):
@@ -1522,7 +1533,7 @@ def do_combine(args):
             for fn in files:
                 # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
                 if fn.endswith(".swp") or fn.endswith("*.bak"):
-                    continue
+                    continue    # pragma: no cover  (peephole optimization)
                 src_file = os.path.join(root, fn)
                 src_path = os.path.join(src_root, root, fn)
                 src_file_index[src_file].append(src_path)
@@ -1535,7 +1546,7 @@ def do_combine(args):
             if tgt_file not in src_file_index:
                 # Todo:  Add support for additional blacklist wildcards (using fnmatch)
                 if fn == CONTROLLED_DIR_MARKER or fn.endswith(".bak"):
-                    continue
+                    continue     # pragma: no cover (peephole optimization)
                 target_extra_files.add(tgt_file)
 
     for (dest_fn, src_files) in sorted(src_file_index.items()):
@@ -1730,7 +1741,7 @@ def do_unarchive(args):
                 for fn in filenames:
                     existing_files.add(os.path.join(root, fn))
         sys.stdout.write("Before upgrade.  App has {} files\n".format(len(existing_files)))
-    else:
+    elif is_git:
         sys.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
 
     def fixup_pattern_bw(patterns, prefix=None):
@@ -1953,21 +1964,31 @@ class ConfFileProxy(object):
                 self._stream.close()
         self._stream = None
 
+    def reset(self):
+        if self._data is not None:
+            self._data = None
+            if self.is_file():
+                self._close_stream()
+            else:
+                try:
+                    self.stream.seek(0)
+                except:
+                    raise
+
     def set_parser_option(self, **kwargs):
         """ Setting a key to None will remove that setting. """
-        changed = False
+        profile = dict(self._parse_profile)
         for (k, v) in kwargs.items():
             if v is None:
-                if k in self._parse_profile:
-                    del self._parse_profile[k]
-                    changed = True
+                if k in profile:
+                    del profile[k]
             else:
-                cv = self._parse_profile.get(k, None)
+                cv = profile.get(k, None)
                 if cv != v:
-                    self._parse_profile[k] = v
-                    changed = True
-        if changed:
-            self._data = None
+                    profile[k] = v
+        if self._parse_profile != profile:
+            self._parse_profile = profile
+            self.reset()
 
     @property
     def stream(self):
@@ -2081,7 +2102,7 @@ class ConfFileType(object):
             except TypeError, e:
                 raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
 
-    def __repr__(self):
+    def __repr__(self):     # pragma: no cover
         args = self._mode, self._action, self._parse_profile
         args_str = ', '.join(repr(arg) for arg in args if arg != -1)
         return '%s(%s)' % (type(self).__name__, args_str)
@@ -2128,7 +2149,7 @@ def cli(argv=None, _unittest=False):
     try:
         from argcomplete import autocomplete
         from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-    except ImportError:
+    except ImportError:     # pragma: no cover
         def _argcomplete_noop(*args, **kwargs): del args, kwargs
         autocomplete = _argcomplete_noop
         # noinspection PyPep8Naming
@@ -2461,7 +2482,7 @@ will be lost.  (This needs improvement.)
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("rw", "none", parse_profile=PARSECONF_STRICT),
+                         type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                          default=ConfFileProxy("<stdout>", "w", sys.stdout),
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."
@@ -2706,5 +2727,5 @@ To recursively sort all files:
 
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':   # pragma: no cover
     cli()
