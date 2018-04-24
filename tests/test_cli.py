@@ -71,9 +71,10 @@ class _KsconfCli():
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Don't wory with coverage here.  It gets plenty of testing DURING unittest development ;-)
+        # Don't worry with coverage here.  It gets plenty of testing DURING unittest development ;-)
         if exc_type is not None:  # pragma: no cover
-            sys.stderr.write("Exception while running ksconf cli:  args={0!r}\n".format(self._last_args))
+            sys.stderr.write("Exception while running: ksconf {0}\n".
+                             format(list2cmdline(self._last_args)))
             ko = self._last_output
             if ko:
                 if ko.stdout:
@@ -96,7 +97,8 @@ class TestWorkDir(object):
             self._path = tempfile.mkdtemp("-ksconftest")
 
     def __del__(self):
-        shutil.rmtree(self._path, ignore_errors=True)
+        # This apparently isn't working...
+        shutil.rmtree(self._path)
 
     def git(self, *args):
         o = git_cmd(args, cwd=self._path)
@@ -142,8 +144,6 @@ class TestWorkDir(object):
         with open(src, "r") as stream:
             content = stream.read()
             return self.write_file(rel_path, content)
-
-
 
 
 class CliSimpleTestCase(unittest.TestCase):
@@ -224,8 +224,8 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
             nav_content = open(twd.get_path("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")).read()
             self.assertIn("My custom view", nav_content)
-        twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf",{
-            "aws:config" : { "TIME_FORMAT" : "%Y-%m-%dT%H:%M:%S.%6NZ" }
+        twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf", {
+            "aws:config": {"TIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%6NZ"}
         })
         twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-the-force/data/ui/nav/default.xml", """
         <nav search_view="search" color="#65A637">
@@ -237,7 +237,8 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_file("etc/apps/Splunk_TA_aws/default/data/dead.conf", "# File to remove")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]\+TIME_FORMAT = [^\r\n]+%6N")
+            self.assertRegexpMatches(ko.stdout, r'[\r\n][-]\s*<view name="search"')
+            self.assertRegexpMatches(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
 
@@ -257,11 +258,33 @@ class CliMergeTest(unittest.TestCase):
         inverval = 97
         index = os_linux
         """)
-        twd.read_conf("inputs2.conf")
         with ksconf_cli:
-            ko = ksconf_cli("merge", "--target", "-", conf1, conf2)
-            #self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stdout, "[\r\n]disabled = FALSE")
+            ko = ksconf_cli("merge", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]disabled = FALSE")
+
+    def test_merge_dry_run(self):
+        twd = TestWorkDir()
+        conf1 = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        conf2 = twd.write_file("inputs2.conf", """
+        [script://./bin/ps.sh]
+        disabled = FALSE
+        inverval = 97
+        index = os_linux
+        """)
+        newfile = twd.get_path("input-new.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("merge", conf1, conf2, "--target", newfile, "--dry-run")
+
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            # Todo: Figure out if this should be a "+" or "-"....
+            self.assertRegexpMatches(ko.stdout, r"[\r\n][+-]disabled = FALSE")
+
+        with ksconf_cli:
+            ko = ksconf_cli("merge", conf1, conf2, "--target", newfile)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stdout, r"^$")
+
 
 
 class CliDiffTest(unittest.TestCase):

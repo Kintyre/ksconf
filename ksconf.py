@@ -456,7 +456,7 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
             dest_cfg = {}
         show_diff(sys.stdout, compare_cfgs(merged_cfg, dest_cfg),
                   headers=(dest.name, dest.name + "-new"))
-        return
+        return SMART_UPDATE
     return dest.dump(merged_cfg)
 
 
@@ -1571,7 +1571,7 @@ def do_combine(args):
                             # Binary files.  Can't compare...
                             smart_rc = "DRY-RUN (NO-DIFF=BIN)"
                         else:
-                            show_text_diff(sys.stdout, src_file, dest_path)
+                            show_text_diff(sys.stdout, dest_path, src_file)
                             smart_rc = "DRY-RUN (DIFF)"
                 else:
                     smart_rc = "DRY-RUN (NEW)"
@@ -1679,7 +1679,7 @@ def do_unarchive(args):
             # Ignoring the 'local' entries since distributed apps should never modify local anyways
             old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
             old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
-        except:
+        except ConfParserException:
             sys.stderr.write("Unable to read app.conf from existing install.\n")
     else:
         mode = "install"
@@ -2003,6 +2003,7 @@ class ConfFileProxy(object):
         return self._data
 
     def load(self, profile=None):
+
         if "r" not in self._mode:
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
             raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
@@ -2482,7 +2483,7 @@ will be lost.  (This needs improvement.)
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
+                         type=ConfFileType("rw", "none", parse_profile=PARSECONF_STRICT),
                          default=ConfFileProxy("<stdout>", "w", sys.stdout),
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."

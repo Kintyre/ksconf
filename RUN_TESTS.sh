@@ -23,9 +23,9 @@ touch TEST_APPS/search/default/EXTRA_FILE.bak
 RUN combine TEST_APPS/search/default.d/* --target=TEST_APPS/search/default
 # Test internal wildcard expansion
 RUN combine 'TEST_APPS/search/default.d/*' --target=TEST_APPS/search/default
-RC=1 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf
+RC=0 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf
 RC=0 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf --dry-run
-RC=1 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
+RC=0 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
 RC=3 RUN diff TEST_APPS/search/default.d/05-*/savedsearches.conf savedsearches.conf
 RC=3 RUN diff TEST_APPS/search/default.d/05-*/savedsearches.conf savedsearches.conf --output=savedsearches.conf.diff
 
@@ -39,10 +39,10 @@ echo -e "[Badconf\nfile=True\n" > TEST_APPS/search/local/bad_conf.conf
 RC=20 RUN check --quiet TEST_APPS/search/local/*.conf non-existant-file.conf
 
 
-RC=1 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
+RC=0 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
 RUN promote savedsearches.conf TEST_APPS/search/default/savedsearches.conf --batch
 
-RC=1 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
+RC=0 RUN merge TEST_APPS/search/default.d/*/savedsearches.conf --target=savedsearches.conf
 RUN sort savedsearches.conf
 RUN sort -i savedsearches.conf
 echo -e "\n\n[stanza]\search=|noop\n[zzzblah]other=true\n" >> savedsearches.conf
