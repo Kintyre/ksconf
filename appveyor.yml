@@ -1,0 +1,22 @@
+build: false
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "32"
+
+init:
+  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+
+install:
+  - "%PYTHON%/Scripts/pip.exe install coverage"
+  - "%PYTHON%/Scripts/pip.exe install codecov"
+  - "%PYTHON%/Scripts/pip.exe install coverall"
+  - "%PYTHON%/Scripts/pip.exe install ."
+
+test_script:
+  - "%PYTHON%/Scripts/coverage run -m unittest discover -s tests"
+
+cache:
+  - '%LOCALAPPDATA%\pip\cache'
