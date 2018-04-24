@@ -835,7 +835,7 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
     base_len = sum([len(s)+1 for s in args])
     for chunk in _xargs(iterable, cmd_len-base_len):
         p = git_cmd(args + chunk, cwd=cwd)
-        if p.returncode != 0:
+        if p.returncode != 0:       # pragma: no cover
             raise RuntimeError("git exited with code {}.  Command: {}".format(
                                p.returncode, list2cmdline(args+chunk)))
 
@@ -843,7 +843,7 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
 def git_status_summary(path):
     c = Counter()
     cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
-    if cmd.returncode != 0:
+    if cmd.returncode != 0:         # pragma: no cover
         raise RuntimeError("git command returned exit code {}.".format(cmd.returncode))
     # XY:  X=index, Y=working tree.   For our simplistic approach we consider them together.
     for line in cmd.stdout.splitlines():
@@ -892,7 +892,7 @@ def git_ls_files(path, *modifiers):
     for m in modifiers:
         args.append("--" + m)
     proc = git_cmd(args, cwd=path)
-    if proc.returncode != 0:
+    if proc.returncode != 0:            # pragma: no cover
         raise RuntimeError("Bad return code from git... {} add better exception handling here.."
                            .format(proc.returncode))
     return proc.stdout.splitlines()
@@ -1150,7 +1150,6 @@ def explode_default_stanza(conf, default_stanza=None):
 
 
 def do_minimize(args):
-    explode_defaults = True
     if args.explode_default:
         # Is this the SAME as exploding the defaults AFTER the merge?;  I think NOT.  Needs testing
         cfgs = [ explode_default_stanza(conf.data) for conf in args.conf ]
@@ -1160,6 +1159,7 @@ def do_minimize(args):
     default_cfg = merge_conf_dicts(*cfgs)
     del cfgs
     local_cfg = args.target.data
+    orig_cfg = dict(args.target.data)
 
     if args.explode_default:
         # Make a skeleton default dict; at the highest level, that ensure that all default
@@ -1186,6 +1186,7 @@ def do_minimize(args):
             if isinstance(op.location, DiffStanza):
                 del minz_cfg[op.location.stanza]
             else:
+                # Todo: Only preserve keys for stanzas where at least 1 key has been modified
                 if match_bwlist(op.location.key, args.preserve_key):
                     '''
                     sys.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
@@ -1194,7 +1195,7 @@ def do_minimize(args):
                     continue
                 del minz_cfg[op.location.stanza][op.location.key]
                 # If that was the last remaining key in the stanza, delete the entire stanza
-                if not minz_cfg[op.location.stanza]:
+                if not _drop_stanza_comments(minz_cfg[op.location.stanza]):
                     del minz_cfg[op.location.stanza]
         elif op.tag == DIFF_OP_INSERT:
             '''
@@ -1210,8 +1211,12 @@ def do_minimize(args):
             continue
 
     if args.dry_run:
-        rc = show_diff(sys.stdout, compare_cfgs(local_cfg, minz_cfg),
-                       headers=(args.target.name, args.target.name + "-new"))
+        if args.explode_default:
+            rc = show_diff(sys.stdout, compare_cfgs(orig_cfg, minz_cfg),
+                           headers=(args.target.name, args.target.name + "-new"))
+        else:
+            rc = show_diff(sys.stdout, compare_cfgs(local_cfg, default_cfg),
+                           headers=(args.target.name, args.target.name + "-new"))
         return rc
 
     if args.output:
@@ -1232,11 +1237,6 @@ def do_promote(args):
         # same as the target filename.
         args.target = args.target.get_file(os.path.basename(args.source.name))
 
-    # If src/dest are the same, then the file ends up being deleted.  Whoops!
-    if os.path.samefile(args.source.name, args.target.name):
-        sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
-        return EXIT_CODE_FAILED_SAFETY_CHECK
-
     if not os.path.isfile(args.target.name):
         sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
                          .format(args.target.name, args.source.name))
@@ -1245,6 +1245,12 @@ def do_promote(args):
         else:
             shutil.move(args.source.name, args.target.name)
         return
+
+    # If src/dest are the same, then the file ends up being deleted.  Whoops!
+    if os.path.samefile(args.source.name, args.target.name):
+        sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
+        return EXIT_CODE_FAILED_SAFETY_CHECK
+
 
     fp_source = file_fingerprint(args.source.name)
     fp_target = file_fingerprint(args.target.name)
@@ -2375,7 +2381,7 @@ will be lost.  (This needs improvement.)
                               "'local' conf file)"
                          ).completer = conf_files_completer
     sp_prmt.add_argument("target", metavar="TARGET",
-                         type=ConfFileType("rw", "load", accept_dir=True,
+                         type=ConfFileType("rw", "none", accept_dir=True,
                                            parse_profile=PARSECONF_STRICT),
                          help="Configuration file or directory to push the changes into. "
                               "(Typically the 'default' folder) "
@@ -2479,11 +2485,49 @@ will be lost.  (This needs improvement.)
                                     help="Minimize the target file by removing entries duplicated "
                                          "in the default conf(s) provided.  ",
                                     description="""\
-The minimize command will allow for the removal of all
-default-ish settings from a target configuration files.
-In theory, this allows for a cleaner upgrade, and fewer
-duplicate settings.""",
+Minimize a conf file by removing the default settings
+
+Reduce local conf file to only your indented changes without manually tracking
+which entires you've edited.  Minimizing local conf files makes your local
+customizations easier to read and often results in cleaner add-on upgrades.
+
+A typical scenario & why does this matter:
+To customizing a Splunk app or add-on, start by copying the conf file from
+default to local and then applying your changes to the local file.  That's
+good.  But stopping here may complicated future upgrades, because the local
+file doesn't contain *just* your settings, it contains all the default
+settings too.  Fixes published by the app creator may be masked by your local
+settings.  A better approach is to reduce the local conf file leaving only the
+stanzas and settings that you indented to change.  This make your conf files
+easier to read and makes upgrades easier, but it's tedious to do by hand.
+
+For special cases, the '--explode-default' mode reduces duplication between
+entries normal stanzas and global/default entries.  If 'disabled = 0' is a
+global default, it's technically safe to remove that setting from individual
+stanzas.  But sometimes it's preferable to be explicit, and this behavior may
+be too heavy-handed for general use so it's off by default.  Use this mode if
+your conf file that's been fully-expanded.  (i.e., conf entries downloaded via
+REST, or the output of "btool list").  This isn't perfect, since many apps
+push their settings into the global namespace, but it can help.
+
+
+Example usage:
+
+    cd Splunk_TA_nix
+    cp default/inputs.conf local/inputs.conf
+
+    # Edit 'disabled' and 'interval' settings in-place
+    vi local/inputs.conf
+
+    # Remove all the extra (unmodified) bits
+    ksconf minimize --target=local/inputs.conf default/inputs.conf
+
+""",
                                     formatter_class=MyDescriptionHelpFormatter)
+    '''Make sure this works before advertising (same file as target and source????)
+    # Note:  Use the 'merge' command to "undo"
+    ksconf merge --target=local/inputs.conf default/inputs local/inputs.conf
+    '''
     sp_minz.set_defaults(funct=do_minimize)
     sp_minz.add_argument("conf", metavar="FILE", nargs="+",
                          type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
@@ -2500,11 +2544,6 @@ duplicate settings.""",
     sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
                          help="Enable dry-run mode.  Instead of writing the minimized value to "
                               "TARGET, show a 'diff' of what would be removed.")
-    sp_mzg1.add_argument("--explode-default", "-E", default=False, action="store_true",
-                         help="Along with minimizing the same stanza across multiple config files, "
-                              "also take into consideration the [default] or global stanza values. "
-                              "This can often be use to trim out cruft in savedsearches.conf by "
-                              "pointing to etc/system/default/savedsearches.conf, for example.")
     sp_mzg1.add_argument("--output",
                          type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                          default=None,
@@ -2512,6 +2551,11 @@ duplicate settings.""",
                               "this file instead of updating TARGET.  This can be use to preview "
                               "changes or helpful in other workflows."
                          ).completer = conf_files_completer
+    sp_minz.add_argument("--explode-default", "-E", default=False, action="store_true",
+                         help="Along with minimizing the same stanza across multiple config files, "
+                              "also take into consideration the [default] or global stanza values. "
+                              "This can often be used to trim out cruft in savedsearches.conf by "
+                              "pointing to etc/system/default/savedsearches.conf, for example.")
     sp_minz.add_argument("-k", "--preserve-key",
                          action="append", default=[],
                          help="Specify a key that should be allowed to be a duplication but should "

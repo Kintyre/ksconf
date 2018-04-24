@@ -8,9 +8,12 @@ python:
   # PyPy versions
 #  - "pypy2.7"
 #  - "pypy3.5"
+cache: pip
 # command to install dependencies
 install:
-  - pip install coverage coveralls
+  - pip install coverage
+  - pip install coveralls
+  - pip install codecov
   - pip install .
 #  - pip install -r requirements.txt
 # command to run tests
@@ -18,6 +21,7 @@ install:
 script: coverage run -m unittest discover -s tests
 after_success:
   - coveralls
+  - codecov
 notifications:
   email:
     - lowell@kintyre.co

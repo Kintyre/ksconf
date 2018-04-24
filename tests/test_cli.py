@@ -142,6 +142,18 @@ class TestWorkDir(object):
         write_conf(path, conf)
         return path
 
+    def read_conf(self, rel_path, profile=PARSECONF_MID):
+        path = self.get_path(rel_path)
+        return parse_conf(path, profile=profile)
+
+    def copy_static(self, static, rel_path):
+        src = static_data(static)
+        with open(src, "r") as stream:
+            content = stream.read()
+            return self.write_file(rel_path, content)
+
+
+
 
 class CliSimpleTestCase(unittest.TestCase):
     """ Test some very simple CLI features. """
@@ -224,9 +236,19 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf",{
             "aws:config" : { "TIME_FORMAT" : "%Y-%m-%dT%H:%M:%S.%6NZ" }
         })
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-the-force/data/ui/nav/default.xml", """
+        <nav search_view="search" color="#65A637">
+        <view name="My custom view" />
+        <view name="Inputs" default="true" label="Inputs" />
+        <view name="Configuration" default="false" label="Configuration" />
+        </nav>
+        """)
+        twd.write_file("etc/apps/Splunk_TA_aws/default/data/dead.conf", "# File to remove")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
             self.assertRegexpMatches(ko.stdout, r"[\r\n]\+TIME_FORMAT = [^\r\n]+%6N")
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--target", default, default + ".d/*")
 
     def test_require_arg(self):
         with ksconf_cli:
@@ -374,6 +396,17 @@ class CliCheckTest(unittest.TestCase):
             ko = ksconf_cli("check", self.conf_good, self.conf_bad)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
+    def test_mixed_stdin(self):
+        """ Make sure that if even a single file files, the exit code should be "BAD CONF" """
+        try:
+            _stdin = sys.stdin
+            sys.stdin = StringIO("\n".join([self.conf_good, self.conf_bad]))
+            with ksconf_cli:
+                ko = ksconf_cli("check", "-")
+                self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
+        finally:
+            sys.stdin = _stdin
+
     def test_mixed_quiet(self):
         """ Make sure that if even a single file files, the exit code should be "BAD CONF" """
         with ksconf_cli:
@@ -493,6 +526,153 @@ class CliSortTest(unittest.TestCase):
             self.assertNotRegexpMatches(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
 
 
+class CliMinimizeTest(unittest.TestCase):
+
+    def test_minimize_cp_inputs(self):
+        twd = TestWorkDir()
+        local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        default = static_data("inputs-ta-nix-default.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--dry-run", "--target", local, default)
+            self.assertRegexpMatches(ko.stdout, "[\r\n][ ]\[script://\./bin/ps\.sh\]")
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--output", twd.get_path("inputs-new.conf"),
+                            "--target", local, default)
+            d = twd.read_conf("inputs-new.conf")
+            self.assertIn("script://./bin/version.sh", d)
+            self.assertIn("script://./bin/vmstat.sh", d)
+            self.assertIn("script://./bin/ps.sh", d)
+            self.assertIn("script://./bin/iostat.sh", d)
+            self.assertEqual(d["script://./bin/iostat.sh"]["interval"], "300")
+            self.assertEqual(d["script://./bin/netstat.sh"]["interval"], "120")
+            self.assertEqual(d["script://./bin/netstat.sh"]["disabled"], "0")
+
+
+    def test_minimize_explode_detauls(self):
+        twd = TestWorkDir()
+        conf = twd.write_file("savedsearches.conf", """\
+        [License usage trend by sourcetype]
+        action.email.useNSSubject = 1
+        alert.track = 0
+        disabled = 0
+        enableSched = 0
+        dispatch.earliest_time = -30d@d
+        dispatch.latest_time = now
+        display.general.type = visualizations
+        display.page.search.tab = visualizations
+        display.statistics.show = 0
+        display.visualizations.charting.chart = area
+        display.visualizations.charting.chart.stackMode = stacked
+        request.ui_dispatch_app = kintyre
+        request.ui_dispatch_view = search
+        search = | tstats sum(b) as bytes where index=summary_splunkidx by st, _time span=1h | timechart span=1h sum(eval(bytes/1073741824)) as b by st | foreach * [ eval "<<FIELD>>"=round('<<FIELD>>',2) ]
+        """)
+        sysdefault = static_data("savedsearches-sysdefault70.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--dry-run", "--explode-default", "--target", conf, sysdefault)
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]-disabled")
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]-enableSched")
+        orig_size = os.stat(conf).st_size
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--explode-default", "--target", conf, sysdefault)
+            final_size = os.stat(conf).st_size
+            self.assertTrue(orig_size > final_size)
+
+dummy_config = {
+    "stanza" : { "any_content": "will do" }
+}
+
+class CliPromoteTest(unittest.TestCase):
+
+    def sample_data01(self):
+        twd = TestWorkDir()
+        self.conf_default = twd.write_file("default/savedsearches.conf", r"""
+        [License usage trend by sourcetype]
+        action.email.useNSSubject = 1
+        alert.track = 0
+        disabled = 0
+        enableSched = 0
+        dispatch.earliest_time = -30d@d
+        dispatch.latest_time = now
+        display.general.type = visualizations
+        display.page.search.tab = visualizations
+        display.statistics.show = 0
+        display.visualizations.charting.chart = area
+        display.visualizations.charting.chart.stackMode = stacked
+        request.ui_dispatch_app = kintyre
+        request.ui_dispatch_view = search
+        search = | tstats sum(b) as bytes where index=summary_splunkidx by st, _time span=1h | timechart span=1h sum(eval(bytes/1073741824)) as b by st | foreach * [ eval "<<FIELD>>"=round('<<FIELD>>',2) ]
+        """)
+        self.conf_local = twd.write_file("local/savedsearches.conf", r"""
+        [License usage trend by sourcetype]
+        alert.track = 1
+        display.statistics.show = 1
+        request.ui_dispatch_app = kintyre
+        search = | tstats sum(b) as bytes where index=summary_splunkidx by st, _time span=1h \
+        | timechart span=1h sum(eval(bytes/1073741824)) as b by st \
+        | foreach * [ eval "<<FIELD>>"=round('<<FIELD>>',3) ]
+        """)
+        return twd
+
+    def assert_data01(self, twd):
+        d = twd.read_conf("default/savedsearches.conf")
+        stanza = d["License usage trend by sourcetype"]
+        self.assertEqual(stanza["disabled"], "0")
+        self.assertEqual(stanza["alert.track"], "1")
+        self.assertTrue(len(stanza["search"].splitlines()) > 2)
+
+    def test_promote_batch_simple_keep(self):
+        twd = self.sample_data01()
+        with ksconf_cli:
+            ksconf_cli("promote", "--batch", "--keep-empty", self.conf_local, self.conf_default)
+            self.assertEqual(os.stat(self.conf_local).st_size, 0)  # "Local file should be blanked")
+            self.assert_data01(twd)
+        del twd
+
+    def test_promote_batch_simple(self):
+        twd = self.sample_data01()
+        with ksconf_cli:
+            ksconf_cli("promote", "--batch", self.conf_local, self.conf_default)
+            self.assertFalse(os.path.isfile(self.conf_local))  # "Local file should be blanked")
+            self.assert_data01(twd)
+        del twd
+
+    def test_promote_to_dir(self):
+        twd = self.sample_data01()
+        with ksconf_cli:
+            ksconf_cli("promote", "--batch", self.conf_local, twd.get_path("default"))
+            self.assertTrue(os.path.isfile(self.conf_default), "Default file should be created.")
+            self.assertFalse(os.path.isfile(self.conf_local), "Default file should be created.")
+            self.assert_data01(twd)
+
+    def test_promote_new_file(self):
+        twd = TestWorkDir()
+        dummy_local = twd.write_conf("local/dummy.conf", dummy_config)
+        dummy_default = twd.get_path("default/dummy.conf")
+        twd.makedir("default")
+        with ksconf_cli:
+            # Expect this to fail
+            ko = ksconf_cli("promote", "--batch", dummy_local, dummy_default)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stdout, "Moving source file [^\r\n]+ to the target")
+
+    def test_promote_same_file_abrt(self):
+        twd = TestWorkDir()
+        dummy = twd.write_conf("dummy.conf", dummy_config)
+        with ksconf_cli:
+            # Expect this to fail
+            ko = ksconf_cli("promote", "--batch", dummy, dummy)
+            self.assertEqual(ko.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
+            self.assertRegexpMatches(ko.stderr, "same file")
+
+    '''
+    def test_promote_simulate_ext_edit(self):
+        # Not quite sure how to do this reliably....  May need to try in a loop?
+        pass
+    '''
+
+
+
 class CliKsconfUnarchiveTestCase(unittest.TestCase):
 
     '''
@@ -504,6 +684,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
     def test_modsec_install_upgrade(self):
         twd = TestWorkDir(git_repo=True)
         self._modsec01_install_11(twd)
+        self._modsec01_untracked_files(twd)
         self._modsec01_upgrade(twd, "apps/modsecurity-add-on-for-splunk_12.tgz")
         self._modsec01_upgrade(twd, "apps/modsecurity-add-on-for-splunk_14.tgz")
 
@@ -513,10 +694,20 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
         tgz = static_data("apps/modsecurity-add-on-for-splunk_11.tgz")
         with ksconf_cli:
             kco = ksconf_cli("unarchive", tgz, "--dest", apps, "--git-mode=stage")
-            self.assertIn("About to install", kco.stdout )
+            self.assertIn("About to install", kco.stdout)
             self.assertIn("ModSecurity Add-on", kco.stdout, "Should display app name during install")
-        twd.git("add", "apps/Splunk_TA_modsecurity")
+        twd.write_file(".gitignore", "*.bak")
+        twd.git("add", "apps/Splunk_TA_modsecurity", ".gitignore")
         twd.git("commit", "-m", "Add custom file.")
+        twd.write_file("Junk.bak", "# An ignored file.")
+
+    def _modsec01_untracked_files(self, twd):
+        twd.write_file("untracked_file", "content")
+        with ksconf_cli:
+            kco = ksconf_cli("unarchive", static_data("apps/modsecurity-add-on-for-splunk_12.tgz"),
+                             "--dest", twd.get_path("apps"), "--git-sanity-check=ignored",
+                             "--git-mode=commit", "--no-edit")
+            self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
 
     def _modsec01_upgrade(self, twd, app_tgz):
         """ Upgade app install with auto commit. """
@@ -528,6 +719,21 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
             self.assertIn("ModSecurity Add-on", kco.stdout,
                           "Should display app name during install")
 
+    def test_modsec_install_defaultd(self):
+        twd = TestWorkDir(git_repo=True)
+        app_archives = [
+            "apps/modsecurity-add-on-for-splunk_11.tgz",
+            "apps/modsecurity-add-on-for-splunk_12.tgz",
+            "apps/modsecurity-add-on-for-splunk_14.tgz",
+        ]
+        apps = twd.makedir("apps")
+        for app in app_archives:
+            tgz = static_data(app)
+            with ksconf_cli:
+                kco = ksconf_cli("unarchive", tgz, "--dest", apps, "--git-mode=commit", "--no-edit",
+                                 "--default-dir", "default.d/10-official",
+                                 "--exclude", "README/inputs.conf.spec")
+                self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
 
 
 if __name__ == '__main__':

@@ -295,15 +295,45 @@ The following documents the CLI options
 
 
 ### ksconf.py minimize
-    usage: ksconf.py minimize [-h] [--target FILE]
-                              [--dry-run | --explode-default | --output OUTPUT]
-                              [-k PRESERVE_KEY]
+    usage: ksconf.py minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
+                              [--explode-default] [-k PRESERVE_KEY]
                               FILE [FILE ...]
     
-    The minimize command will allow for the removal of all
-    default-ish settings from a target configuration files.
-    In theory, this allows for a cleaner upgrade, and fewer
-    duplicate settings.
+    Minimize a conf file by removing the default settings
+    
+    Reduce local conf file to only your indented changes without manually tracking
+    which entires you've edited.  Minimizing local conf files makes your local
+    customizations easier to read and often results in cleaner add-on upgrades.
+    
+    A typical scenario & why does this matter:
+    To customizing a Splunk app or add-on, start by copying the conf file from
+    default to local and then applying your changes to the local file.  That's
+    good.  But stopping here may complicated future upgrades, because the local
+    file doesn't contain *just* your settings, it contains all the default
+    settings too.  Fixes published by the app creator may be masked by your local
+    settings.  A better approach is to reduce the local conf file leaving only the
+    stanzas and settings that you indented to change.  This make your conf files
+    easier to read and makes upgrades easier, but it's tedious to do by hand.
+    
+    For special cases, the '--explode-default' mode reduces duplication between
+    entries normal stanzas and global/default entries.  If 'disabled = 0' is a
+    global default, it's technically safe to remove that setting from individual
+    stanzas.  But sometimes it's preferable to be explicit, and this behavior may
+    be too heavy-handed for general use so it's off by default.  Use this mode if
+    your conf file that's been fully-expanded.  (i.e., conf entries downloaded via
+    REST, or the output of "btool list").  This isn't perfect, since many apps
+    push their settings into the global namespace, but it can help.
+    
+    Example usage:
+    
+        cd Splunk_TA_nix
+        cp default/inputs.conf local/inputs.conf
+    
+        # Edit 'disabled' and 'interval' settings in-place
+        vi local/inputs.conf
+    
+        # Remove all the extra (unmodified) bits
+        ksconf minimize --target=local/inputs.conf default/inputs.conf
     
     positional arguments:
       FILE                  The default configuration file(s) used to determine
@@ -319,17 +349,17 @@ The following documents the CLI options
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimized
                             value to TARGET, show a 'diff' of what would be
                             removed.
-      --explode-default, -E
-                            Along with minimizing the same stanza across multiple
-                            config files, also take into consideration the
-                            [default] or global stanza values. This can often be
-                            use to trim out cruft in savedsearches.conf by
-                            pointing to etc/system/default/savedsearches.conf, for
-                            example.
       --output OUTPUT       When this option is used, the new minimized file will
                             be saved to this file instead of updating TARGET. This
                             can be use to preview changes or helpful in other
                             workflows.
+      --explode-default, -E
+                            Along with minimizing the same stanza across multiple
+                            config files, also take into consideration the
+                            [default] or global stanza values. This can often be
+                            used to trim out cruft in savedsearches.conf by
+                            pointing to etc/system/default/savedsearches.conf, for
+                            example.
       -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
                             Specify a key that should be allowed to be a
                             duplication but should be preserved within the
