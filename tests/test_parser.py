@@ -41,16 +41,13 @@ class ParserTestCase(unittest.TestCase):
         d = {
             "stanza1": {"key1": "value1", "key2": "value2"},
             "stanza2": {"monkey": "banana", "dog": "cat"},
+            "stanza3": {"key_with_no_value": ''},
         }
-        tfile = os.tempnam()
-        #tfile = os.tempnam(None, "ksconf-unitest-") + ".conf"
-        try:
-            write_conf(tfile, d)
-            d2 = parse_conf(tfile)
-
-            self.assertDictEqual(d, d2)
-        finally:
-            os.unlink(tfile)
+        tfile = os.tmpfile()
+        write_conf(tfile, d, sort=False)
+        tfile.seek(0)
+        d2 = parse_conf(tfile)
+        self.assertDictEqual(d, d2)
 
     def test_multi_stanza(self):
         c = parse_string("""
@@ -229,6 +226,21 @@ class ParserTestCase(unittest.TestCase):
         with self.assertRaises(ConfParserException):
             parse_string(t, strict=True)
 
+    def test_unused_features(self):
+        """ Make coverage stop complaining about stuff we don't use.  Remove later? """
+        t = r"""
+        [stanza]
+        key1 = an every-day value
+        KEY2 = normalness \
+        another line
+        """
+        c = parse_string(t, strict=False, keys_lower=True)
+        self.assertIn("key2", c["stanza"])
+        self.assertEqual(len(c["stanza"]["key2"].split("\n")), 2)
+        c = parse_string(t, strict=False, handle_conts=False)
+        self.assertEqual(len(c["stanza"]["KEY2"].split("\n")), 1)
+        self.assertNotIn("another line", c["stanza"]["KEY2"])
+
     def test_continuation(self):
         t = r"""
         [Sourcetype regex reuse]
@@ -288,6 +300,21 @@ class ParserTestCase(unittest.TestCase):
         """
         c = parse_string(t, profile=PARSECONF_MID)
 
+    def test_write_nonstr(self):
+        """ Make sure that other python primative types are writen out correctly.  """
+        # Note:  Types will not be preserved, but values should not be lost
+        d = {"stanza": {"boolean1": True, "boolean2": False, "int1": 99, "int2": 0,
+                        "none": None}}
+        tfile = os.tmpfile()
+        write_conf(tfile, d)
+        tfile.seek(0)
+        d2 = parse_conf(tfile)
+        st = d2["stanza"]
+        self.assertEqual(st["boolean1"], "True")
+        self.assertEqual(st["boolean2"], "False")
+        self.assertEqual(st["int1"], "99")
+        self.assertEqual(st["int2"], "0")
+        self.assertEqual(st["none"], "")
 
 
 #@unittest.expectedFailure()
@@ -366,6 +393,16 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertIsNotNone(op.a)
         self.assertIsNone(op.b)
 
+    def test_compare_no_common(self):
+        c1 = parse_string(self.cfg_macros_1)
+        c2 = parse_string(self.cfg_props_imapsync_1)
+        # Side-effect of our string parsing -- remove GLOBAL
+        del c1[GLOBAL_STANZA]
+        del c2[GLOBAL_STANZA]
+        diffs = compare_cfgs(c1, c2)
+        self.assertEqual(len(diffs), 1)
+        self.assertEqual(diffs[0].location.type, "global")
+
 
 
 
@@ -384,6 +421,8 @@ class ConfigMergeTestCase(unittest.TestCase):
         b = 2
         [z]
         ""","""
+        [v]
+        new_stanza = true
         [x]
         a = one
         [y]
@@ -393,6 +432,21 @@ class ConfigMergeTestCase(unittest.TestCase):
         self.assertEqual(d["y"]["b"], "2")
         self.assertEqual(d["y"]["c"], "3")
         self.assertIn("z", d)
+
+    def test_merge_drop_stanza(self):
+        d = self.merge("""
+        [x]
+        a = 1
+        [y]
+        b = 2
+        [z]
+        ""","""
+        [x]
+        a = one
+        [y]
+        _stanza = <<DROP>>
+        """)
+        self.assertNotIn("y", d)
 
 
 class UtilFunctionTestCase(unittest.TestCase):

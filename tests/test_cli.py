@@ -136,6 +136,11 @@ class TestWorkDir(object):
             stream.write(content)
         return path
 
+    def write_conf(self, rel_path, conf):
+        path = self.get_path(rel_path)
+        self.makedir(None, path=os.path.dirname(path))
+        write_conf(path, conf)
+        return path
 
 
 class CliSimpleTestCase(unittest.TestCase):
@@ -207,14 +212,27 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         </nav>
         """)
         default = twd.get_path("etc/apps/Splunk_TA_aws/default")
-        ksconf_cli("combine", "--target", default, default + ".d/*")
-        cfg = parse_conf(twd.get_path("etc/apps/Splunk_TA_aws/default/props.conf"))
-        self.assertIn("aws:config", cfg)
-        self.assertEqual(cfg["aws:config"]["ANNOTATE_PUNCT"], "true")
-        self.assertEqual(cfg["aws:config"]["EVAL-change_type"], '"configuration"')
-        self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
-        nav_content = open(twd.get_path("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")).read()
-        self.assertIn("My custom view", nav_content)
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--target", default, default + ".d/*")
+            cfg = parse_conf(twd.get_path("etc/apps/Splunk_TA_aws/default/props.conf"))
+            self.assertIn("aws:config", cfg)
+            self.assertEqual(cfg["aws:config"]["ANNOTATE_PUNCT"], "true")
+            self.assertEqual(cfg["aws:config"]["EVAL-change_type"], '"configuration"')
+            self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
+            nav_content = open(twd.get_path("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")).read()
+            self.assertIn("My custom view", nav_content)
+        twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf",{
+            "aws:config" : { "TIME_FORMAT" : "%Y-%m-%dT%H:%M:%S.%6NZ" }
+        })
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]\+TIME_FORMAT = [^\r\n]+%6N")
+
+    def test_require_arg(self):
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "source-dir")
+            self.assertRegexpMatches(ko.stderr, "Must provide [^\r\n]+--target")
+
 
 
 class CliDiffTest(unittest.TestCase):
@@ -252,6 +270,74 @@ class CliDiffTest(unittest.TestCase):
             self.assertRegexpMatches(ko.stdout, r"\x1b\[\d+m", "No TTY color markers found")
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
 
+    def test_diff_multiline(self):
+        """ Force the generate of a multi-line value diff """
+        twd = TestWorkDir()
+        conf1 = twd.write_file("savedsearches-1.conf", r"""
+        [indexed_event_counts_hourly]
+        action.summary_index = 1
+        action.summary_index.info = r3
+        action.summary_index._name = summary_splunkidx
+        cron_schedule = 29 * * * *
+        description = Hourly report showing index event count and license usage data
+        dispatch.earliest_time = 0
+        enableSched = 1
+        realtime_schedule = 0
+        request.ui_dispatch_app = search
+        request.ui_dispatch_view = search
+        search = | tstats count as events, min(_time) as ts, max(_time) as te where _indextime>=`epoch_relative("-1h@h")` _indextime<=`epoch_relative("@h")` index=* OR index=_* NOT index=summary_splunkidx by index, sourcetype, host, source\
+        | rename host as h, sourcetype as st, source as s, index as idx\
+        | append\
+            [ search earliest=-1h@h latest=@h index=_internal sourcetype=splunkd source=*license_usage* LicenseUsage "type=Usage"\
+            | eval s=replace(s, "\\\\\\\\","\\")\
+            | stats sum(b) as b by idx, st, h, s\
+            | sort 0 - b ]\
+        `indexed_event_count_hourly_filter`\
+        | stats sum(b) as b, sum(events) as events, min(ts) as ts, max(te) as te by idx, st, h, s\
+        | eval show_timestamps=if( ts<relative_time(now(), "-1h@h-1m") or te>relative_time(now(), "@h+1m"), "true", "false")\
+        | eval ts=if(show_timestamps="true",ts, null())\
+        | eval te=if(show_timestamps="true", te, null())\
+        | fields - show_timestamps\
+        | eval _time=relative_time(now(), "-1h@h")
+        """)
+        conf2 = twd.write_file("savedsearches-2.conf", r"""
+        [indexed_event_counts_hourly]
+        action.summary_index = 1
+        action.summary_index.info = r4
+        action.summary_index._name = summary_splunkidx
+        cron_schedule = 29 * * * *
+        description = Hourly report showing index event count and license usage data
+        dispatch.earliest_time = -7d@h
+        dispatch.latest_time = +21d@h
+        enableSched = 1
+        realtime_schedule = 0
+        request.ui_dispatch_app = search
+        request.ui_dispatch_view = search
+        search = | tstats count as events, min(_time) as ts, max(_time) as te where _indextime>=`epoch_relative("-1h@h")` _indextime<=`epoch_relative("@h")` index=* OR index=_* NOT index=summary_splunkidx by index, sourcetype, host, source\
+        | rename host as h, sourcetype as st, source as s, index as idx\
+        | append\
+            [ search earliest=-1h@h latest=@h index=_internal sourcetype=splunkd source=*license_usage* LicenseUsage "type=Usage"\
+            | eval s=replace(s, "\\\\\\\\","\\")\
+            | eval h=if(len(h)=0 OR isnull(h),"(SQUASHED)", h)\
+            | eval s=if(len(s)=0 OR isnull(s),"(SQUASHED)", s)\
+            | eval idx=if(len(idx)=0 OR isnull(idx), "(UNKNOWN)", idx) \
+            | stats sum(b) as b by idx, st, h, s\
+            | sort 0 - b ]\
+        `indexed_event_count_hourly_filter`\
+        | stats sum(b) as b, sum(events) as events, min(ts) as ts, max(te) as te by idx, st, h, s\
+        | eval show_timestamps=if( ts<relative_time(now(), "-1h@h-1m") or te>relative_time(now(), "@h+1m"), "true", "false")\
+        | eval ts=if(show_timestamps="true", ts, null())\
+        | eval te=if(show_timestamps="true", te, null())\
+        | fields - show_timestamps\
+        | eval _time=relative_time(now(), "-1h@h")
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("diff", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+            # Look for unchanged, added, and removed entries
+            self.assertRegexpMatches(ko.stdout, r'[\r\n][ ]\s*\| rename host as h, sourcetype as st, source as s, index as idx')
+            self.assertRegexpMatches(ko.stdout, r'[\r\n][+]\s*\| eval h=if[^[\r\n]+,"\(SQUASHED\)"')
+            self.assertRegexpMatches(ko.stdout, r'[\r\n][-]\s*[^\r\n]+show_timestamps="true"')
 
 
 class CliCheckTest(unittest.TestCase):
@@ -264,14 +350,11 @@ class CliCheckTest(unittest.TestCase):
         a = 1
         b = 2
         """)
-        self.conf_good = twd.write_file("goodfile.conf", """
-        c = 3
-        [x]
-        a = 1
-        b = 2
-        [y]
-        a = 1
-        """)
+        self.conf_good = twd.write_conf("goodfile.conf", {
+            GLOBAL_STANZA: {"c": 3},
+            "x": {"a": 1, "b": 2},
+            "y": {"a": 1}
+        })
 
     def test_check_just_good(self):
         with ksconf_cli:
@@ -296,6 +379,15 @@ class CliCheckTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("check", self.conf_good, self.conf_bad)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
+
+    def test_mixed_quiet(self):
+        """ Test with a missing file """
+        with ksconf_cli:
+            # Yes, this may seem silly, a fresh temp dir ensures this file doesn't actually exist
+            fake_file = self.twd.get_path("not-a-real-file.conf")
+            ko = ksconf_cli("check", self.conf_good, fake_file)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stderr, r"Skipping missing file: [^\r\n]+[/\\]not-a-real-file.conf")
 
 
 class CliSortTest(unittest.TestCase):
@@ -368,12 +460,21 @@ class CliSortTest(unittest.TestCase):
 
     def test_sort_mixed(self):
         # Not yet implemented.  Currently relying on the shell to do this.
-        files = glob(self.twd.get_path("*.conf"))
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", *self.all_confs )
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
             self.assertRegexpMatches(ko.stderr, r"Error [^\r\n]+? file [^\r\n]+?[/\\]badfile\.conf[^\r\n]+ \[BAD_STANZA")
             self.assertRegexpMatches(ko.stderr, r"Skipping blacklisted file [^ ]+[/\\]transforms\.conf")
+
+    def test_sort_stdout(self):
+        # Not yet implemented.  Currently relying on the shell to do this.
+        with ksconf_cli:
+            ko = ksconf_cli("sort", self.conf_bogus, self.no_sort  )
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegexpMatches(ko.stdout, r"-----+ [^\r\n]+[/\\]bogus\.conf")
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]-----+ [^\r\n]+[/\\]transforms\.conf")
+            self.assertRegexpMatches(ko.stdout, r"[\r\n]DEST_KEY = [^\r\n]+[\r\n]FORMAT =",
+                                     "transforms.conf should be sorted even with KSCONF-NO-SORT directive for non-inplace mode")
 
     def test_sort_mixed_quiet(self):
         # Not yet implemented.  Currently relying on the shell to do this.

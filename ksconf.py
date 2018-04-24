@@ -183,7 +183,7 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
             buf = ""
         else:
             yield line
-    if buf:
+    if buf:             # pragma: no cover
         # Weird this generally shouldn't happen.
         yield buf
 
@@ -195,12 +195,10 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*#"), keep_comments=False
             if keep_comments:
                 comment += 1
                 yield ("#-%06d" % comment, entry)
-            continue
-        if "=" in entry:
+        elif "=" in entry:
             k, v = entry.split("=", 1)
             yield k.rstrip(), v.lstrip()
-            continue
-        if strict and entry.strip():
+        elif strict and entry.strip():
             raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
 
@@ -298,10 +296,14 @@ def write_conf(stream, conf, stanza_delim="\n", sort=True):
     if sort:
         sorter = sorted
     else:
-        sorter = iter
+        sorter = list
 
     def write_stanza_body(items):
         for (key, value) in sorter(items.iteritems()):
+            if value is None:
+                value = ""
+            else:
+                value = str(value)
             if key.startswith("#"):
                 stream.write("{0}\n".format(value))
             elif value:
@@ -442,7 +444,7 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
             dest_cfg = dest.data
         else:
             dest_cfg = {}
-        show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
+        show_diff(sys.stdout, compare_cfgs(merged_cfg, dest_cfg),
                   headers=(dest.name, dest.name + "-new"))
         return
     return dest.dump(merged_cfg)
@@ -711,12 +713,13 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
 GenArchFile = namedtuple("GenericArchiveEntry", ("path", "mode", "size", "payload"))
 
 def extract_archive(archive_name, extract_filter=None):
-    if extract_filter is not None and not callable(extract_filter):
+    if extract_filter is not None and not callable(extract_filter):     # pragma: no cover
         raise ValueError("extract_filter must be a callable!")
     if archive_name.lower().endswith(".zip"):
         return _extract_zip(archive_name, extract_filter)
     else:
         return _extract_tar(archive_name, extract_filter)
+
 
 def gaf_filter_name_like(pattern):
     from fnmatch import fnmatch
@@ -799,12 +802,9 @@ GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
 
 
-def git_cmd(args, shell=False, cwd=None, combine_std=False, capture_std=True):
+def git_cmd(args, shell=False, cwd=None, capture_std=True):
     if isinstance(args, tuple):
         args = list(args)
-    if combine_std:
-        # Should return "lines" instead of stderr/stdout streams
-        raise NotImplementedError
     from subprocess import Popen, PIPE
     cmdline_args = [ GIT_BIN ] + args
     if capture_std:
@@ -936,7 +936,7 @@ def do_check(args):
             exit_code = EXIT_CODE_BAD_CONF_FILE
             # TODO:  Break out counts by error type/category (there's only a few of them)
             c["error"] += 1
-        except Exception, e:
+        except Exception, e:        # pragma: no cover
             sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
                              "Aborting.\n{1}\n".format(conf, e))
             exit_code = EXIT_CODE_INTERNAL_ERROR
@@ -2649,14 +2649,14 @@ To recursively sort all files:
 
     try:
         return_code = args.funct(args)
-    except Exception, e:
+    except Exception, e:                # pragma: no cover
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         raise
         return_code = EXIT_CODE_INTERNAL_ERROR
 
     if _unittest:
         return return_code or 0
-    else:
+    else:       # pragma: no cover
         sys.exit(return_code or 0)
 
 
