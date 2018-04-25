@@ -27,8 +27,8 @@ repos:
       pass_filenames: false
     - id: ksconf-unittest
       name: Run all unit tests for ksconf
-      language: system
-      entry: python -m unittest discover -s tests
+      language: script
+      entry: run_tests.py
       type: [ python ]
       pass_filenames: false
 

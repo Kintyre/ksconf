@@ -1,8 +1,9 @@
 # Kintyre Splunk Configuration tool
 
-[![Travis](https://img.shields.io/travis/Kintyre/ksconf.svg?style=plastic)](https://travis-ci.org/Kintyre/ksconf/builds)
+[![Travis](https://img.shields.io/travis/Kintyre/ksconf.svg)](https://travis-ci.org/Kintyre/ksconf/builds)
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
+[![Windows Build status](https://ci.appveyor.com/api/projects/status/rlbgstkpf17y8nxh?svg=true)](https://ci.appveyor.com/project/lowell80/ksconf)
 
 
 Install with

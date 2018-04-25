@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name="KintyreSplunkConfTool",
-      version="0.3.1",
+      version="0.3.2",
       description="Kintyre's Splunk Configuration Tool",
       author="Lowell Alleman",
       author_email="lowell@kintyre.co",

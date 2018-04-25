@@ -10,6 +10,14 @@ import warnings
 warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
 
 
+def _debug_file(flag, fn):       # pragma: no cover
+    """ Dump file contents with a message string to the output.  For quick'n'diry unittest
+    debugging only """
+    content = open(fn).read()
+    length = len(content)
+    hash = file_hash(fn)
+    print "\n{flag} {fn}  len={length} hash={hash} \n{content}".format(**vars())
+
 def static_data(path):
     # Assume "/" for path separation for simplicity; bunt handle OS independent.
     # Get paths to files under the 'tests/data/*' location

@@ -348,14 +348,14 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
             return SMART_NOCHANGE
         else:
             tempfile = filename + temp_suffix
-            with open(tempfile, "w") as dest:
+            with open(tempfile, "wb") as dest:
                 dest.write(temp.getvalue())
             os.unlink(filename)
             os.rename(tempfile, filename)
             return SMART_UPDATE
     else:
         tempfile = filename + temp_suffix
-        with open(tempfile, "w") as dest:
+        with open(tempfile, "wb") as dest:
             write_conf(dest, conf, stanza_delim, sort)
         os.rename(tempfile, filename)
         return SMART_CREATE
@@ -1242,6 +1242,17 @@ def do_minimize(args):
     # Todo:  return ?  Should only be updating target if there's a change; RC should reflect this
 
 
+def _samefile(file1, file2):
+    if hasattr(os.path, "samefile"):
+        # Nix
+        return os.path.samefile(file1, file2)
+    else:
+        # Windows
+        file1 = os.path.normpath(os.path.normcase(file1))
+        file2 = os.path.normpath(os.path.normcase(file2))
+        return file1 == file2
+
+
 def do_promote(args):
     if isinstance(args.target, ConfDirProxy):
         # If a directory is given instead of a target file, then assume the source filename is the
@@ -1251,6 +1262,9 @@ def do_promote(args):
     if not os.path.isfile(args.target.name):
         sys.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
                          .format(args.target.name, args.source.name))
+        # For windows:  Close out any open file descriptors first
+        args.target.close()
+        args.source.close()
         if args.keep:
             shutil.copy2(args.source.name, args.target.name)
         else:
@@ -1258,14 +1272,12 @@ def do_promote(args):
         return
 
     # If src/dest are the same, then the file ends up being deleted.  Whoops!
-    if os.path.samefile(args.source.name, args.target.name):
+    if _samefile(args.source.name, args.target.name):
         sys.stderr.write("Aborting.  SOURCE and TARGET are the same file!\n")
         return EXIT_CODE_FAILED_SAFETY_CHECK
 
-
     fp_source = file_fingerprint(args.source.name)
     fp_target = file_fingerprint(args.target.name)
-
 
     # Todo: Add a safety check prevent accidental merge of unrelated files.
     # Scenario: promote local/props.conf into default/transforms.conf
@@ -1336,7 +1348,7 @@ def do_promote(args):
         sys.stderr.write("Aborting!  External target file changed: {0}\n".format(args.target.name))
         return EXIT_CODE_EXTERNAL_FILE_EDIT
     # Reminder:  conf entries are being removed from source and promoted into target
-    smart_write_conf(args.target.name, cfg_final_tgt)
+    args.target.dump(cfg_final_tgt)
     if not args.keep:
         # If --keep is set, we never touch the source file.
         if cfg_final_src:
@@ -1581,7 +1593,7 @@ def do_combine(args):
                 sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
             # Handle merging conf files
-            dest = ConfFileProxy(os.path.join(args.target, dest_fn), "rw",
+            dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
                                  parse_profile=PARSECONF_MID)
             srcs = [ ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files ]
             #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
@@ -1958,17 +1970,20 @@ class ConfFileProxy(object):
         else:
             return "stream"
 
-    def _close_stream(self):
+    def close(self):
         if self._stream:
             if not self._stream.closed:
-                self._stream.close()
+                try:
+                    self._stream.close()
+                finally:
+                    del self._stream
         self._stream = None
 
     def reset(self):
         if self._data is not None:
             self._data = None
             if self.is_file():
-                self._close_stream()
+                self.close()
             else:
                 try:
                     self.stream.seek(0)
@@ -2015,14 +2030,14 @@ class ConfFileProxy(object):
         return data
 
     def dump(self, data):
-        if "w" not in self._mode:
+        if "+" not in self._mode and "w" not in self._mode:
             raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
                                                                             self._mode))
         # Feels like the right thing to do????  OR self._data = data
         self._data = None
         # write vs smart write here ----
         if self._is_file:
-            self._close_stream()
+            self.close()
             return smart_write_conf(self.name, data)
         else:
             write_conf(self._stream, data)
@@ -2030,10 +2045,13 @@ class ConfFileProxy(object):
 
     def unlink(self):
         # Eventually this could trigger some kind of backup or recovery mechanism
-        # self._close_stream()
+        self.close()
         return os.unlink(self.name)
 
     def backup(self, bkname=None):
+        # One option:  Write this file directly to the git object store.  Just need to store some
+        # kind of index to allow the users to pull it back.   (Sill, would need of fall-back
+        # mechanism).  Git shouldn't be a hard-dependency
         raise NotImplementedError
 
     def checksum(self, hash="sha256"):
@@ -2052,7 +2070,7 @@ class ConfFileType(object):
     ArgumentParser add_argument() method.
 
     Keyword Arguments:
-        - mode      A string indicating how the file is to be opened.  Accepts "r", "w", and "rw".
+        - mode      A string indicating how the file is to be opened.  Accepts "r", "w", and "r+".
         - action    'none', 'open', 'load'.   'none' means no preparation or tests;  'open' means
                     make sure the file exists/openable;  'load' means make sure the file can be
                     opened and parsed successfully.
@@ -2398,12 +2416,12 @@ will be lost.  (This needs improvement.)
                                     formatter_class=MyDescriptionHelpFormatter)
     sp_prmt.set_defaults(funct=do_promote, mode="ask")
     sp_prmt.add_argument("source", metavar="SOURCE",
-                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT_NC),
+                         type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
                          help="The source configuration file to pull changes from.  (Typically the "
                               "'local' conf file)"
                          ).completer = conf_files_completer
     sp_prmt.add_argument("target", metavar="TARGET",
-                         type=ConfFileType("rw", "none", accept_dir=True,
+                         type=ConfFileType("r+", "none", accept_dir=True,
                                            parse_profile=PARSECONF_STRICT),
                          help="Configuration file or directory to push the changes into. "
                               "(Typically the 'default' folder) "
@@ -2483,7 +2501,7 @@ will be lost.  (This needs improvement.)
                          help="The source configuration file to pull changes from."
                          ).completer = conf_files_completer
     sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("rw", "none", parse_profile=PARSECONF_STRICT),
+                         type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
                          default=ConfFileProxy("<stdout>", "w", sys.stdout),
                          help="Save the merged configuration files to this target file.  If not "
                               "given, the default is to write the merged conf to standard output."
@@ -2557,7 +2575,7 @@ Example usage:
                               "settings are unnecessary to keep in the target file."
                          ).completer = conf_files_completer
     sp_minz.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("rw", "load", parse_profile=PARSECONF_STRICT),
+                         type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT),
                          help="This is the local file that you with to remove the duplicate "
                               "settings from.  By default, this file will be read and the updated "
                               "with a minimized version."

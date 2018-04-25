@@ -1,22 +1,29 @@
+---
+
 build: false
 
 environment:
   matrix:
     - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.8"
-      PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python27-x64"
 
+# scripts that are called at very beginning, before repo cloning
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+  # Git command run locally during testing with throw-away repos; values don't matter.
+  - git config --global user.email "automation@kintyre.co"
+  - git config --global user.name "App Veyor"
 
 install:
   - "%PYTHON%/Scripts/pip.exe install coverage"
   - "%PYTHON%/Scripts/pip.exe install codecov"
-  - "%PYTHON%/Scripts/pip.exe install coverall"
   - "%PYTHON%/Scripts/pip.exe install ."
 
 test_script:
   - "%PYTHON%/Scripts/coverage run -m unittest discover -s tests"
+
+after_test:
+  - "%PYTHON%/Scripts/codecov"
 
 cache:
   - '%LOCALAPPDATA%\pip\cache'
