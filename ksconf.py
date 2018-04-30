@@ -171,6 +171,14 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
     if section or buf:
         yield section, buf
 
+def bom_handler(iterable):
+    # Strip out aany UTF BOM markers, if present.
+    item = iterable.next()
+    yield item.lstrip(codecs.BOM_UTF8)
+    for item in iterable:
+        yield item
+    # Py 3 something...
+    # yield iterable
 
 def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
     buf = ""
@@ -236,17 +244,19 @@ PARSECONF_LOOSE = dict(
     dup_key=DUP_MERGE,
     strict=False)
 
+import codecs
 
 
 def parse_conf(stream, profile=PARSECONF_MID):
     # Placeholder stub for an eventual migration to proper class-oriented parser
     return _parse_conf(stream, **profile)
 
+
 def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
                dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if not hasattr(stream, "read"):
         # Assume it's a filename
-        stream = open(stream)
+        stream = codecs.open(stream) #, encoding="utf-8")
     if hasattr(stream, "name"):
         stream_name = stream.name
     else:
@@ -255,9 +265,9 @@ def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False
     sections = {}
     # Q: What's the value of allowing line continuations to be disabled?
     if handle_conts:
-        reader = section_reader(cont_handler(stream))
+        reader = section_reader(cont_handler(bom_handler(stream)))
     else:
-        reader = section_reader(stream)
+        reader = section_reader(bom_handler(stream))
     for section, entry in reader:
         if section is None:
             section = GLOBAL_STANZA

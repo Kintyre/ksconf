@@ -111,6 +111,22 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c["stanza1"][""], "no")
         self.assertEqual(c["stanza2"][""], "whoopsie")
 
+    def test_inputs_with_BOM(self):
+        # "\\" in path due to non-raw string (Failing as of 87c5a11ca44; due to lack of BOM support)
+        c = parse_string("""\
+        \xef\xbb\xbf[monitor://D:\\syslogs\\10.0.31.1]
+        disabled = false
+        sourcetype = cisco:asa
+        host_segment = 2
+        ignoreOlderThan = 7d
+        """)
+        self.assertEqual(c[r"monitor://D:\syslogs\10.0.31.1"]["sourcetype"], "cisco:asa")
+
+    def test_comments_with_BOM(self):
+        # "\\" in path due to non-raw string (Failing as of 87c5a11ca44 if this is the FIRST line)
+        c = parse_string("\xef\xbb\xbf# This is a comment\nx = 1")
+        self.assertTrue(c[GLOBAL_STANZA])
+
     def test_whitespace_stanza(self):
         c = parse_string("""
         [stanza 1]
