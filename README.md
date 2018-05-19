@@ -19,7 +19,7 @@ Confirm installation with the following command:
 The following documents the CLI options
 
 ## ksconf
-    usage: ksconf [-h] [--force-color]
+    usage: ksconf [-h] [--version] [--force-color]
                   {check,combine,diff,promote,merge,minimize,sort,unarchive} ...
     
     Kintyre Splunk CONFig tool.
@@ -59,6 +59,7 @@ The following documents the CLI options
     
     optional arguments:
       -h, --help            show this help message and exit
+      --version             show program's version number and exit
       --force-color         Force TTY color mode on. Useful if piping the output a
                             color-awarepager, like 'less -R'
 

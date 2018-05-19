@@ -16,6 +16,7 @@ import argparse
 import sys
 import textwrap
 
+import ksconf
 import ksconf.util
 
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
@@ -57,6 +58,7 @@ except ImportError:  # pragma: no cover
     # noinspection PyPep8Naming
     FilesCompleter = DirectoriesCompleter = _argcomplete_noop
 
+
 ####################################################################################################
 ## CLI definition
 
@@ -71,8 +73,6 @@ repository.  Merging changes from the live system's (local) folder to the
 version controlled (default) folder, and dealing with more than one layer of
 "default" (which splunk can't handle natively) are all supported tasks.
 """
-
-
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
@@ -103,6 +103,7 @@ def cli(argv=None, _unittest=False):
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
     '''
+    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(ksconf.version))
     parser.add_argument("--force-color", action="store_true", default=False,
                         help="Force TTY color mode on.  Useful if piping the output a color-aware"
                              "pager, like 'less -R'")
