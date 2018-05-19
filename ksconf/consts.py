@@ -1,3 +1,4 @@
+import re
 
 SMART_CREATE = "created"
 SMART_UPDATE = "updated"
@@ -35,3 +36,7 @@ EXIT_CODE_EXTERNAL_FILE_EDIT = 50
 
 # Unresolvable issues (developer required)
 EXIT_CODE_INTERNAL_ERROR = 100
+
+
+# This gets properly supported in Python 3.6, but until then....
+RegexType = type(re.compile(r'.'))

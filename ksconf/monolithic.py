@@ -63,15 +63,18 @@ Make normal diffs show the 'stanza' on the @@ output lines
 """
 
 import os
-import re
 import shutil
 import sys
 from StringIO import StringIO
-from collections import namedtuple, defaultdict, Counter
+from collections import defaultdict, Counter
 from copy import deepcopy
 from subprocess import list2cmdline
 
 import ksconf.util.terminal
+from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker, \
+    gen_arch_file_remapper
+from ksconf.vc.git import git_cmd, git_cmd_iterable, git_is_working_tree, git_is_clean, \
+    git_ls_files, git_status_ui
 from .conf.parser import GLOBAL_STANZA, \
     PARSECONF_STRICT, PARSECONF_STRICT_NC, PARSECONF_MID, PARSECONF_MID_NC, PARSECONF_LOOSE, \
     ConfParserException, parse_conf, write_conf, \
@@ -81,197 +84,13 @@ from ksconf.conf.delta import DIFF_OP_INSERT, DIFF_OP_DELETE, DIFF_OP_REPLACE, D
     DiffStanza, compare_cfgs, summarize_cfg_diffs, show_diff, \
     show_text_diff
 from ksconf.util.file import _is_binary_file, dir_exists, smart_copy, _stdin_iter, \
-    file_fingerprint, _expand_glob_list, match_bwlist, relwalk, file_hash
+    file_fingerprint, _expand_glob_list, match_bwlist, relwalk, file_hash, _samefile
 from ksconf.util.compare import file_compare, _cmp_sets
 
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 
 from .consts import *
-
-GenArchFile = namedtuple("GenericArchiveEntry", ("path", "mode", "size", "payload"))
-
-def extract_archive(archive_name, extract_filter=None):
-    if extract_filter is not None and not callable(extract_filter):     # pragma: no cover
-        raise ValueError("extract_filter must be a callable!")
-    if archive_name.lower().endswith(".zip"):
-        return _extract_zip(archive_name, extract_filter)
-    else:
-        return _extract_tar(archive_name, extract_filter)
-
-
-def gaf_filter_name_like(pattern):
-    from fnmatch import fnmatch
-    def filter(gaf):
-        filename = os.path.basename(gaf.path)
-        return fnmatch(filename, pattern)
-    return filter
-
-
-def _extract_tar(path, extract_filter=None):
-    import tarfile
-    with tarfile.open(path, "r") as tar:
-        for ti in tar:
-            if not ti.isreg():
-                '''
-                print "Skipping {}  ({})".format(ti.name, ti.type)
-                '''
-                continue
-            mode = ti.mode & 0777
-            if extract_filter is None or \
-               extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
-                tar_file_fp = tar.extractfile(ti)
-                buf = tar_file_fp.read()
-            else:
-                buf = None
-            yield GenArchFile(ti.name, mode, ti.size, buf)
-
-
-def _extract_zip(path, extract_filter=None, mode=0644):
-    import zipfile
-    with zipfile.ZipFile(path, mode="r") as zipf:
-        for zi in zipf.infolist():
-            if zi.filename.endswith('/'):
-                # Skip directories
-                continue
-            if extract_filter is None or \
-               extract_filter(GenArchFile(zi.filename, mode, zi.file_size, None)):
-                payload = zipf.read(zi)
-            else:
-                payload = None
-            yield GenArchFile(zi.filename, mode, zi.file_size, payload)
-
-def sanity_checker(interable):
-    for gaf in interable:
-        if gaf.path.startswith("/") or ".." in gaf.path:
-            raise ValueError("Bad path found in archive:  {}".format(gaf.path))
-        yield gaf
-
-
-# This gets properly supported in Python 3.6, but until then....
-RegexType = type(re.compile(r'.'))
-
-def gen_arch_file_remapper(iterable, mapping):
-    # Mapping is assumed to be a sequence of (find,replace) strings (may eventually support re.sub?)
-    for gaf in iterable:
-        path = gaf.path
-        for (find, replace) in mapping:
-            if isinstance(find, RegexType):
-                path = find.sub(replace, path)
-            else:
-                path = path.replace(find, replace)
-        if gaf.path == path:
-            yield gaf
-        else:
-            yield GenArchFile(path, gaf.mode, gaf.size, gaf.payload)
-
-
-GIT_BIN = "git"
-GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
-
-
-def git_cmd(args, shell=False, cwd=None, capture_std=True):
-    if isinstance(args, tuple):
-        args = list(args)
-    from subprocess import Popen, PIPE
-    cmdline_args = [ GIT_BIN ] + args
-    if capture_std:
-        out = PIPE
-    else:
-        out = None
-    proc = Popen(cmdline_args, stdout=out, stderr=out, shell=shell, cwd=cwd)
-    (stdout, stderr) = proc.communicate()
-    return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
-
-def _xargs(iterable, cmd_len=1024):
-    fn_len = 0
-    buf = []
-    iterable = list(iterable)
-    while iterable:
-        s = iterable.pop(0)
-        l = len(s) + 1
-        if fn_len +l >= cmd_len:
-            yield buf
-            buf = []
-            fn_len = 0
-        buf.append(s)
-        fn_len += l
-    if buf:
-        yield buf
-
-def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
-    base_len = sum([len(s)+1 for s in args])
-    for chunk in _xargs(iterable, cmd_len-base_len):
-        p = git_cmd(args + chunk, cwd=cwd)
-        if p.returncode != 0:       # pragma: no cover
-            raise RuntimeError("git exited with code {}.  Command: {}".format(
-                               p.returncode, list2cmdline(args+chunk)))
-
-
-def git_status_summary(path):
-    c = Counter()
-    cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
-    if cmd.returncode != 0:         # pragma: no cover
-        raise RuntimeError("git command returned exit code {}.".format(cmd.returncode))
-    # XY:  X=index, Y=working tree.   For our simplistic approach we consider them together.
-    for line in cmd.stdout.splitlines():
-        state = line[0:2]
-        if state == "??":
-            c["untracked"] += 1
-        elif state == "!!":
-            c["ignored"] += 1
-        else:
-            c["changed"] += 1
-    return c
-
-
-def git_is_working_tree(path=None):
-    return git_cmd(["rev-parse", "--is-inside-work-tree"], cwd=path).returncode == 0
-
-'''
-def get_gitdir(path=None):
-    # May not need this.  the 'git status' was missing '.' to make it specific to JUST the app folder
-    # I thought I needed this because of my local testing git-inside-of-git scenario...
-    p = git_cmd(["rev-parse", "--git-dir"], cwd=path)
-    if p.returncode == 0:
-        gitdir = p.stdout.strip()
-        return gitdir
-    # Then later you can use  git --git-dir=apps/.git --working-tree apps Splunk_TA_aws
-'''
-
-def git_is_clean(path=None, check_untracked=True, check_ignored=False):
-    # ANY change to the index or working tree is considered unclean.
-    c = git_status_summary(path)
-    total_changes = c["changed"]
-    if check_untracked:
-        total_changes += c["untracked"]
-    if check_ignored:
-        total_changes += c["ignored"]
-    '''
-    print "GIT IS CLEAN?:   path={} check_untracked={} check_ignored={} total_changes={} c={}".format(
-        path, check_untracked, check_ignored, total_changes, c)
-    '''
-    return total_changes == 0
-
-
-def git_ls_files(path, *modifiers):
-    # staged=True
-    args = [ "ls-files" ]
-    for m in modifiers:
-        args.append("--" + m)
-    proc = git_cmd(args, cwd=path)
-    if proc.returncode != 0:            # pragma: no cover
-        raise RuntimeError("Bad return code from git... {} add better exception handling here.."
-                           .format(proc.returncode))
-    return proc.stdout.splitlines()
-
-
-def git_status_ui(path, *args):
-    from subprocess import call
-    # Don't redirect the std* streams; let the output go straight to the console
-    cmd = [GIT_BIN, "status", "."]
-    cmd.extend(args)
-    call(cmd, cwd=path)
 
 
 ####################################################################################################
@@ -438,17 +257,6 @@ def do_minimize(args):
         write_conf(sys.stdout, minz_cfg)
         '''
     # Todo:  return ?  Should only be updating target if there's a change; RC should reflect this
-
-
-def _samefile(file1, file2):
-    if hasattr(os.path, "samefile"):
-        # Nix
-        return os.path.samefile(file1, file2)
-    else:
-        # Windows
-        file1 = os.path.normpath(os.path.normcase(file1))
-        file2 = os.path.normpath(os.path.normcase(file2))
-        return file1 == file2
 
 
 def do_promote(args):

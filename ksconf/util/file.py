@@ -114,3 +114,14 @@ def file_hash(path, algorithm="sha256"):
             h.update(buf)
             buf = fp.read(4096)
     return h.hexdigest()
+
+
+def _samefile(file1, file2):
+    if hasattr(os.path, "samefile"):
+        # Nix
+        return os.path.samefile(file1, file2)
+    else:
+        # Windows
+        file1 = os.path.normpath(os.path.normcase(file1))
+        file2 = os.path.normpath(os.path.normcase(file2))
+        return file1 == file2

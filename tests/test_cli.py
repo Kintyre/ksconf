@@ -3,6 +3,8 @@
 import unittest
 import tempfile
 from textwrap import dedent
+from collections import namedtuple
+
 # TEMP-FOR-REFACTOR
 from ksconf.monolithic import *
 
@@ -29,7 +31,6 @@ def static_data(path):
     # Get paths to files under the 'tests/data/*' location
     parts = path.split("/")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "data", *parts))
-
 
 KsconfOutput = namedtuple("KsconfOutput", ["returncode", "stdout", "stderr"])
 
