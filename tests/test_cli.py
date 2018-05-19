@@ -3,11 +3,17 @@
 import unittest
 import tempfile
 from textwrap import dedent
-from ksconf import *
+# TEMP-FOR-REFACTOR
+from ksconf.monolithic import *
 
 import warnings
 # Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
 warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
+
+
+from ksconf.conf.parser import parse_conf, write_conf, \
+    GLOBAL_STANZA, ConfParserException, DuplicateKeyException, DuplicateStanzaException, \
+    DUP_OVERWRITE, DUP_EXCEPTION, DUP_MERGE, _parse_conf, PARSECONF_MID
 
 
 def _debug_file(flag, fn):       # pragma: no cover

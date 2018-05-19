@@ -2,8 +2,9 @@
 
 import unittest
 from textwrap import dedent
-
-from ksconf import *
+# TEMP-FOR-REFACTOR
+from ksconf.monolithic import *
+from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, DuplicateStanzaException
 
 
 # For coverage info, can be run with nose2, like so:
@@ -22,7 +23,6 @@ def parse_string(text, profile=None, **kwargs):
     if profile:
         return parse_conf(f, profile)
     else:
-        from ksconf import _parse_conf
         return _parse_conf(f, **kwargs)
 
 

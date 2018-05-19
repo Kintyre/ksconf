@@ -7,14 +7,18 @@ setup(name="KintyreSplunkConfTool",
       author="Lowell Alleman",
       author_email="lowell@kintyre.co",
       url="https://github.com/Kintyre/ksconf",
-      py_modules=[
+      packages=[
         "ksconf",
+        "ksconf.commands",
+        "ksconf.conf",
+        "ksconf.util",
+        "ksconf.vc",
        ],
       # Not required, but useful.
       # install_requires=[ "argcomplete "],
       entry_points={
         "console_scripts" : [
-            "ksconf = ksconf:cli",
+            "ksconf = ksconf.monolithic:cli",
         ]
       },
     )

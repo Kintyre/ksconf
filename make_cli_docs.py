@@ -4,7 +4,6 @@ import os
 import sys
 import re
 import filecmp
-from glob import glob
 from subprocess import Popen, PIPE
 
 def cmd_output(*cmd):
@@ -25,18 +24,22 @@ def prefix(iterable, indent=4):
     for line in iterable:
         yield p + line
 
-def write_doc_for(stream, script, level=2, *subcmds):
+def write_doc_for(stream, cmd, level=2, cmd_name=None, *subcmds):
     subcmds = list(subcmds)
-    args = [ sys.executable, script ] + subcmds + [ "--help" ]
+    if not cmd_name:
+        cmd_name = str(cmd)
+    if not isinstance(cmd, (list, tuple)):
+        cmd = [ cmd ]
+    args = [ sys.executable ] + cmd + subcmds + [ "--help" ]
     out = list(cmd_output(*args))
-    stream.write("{} {}\n".format("#" * level, " ".join([script] + subcmds)))
+    stream.write("{} {}\n".format("#" * level, " ".join([cmd_name] + subcmds)))
     for line in prefix(out):
         stream.write(line)
     stream.write("\n\n")
     for subcmd in parse_subcommand(out):
         sc = subcmds + [ subcmd ]
-        print "  Subcmd docs for {} {}".format(script, " ".join(sc))
-        write_doc_for(stream, script, level+1, *sc)
+        print "  Subcmd docs for {} {}".format(cmd_name, " ".join(sc))
+        write_doc_for(stream, cmd, level+1, cmd_name, *sc)
 
 readme = open("README.md.tmp", "w")
 readme.write("""\
@@ -54,18 +57,17 @@ Install with
     cd ksconf
     pip install .
 
+Confirm installation with the following command:
+
+    ksconf --help
+
 The following documents the CLI options
 
 """)
 
+print "Building docs for ksconf"
+write_doc_for(readme, ["-m", "ksconf.monolithic"], cmd_name="ksconf")
 
-for script in glob("*.py"):
-    if "make_cli_docs" in script:
-        continue  # Don't fork bomb
-    if "test" in script or script == "setup.py":
-        continue
-    print "Building docs for {}".format(script)
-    write_doc_for(readme, script)
 
 readme.close()
 
