@@ -1,7 +1,10 @@
+#!/bin/bash
+
 function RUN() {
     local expect_rc=${RC:-0}
     echo "Running:    ksconf $*  [Expect rc=$expect_rc]"
-    coverage run -a ksconf.py $*
+    coverage run -a -m ksconf.cli $*
+    #coverage run -a ksconf $*
     rc=$?
     if [[ $rc -ne $expect_rc ]]
     then
@@ -14,7 +17,15 @@ function RUN() {
 DOWNLOADS=$PWD/app_archive
 
 coverage run run_tests.py || { echo "Unit test failed.  Stopping."; exit 2; }
-#coverage report ksconf.py
+coverage report ksconf/cli.py
+
+
+#VENV=venv-test
+#echo "Running virtualenv install"
+#virtualenv "$VENV" || exit 1
+#. $VENV/bin/activate || exit 1
+#pip install .
+
 
 RUN combine TEST_APPS/search/default.d/* --target=TEST_APPS/search/default --dry-run
 touch TEST_APPS/search/default/EXTRA_FILE.conf
@@ -66,5 +77,5 @@ for app in $DOWNLOADS/splunk-add-on-for-*.tgz; do RUN unarchive --dest=apps/ --d
 
 [[ -f apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf ]] && RC=3 RUN diff apps/Splunk_TA_aws/default.d/10-splunk/savedsearches.conf apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf
 
-coverage report ksconf.py
-coverage html ksconf.py
+coverage report ksconf/cli.py
+coverage html ksconf/cli.py

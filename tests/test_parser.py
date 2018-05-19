@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 
-import unittest
-from textwrap import dedent
-
-from ksconf import *
-
-
 # For coverage info, can be run with nose2, like so:
 #  nose2 -s . -C
 
+import os
+import unittest
+from StringIO import StringIO
+from textwrap import dedent
 
-
-import warnings
-# Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
-warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
+from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
+    DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
+from ksconf.conf.merge import merge_conf_dicts
+from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
+    DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
+    PARSECONF_MID, GLOBAL_STANZA
+from ksconf.util.file import relwalk
 
 
 def parse_string(text, profile=None, **kwargs):
@@ -22,7 +23,6 @@ def parse_string(text, profile=None, **kwargs):
     if profile:
         return parse_conf(f, profile)
     else:
-        from ksconf import _parse_conf
         return _parse_conf(f, **kwargs)
 
 
@@ -143,7 +143,7 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c[" stanza2"]["color"], "yellow")
         self.assertEqual(c["stanza 3 "]["homework"], "no")
         # This one fails....   need to confirm Splunk's built-in behavior....  Maybe this should fail on 'strict' mode?
-        #self.assertEqual(c["stanza 4"]["pre_whitespace"], "weird")
+        # self.assertEqual(c["stanza 4"]["pre_whitespace"], "weird")
         self.assertIn("stanza 5", c)
 
     def test_stanza_weird_chars(self):
@@ -314,7 +314,7 @@ class ParserTestCase(unittest.TestCase):
 
     def test_splksysdfltjunk(self):
         # This is copied from Splunk's system/default/props.conf file.  (We are CERTAINLY more
-        #picky than splunk when it comes to parsing these files.
+        # picky than splunk when it comes to parsing these files.
         # WHoops, semi-colons aren't comments!
         t = """
         [sar]
@@ -342,13 +342,10 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(st["none"], "")
 
 
-#@unittest.expectedFailure()
-
-
+# @unittest.expectedFailure()
 
 
 class ConfigDiffTestCase(unittest.TestCase):
-
     cfg_macros_1 = """
     [comment(1)]
     args = text
@@ -406,7 +403,7 @@ class ConfigDiffTestCase(unittest.TestCase):
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="LINE_BREAKER")
         self.assertEqual(op.tag, DIFF_OP_EQUAL)
         self.assertEqual(op.a, op.b)
-        self.assert_(op.a.startswith(r"([\r\n]+)"))   # Don't bother to match the whole thing...
+        self.assert_(op.a.startswith(r"([\r\n]+)"))  # Don't bother to match the whole thing...
 
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="DATETIME_CONFIG")
         self.assertEqual(op.tag, DIFF_OP_DELETE)
@@ -437,13 +434,11 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertEqual(diffs[0].location.type, "global")
 
 
-
-
 class ConfigMergeTestCase(unittest.TestCase):
 
     @staticmethod
     def merge(*cfg_txts, **parse_args):
-        dicts = [ parse_string(txt, **parse_args) for txt in cfg_txts ]
+        dicts = [parse_string(txt, **parse_args) for txt in cfg_txts]
         return merge_conf_dicts(*dicts)
 
     def test_merge_simple_2(self):
@@ -453,7 +448,7 @@ class ConfigMergeTestCase(unittest.TestCase):
         [y]
         b = 2
         [z]
-        ""","""
+        """, """
         [v]
         new_stanza = true
         [x]
@@ -473,7 +468,7 @@ class ConfigMergeTestCase(unittest.TestCase):
         [y]
         b = 2
         [z]
-        ""","""
+        """, """
         [x]
         a = one
         [y]

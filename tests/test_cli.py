@@ -1,13 +1,22 @@
 #!/usr/bin/env python
-
-import unittest
+import os
+import shutil
+import sys
 import tempfile
+import unittest
+from StringIO import StringIO
+from collections import namedtuple
+from glob import glob
+from subprocess import list2cmdline
 from textwrap import dedent
-from ksconf import *
 
-import warnings
-# Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
-warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
+from ksconf.consts import *
+from ksconf.cli import cli
+from ksconf.util.file import file_hash
+from ksconf.vc.git import git_cmd
+
+from ksconf.conf.parser import parse_conf, write_conf, \
+    GLOBAL_STANZA, PARSECONF_MID
 
 
 def _debug_file(flag, fn):       # pragma: no cover
@@ -23,7 +32,6 @@ def static_data(path):
     # Get paths to files under the 'tests/data/*' location
     parts = path.split("/")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "data", *parts))
-
 
 KsconfOutput = namedtuple("KsconfOutput", ["returncode", "stdout", "stderr"])
 
@@ -536,7 +544,7 @@ class CliSortTest(unittest.TestCase):
         DEST_KEY = MetaData:Sourcetype
         FORMAT = sourcetype::MyTool:Services:$1
         """)
-        from glob import glob
+
         self.all_confs = glob(twd.get_path("*.conf"))
 
     def test_sort_inplace_returncodes(self):

@@ -12,12 +12,15 @@ Install with
     cd ksconf
     pip install .
 
+Confirm installation with the following command:
+
+    ksconf --help
+
 The following documents the CLI options
 
-## ksconf.py
-    usage: ksconf.py [-h] [--force-color]
-                     {check,combine,diff,promote,merge,minimize,sort,unarchive}
-                     ...
+## ksconf
+    usage: ksconf [-h] [--version] [--force-color]
+                  {check,combine,diff,promote,merge,minimize,sort,unarchive} ...
     
     Kintyre Splunk CONFig tool.
     
@@ -56,12 +59,13 @@ The following documents the CLI options
     
     optional arguments:
       -h, --help            show this help message and exit
+      --version             show program's version number and exit
       --force-color         Force TTY color mode on. Useful if piping the output a
                             color-awarepager, like 'less -R'
 
 
-### ksconf.py check
-    usage: ksconf.py check [-h] [--quiet] FILE [FILE ...]
+### ksconf check
+    usage: ksconf check [-h] [--quiet] FILE [FILE ...]
     
     Provide basic syntax and sanity checking for Splunk's .conf files. Use
     Splunk's builtin 'btool check' for a more robust validation of keys and
@@ -77,9 +81,9 @@ The following documents the CLI options
       --quiet, -q  Reduce the volume of output.
 
 
-### ksconf.py combine
-    usage: ksconf.py combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
-                             source [source ...]
+### ksconf combine
+    usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
+                          source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
     directory.   Configuration files can be stored in a '/etc/*.d' like directory
@@ -196,8 +200,8 @@ The following documents the CLI options
                             files.
 
 
-### ksconf.py diff
-    usage: ksconf.py diff [-h] [-o FILE] [--comments] CONF1 CONF2
+### ksconf diff
+    usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
     
     Compares the content differences of two .conf files
     
@@ -220,10 +224,10 @@ The following documents the CLI options
                             consistently)
 
 
-### ksconf.py promote
-    usage: ksconf.py promote [-h] [--batch | --interactive] [--force] [--keep]
-                             [--keep-empty]
-                             SOURCE TARGET
+### ksconf promote
+    usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
+                          [--keep-empty]
+                          SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is
     used to take local changes made via the UI and push them into a default (or
@@ -274,9 +278,9 @@ The following documents the CLI options
                          local files on the fly.
 
 
-### ksconf.py merge
-    usage: ksconf.py merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
-                           FILE [FILE ...]
+### ksconf merge
+    usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
+                        FILE [FILE ...]
     
     positional arguments:
       FILE                  The source configuration file to pull changes from.
@@ -297,10 +301,10 @@ The following documents the CLI options
                             generated file.
 
 
-### ksconf.py minimize
-    usage: ksconf.py minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
-                              [--explode-default] [-k PRESERVE_KEY]
-                              FILE [FILE ...]
+### ksconf minimize
+    usage: ksconf minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
+                           [--explode-default] [-k PRESERVE_KEY]
+                           FILE [FILE ...]
     
     Minimize a conf file by removing the default settings
     
@@ -371,9 +375,9 @@ The following documents the CLI options
                             if it's enabled by default.
 
 
-### ksconf.py sort
-    usage: ksconf.py sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
-                          FILE [FILE ...]
+### ksconf sort
+    usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
+                       FILE [FILE ...]
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
@@ -408,14 +412,14 @@ The following documents the CLI options
                             example.
 
 
-### ksconf.py unarchive
-    usage: ksconf.py unarchive [-h] [--dest DIR] [--app-name NAME]
-                               [--default-dir DIR] [--exclude EXCLUDE]
-                               [--keep KEEP] [--allow-local]
-                               [--git-sanity-check {off,changed,untracked,ignored}]
-                               [--git-mode {nochange,stage,commit}] [--no-edit]
-                               [--git-commit-args GIT_COMMIT_ARGS]
-                               SPL
+### ksconf unarchive
+    usage: ksconf unarchive [-h] [--dest DIR] [--app-name NAME]
+                            [--default-dir DIR] [--exclude EXCLUDE] [--keep KEEP]
+                            [--allow-local]
+                            [--git-sanity-check {off,changed,untracked,ignored}]
+                            [--git-mode {nochange,stage,commit}] [--no-edit]
+                            [--git-commit-args GIT_COMMIT_ARGS]
+                            SPL
     
     positional arguments:
       SPL                   The path to the archive to install.
