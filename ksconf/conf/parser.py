@@ -297,3 +297,12 @@ def inject_section_comments(section, prepend=None, append=None):
                 new_comments.append(c)
     for (i, comment) in enumerate(new_comments, 1):
         section["#-%06d" % i] = comment
+
+
+def _drop_stanza_comments(stanza):
+    n = {}
+    for (key, value) in stanza.iteritems():
+        if key.startswith("#"):
+            continue
+        n[key] = value
+    return n

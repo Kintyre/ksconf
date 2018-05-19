@@ -4,8 +4,7 @@ from copy import deepcopy
 
 from ksconf.consts import SMART_UPDATE
 from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments
-
-
+from ksconf.conf.delta import compare_cfgs, show_diff
 
 
 ####################################################################################################
@@ -73,7 +72,3 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
                   headers=(dest.name, dest.name + "-new"))
         return SMART_UPDATE
     return dest.dump(merged_cfg)
-
-
-# TEMP-FOR-REFACTOR:  Import at the end to avoid circular references
-from ksconf.monolithic import show_diff, compare_cfgs

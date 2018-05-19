@@ -16,3 +16,13 @@ def file_compare(fn1, fn2):
     with open(fn1, "rb") as f1,\
          open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
+
+
+def _cmp_sets(a, b):
+    """ Result tuples in format (a-only, common, b-only) """
+    set_a = set(a)
+    set_b = set(b)
+    a_only = sorted(set_a.difference(set_b))
+    common = sorted(set_a.intersection(set_b))
+    b_only = sorted(set_b.difference(set_a))
+    return (a_only, common, b_only)
