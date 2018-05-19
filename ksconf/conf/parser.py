@@ -3,8 +3,7 @@ import os
 import re
 from StringIO import StringIO
 
-#from .. import fileobj_compare, SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
-
+from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
 
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
@@ -63,6 +62,9 @@ class DuplicateKeyException(ConfParserException):
 class DuplicateStanzaException(ConfParserException):
     pass
 
+
+####################################################################################################
+## Core parsing / conf file writing logic
 
 
 def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
@@ -264,5 +266,36 @@ def _format_stanza(stanza):
     else:
         return stanza
 
+def _extract_comments(section):
+    "Return a sequental list of comments REMOVED from a section dictionary"
+    comments = []
+    for key, value in sorted(section.items()):
+        if key.startswith("#-"):
+            comments.append(value)
+            del section[key]
+    return comments
+
+
+def inject_section_comments(section, prepend=None, append=None):
+    # Extract existing comments from section dict (in order; and remove them)
+    # Add in any prepend/append comments (if that comment isn't already present)
+    # Re-inject comments back into the section dict with fresh numbering
+    #
+    # Yes, this is really hacky, but the only way to make the diffs work correctly ;-(
+    comments = _extract_comments(section)
+    new_comments = []
+    if prepend:
+        for c in prepend:
+            if c not in comments:
+                new_comments.append(c)
+    new_comments.extend(comments)
+    if append:
+        for c in append:
+            if c not in comments:
+                new_comments.append(c)
+    for (i, comment) in enumerate(new_comments, 1):
+        section["#-%06d" % i] = comment
+
+
 # TEMP-FOR-REFACTOR:  Import at the end to avoid circular references.
-from ..monolithic import fileobj_compare, SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
+from ..monolithic import fileobj_compare

@@ -4,7 +4,8 @@ import unittest
 from textwrap import dedent
 # TEMP-FOR-REFACTOR
 from ksconf.monolithic import *
-from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, DuplicateStanzaException
+from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, DuplicateStanzaException, DuplicateKeyException
+
 
 
 # For coverage info, can be run with nose2, like so:

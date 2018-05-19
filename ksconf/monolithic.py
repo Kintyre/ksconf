@@ -84,6 +84,8 @@ from subprocess import list2cmdline
 #   20-49  Error conditions (user caused)
 #   50-59  Externally caused (should retry)
 #   100+   Internal error (developer required)
+
+
 EXIT_CODE_SUCCESS = 0
 EXIT_CODE_NOTHING_TO_DO = 1
 EXIT_CODE_USER_QUIT = 2
@@ -113,109 +115,6 @@ CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 
 # SMART_*
 from .consts import *
-
-
-####################################################################################################
-## Core parsing / conf file writing logic
-
-
-####################################################################################################
-## Merging logic
-
-# TODO: Replace this with "<<DROP_STANZA>>" on ANY key.  Let's use just ONE mechanism for all of
-# these merge hints/customizations
-STANZA_MAGIC_KEY = "_stanza"
-STANZA_OP_DROP = "<<DROP>>"
-
-
-def _merge_conf_dicts(base, new_layer):
-    """ Merge new_layer on top of base.  It's up to the caller to deal with any necessary object
-    copying to avoid odd referencing between the base and new_layer"""
-    for (section, items) in new_layer.iteritems():
-        if STANZA_MAGIC_KEY in items:
-            magic_op = items[STANZA_MAGIC_KEY]
-            if STANZA_OP_DROP in magic_op:
-                # If this section exist in a parent (base), then drop it now
-                if section in base:
-                    del base[section]
-                continue        # pragma: no cover  (peephole optimization)
-        if section in base:
-            # TODO:  Support other magic here...
-            # Rip all the comments out of the new_layer, and prepend them (sequentially) to base
-            comments = _extract_comments(items)
-            if comments:
-                inject_section_comments(base[section], prepend=comments)
-            base[section].update(items)
-        else:
-            # TODO:  Support other magic here too..., though with no parent info
-            base[section] = items
-    # Nothing to return, base is updated in-place
-
-
-def merge_conf_dicts(*dicts):
-    result = {}
-    for d in dicts:
-        d = deepcopy(d)
-        if not result:
-            result = d
-        else:
-            # Merge each subsequent layer on one at a time
-            _merge_conf_dicts(result, d)
-    return result
-
-
-def _extract_comments(section):
-    "Return a sequental list of comments REMOVED from a section dictionary"
-    comments = []
-    for key, value in sorted(section.items()):
-        if key.startswith("#-"):
-            comments.append(value)
-            del section[key]
-    return comments
-
-
-def inject_section_comments(section, prepend=None, append=None):
-    # Extract existing comments from section dict (in order; and remove them)
-    # Add in any prepend/append comments (if that comment isn't already present)
-    # Re-inject comments back into the section dict with fresh numbering
-    #
-    # Yes, this is really hacky, but the only way to make the diffs work correctly ;-(
-    comments = _extract_comments(section)
-    new_comments = []
-    if prepend:
-        for c in prepend:
-            if c not in comments:
-                new_comments.append(c)
-    new_comments.extend(comments)
-    if append:
-        for c in append:
-            if c not in comments:
-                new_comments.append(c)
-    for (i, comment) in enumerate(new_comments, 1):
-        section["#-%06d" % i] = comment
-
-
-def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
-    # Parse all config files
-    cfgs = [conf.data for conf in configs]
-    # Merge all config files:
-    merged_cfg = merge_conf_dicts(*cfgs)
-    if banner_comment:
-        if not banner_comment.startswith("#"):
-            banner_comment = "#" + banner_comment
-        inject_section_comments(merged_cfg.setdefault(GLOBAL_STANZA, {}), prepend=[banner_comment])
-
-    # Either show the diff (dry-run mode) or write to the destination file
-    if dry_run and dest.is_file():
-        if os.path.isfile(dest.name):
-            dest_cfg = dest.data
-        else:
-            dest_cfg = {}
-        show_diff(sys.stdout, compare_cfgs(merged_cfg, dest_cfg),
-                  headers=(dest.name, dest.name + "-new"))
-        return SMART_UPDATE
-    return dest.dump(merged_cfg)
-
 
 
 ####################################################################################################
@@ -2492,11 +2391,12 @@ To recursively sort all files:
     else:       # pragma: no cover
         sys.exit(return_code or 0)
 
-
 from .conf.parser import GLOBAL_STANZA, \
     PARSECONF_STRICT, PARSECONF_STRICT_NC, PARSECONF_MID, PARSECONF_MID_NC, PARSECONF_LOOSE, \
-    ConfParserException, section_reader, DuplicateKeyException, parse_conf, write_conf, \
+    ConfParserException, parse_conf, write_conf, \
     smart_write_conf, _format_stanza
+
+from ksconf.conf.merge import merge_conf_dicts, merge_conf_files
 
 
 
