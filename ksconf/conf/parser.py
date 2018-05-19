@@ -3,7 +3,9 @@ import os
 import re
 from StringIO import StringIO
 
+
 from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
+from ..util.compare import fileobj_compare
 
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
@@ -295,7 +297,3 @@ def inject_section_comments(section, prepend=None, append=None):
                 new_comments.append(c)
     for (i, comment) in enumerate(new_comments, 1):
         section["#-%06d" % i] = comment
-
-
-# TEMP-FOR-REFACTOR:  Import at the end to avoid circular references.
-from ..monolithic import fileobj_compare
