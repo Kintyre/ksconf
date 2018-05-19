@@ -21,9 +21,15 @@ import ksconf.util
 from ksconf.conf.parser import PARSECONF_MID_NC, PARSECONF_STRICT_NC, PARSECONF_STRICT, \
     PARSECONF_MID, PARSECONF_LOOSE
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
-from ksconf.monolithic import do_check, do_combine, do_diff, ConfFileType, do_promote, do_merge, \
-    ConfFileProxy, do_minimize, do_sort, do_unarchive
-
+from ksconf.commands import ConfFileProxy, ConfFileType
+from ksconf.commands.unarchive import do_unarchive
+from ksconf.commands.combine import do_combine
+from ksconf.commands.sort import do_sort
+from ksconf.commands.promote import do_promote
+from ksconf.commands.minimize import do_minimize
+from ksconf.commands.diff import do_diff
+from ksconf.commands.merge import do_merge
+from ksconf.commands.check import do_check
 
 
 # For now, just effectively a copy of RawDescriptionHelpFormatter

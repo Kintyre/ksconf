@@ -1,13 +1,20 @@
 #!/usr/bin/env python
-
+import os
+import shutil
+import sys
 import unittest
 import tempfile
+from glob import glob
+from StringIO import StringIO
+from subprocess import list2cmdline
 from textwrap import dedent
 from collections import namedtuple
 
+from ksconf.consts import *
 from ksconf.cli import cli
-# TEMP-FOR-REFACTOR
-from ksconf.monolithic import *
+#from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE
+from ksconf.util.file import file_hash
+from ksconf.vc.git import git_cmd
 
 import warnings
 # Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
@@ -544,7 +551,7 @@ class CliSortTest(unittest.TestCase):
         DEST_KEY = MetaData:Sourcetype
         FORMAT = sourcetype::MyTool:Services:$1
         """)
-        from glob import glob
+
         self.all_confs = glob(twd.get_path("*.conf"))
 
     def test_sort_inplace_returncodes(self):

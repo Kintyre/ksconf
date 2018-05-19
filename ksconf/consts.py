@@ -1,5 +1,3 @@
-import re
-
 SMART_CREATE = "created"
 SMART_UPDATE = "updated"
 SMART_NOCHANGE = "unchanged"
@@ -39,4 +37,6 @@ EXIT_CODE_INTERNAL_ERROR = 100
 
 
 # This gets properly supported in Python 3.6, but until then....
+import re
 RegexType = type(re.compile(r'.'))
+del re

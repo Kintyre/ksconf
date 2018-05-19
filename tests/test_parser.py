@@ -1,17 +1,19 @@
 #!/usr/bin/env python
-
+import os
 import unittest
+from StringIO import StringIO
 from textwrap import dedent
-# TEMP-FOR-REFACTOR
-from ksconf.monolithic import *
-from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, DuplicateStanzaException, DuplicateKeyException
 
-
+from ksconf.conf.parser import _parse_conf, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
+    DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
+    PARSECONF_MID, GLOBAL_STANZA
+from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
+    DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
+from ksconf.util.file import relwalk
+from ksconf.conf.merge import merge_conf_dicts
 
 # For coverage info, can be run with nose2, like so:
 #  nose2 -s . -C
-
-
 
 import warnings
 # Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
