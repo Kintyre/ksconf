@@ -3,7 +3,7 @@
 function RUN() {
     local expect_rc=${RC:-0}
     echo "Running:    ksconf $*  [Expect rc=$expect_rc]"
-    coverage run -a -m ksconf.monolithic $*
+    coverage run -a -m ksconf.cli $*
     #coverage run -a ksconf $*
     rc=$?
     if [[ $rc -ne $expect_rc ]]
@@ -17,7 +17,7 @@ function RUN() {
 DOWNLOADS=$PWD/app_archive
 
 coverage run run_tests.py || { echo "Unit test failed.  Stopping."; exit 2; }
-coverage report ksconf/monolithic.py
+coverage report ksconf/cli.py
 
 
 #VENV=venv-test
@@ -77,5 +77,5 @@ for app in $DOWNLOADS/splunk-add-on-for-*.tgz; do RUN unarchive --dest=apps/ --d
 
 [[ -f apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf ]] && RC=3 RUN diff apps/Splunk_TA_aws/default.d/10-splunk/savedsearches.conf apps/Splunk_TA_aws/default.d/50-lowell/savedsearches.conf
 
-coverage report ksconf/monolithic.py
-coverage html ksconf/monolithic.py
+coverage report ksconf/cli.py
+coverage html ksconf/cli.py

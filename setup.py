@@ -18,7 +18,7 @@ setup(name="KintyreSplunkConfTool",
       # install_requires=[ "argcomplete "],
       entry_points={
         "console_scripts" : [
-            "ksconf = ksconf.monolithic:cli",
+            "ksconf = ksconf.cli:cli",
         ]
       },
     )

@@ -66,7 +66,7 @@ The following documents the CLI options
 """)
 
 print "Building docs for ksconf"
-write_doc_for(readme, ["-m", "ksconf.monolithic"], cmd_name="ksconf")
+write_doc_for(readme, ["-m", "ksconf.cli"], cmd_name="ksconf")
 
 
 readme.close()

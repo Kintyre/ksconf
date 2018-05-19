@@ -5,6 +5,7 @@ import tempfile
 from textwrap import dedent
 from collections import namedtuple
 
+from ksconf.cli import cli
 # TEMP-FOR-REFACTOR
 from ksconf.monolithic import *
 
