@@ -2,7 +2,6 @@ SMART_CREATE = "created"
 SMART_UPDATE = "updated"
 SMART_NOCHANGE = "unchanged"
 
-
 # EXIT_CODE_* constants:  Use consistent exit codes for scriptability
 #
 #   0-9    Normal/successful conditions
@@ -34,7 +33,6 @@ EXIT_CODE_EXTERNAL_FILE_EDIT = 50
 
 # Unresolvable issues (developer required)
 EXIT_CODE_INTERNAL_ERROR = 100
-
 
 # This gets properly supported in Python 3.6, but until then....
 import re

@@ -64,7 +64,7 @@ def do_unarchive(args):
         else:
             sys.stderr.write("Excluding these files by default.  Use '--allow-local' to override.")
 
-    if not new_app_name and True:        # if not --no-app-name-fixes
+    if not new_app_name and True:  # if not --no-app-name-fixes
         if app_name.endswith("-master"):
             sys.stdout.write("Automatically dropping '-master' from the app name.  This is often "
                              "the result of a github export.\n")
@@ -108,6 +108,7 @@ def do_unarchive(args):
             conf.get("ui", {}).get("label", "Unknown"),
             conf.get("launcher", {}).get("author", "Unknown"),
             conf.get("launcher", {}).get("version", "Unknown")))
+
     if old_app_conf:
         show_pkg_info(old_app_conf, " Installed app")
     if app_conf:
@@ -129,10 +130,10 @@ def do_unarchive(args):
                                  "argument.  Skipping.\n")
             else:
                 d = {
-                #                untracked, ignored
-                    "changed" :     (False, False),
-                    "untracked" :   (True, False),
-                    "ignored":      (True, True)
+                    #        untracked, ignored
+                    "changed": (False, False),
+                    "untracked": (True, False),
+                    "ignored": (True, True)
                 }
                 is_clean = git_is_clean(dest_app, *d[args.git_sanity_check])
                 del d
@@ -211,7 +212,7 @@ def do_unarchive(args):
             continue
         if not is_git or args.git_mode in ("nochange", "stage"):
             print "{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode)
-        installed_files.add(gaf.path.split("/",1)[1])
+        installed_files.add(gaf.path.split("/", 1)[1])
         full_path = os.path.join(args.dest, gaf.path)
         dir_exists(os.path.dirname(full_path))
         with open(full_path, "wb") as fp:
@@ -232,10 +233,10 @@ def do_unarchive(args):
     # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
     # include things like local, ".gitignore", ".gitattributes" and so on
 
-    keep_list = [ ".git*" ]
+    keep_list = [".git*"]
     keep_list.extend(args.keep)
     if not args.allow_local:
-        keep_list += [ "local/...", "local.meta" ]
+        keep_list += ["local/...", "local.meta"]
     keep_list = fixup_pattern_bw(keep_list)
     sys.stderr.write("Keep file patterns:  {!r}\n".format(keep_list))
 
@@ -275,7 +276,7 @@ def do_unarchive(args):
     if is_git:
         if args.git_mode in ("stage", "commit"):
             git_cmd(["add", os.path.basename(dest_app)], cwd=os.path.dirname(dest_app))
-            #sys.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
+            # sys.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
         '''
         else:
             sys.stdout.write("git add {}\n".format(dest_app))
@@ -305,8 +306,8 @@ def do_unarchive(args):
                 git_commit_message += " to version {}".format(git_commit_new_version)
         # Could possibly include some CLI arg details, like what file patterns were excluded
         git_commit_message += "\n\nSHA256 {} {}\n\nSplunk-App-managed-by: ksconf" \
-                                .format(f_hash, os.path.basename(args.tarball))
-        git_commit_cmd = [ "commit", os.path.basename(dest_app), "-m", git_commit_message ]
+            .format(f_hash, os.path.basename(args.tarball))
+        git_commit_cmd = ["commit", os.path.basename(dest_app), "-m", git_commit_message]
 
         if not args.no_edit:
             git_commit_cmd.append("--edit")

@@ -29,7 +29,7 @@ def do_sort(args):
             if smart_rc == SMART_NOCHANGE:
                 if not args.quiet:
                     sys.stderr.write("Nothing to update.  "
-                                    "File {0} is already sorted\n".format(conf.name))
+                                     "File {0} is already sorted\n".format(conf.name))
             else:
                 sys.stderr.write("Replaced file {0} with sorted content.\n".format(conf.name))
                 changes += 1

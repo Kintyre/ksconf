@@ -18,6 +18,7 @@ def _is_binary_file(filename, peek=2048):
 
 _dir_exists_cache = set()
 
+
 def dir_exists(directory):
     """ Ensure that the directory exists """
     # This works as long as we never call os.chdir()
@@ -68,11 +69,12 @@ def _expand_glob_list(iterable):
 
 
 _glob_to_regex = {
-    r"\*":   r"[^/\\]*",
-    r"\?":   r".",
+    r"\*": r"[^/\\]*",
+    r"\?": r".",
     r"\.\.\.": r".*",
 }
 _is_glob_re = re.compile("({})".format("|".join(_glob_to_regex.keys())))
+
 
 def match_bwlist(value, bwlist, escape=True):
     # Return direct matches first  (most efficient)

@@ -2,10 +2,9 @@ import os
 import sys
 from copy import deepcopy
 
-from ksconf.consts import SMART_UPDATE
-from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments
 from ksconf.conf.delta import compare_cfgs, show_diff
-
+from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments
+from ksconf.consts import SMART_UPDATE
 
 ####################################################################################################
 ## Merging logic
@@ -26,7 +25,7 @@ def _merge_conf_dicts(base, new_layer):
                 # If this section exist in a parent (base), then drop it now
                 if section in base:
                     del base[section]
-                continue        # pragma: no cover  (peephole optimization)
+                continue  # pragma: no cover  (peephole optimization)
         if section in base:
             # TODO:  Support other magic here...
             # Rip all the comments out of the new_layer, and prepend them (sequentially) to base

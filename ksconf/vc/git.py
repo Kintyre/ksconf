@@ -10,7 +10,7 @@ GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stder
 def git_cmd(args, shell=False, cwd=None, capture_std=True):
     if isinstance(args, tuple):
         args = list(args)
-    cmdline_args = [ GIT_BIN ] + args
+    cmdline_args = [GIT_BIN] + args
     if capture_std:
         out = PIPE
     else:
@@ -21,17 +21,18 @@ def git_cmd(args, shell=False, cwd=None, capture_std=True):
 
 
 def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
-    base_len = sum([len(s)+1 for s in args])
+    base_len = sum([len(s) + 1 for s in args])
     for chunk in _xargs(iterable, cmd_len - base_len):
         p = git_cmd(args + chunk, cwd=cwd)
-        if p.returncode != 0:       # pragma: no cover
+        if p.returncode != 0:  # pragma: no cover
             raise RuntimeError("git exited with code {}.  Command: {}".format(
-                               p.returncode, list2cmdline(args+chunk)))
+                p.returncode, list2cmdline(args + chunk)))
+
 
 def git_status_summary(path):
     c = Counter()
     cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
-    if cmd.returncode != 0:         # pragma: no cover
+    if cmd.returncode != 0:  # pragma: no cover
         raise RuntimeError("git command returned exit code {}.".format(cmd.returncode))
     # XY:  X=index, Y=working tree.   For our simplistic approach we consider them together.
     for line in cmd.stdout.splitlines():
@@ -43,6 +44,7 @@ def git_status_summary(path):
         else:
             c["changed"] += 1
     return c
+
 
 '''
 def get_gitdir(path=None):
@@ -77,11 +79,11 @@ def git_is_clean(path=None, check_untracked=True, check_ignored=False):
 
 def git_ls_files(path, *modifiers):
     # staged=True
-    args = [ "ls-files" ]
+    args = ["ls-files"]
     for m in modifiers:
         args.append("--" + m)
     proc = git_cmd(args, cwd=path)
-    if proc.returncode != 0:            # pragma: no cover
+    if proc.returncode != 0:  # pragma: no cover
         raise RuntimeError("Bad return code from git... {} add better exception handling here.."
                            .format(proc.returncode))
     return proc.stdout.splitlines()

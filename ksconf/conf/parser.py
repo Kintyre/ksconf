@@ -3,12 +3,13 @@ import os
 import re
 from StringIO import StringIO
 
-
 from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
 from ..util.compare import fileobj_compare
 
+
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
+
     def __deepcopy__(self, memo):
         memo[id(self)] = self
         return self
@@ -16,8 +17,6 @@ class Token(object):
 
 DUP_OVERWRITE = "overwrite"
 DUP_MERGE = "merge"
-
-
 
 GLOBAL_STANZA = Token()
 
@@ -31,7 +30,7 @@ PARSECONF_MID = dict(
     strict=True)
 
 PARSECONF_MID_NC = dict(
-    keep_comments=False,         # No comments
+    keep_comments=False,  # No comments
     dup_stanza=DUP_EXCEPTION,
     dup_key=DUP_OVERWRITE,
     strict=True)
@@ -49,7 +48,7 @@ PARSECONF_STRICT = dict(
     strict=True)
 
 PARSECONF_STRICT_NC = dict(
-    keep_comments=False,        # No comment
+    keep_comments=False,  # No comment
     dup_stanza=DUP_EXCEPTION,
     dup_key=DUP_EXCEPTION,
     strict=True)
@@ -58,8 +57,10 @@ PARSECONF_STRICT_NC = dict(
 class ConfParserException(Exception):
     pass
 
+
 class DuplicateKeyException(ConfParserException):
     pass
+
 
 class DuplicateStanzaException(ConfParserException):
     pass
@@ -93,7 +94,6 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
         yield section, buf
 
 
-
 def bom_handler(iterable):
     # Strip out aany UTF BOM markers, if present.
     item = iterable.next()
@@ -115,7 +115,7 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
             buf = ""
         else:
             yield line
-    if buf:             # pragma: no cover
+    if buf:  # pragma: no cover
         # Weird this generally shouldn't happen.
         yield buf
 
@@ -143,10 +143,10 @@ def parse_conf(stream, profile=PARSECONF_MID):
 
 
 def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False,
-               dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
+                dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if not hasattr(stream, "read"):
         # Assume it's a filename
-        stream = codecs.open(stream) #, encoding="utf-8")
+        stream = codecs.open(stream)  # , encoding="utf-8")
     if hasattr(stream, "name"):
         stream_name = stream.name
     else:
@@ -163,7 +163,7 @@ def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False
             section = GLOBAL_STANZA
         if section in sections:
             if dup_stanza == DUP_OVERWRITE:
-               s = sections[section] = {}
+                s = sections[section] = {}
             elif dup_stanza == DUP_EXCEPTION:
                 raise DuplicateStanzaException("Stanza [{0}] found more than once in config "
                                                "file {1}".format(_format_stanza(section),
@@ -191,7 +191,7 @@ def _parse_conf(stream, keys_lower=False, handle_conts=True, keep_comments=False
     if GLOBAL_STANZA in sections:
         g = sections[GLOBAL_STANZA]
         if not g:
-        #if len(g) == 1 and not g[0]:
+            # if len(g) == 1 and not g[0]:
             del sections[GLOBAL_STANZA]
     return sections
 
@@ -267,6 +267,7 @@ def _format_stanza(stanza):
         return "GLOBAL"
     else:
         return stanza
+
 
 def _extract_comments(section):
     "Return a sequental list of comments REMOVED from a section dictionary"

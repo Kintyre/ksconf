@@ -1,6 +1,6 @@
 import os
-from fnmatch import fnmatch
 from collections import namedtuple
+from fnmatch import fnmatch
 
 from ksconf.consts import RegexType
 
@@ -8,7 +8,7 @@ GenArchFile = namedtuple("GenericArchiveEntry", ("path", "mode", "size", "payloa
 
 
 def extract_archive(archive_name, extract_filter=None):
-    if extract_filter is not None and not callable(extract_filter):     # pragma: no cover
+    if extract_filter is not None and not callable(extract_filter):  # pragma: no cover
         raise ValueError("extract_filter must be a callable!")
     if archive_name.lower().endswith(".zip"):
         return _extract_zip(archive_name, extract_filter)
@@ -20,6 +20,7 @@ def gaf_filter_name_like(pattern):
     def filter(gaf):
         filename = os.path.basename(gaf.path)
         return fnmatch(filename, pattern)
+
     return filter
 
 
@@ -34,7 +35,7 @@ def _extract_tar(path, extract_filter=None):
                 continue
             mode = ti.mode & 0777
             if extract_filter is None or \
-               extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
+                    extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
                 tar_file_fp = tar.extractfile(ti)
                 buf = tar_file_fp.read()
             else:
@@ -50,7 +51,7 @@ def _extract_zip(path, extract_filter=None, mode=0644):
                 # Skip directories
                 continue
             if extract_filter is None or \
-               extract_filter(GenArchFile(zi.filename, mode, zi.file_size, None)):
+                    extract_filter(GenArchFile(zi.filename, mode, zi.file_size, None)):
                 payload = zipf.read(zi)
             else:
                 payload = None

@@ -26,9 +26,9 @@ def explode_default_stanza(conf, default_stanza=None):
 def do_minimize(args):
     if args.explode_default:
         # Is this the SAME as exploding the defaults AFTER the merge?;  I think NOT.  Needs testing
-        cfgs = [ explode_default_stanza(conf.data) for conf in args.conf ]
+        cfgs = [explode_default_stanza(conf.data) for conf in args.conf]
     else:
-        cfgs = [ conf.data for conf in args.conf ]
+        cfgs = [conf.data for conf in args.conf]
     # Merge all config files:
     default_cfg = merge_conf_dicts(*cfgs)
     del cfgs
@@ -38,7 +38,7 @@ def do_minimize(args):
     if args.explode_default:
         # Make a skeleton default dict; at the highest level, that ensure that all default
         default_stanza = default_cfg.get(GLOBAL_STANZA, default_cfg.get("default"))
-        skeleton_default = dict([ (k,{}) for k in args.target.data])
+        skeleton_default = dict([(k, {}) for k in args.target.data])
         skeleton_default = explode_default_stanza(skeleton_default, default_stanza)
         default_cfg = merge_conf_dicts(skeleton_default, default_cfg)
 
@@ -66,7 +66,7 @@ def do_minimize(args):
                     sys.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
                                  "".format(op.location.stanza, op.location.key, op.a))
                     '''
-                    continue        # pragma: no cover  (peephole optimization)
+                    continue  # pragma: no cover  (peephole optimization)
                 del minz_cfg[op.location.stanza][op.location.key]
                 # If that was the last remaining key in the stanza, delete the entire stanza
                 if not _drop_stanza_comments(minz_cfg[op.location.stanza]):

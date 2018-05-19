@@ -3,12 +3,12 @@ import shutil
 import sys
 from copy import deepcopy
 
+from ksconf.commands import ConfDirProxy
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs, show_diff, \
     DIFF_OP_EQUAL, DiffStanza
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
     EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT
-from ksconf.commands import ConfDirProxy
 from ksconf.util.file import _samefile, file_fingerprint
 
 
@@ -175,7 +175,6 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
     though we know that change promotions will not *always* be between default and local.  (We can
     and should assume some familiarity with Splunk conf, less so than familiarity with git lingo.)
     '''
-
 
     def prompt_yes_no(prompt):
         while True:

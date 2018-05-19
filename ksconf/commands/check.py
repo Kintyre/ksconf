@@ -33,13 +33,13 @@ def do_check(args):
             exit_code = EXIT_CODE_BAD_CONF_FILE
             # TODO:  Break out counts by error type/category (there's only a few of them)
             c["error"] += 1
-        except Exception, e:        # pragma: no cover
+        except Exception, e:  # pragma: no cover
             sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
                              "Aborting.\n{1}\n".format(conf, e))
             exit_code = EXIT_CODE_INTERNAL_ERROR
             c["error"] += 1
             break
-    if True:    #show stats or verbose
+    if True:  # show stats or verbose
         sys.stdout.write("Completed checking {0[checked]} files.  rc={1} Breakdown:\n"
                          "   {0[okay]} files were parsed successfully.\n"
                          "   {0[error]} files failed.\n".format(c, exit_code))

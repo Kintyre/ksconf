@@ -3,11 +3,11 @@ import re
 import sys
 from collections import defaultdict
 
+from ksconf.commands import ConfFileProxy
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_COMBINE_MARKER_MISSING, SMART_NOCHANGE
-from ksconf.commands import ConfFileProxy
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _expand_glob_list, relwalk, _is_binary_file, smart_copy
 
@@ -47,7 +47,7 @@ def do_combine(args):
             for fn in files:
                 # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
                 if fn.endswith(".swp") or fn.endswith("*.bak"):
-                    continue    # pragma: no cover  (peephole optimization)
+                    continue  # pragma: no cover  (peephole optimization)
                 src_file = os.path.join(root, fn)
                 src_path = os.path.join(src_root, root, fn)
                 src_file_index[src_file].append(src_path)
@@ -60,7 +60,7 @@ def do_combine(args):
             if tgt_file not in src_file_index:
                 # Todo:  Add support for additional blacklist wildcards (using fnmatch)
                 if fn == CONTROLLED_DIR_MARKER or fn.endswith(".bak"):
-                    continue     # pragma: no cover (peephole optimization)
+                    continue  # pragma: no cover (peephole optimization)
                 target_extra_files.add(tgt_file)
 
     for (dest_fn, src_files) in sorted(src_file_index.items()):
@@ -73,7 +73,7 @@ def do_combine(args):
 
         # Handle conf files and non-conf files separately
         if not conf_file_re.search(dest_fn):
-            #sys.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
+            # sys.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
             # Always use the last file in the list (since last directory always wins)
             src_file = src_files[-1]
             if args.dry_run:
@@ -92,20 +92,21 @@ def do_combine(args):
             else:
                 smart_rc = smart_copy(src_file, dest_path)
             if smart_rc != SMART_NOCHANGE:
-                sys.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
+                sys.stderr.write(
+                    "Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
         else:
             # Handle merging conf files
             dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
                                  parse_profile=PARSECONF_MID)
             srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
-            #sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
+            # sys.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
             smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
                                         banner_comment=args.banner)
             if smart_rc != SMART_NOCHANGE:
                 sys.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
                                                                              src_files))
 
-    if True and target_extra_files:     # Todo: Allow for cleanup to be disabled via CLI
+    if True and target_extra_files:  # Todo: Allow for cleanup to be disabled via CLI
         sys.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".format(
             len(target_extra_files)))
         for dest_fn in target_extra_files:

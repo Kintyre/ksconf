@@ -2,28 +2,21 @@
 import os
 import shutil
 import sys
-import unittest
 import tempfile
-from glob import glob
+import unittest
 from StringIO import StringIO
+from collections import namedtuple
+from glob import glob
 from subprocess import list2cmdline
 from textwrap import dedent
-from collections import namedtuple
 
 from ksconf.consts import *
 from ksconf.cli import cli
-#from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
-import warnings
-# Don't warn us about tempnam, we can't use tmpfile, we need an named filesystem object
-warnings.filterwarnings("ignore", "tempnam is a potential security.*", RuntimeWarning)
-
-
 from ksconf.conf.parser import parse_conf, write_conf, \
-    GLOBAL_STANZA, ConfParserException, DuplicateKeyException, DuplicateStanzaException, \
-    DUP_OVERWRITE, DUP_EXCEPTION, DUP_MERGE, _parse_conf, PARSECONF_MID
+    GLOBAL_STANZA, PARSECONF_MID
 
 
 def _debug_file(flag, fn):       # pragma: no cover

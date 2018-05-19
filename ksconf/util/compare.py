@@ -13,7 +13,7 @@ def fileobj_compare(f1, f2):
 
 
 def file_compare(fn1, fn2):
-    with open(fn1, "rb") as f1,\
+    with open(fn1, "rb") as f1, \
          open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
 

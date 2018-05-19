@@ -8,14 +8,13 @@ from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
 
-
 ####################################################################################################
 ## Diff logic
 
-DIFF_OP_INSERT  = "insert"
-DIFF_OP_DELETE  = "delete"
+DIFF_OP_INSERT = "insert"
+DIFF_OP_DELETE = "delete"
 DIFF_OP_REPLACE = "replace"
-DIFF_OP_EQUAL   = "equal"
+DIFF_OP_EQUAL = "equal"
 
 DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
 DiffGlobal = namedtuple("DiffGlobal", ("type",))
@@ -126,7 +125,7 @@ def summarize_cfg_diffs(delta, stream):
         elif isinstance(op.location, DiffStzKey):
             key_stats[op.tag][op.location.stanza][op.location.key].add(op.location.key)
 
-    for tag in sorted(c.keys()): # (DIFF_OP_EQUAL, DIFF_OP_REPLACE, DIFF_OP_INSERT, DIFF_OP_DELETE):
+    for tag in sorted(c.keys()):
         stream.write("Have {0} '{1}' operations:\n".format(c[tag], tag))
         for entry in sorted(stanza_stats[tag]):
             stream.write("\t[{0}]\n".format(_format_stanza(entry)))
@@ -134,7 +133,6 @@ def summarize_cfg_diffs(delta, stream):
             stream.write("\t[{0}]  {1} keys\n".format(_format_stanza(entry),
                                                       len(key_stats[tag][entry])))
         stream.write("\n")
-
 
 
 # Color mapping
@@ -199,6 +197,7 @@ def show_diff(stream, diffs, headers=None):
             r = "{0} = {1}".format(key, v)
             r = r.replace("\n", "\\\n")
             return r.splitlines()
+
         a = f(value_a)
         b = f(value_b)
         differ = difflib.Differ()
@@ -250,7 +249,7 @@ def show_diff(stream, diffs, headers=None):
         if op.tag == DIFF_OP_INSERT:
             show_value(op.a, op.location.stanza, op.location.key, "+")
         elif op.tag == DIFF_OP_DELETE:
-            show_value(op.b,  op.location.stanza,  op.location.key, "-")
+            show_value(op.b, op.location.stanza, op.location.key, "-")
         elif op.tag == DIFF_OP_REPLACE:
             if "\n" in op.a or "\n" in op.b:
                 show_multiline_diff(op.a, op.b, op.location.key)

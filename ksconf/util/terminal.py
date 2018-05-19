@@ -1,6 +1,4 @@
-
 # ANSI_COLOR = "\x1b[{0}m"
-
 ANSI_BOLD = 1
 ANSI_RED = 31
 ANSI_GREEN = 32

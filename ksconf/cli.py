@@ -13,23 +13,25 @@ Install & register with:
 """
 
 import argparse
-import textwrap
 import sys
+import textwrap
 
 import ksconf.util
 
-from ksconf.conf.parser import PARSECONF_MID_NC, PARSECONF_STRICT_NC, PARSECONF_STRICT, \
-    PARSECONF_MID, PARSECONF_LOOSE
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 from ksconf.commands import ConfFileProxy, ConfFileType
-from ksconf.commands.unarchive import do_unarchive
+from ksconf.conf.parser import PARSECONF_MID_NC, PARSECONF_STRICT_NC, PARSECONF_STRICT, \
+    PARSECONF_MID, PARSECONF_LOOSE
+
+from ksconf.commands.check import do_check
 from ksconf.commands.combine import do_combine
-from ksconf.commands.sort import do_sort
-from ksconf.commands.promote import do_promote
-from ksconf.commands.minimize import do_minimize
 from ksconf.commands.diff import do_diff
 from ksconf.commands.merge import do_merge
-from ksconf.commands.check import do_check
+from ksconf.commands.minimize import do_minimize
+from ksconf.commands.promote import do_promote
+from ksconf.commands.sort import do_sort
+from ksconf.commands.unarchive import do_unarchive
+
 
 
 # For now, just effectively a copy of RawDescriptionHelpFormatter
@@ -47,20 +49,20 @@ class MyDescriptionHelpFormatter(argparse.HelpFormatter):
 try:
     from argcomplete import autocomplete
     from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-except ImportError:     # pragma: no cover
+except ImportError:  # pragma: no cover
     def _argcomplete_noop(*args, **kwargs): del args, kwargs
+
+
     autocomplete = _argcomplete_noop
     # noinspection PyPep8Naming
     FilesCompleter = DirectoriesCompleter = _argcomplete_noop
-
-
 
 ####################################################################################################
 ## CLI definition
 
 
 # ------------------------------------------ wrap to 80 chars ----------------v
-_cli_description= """Kintyre Splunk CONFig tool.
+_cli_description = """Kintyre Splunk CONFig tool.
 
 This utility handles a number of common Splunk app maintenance tasks in a small
 and easy to relocate package.  Specifically, this tools deals with many of the
@@ -69,6 +71,8 @@ repository.  Merging changes from the live system's (local) folder to the
 version controlled (default) folder, and dealing with more than one layer of
 "default" (which splunk can't handle natively) are all supported tasks.
 """
+
+
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
@@ -259,12 +263,11 @@ Commands:
                                  "edit hand-edit this file! ****",
                          help="A warning banner telling discouraging editing of conf files.")
 
-
     # SUBCOMMAND:  splconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
                                     help="Compares settings differences of two .conf files "
                                          "ignoring textual and sorting differences",
-                                         description="""\
+                                    description="""\
 Compares the content differences of two .conf files
 
 This command ignores textual differences (like order, spacing, and comments)
@@ -287,7 +290,6 @@ macros can be compared more easily.
     sp_diff.add_argument("--comments", "-C",
                          action="store_true", default=False,
                          help="Enable comparison of comments.  (Unlikely to work consistently)")
-
 
     # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
     sp_prmt = subparsers.add_parser("promote",
@@ -507,8 +509,6 @@ Example usage:
                               "often desirable keep the 'disabled' settings in the local file, "
                               "even if it's enabled by default.")
 
-
-
     # SUBCOMMAND:  splconf sort <CONF>
     sp_sort = subparsers.add_parser("sort",
                                     help="Sort a Splunk .conf file.  Sorted output can be echoed "
@@ -636,17 +636,16 @@ To recursively sort all files:
 
     try:
         return_code = args.funct(args)
-    except Exception, e:                # pragma: no cover
+    except Exception, e:  # pragma: no cover
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         raise
         return_code = EXIT_CODE_INTERNAL_ERROR
 
     if _unittest:
         return return_code or 0
-    else:       # pragma: no cover
+    else:  # pragma: no cover
         sys.exit(return_code or 0)
 
 
-
-if __name__ == '__main__':   # pragma: no cover
+if __name__ == '__main__':  # pragma: no cover
     cli()
