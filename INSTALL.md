@@ -97,17 +97,16 @@ environment is the wrong version, is missing (like on Windows), or security rest
 installation of additional packages.  In such cases, Splunk's embedded Python becomes a beacon of
 hope.
 
-Using some other Python simply requires a manual installation process.
-
     cd $SPLUNK_HOME
     git clone https://github.com/Kintyre/ksconf.git
+    # or:  tar -xzvf ksconf-x.y.z.tar.gz; mv ksconf-* ksconf
 
     echo > $SPLUNK_HOME/bin/ksconf <<HERE
     #!/bin/sh
     export PYTHONPATH=$SPLUNK_HOME/ksconf
     exec $SPLUNK_HOME/bin/python -m ksconf.cli $*
     HERE
-    chmod +x PYTHONPATH=SPLUNK_HOME/ksconf
+    chmod +x $SPLUNK_HOME/bin/ksconf
 
     # Test
     ksconf --version
@@ -124,11 +123,13 @@ As to not leave out the poor souls running Windows:
  5. Copy the "ksconf" folder to the "SPLUNK_HOME", `C:\Program Files\Splunk` by default.)
  6. Create a new file called `ksconf.bat` and paste in the following batch script.  Be sure to
     adjust for a non-standard `%SPLUNK_HOME%` value, if necessary.
+    
         @echo off
         SET SPLUNK_HOME=C:\Program Files\Splunk
         SET PYTHONPATH=%SPLUNK_HOME%\bin;%SPLUNK_HOME%\Python-2.7\Lib\site-packages\win32;%SPLUNK_HOME%\Python-2.7\Lib\site-packages;%SPLUNK_HOME%\Python-2.7\Lib
         SET PYTHONPATH=%PYTHONPATH%;%SPLUNK_HOME%\ksconf
         CALL "%SPLUNK_HOME%\bin\python.exe" -m ksconf.cli %*
+
  7. Copy `ksconf.bat` to the `Splunk\bin` folder.  (This assumes that `%SPLUNK_HOME%/bin` is part of
     your `%PATH%`.  If not, find an appropriate install location.)
  8. Test by running `ksconf --version` from the command line.
@@ -163,8 +164,7 @@ everywhere in your system.  Go forth and conquer!
 
 If `pip` throws an error message like the following:
 
-    There was a problem confirming the ssl certificate:
-      [SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol version
+    There was a problem confirming the ssl certificate: [SSL: TLSV1_ALERT_PROTOCOL_VERSION] tlsv1 alert protocol version
     ...
     No matching distribution found for setuptools
 
@@ -186,7 +186,7 @@ Helpful links:
 
 # Resources
 
- * [Python packagingg](https://docs.python.org/2.7/installing/index.html) docs provide a general
+ * [Python packaging](https://docs.python.org/2.7/installing/index.html) docs provide a general
    overview on installing Python packages, how to install per-user vs install system-wide.
  * [Install PIP](https://pip.pypa.io/en/stable/installing) docs explain how to bootstrap or upgrade
    `pip` the Python packaging tool.  Recent versions of Python come with this by default, but
