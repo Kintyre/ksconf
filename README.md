@@ -5,16 +5,19 @@
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/rlbgstkpf17y8nxh?svg=true)](https://ci.appveyor.com/project/lowell80/ksconf)
 
-
 Install with
 
     git clone https://github.com/Kintyre/ksconf.git
     cd ksconf
     pip install .
 
+See full install documentation in the [INSTALL.md](./INSTALL.md) document.
+
+
 Confirm installation with the following command:
 
     ksconf --help
+
 
 The following documents the CLI options
 
