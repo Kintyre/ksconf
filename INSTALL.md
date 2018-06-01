@@ -4,8 +4,8 @@ The following doc describes installation options for Kintyre's Splunk Configurat
 
 ## Requirements
 
- * Python 2.7
- * PIP (recommended)
+ * [Python 2.7][python-download]
+ * [PIP][pip-install] (strongly recommended)
  * Tested on Mac, Linux, and Windows
 
 
@@ -38,7 +38,7 @@ recommended to more obscure and difficult:
 The preferred installation method it to use pip to install the ksconf python package.  Since ksconf
 is not registered with PyPi, it necessary to either download the git repository or a release bundle
 from GitHub.  All standard python packaging approaches are available, but for the sake of non-python
-developer, here are the 2 best options we recommend depending on whether or not you would like to
+developers, here are the 2 best options we recommend depending on whether or not you would like to
 install for all users or just play around with it locally.
 
 
@@ -68,8 +68,11 @@ Please change `venv` to a suitable path for your environment.
 
 #### Install ksconf system-wide (requires admin access)
 
-On Windows, run these commands from an Administrator session.  On Mac or
-Linux, simply run the install with "sudo", aka `sudo pip install .`
+This is the absolute easiest install method where 'ksconf' is avaible to all users on the system but
+it requires root acess.
+
+On Windows, run these commands from an Administrator console.  On Mac or Linux, simply run the final
+install command with "sudo", aka `sudo pip install .`
 
     git clone https://github.com/Kintyre/ksconf.git
     cd ksconf
@@ -97,6 +100,8 @@ environment is the wrong version, is missing (like on Windows), or security rest
 installation of additional packages.  In such cases, Splunk's embedded Python becomes a beacon of
 hope.
 
+#### On Linux or Mac
+
     cd $SPLUNK_HOME
     git clone https://github.com/Kintyre/ksconf.git
     # or:  tar -xzvf ksconf-x.y.z.tar.gz; mv ksconf-* ksconf
@@ -113,7 +118,8 @@ hope.
 
     # Known issue:  Version will be 'None'
 
-As to not leave out the poor souls running Windows:
+
+#### On Windows
 
  1. Open a browser to [ksconf releases](https://github.com/Kintyre/ksconf/releases/latest) on GitHub
  2. Download the "Source code (zip)" file.
@@ -186,14 +192,15 @@ Helpful links:
 
 # Resources
 
- * [Python packaging](https://docs.python.org/2.7/installing/index.html) docs provide a general
+ * [Python packaging][python-packaging] docs provide a general
    overview on installing Python packages, how to install per-user vs install system-wide.
- * [Install PIP](https://pip.pypa.io/en/stable/installing) docs explain how to bootstrap or upgrade
+ * [Install PIP][pip-install] docs explain how to bootstrap or upgrade
    `pip` the Python packaging tool.  Recent versions of Python come with this by default, but
    releases before Python 2.7.9 do not.
 
 
-
-
 [argcomplete]: https://argcomplete.readthedocs.io/en/latest/
+[pip-install]: https://pip.pypa.io/en/stable/installing/
+[python-download]: https://www.python.org/downloads/
+[python-packaging]: (https://docs.python.org/2.7/installing/index.html
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
