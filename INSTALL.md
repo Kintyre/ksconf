@@ -202,5 +202,5 @@ Helpful links:
 [argcomplete]: https://argcomplete.readthedocs.io/en/latest/
 [pip-install]: https://pip.pypa.io/en/stable/installing/
 [python-download]: https://www.python.org/downloads/
-[python-packaging]: (https://docs.python.org/2.7/installing/index.html
+[python-packaging]: https://docs.python.org/2.7/installing/index.html
 [virtualenv]: https://virtualenv.pypa.io/en/stable/
