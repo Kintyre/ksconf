@@ -33,9 +33,10 @@ deploy:
   distributions: "sdist bdist_wheel"
   # I think we may need this to keep the '_version.py' file.  But we'll see.
 #  skip_cleanup: true
-# Turn this on after initial testing:
-#    on:
-#      tags: true
+  on:
+    tags: true
+    # For testing only...
+    all_branches: true
 notifications:
   email:
     - lowell@kintyre.co
