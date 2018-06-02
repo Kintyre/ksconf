@@ -22,7 +22,7 @@ setup(name="KintyreSplunkConfTool",
       version=get_ver(),
       description="Kintyre's Splunk Configuration Tool",
       long_description=open("README.md").read(),
-      long_description_content_type="Markdown",
+      long_description_content_type="text/markdown",
       classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: System Administrators",
