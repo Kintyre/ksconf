@@ -28,7 +28,7 @@ setup(name="KintyreSplunkConfTool",
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
-        "Operating System :: MacOS :: MacOS X,"
+        "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 2 :: Only",
