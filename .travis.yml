@@ -15,6 +15,7 @@ install:
   - pip install coveralls
   - pip install codecov
   - pip install .
+  - echo "Build $TRAVIS_BUILD_NUMBER"
 #  - pip install -r requirements.txt
 # command to run tests
 #script: nosetests --with-coverage
@@ -22,6 +23,20 @@ script: coverage run -m unittest discover -s tests
 after_success:
   - coveralls
   - codecov
+deploy:
+  provider: pypi
+  # For testing...
+  server: https://test.pypi.org/legacy/
+  user: lowellalleman
+  password:
+    secure: UWQDp5drNbTLtgqp0N5pnX5uw/02IeHQt2eLU5DLnjfJ1S1ZV03azi2+h0gWhfkowW8NGrOSDKVK5UK1gmeoU26iTC6WuSWzGfIcdmrISz0tq24mmYIxqKzm+2ASU2zjPa4qpp0i0lNroowSGja+0cQ9jSUd8gF4bWPWlXXKuLm5nhuMlrFYdy8Vr7eCj5qlFhGLYGEhSx0Pob7fzQ6OndiYXSjB8VUUz9yd3uWEqWFQd4gOMrMVQ9E3iraJ8hY2MVPM/wc6NffuhN9TEVWfKet4B6WKGoQeMyshGGMOulw06vqEi6T6V4CUxQse/iUrOcHYRfpMrk0oFYGQ7qT8CJYdjl3TZDxbc8w9JEfEq22wqNgnFiA5mChbh9tRrxY8i0aOntruNByRJtmMZsWbjNHundhFWsUzadGHeFyCE3HXssSfP555uOnea6ml6qUF4fIDnKAlzFm3tFbA/62QQ1EigVpwGUFeeJcpkD7lqq0qz2aexES5vyMCcJukv7UyP1wtFZAihF5MbZddeGHhKFfhVMpTCpwmzWhIQijknTdmvd/n020U51tdGXTmHWHYBoUcp0Zg7VmM94iQXvH6rlfXPfMGIcviMTZwnIR21fxuUx2F6TXOw86pLu4MNcALHdaXyH9M6McjtBPW1l5QxG+5xvfdJrTzlWQg2Po4jS0=
+  distributions: "sdist bdist_wheel"
+  # I think we may need this to keep the '_version.py' file.  But we'll see.
+#  skip_cleanup: true
+  on:
+    tags: true
+    # For testing only...
+    all_branches: true
 notifications:
   email:
     - lowell@kintyre.co
