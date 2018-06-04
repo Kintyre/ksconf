@@ -32,7 +32,7 @@ deploy:
     file: build/ksconf-*-standalone
     skip_cleanup: true
     on:
-      repo: kintyre/ksconf
+      repo: Kintyre/ksconf
       branch: master
   - provider: pypi
     user: lowellalleman
