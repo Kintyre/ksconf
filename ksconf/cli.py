@@ -105,7 +105,7 @@ def cli(argv=None, _unittest=False):
     '''
     parser.add_argument('--version', action='version', version='%(prog)s {}'.format(ksconf.version))
     parser.add_argument("--force-color", action="store_true", default=False,
-                        help="Force TTY color mode on.  Useful if piping the output a color-aware"
+                        help="Force TTY color mode on.  Useful if piping the output a color-aware "
                              "pager, like 'less -R'")
 
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';

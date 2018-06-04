@@ -1,0 +1,10 @@
+pre-commit
+gitlint
+sphinx
+sphinx-autobuild
+recommonmark
+
+twine
+pyOpenSSL
+ndg-httpsclient
+pyasn1
