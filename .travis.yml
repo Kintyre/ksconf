@@ -1,3 +1,4 @@
+---
 language: python
 python:
 #  - "2.6"
@@ -23,17 +24,27 @@ script: coverage run -m unittest discover -s tests
 after_success:
   - coveralls
   - codecov
+  - ./make_zipapp
 deploy:
-  provider: pypi
-  user: lowellalleman
-  password:
-    secure: OqhsEKwmMHB26imHCH23UXINk0VEkeMR7uJRKvj90zz4c34VvPE5VJoYTOERMIEoNMBGr9VN1O216CJDAeykswxQG0CxsbTeIOVHB7avAQaodvWgosQDyyrwAypWtLsBu/LZdXWZ0j09CYB+DiG2zKBOdtER+YEqRSIMDFXRmWKfPvkOHkhh7v4bSjjs/w6HvV9FLgXnz1y7YxVwLmRHku8NWiqBq1q09b0gezBgOll7QhKFXMJLLtsy7V1JWV42e/B812RORiW+pnyZqLzDG6qoUd+W0aJMGUpMetm8dcgp70Teyq0jLSPVZ7BtuzudL8mimxONFr7QHDWwv2gsMKVg3xvfOJ1FvDsugGXTmbu3WtSeZEaXLaLo4xiyC5GLOGsPxZPPqpsE5K7UW14HQlCWPOYWD161fxW6stbDeIvxJOVn4aYUZFWr6jypJW2SYK1xCjSB8r8FSpJCCz1/3d5j9jFOJGf8eY9dDDkSUxWWjPHjbHjI5bWIC5k+sxXLmURA4Ne5gl4QSynX1TQFsU3AiSul93Ds6SSXSQJbSp0kwFwHPDju/g4RJB9rcH0EpJ0aTzuavvTIPLLCXO1HI8c/6uL5nWWUN6zwXjLsGrLY0Pb6VTxH/qiQPYJduWSXOXV9R2a0mGr8Jc4dCTQBeUCGGqEwMRnn3Iknx7JF0AE=
-  distributions: "sdist bdist_wheel"
-  on:
-    tags: true
-    # For testing only...
-    #all_branches: true
-    branch: master
+  - provider: releases
+    api_key:
+      secure: j34qukrg/cdpcceiopiuaweqyelkkplzsumz49yh7dlomhv8daygniw1p7wkyehdhaejhzyzdxvv/9vki0bbfad0182soci46szs62ce71ufjw/o2razd8c9qnkkntxfyhin5g6h6dm0kbb6sbrozpjx3zzh2hs8ssj/wgjjmqeuevoa5u7hd3gfygkuh3yfb4jft31ov7o9/pfdi7syyahg7xhwcwdmyojfmqyco34hpz6jy1pknaueolbun66wbqq1azw6ssqelxfrxwqjmmktstrfunan96fp8il2davabcg5tomtmtxmn6uhewinbbfjn1qq2hwumfahv/i+wn+8w6doyzgdl+w4zyf8mwmrpo6dib+ejyui8z26v4y6silwppdcpxtbusopxrds5bfckp62ggu7t3hgbw9hdbrxyvj7sxlliljwhghqzmttl79buavsdc8mdneiqikbxc3lr5wfotlhjr5zoly7ashol3yeigmof2m3nfdt7g2ernuswjcchlu4c42k7sysvkjmfmmlsztvm+jn3msrllpvz8/dwafxxbn9yc0zglxvovjrpsjbcb1h5thaozst7gzosfno4bu/yccrll1wubvqpw9rdtj6vwb5kmbed8f9k3mfalfihraxy+sscusvlrzedeamjbjtrrcdlmhaoqe=
+    file: build/ksconf-*-standalone
+    skip_cleanup: true
+    on:
+      repo: kintyre/ksconf
+      branch: master
+  - provider: pypi
+    user: lowellalleman
+    password:
+      secure: OqhsEKwmMHB26imHCH23UXINk0VEkeMR7uJRKvj90zz4c34VvPE5VJoYTOERMIEoNMBGr9VN1O216CJDAeykswxQG0CxsbTeIOVHB7avAQaodvWgosQDyyrwAypWtLsBu/LZdXWZ0j09CYB+DiG2zKBOdtER+YEqRSIMDFXRmWKfPvkOHkhh7v4bSjjs/w6HvV9FLgXnz1y7YxVwLmRHku8NWiqBq1q09b0gezBgOll7QhKFXMJLLtsy7V1JWV42e/B812RORiW+pnyZqLzDG6qoUd+W0aJMGUpMetm8dcgp70Teyq0jLSPVZ7BtuzudL8mimxONFr7QHDWwv2gsMKVg3xvfOJ1FvDsugGXTmbu3WtSeZEaXLaLo4xiyC5GLOGsPxZPPqpsE5K7UW14HQlCWPOYWD161fxW6stbDeIvxJOVn4aYUZFWr6jypJW2SYK1xCjSB8r8FSpJCCz1/3d5j9jFOJGf8eY9dDDkSUxWWjPHjbHjI5bWIC5k+sxXLmURA4Ne5gl4QSynX1TQFsU3AiSul93Ds6SSXSQJbSp0kwFwHPDju/g4RJB9rcH0EpJ0aTzuavvTIPLLCXO1HI8c/6uL5nWWUN6zwXjLsGrLY0Pb6VTxH/qiQPYJduWSXOXV9R2a0mGr8Jc4dCTQBeUCGGqEwMRnn3Iknx7JF0AE=
+    distributions: "sdist bdist_wheel"
+    skip_cleanup: true
+    on:
+      tags: true
+      # For testing only...
+      #all_branches: true
+      branch: master
 notifications:
   email:
     - lowell@kintyre.co

@@ -1,0 +1,21 @@
+#!/bin/bash
+version=$(git describe --tags --always)
+version=${version#v#}
+zipapp=build/ksconf-zipapp-${version}.py.zip
+standalone=build/ksconf-${version}-standalone
+
+echo "Building stanadalone zipapp for $version"
+
+cat > __main__.py <<HERE
+from ksconf.cli import cli
+cli()
+HERE
+
+rm $zipapp
+zip $zipapp __main__.py $(find ksconf -name '*.py')
+rm -f __main__.py
+
+echo "Build zip file $zipapp --> $standalone"
+( echo '#!/usr/bin/env python'; cat $zipapp; ) > ${standalone}
+
+echo "done"

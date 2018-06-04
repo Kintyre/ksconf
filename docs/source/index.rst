@@ -15,8 +15,7 @@ more than one layer of "default" (which splunk can't handle natively).
 Install
 -------
 
-    pip install KintyreSplunkConfTool
-
+    pip install kintyre-splunk-conf
 
 
 Docs
@@ -26,8 +25,9 @@ Docs
    :maxdepth: 3
    :caption: Contents:
 
-   license
+   install
    cli
+   license
    help
 
 

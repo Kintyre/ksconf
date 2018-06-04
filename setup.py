@@ -18,9 +18,9 @@ def get_ver():
     return version
 
 
-setup(name="KintyreSplunkConfTool",
+setup(name="kintyre-splunk-conf",
       version=get_ver(),
-      description="Kintyre's Splunk Configuration Tool",
+      description="KSCONF: Kintyre's Splunk Configuration Tool",
       long_description=open("README.md").read(),
       long_description_content_type="text/markdown",
       classifiers=[
@@ -40,6 +40,10 @@ setup(name="KintyreSplunkConfTool",
       author="Lowell Alleman",
       author_email="lowell@kintyre.co",
       url="https://github.com/Kintyre/ksconf",
+      project_urls = {
+        "homepage" : "https://github.com/Kintyre/ksconf",
+        "docs" : "https://ksconf.readthedocs.io/",
+      },
       packages=[
           "ksconf",
           "ksconf.commands",

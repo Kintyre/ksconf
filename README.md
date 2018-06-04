@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/rlbgstkpf17y8nxh?svg=true)](https://ci.appveyor.com/project/lowell80/ksconf)
+[![Documentation Status](https://readthedocs.org/projects/ksconf/badge/?version=latest)](https://ksconf.readthedocs.io/en/latest/?badge=latest)
+
 
 This utility handles a number of common Splunk app maintenance tasks in an installable python
 package.  Specifically, this tools deals with many of the nuances with storing Splunk apps in a
@@ -13,9 +15,9 @@ more than one layer of "default" (which splunk can't handle natively).
 
 Install with
 
-    pip install KintyreSplunkConfTool
+    pip install kintyre-splunk-conf
 
-See full install documentation in the [INSTALL.md](./INSTALL.md) document.
+See full install documentation in the [INSTALL.md](./docs/source/install.md) document.
 
 
 Confirm installation with the following command:
@@ -24,5 +26,6 @@ Confirm installation with the following command:
 
 Docs:
 
-  * [Online docs](https://readthedocs.io/KSConf/latest) - Hosted via ReadTheDocs
+  * [Official docs](https://ksconf.readthedocs.io/en/latest/)  Hosted via ReadTheDocs.io
   * [Command line reference](./docs/source/cli.md)
+  * [Installation docs](./docs/source/install.md)

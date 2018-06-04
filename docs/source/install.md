@@ -1,6 +1,12 @@
 # KSConf Installation Guide
 
 The following doc describes installation options for Kintyre's Splunk Configuration tool.
+For most people, the simple one-line install should work fine, but if for more complex situations,
+one of the below options should work.
+
+_One-line install_ (*Try this first!*)
+
+    pip install kintyre-splunk-conf
 
 ## Requirements
 
@@ -35,12 +41,12 @@ recommended to more obscure and difficult:
 
 ### Install with PIP
 
-The preferred installation method it to use pip to install the ksconf python package.  Since ksconf
-is not registered with PyPi, it necessary to either download the git repository or a release bundle
-from GitHub.  All standard python packaging approaches are available, but for the sake of non-python
-developers, here are the 2 best options we recommend depending on whether or not you would like to
-install for all users or just play around with it locally.
-
+The preferred installation method it to use pip to install the ksconf python package.  As of v0.4.1
+ksconf is registered with PyPi so it can be downloaded directly from there.  Or the lastest and
+greatest it can be download from the git repository.  All standard python packaging approaches are
+available, but for the sake of non-python developers, here are the 2 best options we recommend
+depending on whether or not you would like to install for all users or just play around with it
+locally.
 
 #### Install ksconf into a virtual environment (no admin access)
 
@@ -56,6 +62,11 @@ Please change `venv` to a suitable path for your environment.
     # Create and activte new 'venv' virtual environment
     virtualenv venv
     source venv/bin/activate
+
+    pip install kintyre-splunk-conf
+
+
+Or, to pull the latest from git, replace the last command with:
 
     git clone https://github.com/Kintyre/ksconf.git
     cd ksconf
@@ -74,6 +85,12 @@ it requires root acess.
 On Windows, run these commands from an Administrator console.  On Mac or Linux, simply run the final
 install command with "sudo", aka `sudo pip install .`
 
+
+    pip install kintyre-splunk-conf
+
+
+Or, to pull the latest from git, replace the above command with:
+
     git clone https://github.com/Kintyre/ksconf.git
     cd ksconf
     pip install .
@@ -88,6 +105,22 @@ Here are a few possible alternatives to the above commands that may be helpful i
      `tar -xzf ksconf-x.y.z.tar.gz`)
  1.  Consider using the 'ssh' github endpoints if https is blocked or if you're running a very old
      version of git lacking modern TLS support.  Use `git clone git@github.com:Kintyre/ksconf.git`
+
+
+
+This works since `ksconf` has no external dependencies.
+
+https://pypi.org/project/kintyre-splunk-conf/#files
+
+Download the latest "Wheel" file file.  This example uses the name
+
+   kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl
+
+    echo -en "from ksconf.cli import cli\ncli()\n" > __main__.py
+    zip -u kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl __main__.py
+
+    alias ksconf='python kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl'
+    ksconf --version
 
 
 ### Install with Splunk's Python
@@ -105,6 +138,7 @@ hope.
     cd $SPLUNK_HOME
     git clone https://github.com/Kintyre/ksconf.git
     # or:  tar -xzvf ksconf-x.y.z.tar.gz; mv ksconf-* ksconf
+    # or:  Download wheel?  (This may be a better suggestion)
 
     echo > $SPLUNK_HOME/bin/ksconf <<HERE
     #!/bin/sh
