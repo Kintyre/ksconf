@@ -25,18 +25,15 @@ after_success:
   - codecov
 deploy:
   provider: pypi
-  # For testing...
-  server: https://test.pypi.org/legacy/
   user: lowellalleman
   password:
-    secure: UWQDp5drNbTLtgqp0N5pnX5uw/02IeHQt2eLU5DLnjfJ1S1ZV03azi2+h0gWhfkowW8NGrOSDKVK5UK1gmeoU26iTC6WuSWzGfIcdmrISz0tq24mmYIxqKzm+2ASU2zjPa4qpp0i0lNroowSGja+0cQ9jSUd8gF4bWPWlXXKuLm5nhuMlrFYdy8Vr7eCj5qlFhGLYGEhSx0Pob7fzQ6OndiYXSjB8VUUz9yd3uWEqWFQd4gOMrMVQ9E3iraJ8hY2MVPM/wc6NffuhN9TEVWfKet4B6WKGoQeMyshGGMOulw06vqEi6T6V4CUxQse/iUrOcHYRfpMrk0oFYGQ7qT8CJYdjl3TZDxbc8w9JEfEq22wqNgnFiA5mChbh9tRrxY8i0aOntruNByRJtmMZsWbjNHundhFWsUzadGHeFyCE3HXssSfP555uOnea6ml6qUF4fIDnKAlzFm3tFbA/62QQ1EigVpwGUFeeJcpkD7lqq0qz2aexES5vyMCcJukv7UyP1wtFZAihF5MbZddeGHhKFfhVMpTCpwmzWhIQijknTdmvd/n020U51tdGXTmHWHYBoUcp0Zg7VmM94iQXvH6rlfXPfMGIcviMTZwnIR21fxuUx2F6TXOw86pLu4MNcALHdaXyH9M6McjtBPW1l5QxG+5xvfdJrTzlWQg2Po4jS0=
+    secure: OqhsEKwmMHB26imHCH23UXINk0VEkeMR7uJRKvj90zz4c34VvPE5VJoYTOERMIEoNMBGr9VN1O216CJDAeykswxQG0CxsbTeIOVHB7avAQaodvWgosQDyyrwAypWtLsBu/LZdXWZ0j09CYB+DiG2zKBOdtER+YEqRSIMDFXRmWKfPvkOHkhh7v4bSjjs/w6HvV9FLgXnz1y7YxVwLmRHku8NWiqBq1q09b0gezBgOll7QhKFXMJLLtsy7V1JWV42e/B812RORiW+pnyZqLzDG6qoUd+W0aJMGUpMetm8dcgp70Teyq0jLSPVZ7BtuzudL8mimxONFr7QHDWwv2gsMKVg3xvfOJ1FvDsugGXTmbu3WtSeZEaXLaLo4xiyC5GLOGsPxZPPqpsE5K7UW14HQlCWPOYWD161fxW6stbDeIvxJOVn4aYUZFWr6jypJW2SYK1xCjSB8r8FSpJCCz1/3d5j9jFOJGf8eY9dDDkSUxWWjPHjbHjI5bWIC5k+sxXLmURA4Ne5gl4QSynX1TQFsU3AiSul93Ds6SSXSQJbSp0kwFwHPDju/g4RJB9rcH0EpJ0aTzuavvTIPLLCXO1HI8c/6uL5nWWUN6zwXjLsGrLY0Pb6VTxH/qiQPYJduWSXOXV9R2a0mGr8Jc4dCTQBeUCGGqEwMRnn3Iknx7JF0AE=
   distributions: "sdist bdist_wheel"
-  # I think we may need this to keep the '_version.py' file.  But we'll see.
-#  skip_cleanup: true
   on:
     tags: true
     # For testing only...
-    all_branches: true
+    #all_branches: true
+    branch: master
 notifications:
   email:
     - lowell@kintyre.co
