@@ -17,11 +17,33 @@ def get_ver():
                               "version = {0!r}\n".format(version))
     return version
 
+DESCRIPTION = """\
+# Kintyre's Splunk CONFiguration tool
+
+This utility handles a number of common Splunk app maintenance tasks in an installable python
+package.  Specifically, this tools deals with many of the nuances with storing Splunk apps in a
+version control system like git and pointing live Splunk apps to a working tree, merging changes
+from the live system's (local) folder to the version controlled (default) folder, and dealing with
+more than one layer of "default" (which splunk can't handle natively).
+
+Install with
+
+    pip install kintyre-splunk-conf
+
+Confirm installation with the following command:
+
+    ksconf --help
+
+
+Please see the [Official docs](https://ksconf.readthedocs.io/en/latest/) for more info.
+
+"""
+
 
 setup(name="kintyre-splunk-conf",
       version=get_ver(),
       description="KSCONF: Kintyre's Splunk Configuration Tool",
-      long_description=open("README.md").read(),
+      long_description=DESCRIPTION,
       long_description_content_type="text/markdown",
       classifiers=[
         "Development Status :: 4 - Beta",
@@ -41,8 +63,7 @@ setup(name="kintyre-splunk-conf",
       author_email="lowell@kintyre.co",
       url="https://github.com/Kintyre/ksconf",
       project_urls = {
-        "homepage" : "https://github.com/Kintyre/ksconf",
-        "docs" : "https://ksconf.readthedocs.io/",
+        "Documentation" : "https://ksconf.readthedocs.io/",
       },
       packages=[
           "ksconf",

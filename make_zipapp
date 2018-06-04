@@ -5,6 +5,8 @@ test -d build || mkdir build
 zipapp=build/ksconf-zipapp-${version}.py.zip
 standalone=build/ksconf-${version}-standalone
 
+test -f ksconf/_version.py || python setup.py build
+
 echo "Building stanadalone zipapp for $version"
 
 cat > __main__.py <<HERE
