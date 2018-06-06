@@ -28,7 +28,7 @@ def prefix(iterable, indent=4):
         yield p + line
 
 
-def write_doc_for(stream, cmd, level=2, cmd_name=None, *subcmds):
+def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     subcmds = list(subcmds)
     if not cmd_name:
         cmd_name = str(cmd)
@@ -43,7 +43,7 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, *subcmds):
     for subcmd in parse_subcommand(out):
         sc = subcmds + [subcmd]
         print "  Subcmd docs for {} {}".format(cmd_name, " ".join(sc))
-        write_doc_for(stream, cmd, level + 1, cmd_name, *sc)
+        write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
 readme_file = os.path.join("docs", "source", "cli.md")
@@ -58,7 +58,7 @@ The following documents the CLI options
 """)
 
 print "Building docs for ksconf"
-write_doc_for(readme, ["-m", "ksconf.cli"], cmd_name="ksconf")
+write_doc_for(readme, ["-m", "ksconf.cli"], cmd_name="ksconf", level=2, level_inc=0)
 
 readme.close()
 

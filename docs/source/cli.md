@@ -49,7 +49,7 @@ The following documents the CLI options
                             color-aware pager, like 'less -R'
 
 
-### ksconf check
+## ksconf check
     usage: ksconf check [-h] [--quiet] FILE [FILE ...]
     
     Provide basic syntax and sanity checking for Splunk's .conf files. Use
@@ -66,7 +66,7 @@ The following documents the CLI options
       --quiet, -q  Reduce the volume of output.
 
 
-### ksconf combine
+## ksconf combine
     usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
                           source [source ...]
     
@@ -185,7 +185,7 @@ The following documents the CLI options
                             files.
 
 
-### ksconf diff
+## ksconf diff
     usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
     
     Compares the content differences of two .conf files
@@ -209,7 +209,7 @@ The following documents the CLI options
                             consistently)
 
 
-### ksconf promote
+## ksconf promote
     usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
                           [--keep-empty]
                           SOURCE TARGET
@@ -263,7 +263,7 @@ The following documents the CLI options
                          local files on the fly.
 
 
-### ksconf merge
+## ksconf merge
     usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
                         FILE [FILE ...]
     
@@ -286,7 +286,7 @@ The following documents the CLI options
                             generated file.
 
 
-### ksconf minimize
+## ksconf minimize
     usage: ksconf minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
                            [--explode-default] [-k PRESERVE_KEY]
                            FILE [FILE ...]
@@ -360,7 +360,7 @@ The following documents the CLI options
                             if it's enabled by default.
 
 
-### ksconf sort
+## ksconf sort
     usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
                        FILE [FILE ...]
     
@@ -397,7 +397,7 @@ The following documents the CLI options
                             example.
 
 
-### ksconf unarchive
+## ksconf unarchive
     usage: ksconf unarchive [-h] [--dest DIR] [--app-name NAME]
                             [--default-dir DIR] [--exclude EXCLUDE] [--keep KEEP]
                             [--allow-local]

@@ -12,9 +12,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
 from recommonmark.parser import CommonMarkParser
 
 
@@ -24,10 +24,12 @@ project = u'KSConf'
 copyright = u'2018, Kintyre Solutions, Inc.'
 author = u'Lowell Alleman'
 
+from ksconf import version as release
+
 # The short X.Y version
-version = u'0.4'
+version = ".".join(release.split(".")[:-1])
 # The full version, including alpha/beta/rc tags
-release = u'0.4.3'
+#release = u'0.4.3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,6 +42,7 @@ release = u'0.4.3'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -82,6 +85,8 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+html_theme = 'classic'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -157,7 +162,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'KSConf', u'KSConf Documentation',
-     author, 'KSConf', 'One line description of project.',
+     author, 'KSConf', "Kintyre's Splunk Configuration tool",
      'Miscellaneous'),
 ]
 

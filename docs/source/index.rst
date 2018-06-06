@@ -15,21 +15,24 @@ more than one layer of "default" (which splunk can't handle natively).
 Install
 -------
 
+.. code-block:: shell
+
     pip install kintyre-splunk-conf
 
 
-Docs
-----
+.. User Guide
+.. ----
+
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    install
    cli
+   devel
    license
-   help
-
+..   ksconf
 
 
 Indices and tables

@@ -1,10 +1,12 @@
 # Kintyre's Splunk CONFiguration tool
 
 [![Travis](https://img.shields.io/travis/Kintyre/ksconf.svg)](https://travis-ci.org/Kintyre/ksconf/builds)
+[![PyPI](https://img.shields.io/pypi/v/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/rlbgstkpf17y8nxh?svg=true)](https://ci.appveyor.com/project/lowell80/ksconf)
 [![Documentation Status](https://readthedocs.org/projects/ksconf/badge/?version=latest)](https://ksconf.readthedocs.io/en/latest/?badge=latest)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 
 
 This utility handles a number of common Splunk app maintenance tasks in an installable python
@@ -17,7 +19,7 @@ Install with
 
     pip install kintyre-splunk-conf
 
-See full install documentation in the [INSTALL.md](./docs/source/install.md) document.
+See full install documentation in the [install](./docs/source/install.md) document.
 
 
 Confirm installation with the following command:
