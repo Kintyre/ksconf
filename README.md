@@ -31,3 +31,7 @@ Docs:
   * [Official docs](https://ksconf.readthedocs.io/en/latest/)  Hosted via ReadTheDocs.io
   * [Command line reference](./docs/source/cli.md)
   * [Installation docs](./docs/source/install.md)
+
+Presentations:
+
+  * [Managing Splunk Deployments With Git and KSCONF](http://kintyre.rocks/70d87) Philly Splunk Meetup - June 6, 2018
