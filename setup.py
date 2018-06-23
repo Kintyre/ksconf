@@ -47,6 +47,7 @@ setup(name="kintyre-splunk-conf",
       long_description_content_type="text/markdown",
       classifiers=[
         "Development Status :: 4 - Beta",
+        "Environment :: Console",
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",

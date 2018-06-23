@@ -143,7 +143,7 @@ def cli(argv=None, _unittest=False):
                                     "into a combined destination directory.  This allows for an "
                                     "arbitrary number of splunk's configuration layers within a "
                                     "single app.  Ad-hoc uses include merging the 'users' "
-                                    "directory across several instances after a phased server"
+                                    "directory across several instances after a phased server "
                                     "migration.",
                                     description="""\
 Merge .conf settings from multiple source directories into a combined target

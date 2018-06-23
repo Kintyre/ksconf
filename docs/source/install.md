@@ -1,12 +1,33 @@
 # Installation Guide
 
 The following doc describes installation options for Kintyre's Splunk Configuration tool.
-For most people, the simple one-line install should work fine, but if for more complex situations,
-one of the below options should work.
+This tool is available as a normal Python package that should require very minimal effort to install
+and upgrade.  However, sometimes Python packaging gets ugly and the one-liner may not work.
 
-_One-line install_ (**Try this first!**)
+A portion of this document is targeted at those who can't install packages as Admin or are forced to
+use Splunk's embedded Python.  For everyone else, please start with the one-liner!
+
+
+## Quick install
+
+Using pip:
 
     pip install kintyre-splunk-conf
+
+System-level install:  (For Mac/Linux)
+
+    curl https://bootstrap.pypa.io/get-pip.py | sudo python - kintyre-splunk-conf
+
+Note:  This will also install/update `pip` and work around some known TLS/SSL issues
+
+### Enable Bash completion
+
+If you're on a Mac or Linux, and would like to enable bash completion, run these commands:
+
+    pip install argcomplete
+    echo 'eval "$(register-python-argcomplete ksconf)"' >> ~/.bashrc
+
+
 
 ## Requirements
 
@@ -110,8 +131,8 @@ options fail.
 From the [GitHub releases][gh-releases] page , grab the file name `ksconf-*-standalone`
 and copy it to a `bin` folder and rename it `ksconf`.
 
-This file is just a zip file, prepended with a shebang that tricks the OS to launch Python, and then
-Python run the __main__.py module located inside of the zip file.  This is more officially supported
+This file is just a zip file, prepended with a shebang that tells the OS to launch Python, and then
+Python run the `__main__.py` module located inside of the zip file.  This is more better supported
 in Python 3.x, but works as far back as Python 2.6.  It worked during testing.  Good luck!
 
 
@@ -125,86 +146,75 @@ Reasons why this is a non-ideal install approach:
 
 
 
-### Install the Wheel manually
+### Install the Wheel manually (offline mode)
 
+Download the latest "Wheel" file file from [PyPI][pypi-files], copy it to the destination server
+and install with pip.
 
-Download the latest "Wheel" file file from [PyPI][pypi-files].  This example uses the name
-`kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl`
-
-
-Option 1:  (Use `pip`, but this works offline)
+Offline pip install:
 
     pip install ~/Downloads/kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl
-
-Option 2:  (**Broken**)
-
-    python -m wheel unpack ~/Downloads/kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl -d $(python -m site --user-site)
-
-Option 3:  (**Ugly; should work in theroy**)
-
-    # Switch to the local python 'site-packages' folder
-    cd $(python -m site --user-site)
-
-    # Extract the wheel
-    unzip ~/Downloads/kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl 
-    alias ksconf='python -m ksconf.cli'
-    ksconf --version
 
 
 ### Install with Splunk's Python
 
 Splunk Enterprise 6.x and later installs an embedded Python 2.7 environment.
-However, Splunk does not provide packing tools (such as `pip` and the `distutils` standard library
+However, Splunk does not provide packing tools (such as `pip` or the `distutils` standard library
 which is required to bootstrap install `pip`).  For these reasons, it's typically easier and cleaner
-to install `ksconf` with the system provided Python.  However, sometime the system-provided Python
+to install `ksconf` with the system provided Python.  However, sometimes the system-provided Python
 environment is the wrong version, is missing (like on Windows), or security restrictions prevent the
 installation of additional packages.  In such cases, Splunk's embedded Python becomes a beacon of
 hope.
 
-
-***Note:  These sections need updated to use wheels instead of git/github release files***
-
 #### On Linux or Mac
 
-    cd $SPLUNK_HOME
-    git clone https://github.com/Kintyre/ksconf.git
-    # or:  tar -xzvf ksconf-x.y.z.tar.gz; mv ksconf-* ksconf
-    # or:  Download wheel?  (This may be a better suggestion)
+Download the latest "Wheel" file file from [PyPI][pypi-files].  The path to this download will be
+set in the `pkg` variable as shown below.
 
-    echo > $SPLUNK_HOME/bin/ksconf <<HERE
+Setup the shell:
+
+    export SPLUNK_HOME=/opt/splunk
+    export pkg=~/Downloads/kintyre_splunk_conf-0.4.9-py2.py3-none-any.whl
+
+Run the following:
+
+    cd $SPLUNK_HOME
+    mkdir Kintyre
+    cd Kintyre
+    # Unzip the 'kconf' folder into SPLUNK_HOME/Kintyre
+    unzip "$pkg"
+
+    cat > $SPLUNK_HOME/bin/ksconf <<HERE
     #!/bin/sh
-    export PYTHONPATH=$SPLUNK_HOME/ksconf
-    exec $SPLUNK_HOME/bin/python -m ksconf.cli $*
+    export PYTHONPATH=$PYTHONPATH:$SPLUNK_HOME/Kintyre
+    exec $SPLUNK_HOME/bin/python -m ksconf.cli \$*
     HERE
     chmod +x $SPLUNK_HOME/bin/ksconf
 
-    # Test
+Test the install:
+
     ksconf --version
-
-    # Known issue:  Version will be 'None'
-
 
 #### On Windows
 
- 1. Open a browser to [ksconf releases][gh-releases] on GitHub
- 2. Download the "Source code (zip)" file.
- 3. Extract the zip file to a temporary folder.  (This should create a folder named "ksconf" with
-    the version number appended.)
- 4. Rename the extracted folder to simply "ksconf" (Removing the appended version string.)
- 5. Copy the "ksconf" folder to the "SPLUNK_HOME", `C:\Program Files\Splunk` by default.)
- 6. Create a new file called `ksconf.bat` and paste in the following batch script.  Be sure to
+ 1. Open a browser and download the latest "Wheel" file file from [PyPI][pypi-files].
+ 2. Rename the `.whl` extension to `.zip`.  (This may require showing file extensions in Explorer.)
+ 3. Extract the zip file to a temporary folder.  (This should create a folder named "ksconf")
+ 4. Create a new folder called "Kintyre" under the Splunk installation path (aka `SPLUNK_HOME`)
+    By default this is `C:\Program Files\Splunk`.
+ 5. Copy the "ksconf" folder to "SPLUNK_HOME\Kintyre".
+ 6. Create a new batch file called `ksconf.bat` and paste in the following.  Be sure to
     adjust for a non-standard `%SPLUNK_HOME%` value, if necessary.
-    
+
         @echo off
         SET SPLUNK_HOME=C:\Program Files\Splunk
         SET PYTHONPATH=%SPLUNK_HOME%\bin;%SPLUNK_HOME%\Python-2.7\Lib\site-packages\win32;%SPLUNK_HOME%\Python-2.7\Lib\site-packages;%SPLUNK_HOME%\Python-2.7\Lib
-        SET PYTHONPATH=%PYTHONPATH%;%SPLUNK_HOME%\ksconf
+        SET PYTHONPATH=%PYTHONPATH%;%SPLUNK_HOME%\Kintyre
         CALL "%SPLUNK_HOME%\bin\python.exe" -m ksconf.cli %*
 
- 7. Copy `ksconf.bat` to the `Splunk\bin` folder.  (This assumes that `%SPLUNK_HOME%/bin` is part of
-    your `%PATH%`.  If not, find an appropriate install location.)
- 8. Test by running `ksconf --version` from the command line.
-    Note that there's a Known issue with this, the version will show up as 'None'.
+ 7. Move `ksconf.bat` to the `Splunk\bin` folder.  (This assumes that `%SPLUNK_HOME%/bin` is part of
+    your `%PATH%`.  If not, add it, or find an appropriate install location.)
+ 8. Test this by running `ksconf --version` from the command line.
 
 
 ## Validate the install
@@ -219,14 +229,53 @@ everywhere in your system.  Go forth and conquer!
 
 ## Command line completion
 
- * Available for Bash, zsh, tcsh.  (These instructions focus on BASH)
- * Install the argcomplete python package using `pip install argcomplete`
- * Add `activate-global-python-argcomplete` to your `~.bashrc`.
-   Other less-global options are available in the docs.
- * Mac OS X user may run into some issue due to the old version of Bash shipped by default.
-   Install a later version with homebrew:   `brew install bash` then.  To switch to the newer bash
-   by default, run `chsh /usr/local/bin/bash`
- * For more information, read the [argcomplete docs][argcomplete].
+Bash completion allows for a more intuitive interactive workflow by providing quick access to
+command line options and file completions.  Often this saves time since the user can avoid mistyping
+file names or be reminded of which command line actions and arguments are available without
+switching contexts.  For example, if the user types `ksconf d` and hits *<TAB>* then the `ksconf
+diff` is completed.  Or if the user types `ksconf` and hits tab twice, the full list of command
+actions are listed.
+
+This feature is use the [argcomplete][argcomplete] python package and supports Bash, zsh, tcsh.
+
+Install via pip:
+
+    pip install argcomplete
+
+Enable command line completion for ksconf can be done in two ways.  The easiest option is to enable
+it for ksconf only.  (However, it only works for the current user, it can break if the ksconf
+command is referenced in a non-standard way.)  The alternate option is to enable global command line
+completion for all python scripts at once, which is preferable if you use this module with many
+python tool.
+
+Enable argcomplete for ksconf only:
+
+    # Edit your bashrc script
+    vim ~.bashrc
+
+    # Add the following line
+    eval "$(register-python-argcomplete ksconf)"
+
+    # Reload your bashrc (Alternative:  restart your shell)
+    source ~/.bashrc
+
+To enable argcomplete globally, run the command:
+
+    activate-global-python-argcomplete
+
+This adds new script to your the `bash_completion.d` folder, which can be use for all scripts and
+all users, but it does add some minor overhead to each completion command request.
+
+
+OS-specific notes:
+
+ * **Mac OS X**: The global registration option has issue due the old version of Bash shipped by
+   default.  So either use the one-shot registration or install a later version of bash with
+   homebrew:   `brew install bash` then.  Switch to the newer bash by default with
+   `chsh /usr/local/bin/bash`.
+ * **Windows**:  Argcomplete doesn't work on windows Bash for GIT.
+   See [argcomplete issue 142][argcomplete-142] for more info.  If you really want this, use Linux
+   subsystem for Windows instead.
 
 
 ## Frequent gotchas
@@ -264,7 +313,9 @@ Helpful links:
    releases before Python 2.7.9 do not.
 
 
+
 [argcomplete]: https://argcomplete.readthedocs.io/en/latest/
+[argcomplete-142]: https://github.com/kislyuk/argcomplete/issues/142
 [gh-releases]: https://github.com/Kintyre/ksconf/releases/latest
 [pip-install]: https://pip.pypa.io/en/stable/installing/
 [pypi-files]: https://pypi.org/project/kintyre-splunk-conf/#files

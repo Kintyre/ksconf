@@ -61,9 +61,10 @@ class _KsconfCli():
         return stream.read()
 
     def __call__(self, *args):
+        # In later version of Python (3.4), something like this could be considered:
+        # from contextlib import redirect_stdout
         self._last_args = args
         _stdout, _stderr = (sys.stdout, sys.stderr)
-        rc = "INVALID"
         try:
             # Capture all output written to stdout/stderr
             temp_stdout = sys.stdout = self.tmpfile()
@@ -75,10 +76,10 @@ class _KsconfCli():
         finally:
             # This next step MUST be done!
             (sys.stdout, sys.stderr) = _stdout, _stderr
-            stdout = self._as_string(temp_stdout)
-            stderr = self._as_string(temp_stderr)
-            output = KsconfOutput(rc, stdout, stderr)
-            self._last_output = output
+        stdout = self._as_string(temp_stdout)
+        stderr = self._as_string(temp_stderr)
+        output = KsconfOutput(rc, stdout, stderr)
+        self._last_output = output
         return output
 
     def __enter__(self):

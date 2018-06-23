@@ -24,7 +24,7 @@ The following documents the CLI options
                             This allows for an arbitrary number of splunk's
                             configuration layers within a single app. Ad-hoc uses
                             include merging the 'users' directory across several
-                            instances after a phased servermigration.
+                            instances after a phased server migration.
         diff                Compares settings differences of two .conf files
                             ignoring textual and sorting differences
         promote             Promote .conf settings from one file into another
