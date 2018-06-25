@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 
 
 def cmd_output(*cmd):
-    p = Popen(cmd, stdout=PIPE, env={"PYTHONWARNINGS": "ignore", "PYTHONIOENCODING": "utf-8"})
+    p = Popen(cmd, stdout=PIPE, env={b"PYTHONWARNINGS": b"ignore", b"PYTHONIOENCODING": b"utf-8"})
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
 
@@ -52,7 +52,7 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
 
 readme_file = os.path.join("docs", "source", "cli.md")
 readme_file_tmp = readme_file + ".tmp"
-readme = open(readme_file_tmp, "w", encoding="utf-8")
+readme = open(readme_file_tmp, "w", newline="\n", encoding="utf-8")
 readme.write("""\
 # Command line reference
 

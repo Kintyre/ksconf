@@ -2,6 +2,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 import os
 import shutil
+import stat
 import sys
 import tempfile
 import unittest
@@ -119,12 +120,18 @@ class TestWorkDir(object):
             self.git("init")
         else:
             self._path = tempfile.mkdtemp("-ksconftest")
+        self.git_repo = git_repo
 
     def __del__(self):
         if "KSCONF_KEEP_TEST_FILES" in os.environ:
             return
-        # This apparently isn't working...
-        shutil.rmtree(self._path)
+        # Remove read-only file handler (e.g. clean .git/objects/xx/* files on Windows)
+        def del_rw(action, name, exc):
+            # https://stackoverflow.com/a/21263493/315892
+            # Not checking for file vs dir, ...
+            os.chmod(name, stat.S_IWRITE)
+            os.remove(name)
+        shutil.rmtree(self._path, onerror=del_rw)
 
     def git(self, *args):
         o = git_cmd(args, cwd=self._path)
@@ -824,6 +831,17 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
         super(CliKsconfUnarchiveTestCase, self).__init__(*args, **kwargs)
         self._modsec_workdir = TestWorkDir(git_repo=True)
     '''
+
+    def setUp(self):
+	# Setup environmental variables to avoid GIT commit errors regarding missing user.email, user.name configs
+        env = os.environ
+        env["GIT_AUTHOR_NAME"]  = env["GIT_COMMITTER_NAME"]  = "Ksconf Unit Tests"
+        env["GIT_AUTHOR_EMAIL"] = env["GIT_COMMITTER_EMAIL"] = "automated-tests@bogus.kintyre.co"
+
+    def tearDown(self):
+        env = os.environ
+        for v in ("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
+            del env[v]
 
     def test_modsec_install_upgrade(self):
         twd = TestWorkDir(git_repo=True)
