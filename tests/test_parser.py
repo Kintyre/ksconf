@@ -419,7 +419,7 @@ class ConfigDiffTestCase(unittest.TestCase):
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="LINE_BREAKER")
         self.assertEqual(op.tag, DIFF_OP_EQUAL)
         self.assertEqual(op.a, op.b)
-        self.assert_(op.a.startswith(r"([\r\n]+)"))  # Don't bother to match the whole thing...
+        self.assertTrue(op.a.startswith(r"([\r\n]+)"))  # Don't bother to match the whole thing...
 
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="DATETIME_CONFIG")
         self.assertEqual(op.tag, DIFF_OP_DELETE)

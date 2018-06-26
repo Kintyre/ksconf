@@ -1,14 +1,32 @@
 ---
 language: python
-python:
-#  - "2.6"
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  # PyPy versions
-#  - "pypy2.7"
-#  - "pypy3.5"
+
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    sudo: false
+    python: '2.7'
+  - os: linux
+    dist: trusty
+    sudo: false
+    python: '3.4'
+  - os: linux
+    dist: trusty
+    sudo: false
+    python: '3.5'
+  - os: linux
+    dist: trusty
+    sudo: false
+    python: '3.6'
+    env: BUILD_SDIST=true
+#  - os: osx
+#    language: objective-c
+#    env: PYENV_VERSION=2.7.12
+#  - os: osx
+#    language: objective-c
+#    env: PYENV_VERSION=3.5.2
+
 cache: pip
 # command to install dependencies
 install:
@@ -24,7 +42,7 @@ script: coverage run -m unittest discover -s tests
 after_success:
   - coveralls
   - codecov
-  - ./make_zipapp
+  - if [[ $$BUILD_SDIST == "True" ]] && ./make_zipapp
 deploy:
   - provider: releases
     api_key:
@@ -44,9 +62,9 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      # For testing only...
-      #all_branches: true
       branch: master
+      condition: $BUILD_SDIST == "True"
+
 notifications:
   email:
     - lowell@kintyre.co
