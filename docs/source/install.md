@@ -31,7 +31,7 @@ If you're on a Mac or Linux, and would like to enable bash completion, run these
 
 ## Requirements
 
- * [Python 2.7][python-download]
+ * [Python][python-download]  Supports Python 2.7, 3.4+
  * [PIP][pip-install] (strongly recommended)
  * Tested on Mac, Linux, and Windows
 
@@ -125,21 +125,31 @@ See [developer docs](devel.html) for additional details about contributing to ks
 
 ## Use the standalone executable
 
-Ksconf can be installed as a standalone executable.  This works well for testing or when all other
-options fail.
+Ksconf can be installed as a standalone executable zip app.  This approach still requires a python
+interpreter to be present either from the OS or the one embedded with Splunk Enterprise.  This works
+well for testing or when all other options fail.  
 
-From the [GitHub releases][gh-releases] page , grab the file name `ksconf-*-standalone`
-and copy it to a `bin` folder and rename it `ksconf`.
+From the [GitHub releases][gh-releases] page, grab the file name `ksconf-*.pyz`, download it, copy
+it to a `bin` folder in your PATH and rename it `ksconf`.  The default shebang looks for 'python' in
+the PATH, but this can be adjusted as needed.  Since installing with Splunk is a common use case, a
+second file named `ksconf-*-splunk.pyz` already has the shebang set for the standard `/opt/splunk`
+install path.
 
-This file is just a zip file, prepended with a shebang that tells the OS to launch Python, and then
-Python run the `__main__.py` module located inside of the zip file.  This is more better supported
-in Python 3.x, but works as far back as Python 2.6.  It worked during testing.  Good luck!
+Typical embedded Splunk install example:
+
+    VER=0.5.0
+    curl https://github.com/Kintyre/ksconf/releases/download/v${VER}/ksconf-${VER}-splunk.pyz
+    mv ksconf-${VER}-splunk.pyz /opt/splunk/bin/
+    cd /opt/splunk/bin
+    ln -sf ksconf-${VER}-splunk.pyz ksconf
+    chmod +x ksconf
+    ksconf --version
 
 
 Reasons why this is a non-ideal install approach:
 
- * Lower performance since all python file live in a zip file, and precompiled version's can be
-   cached (in Python 2.7).
+ * Lower performance since all python files live in a zip file, and precompiled version's can be
+   cached.
  * No standard install pathway (doesn't use pip); user must manually copy the executable into place.
  * Uses a non-standard build process.  (May not be a big deal, but could cause things to break in
   the future.)
@@ -320,5 +330,5 @@ Helpful links:
 [pip-install]: https://pip.pypa.io/en/stable/installing/
 [pypi-files]: https://pypi.org/project/kintyre-splunk-conf/#files
 [python-download]: https://www.python.org/downloads/
-[python-packaging]: https://docs.python.org/2.7/installing/index.html
+[python-packaging]: https://docs.python.org/3/installing/index.html
 [virtualenv]: https://virtualenv.pypa.io/en/stable/

@@ -1,6 +1,16 @@
 # Changelog
 
 
+## Ksconf 0.5.x
+
+Add Python 3 support, tox and vagrant for testing.
+
+### Release v0.5.0 (pending)
+ * Adds Python 3 support.
+ * Many bug fixes and improvements resulting from wider testsing.
+ * Fixed some long-term bugs with testing on Windows (without running as admin) 
+
+
 ## Ksconf 0.4.x
 
 Ksconf 0.4.x switched to a modular code base, added build/release automation, PyPI package

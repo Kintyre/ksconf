@@ -81,8 +81,9 @@ Vagrant.configure("2") do |config|
     pyenv install 3.6.5
     pyenv install 3.5.5
     pyenv install 3.4.8
+    pyenv install 3.3.7
 
-    pyenv global 2.7.15 3.6.5 3.5.5 3.4.8
+    pyenv global 2.7.15 3.6.5 3.5.5 3.4.8 3.3.7
     pyenv rehash
 
     # Intall tox
