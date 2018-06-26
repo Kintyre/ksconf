@@ -21,6 +21,7 @@ init:
   - git config --global user.name "App Veyor"
 
 install:
+  - "%PYTHON%/python.exe --version"
   - "%PYTHON%/Scripts/pip.exe install coverage"
   - "%PYTHON%/Scripts/pip.exe install codecov"
   - "%PYTHON%/Scripts/pip.exe install ."

@@ -637,6 +637,11 @@ To recursively sort all files:
 
     ksconf.util.terminal.FORCE_TTY_COLOR = args.force_color
 
+    # This becomes a thing in Python 3.6
+    if not hasattr(args, "funct") or args.funct is None:
+        sys.stderr.write(parser.format_usage())
+        sys.exit(1)
+
     try:
         return_code = args.funct(args)
     except Exception as e:  # pragma: no cover

@@ -150,9 +150,9 @@ def _show_diff_header(stream, files, diff_line=None):
     def header(sign, filename):
         try:
             mtime = os.stat(filename).st_mtime
+            ts = datetime.datetime.fromtimestamp(mtime)
         except OSError:
-            mtime = 0
-        ts = datetime.datetime.fromtimestamp(mtime)
+            ts = "1970-01-01 00:00:00"
         stream.write("{0} {1:50} {2}\n".format(sign * 3, filename, ts))
         tty_color(stream, ANSI_RESET)
 
