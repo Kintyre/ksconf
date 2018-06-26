@@ -31,6 +31,12 @@ def parse_string(text, profile=None, **kwargs):
         return parse_conf_stream(f, **kwargs)
 
 
+
+# Py27 workaround for new naming convention
+if not hasattr(unittest.TestCase, "assertRegex"):
+    unittest.TestCase.assertRegex = unittest.TestCase.assertRegexpMatches
+
+
 class ParserTestCase(unittest.TestCase):
     """ Test the parse_conf() Splunk .conf parser.  We should be at least as string as Splunk. """
 
@@ -81,7 +87,7 @@ class ParserTestCase(unittest.TestCase):
         has_key = true
         """)
         self.assertEqual(c["stanza1"]["key1"], "yes")
-        self.assert_("stanza2" in c, "Must preserve empty stanza")
+        self.assertTrue("stanza2" in c, "Must preserve empty stanza")
         self.assertEqual(len(c["stanza2"]), 0)
         self.assertEqual(c["stanza3"]["has_key"], "true")
 
@@ -101,7 +107,7 @@ class ParserTestCase(unittest.TestCase):
         # Todo: Figure out what Splunk behavior is for trailing whitespace.  (For now, should pass)
         self.assertEqual(c["stanza2"]["key2"], "green   ")
         # Todo:  Does this ever happen...
-        self.assert_(c["stanza2"]["key with spaces"])
+        self.assertTrue(c["stanza2"]["key with spaces"])
 
     def test_missing_key(self):
         c = parse_string("""\
@@ -170,9 +176,9 @@ class ParserTestCase(unittest.TestCase):
         [My cool search [COOLNESS]]
         search = ...
         """)
-        self.assert_(c[r"source::...(/|\\)var(/|\\)log(/|\\)splunk(/|\\)*aws_sns*.log*"])
-        self.assert_(c[r"source::...[/\\]var[/\\]log[/\\]splunk[/\\]s3util*.log*"])
-        self.assert_(c["My cool search [COOLNESS]"])
+        self.assertTrue(c[r"source::...(/|\\)var(/|\\)log(/|\\)splunk(/|\\)*aws_sns*.log*"])
+        self.assertTrue(c[r"source::...[/\\]var[/\\]log[/\\]splunk[/\\]s3util*.log*"])
+        self.assertTrue(c["My cool search [COOLNESS]"])
 
     def test_global_stanzs(self):
         c = parse_string("""
@@ -317,7 +323,7 @@ class ParserTestCase(unittest.TestCase):
         """
         c = parse_string(t)
         # If an empty global stanza is created, that's an implementation detail not important here.
-        self.assert_(c["Knowledge Object backup to CSV"])
+        self.assertTrue(c["Knowledge Object backup to CSV"])
         self.assertNotIn(" rest splunk_server=local /servicesNS/-/-/configs/conf-macros ", c)
         self.assertEqual(len(c), 1, "Should only have 1 stanza")
         self.assertEqual(len(c["Knowledge Object backup to CSV"]["search"].splitlines()), 7)
@@ -433,8 +439,8 @@ class ConfigDiffTestCase(unittest.TestCase):
         summarize_cfg_diffs(diffs, output)
         out = output.getvalue()
         # Very basic check for now.
-        self.assertRegexpMatches(out, r"\[imapsync\]\s*3 keys")
-        self.assertRegexpMatches(out, r"\[other2\]")
+        self.assertRegex(out, r"\[imapsync\]\s*3 keys")
+        self.assertRegex(out, r"\[other2\]")
 
     def test_compare_no_common(self):
         c1 = parse_string(self.cfg_macros_1)

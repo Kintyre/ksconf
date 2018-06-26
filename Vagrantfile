@@ -43,7 +43,7 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  config.vm.synced_folder ".", "/vagrant_ksconf"
+  # config.vm.synced_folder ".", "/vagrant_ksconf"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -63,6 +63,7 @@ Vagrant.configure("2") do |config|
 
   # https://gist.github.com/clozed2u/b0421d8af60e26d97372
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    sudo yum install -y vim
     sudo yum install -y gcc gcc-c++ make git patch openssl-devel zlib-devel readline-devel sqlite-devel bzip2-devel
     git clone git://github.com/yyuu/pyenv.git ~/.pyenv --depth=20
     echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc

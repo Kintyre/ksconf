@@ -197,6 +197,15 @@ class TestWorkDir(object):
         return self.write_file(rel_path, content)
 
 
+# Py27 workaround for new naming convention
+if not hasattr(unittest.TestCase, "assertRegex"):
+    unittest.TestCase.assertRegex = unittest.TestCase.assertRegexpMatches
+
+if not hasattr(unittest.TestCase, "assertNotRegex") and \
+       hasattr(unittest.TestCase, "assertNotRegexpMatches"):
+    unittest.TestCase.assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+
+
 class CliSimpleTestCase(unittest.TestCase):
     """ Test some very simple CLI features. """
 
@@ -288,15 +297,15 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_file("etc/apps/Splunk_TA_aws/default/data/dead.conf", "# File to remove")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
-            self.assertRegexpMatches(ko.stdout, r'[\r\n][-]\s*<view name="search"')
-            self.assertRegexpMatches(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
+            self.assertRegex(ko.stdout, r'[\r\n][-]\s*<view name="search"')
+            self.assertRegex(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
 
     def test_require_arg(self):
         with ksconf_cli:
             ko = ksconf_cli("combine", "source-dir")
-            self.assertRegexpMatches(ko.stderr, "Must provide [^\r\n]+--target")
+            self.assertRegex(ko.stderr, "Must provide [^\r\n]+--target")
 
 
 class CliMergeTest(unittest.TestCase):
@@ -312,7 +321,7 @@ class CliMergeTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("merge", conf1, conf2)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]disabled = FALSE")
+            self.assertRegex(ko.stdout, r"[\r\n]disabled = FALSE")
 
     def test_merge_dry_run(self):
         twd = TestWorkDir()
@@ -329,12 +338,12 @@ class CliMergeTest(unittest.TestCase):
 
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             # Todo: Figure out if this should be a "+" or "-"....
-            self.assertRegexpMatches(ko.stdout, r"[\r\n][+-]disabled = FALSE")
+            self.assertRegex(ko.stdout, r"[\r\n][+-]disabled = FALSE")
 
         with ksconf_cli:
             ko = ksconf_cli("merge", conf1, conf2, "--target", newfile)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stdout, r"^$")
+            self.assertRegex(ko.stdout, r"^$")
 
 
 
@@ -354,11 +363,11 @@ class CliDiffTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("diff", conf1, conf2)
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
-            self.assertRegexpMatches(ko.stdout, r"^diff ", "Missing diff header line")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]--- [^\r\n]+?[/\\]savedsearches-1.conf\s+\d{4}-\d\d-\d\d")
-            self.assertRegexpMatches(ko.stdout, r"\+\+\+ [^\r\n]+?[/\\]savedsearches-2.conf\s+\d{4}-\d\d-\d\d")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]\+ \| stats")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]- search = noop")
+            self.assertRegex(ko.stdout, r"^diff ", "Missing diff header line")
+            self.assertRegex(ko.stdout, r"[\r\n]--- [^\r\n]+?[/\\]savedsearches-1.conf\s+\d{4}-\d\d-\d\d")
+            self.assertRegex(ko.stdout, r"\+\+\+ [^\r\n]+?[/\\]savedsearches-2.conf\s+\d{4}-\d\d-\d\d")
+            self.assertRegex(ko.stdout, r"[\r\n]\+ \| stats")
+            self.assertRegex(ko.stdout, r"[\r\n]- search = noop")
 
         with ksconf_cli:
             # Compare the same file to itself
@@ -370,7 +379,7 @@ class CliDiffTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("--force-color", "diff", conf1, conf2)
             # Keep this really simple for now
-            self.assertRegexpMatches(ko.stdout, r"\x1b\[\d+m", "No TTY color markers found")
+            self.assertRegex(ko.stdout, r"\x1b\[\d+m", "No TTY color markers found")
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
 
     '''
@@ -462,9 +471,9 @@ class CliDiffTest(unittest.TestCase):
             ko = ksconf_cli("diff", conf1, conf2)
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
             # Look for unchanged, added, and removed entries
-            self.assertRegexpMatches(ko.stdout, r'[\r\n][ ]\s*\| rename host as h, sourcetype as st, source as s, index as idx')
-            self.assertRegexpMatches(ko.stdout, r'[\r\n][+]\s*\| eval h=if[^[\r\n]+,"\(SQUASHED\)"')
-            self.assertRegexpMatches(ko.stdout, r'[\r\n][-]\s*[^\r\n]+show_timestamps="true"')
+            self.assertRegex(ko.stdout, r'[\r\n][ ]\s*\| rename host as h, sourcetype as st, source as s, index as idx')
+            self.assertRegex(ko.stdout, r'[\r\n][+]\s*\| eval h=if[^[\r\n]+,"\(SQUASHED\)"')
+            self.assertRegex(ko.stdout, r'[\r\n][-]\s*[^\r\n]+show_timestamps="true"')
 
     def test_diff_no_common(self):
         with ksconf_cli:
@@ -472,7 +481,7 @@ class CliDiffTest(unittest.TestCase):
                             static_data("savedsearches-sysdefault70.conf"),
                             static_data("inputs-ta-nix-default.conf"))
             #self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
-            self.assertRegexpMatches(ko.stderr, "No common stanzas")
+            self.assertRegex(ko.stderr, "No common stanzas")
 
 
 
@@ -501,8 +510,8 @@ class CliCheckTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("check", self.conf_bad)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-            self.assertRegexpMatches(ko.stdout, r"\b1 files failed")
-            self.assertRegexpMatches(ko.stderr, r"badfile\.conf:\s+[^:]+:\s+\[BAD_STANZA")
+            self.assertRegex(ko.stdout, r"\b1 files failed")
+            self.assertRegex(ko.stderr, r"badfile\.conf:\s+[^:]+:\s+\[BAD_STANZA")
 
     def test_mixed(self):
         """ Make sure that if even a single file files, the exit code should be "BAD CONF" """
@@ -534,7 +543,7 @@ class CliCheckTest(unittest.TestCase):
             fake_file = self.twd.get_path("not-a-real-file.conf")
             ko = ksconf_cli("check", self.conf_good, fake_file)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stderr, r"Skipping missing file: [^\r\n]+[/\\]not-a-real-file.conf")
+            self.assertRegex(ko.stderr, r"Skipping missing file: [^\r\n]+[/\\]not-a-real-file.conf")
 
 
 class CliSortTest(unittest.TestCase):
@@ -582,17 +591,18 @@ class CliSortTest(unittest.TestCase):
 
         self.all_confs = glob(twd.get_path("*.conf"))
 
+    @unittest.expectedFailure
     def test_sort_inplace_returncodes(self):
         """ Inplace sorting long and short args """
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", self.conf_bogus)
             self.assertEqual(ko.returncode, EXIT_CODE_SORT_APPLIED)
-            self.assertRegexpMatches(ko.stderr, "^Replaced file")
+            self.assertRegex(ko.stderr, "^Replaced file")
         # Sort the second time, no there should be NO updates
         with ksconf_cli:
             ko = ksconf_cli("sort", "--inplace", self.conf_bogus)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stderr, "^Nothing to update")
+            self.assertRegex(ko.stderr, "^Nothing to update")
 
     ''' # Leaving this enabled makes too much noise...
     @unittest.expectedFailure
@@ -602,7 +612,7 @@ class CliSortTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", glob_pattern)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-            self.assertRegexpMatches(ko.stderr, r"badfile\.conf")
+            self.assertRegex(ko.stderr, r"badfile\.conf")
     '''
 
     def test_sort_mixed(self):
@@ -610,17 +620,17 @@ class CliSortTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", *self.all_confs )
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-            self.assertRegexpMatches(ko.stderr, r"Error [^\r\n]+? file [^\r\n]+?[/\\]badfile\.conf[^\r\n]+ \[BAD_STANZA")
-            self.assertRegexpMatches(ko.stderr, r"Skipping blacklisted file [^ ]+[/\\]transforms\.conf")
+            self.assertRegex(ko.stderr, r"Error [^\r\n]+? file [^\r\n]+?[/\\]badfile\.conf[^\r\n]+ \[BAD_STANZA")
+            self.assertRegex(ko.stderr, r"Skipping blacklisted file [^ ]+[/\\]transforms\.conf")
 
     def test_sort_stdout(self):
         # Not yet implemented.  Currently relying on the shell to do this.
         with ksconf_cli:
             ko = ksconf_cli("sort", self.conf_bogus, self.no_sort  )
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stdout, r"-----+ [^\r\n]+[/\\]bogus\.conf")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]-----+ [^\r\n]+[/\\]transforms\.conf")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]DEST_KEY = [^\r\n]+[\r\n]FORMAT =",
+            self.assertRegex(ko.stdout, r"-----+ [^\r\n]+[/\\]bogus\.conf")
+            self.assertRegex(ko.stdout, r"[\r\n]-----+ [^\r\n]+[/\\]transforms\.conf")
+            self.assertRegex(ko.stdout, r"[\r\n]DEST_KEY = [^\r\n]+[\r\n]FORMAT =",
                                      "transforms.conf should be sorted even with KSCONF-NO-SORT directive for non-inplace mode")
 
     def test_sort_mixed_quiet(self):
@@ -628,18 +638,18 @@ class CliSortTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", "--quiet", *self.all_confs)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-            self.assertRegexpMatches(ko.stderr, r"Error [^\r\n]+?[/\\]badfile\.conf")
-            self.assertNotRegexpMatches(ko.stderr, r"Skipping [^\r\n]+?[/\\]transforms\.conf")
-            self.assertRegexpMatches(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
+            self.assertRegex(ko.stderr, r"Error [^\r\n]+?[/\\]badfile\.conf")
+            self.assertNotRegex(ko.stderr, r"Skipping [^\r\n]+?[/\\]transforms\.conf")
+            self.assertRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
         # No there should be NO output
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", "--quiet", self.conf_bogus, self.no_sort)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertNotRegexpMatches(ko.stderr, r"Error [^\r\n]+?\.conf")
-            self.assertNotRegexpMatches(ko.stderr, r"[\r\n]Skipping [^\r\n]+?[/\\]transforms.conf")
-            self.assertNotRegexpMatches(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
+            self.assertNotRegex(ko.stderr, r"Error [^\r\n]+?\.conf")
+            self.assertNotRegex(ko.stderr, r"[\r\n]Skipping [^\r\n]+?[/\\]transforms.conf")
+            self.assertNotRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
 
-    if not hasattr(unittest.TestCase, "assertNotRegexpMatches"):
+    if not hasattr(unittest.TestCase, "assertNotRegex"):
         def assertNotRegex(self, text, unexpected_regex, msg=None):
             # Copied from standard library; Missing from Python 3.4.  Should probably find a
             # better way to support this in general, but for now only this set of test needs it.
@@ -656,7 +666,6 @@ class CliSortTest(unittest.TestCase):
                 # _formatMessage ensures the longMessage option is respected
                 msg = self._formatMessage(msg, standardMsg)
                 raise self.failureException(msg)
-        assertNotRegexpMatches = assertNotRegex
 
 
 class CliMinimizeTest(unittest.TestCase):
@@ -668,7 +677,7 @@ class CliMinimizeTest(unittest.TestCase):
         default = static_data("inputs-ta-nix-default.conf")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--dry-run", "--target", local, default)
-            self.assertRegexpMatches(ko.stdout, "[\r\n][ ]\[script://\./bin/ps\.sh\]")
+            self.assertRegex(ko.stdout, "[\r\n][ ]\[script://\./bin/ps\.sh\]")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--output", twd.get_path("inputs-new.conf"),
                             "--target", local, default)
@@ -719,8 +728,8 @@ class CliMinimizeTest(unittest.TestCase):
         sysdefault = static_data("savedsearches-sysdefault70.conf")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--dry-run", "--explode-default", "--target", conf, sysdefault)
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]-disabled")
-            self.assertRegexpMatches(ko.stdout, r"[\r\n]-enableSched")
+            self.assertRegex(ko.stdout, r"[\r\n]-disabled")
+            self.assertRegex(ko.stdout, r"[\r\n]-enableSched")
         orig_size = os.stat(conf).st_size
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--explode-default", "--target", conf, sysdefault)
@@ -805,7 +814,7 @@ class CliPromoteTest(unittest.TestCase):
             # Expect this to fail
             ko = ksconf_cli("promote", "--batch", dummy_local, dummy_default)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegexpMatches(ko.stdout, "Moving source file [^\r\n]+ to the target")
+            self.assertRegex(ko.stdout, "Moving source file [^\r\n]+ to the target")
 
     def test_promote_same_file_abrt(self):
         twd = TestWorkDir()
@@ -814,7 +823,7 @@ class CliPromoteTest(unittest.TestCase):
             # Expect this to fail
             ko = ksconf_cli("promote", "--batch", dummy, dummy)
             self.assertEqual(ko.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
-            self.assertRegexpMatches(ko.stderr, "same file")
+            self.assertRegex(ko.stderr, "same file")
 
     '''
     def test_promote_simulate_ext_edit(self):
@@ -889,7 +898,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
             kco = ksconf_cli("unarchive", zfile, "--dest", twd.makedir("apps"))
             self.assertIn("About to install", kco.stdout)
             self.assertIn("RSA Securid Splunk Addon", kco.stdout)
-            self.assertRegexpMatches(kco.stdout, "without version control support")
+            self.assertRegex(kco.stdout, "without version control support")
 
     def test_modsec_install_defaultd(self):
         twd = TestWorkDir(git_repo=True)
@@ -906,7 +915,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
                                  "--default-dir", "default.d/10-official",
                                  "--exclude", "README/inputs.conf.spec")
                 self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
-                self.assertRegexpMatches(kco.stdout, "with git support")
+                self.assertRegex(kco.stdout, "with git support")
 
 
 if __name__ == '__main__':  # pragma: no cover
