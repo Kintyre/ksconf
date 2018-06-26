@@ -214,7 +214,6 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     return sections
 
 
-
 def write_conf(stream, conf, stanza_delim="\n", sort=True):
     if not hasattr(stream, "write"):
         # Assume it's a filename

@@ -21,10 +21,7 @@ import six
 
 def parse_string(text, profile=None, **kwargs):
     text = dedent(text)
-    if isinstance(text, bytes):
-        f = BytesIO(text)
-    else:
-        f = StringIO(text)
+    f = StringIO(text)
     if profile:
         return parse_conf(f, profile)
     else:

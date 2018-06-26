@@ -192,7 +192,7 @@ class TestWorkDir(object):
 
     def copy_static(self, static, rel_path):
         src = static_data(static)
-        with open(src, "r", encoding=self.encoding) as stream:
+        with open(src, "rb") as stream:
             content = stream.read()
         return self.write_file(rel_path, content)
 
@@ -591,7 +591,6 @@ class CliSortTest(unittest.TestCase):
 
         self.all_confs = glob(twd.get_path("*.conf"))
 
-    @unittest.expectedFailure
     def test_sort_inplace_returncodes(self):
         """ Inplace sorting long and short args """
         with ksconf_cli:
