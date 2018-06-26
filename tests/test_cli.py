@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+from __future__ import absolute_import, print_function, unicode_literals
 import os
 import shutil
 import sys
 import tempfile
 import unittest
-from StringIO import StringIO
+from io import open, StringIO
 from collections import namedtuple
 from glob import glob
 from subprocess import list2cmdline
@@ -26,7 +27,7 @@ def _debug_file(flag, fn):       # pragma: no cover
          content = fp.read()
     length = len(content)
     hash = file_hash(fn)
-    print "\n{flag} {fn}  len={length} hash={hash} \n{content}".format(**vars())
+    print("\n{flag} {fn}  len={length} hash={hash} \n{content}".format(**vars()))
 
 def static_data(path):
     # Assume "/" for path separation for simplicity; bunt handle OS independent.
@@ -54,7 +55,6 @@ class _KsconfCli():
     very clean, but we try to make it as safe as possible.
     tmpfile:    os.tmpfile, or StringIO?
     """
-    tmpfile = os.tmpfile
 
     @staticmethod
     def _as_string(stream):
@@ -68,11 +68,11 @@ class _KsconfCli():
         _stdout, _stderr = (sys.stdout, sys.stderr)
         try:
             # Capture all output written to stdout/stderr
-            temp_stdout = sys.stdout = self.tmpfile()
-            temp_stderr = sys.stderr = self.tmpfile()
+            temp_stdout = sys.stdout = StringIO()
+            temp_stderr = sys.stderr = StringIO()
             try:
                 rc = cli(args, _unittest=True)
-            except SystemExit, e:
+            except SystemExit as e:
                 rc = e.message
         finally:
             # This next step MUST be done!
@@ -107,6 +107,7 @@ ksconf_cli = _KsconfCli()
 
 
 class TestWorkDir(object):
+    encoding = "utf-8"
     def __init__(self, git_repo=False):
         if git_repo:
             self._path = tempfile.mkdtemp("-ksconftest-git")
@@ -115,6 +116,8 @@ class TestWorkDir(object):
             self._path = tempfile.mkdtemp("-ksconftest")
 
     def __del__(self):
+        if "KSCONF_KEEP_TEST_FILES" in os.environ:
+            return
         # This apparently isn't working...
         shutil.rmtree(self._path)
 
@@ -148,6 +151,7 @@ class TestWorkDir(object):
             kw["mode"] = "wb"
         else:
             kw["mode"] = "w"
+            kw["encoding"] = self.encoding
             content = dedent(content)
         with open(path, **kw) as stream:
             stream.write(content)
@@ -160,6 +164,7 @@ class TestWorkDir(object):
             kw["mode"] = "rb"
         else:
             kw["mode"] = "r"
+            kw["encoding"] = self.encoding
         with open(path, **kw) as stream:
             content = stream.read()
         return content
@@ -176,7 +181,7 @@ class TestWorkDir(object):
 
     def copy_static(self, static, rel_path):
         src = static_data(static)
-        with open(src, "rb") as stream:
+        with open(src, "r", encoding=self.encoding) as stream:
             content = stream.read()
         return self.write_file(rel_path, content)
 

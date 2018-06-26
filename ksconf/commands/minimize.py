@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import sys
 
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, DIFF_OP_EQUAL, DiffStanza, \
@@ -5,6 +7,7 @@ from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, DIFF_OP_EQUAL, DiffS
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import GLOBAL_STANZA, _drop_stanza_comments
 from ksconf.util.file import match_bwlist
+import six
 
 
 def explode_default_stanza(conf, default_stanza=None):
@@ -16,7 +19,7 @@ def explode_default_stanza(conf, default_stanza=None):
             return conf
     default_stanza = _drop_stanza_comments(default_stanza)
     n = {}
-    for (stanza, content) in conf.iteritems():
+    for (stanza, content) in six.iteritems(conf):
         new_content = dict(default_stanza)
         new_content.update(content)
         n[stanza] = new_content

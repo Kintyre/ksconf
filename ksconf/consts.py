@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 SMART_CREATE = "created"
 SMART_UPDATE = "updated"
 SMART_NOCHANGE = "unchanged"

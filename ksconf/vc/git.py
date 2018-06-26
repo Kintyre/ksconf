@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, Counter
 from subprocess import Popen, PIPE, list2cmdline
 

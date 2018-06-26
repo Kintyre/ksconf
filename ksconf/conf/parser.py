@@ -1,11 +1,15 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import codecs
 import os
 import re
-from StringIO import StringIO
+from io import open, StringIO
 
 from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
 from ..util.compare import fileobj_compare
+import six
 
+default_encoding = "utf-8"
 
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
@@ -94,8 +98,22 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
         yield section, buf
 
 
+def detect_by_bom(path, default):
+    # https://stackoverflow.com/a/24370596/315892
+    with open(path, 'rb') as f:
+        raw = f.read(4)    # will read less if the file is smaller
+    for (enc, boms) in (
+            ('utf-8-sig', (codecs.BOM_UTF8,)),\
+            ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),\
+            ('utf-32', (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE))):
+        if any(raw.startswith(bom) for bom in boms):
+            # DEBUG -- print("FOUND ENCODING:  {} encoding={}".format(path, enc))
+            return enc
+    return default
+
+
 def bom_handler(iterable):
-    # Strip out aany UTF BOM markers, if present.
+    # Strip out any UTF-8 BOM markers, if present.
     item = iterable.next()
     yield item.lstrip(codecs.BOM_UTF8)
     for item in iterable:
@@ -137,13 +155,15 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
             raise ConfParserException("Unexpected entry:  {0}".format(entry))
 
 
-def parse_conf(stream, profile=PARSECONF_MID):
+def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
     # Placeholder stub for an eventual migration to proper class-oriented parser
     if hasattr(stream, "read"):
         return parse_conf_stream(stream, **profile)
     else:
+        if not encoding:
+            encoding = detect_by_bom(stream, default_encoding)
         # Assume it's a filename
-        with open(stream, "r") as stream:
+        with open(stream, "r", encoding=encoding) as stream:
             return parse_conf_stream(stream, **profile)
 
 
@@ -157,9 +177,9 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     sections = {}
     # Q: What's the value of allowing line continuations to be disabled?
     if handle_conts:
-        reader = section_reader(cont_handler(bom_handler(stream)))
+        reader = section_reader(cont_handler(stream))
     else:
-        reader = section_reader(bom_handler(stream))
+        reader = section_reader(stream)
     for section, entry in reader:
         if section is None:
             section = GLOBAL_STANZA
@@ -198,10 +218,20 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     return sections
 
 
+def _sort_stanza_keys(conf):
+    # Global MUST be written first
+    if GLOBAL_STANZA in conf:
+        conf = list(conf)
+        conf.remove(GLOBAL_STANZA)
+        return [ GLOBAL_STANZA ] + sorted(conf)
+    else:
+        return sorted(conf)
+
+
 def write_conf(stream, conf, stanza_delim="\n", sort=True):
     if not hasattr(stream, "write"):
         # Assume it's a filename
-        with open(stream, "w") as stream:
+        with open(stream, "w", encoding=default_encoding) as stream:
             write_conf_stream(stream, conf, stanza_delim, sort)
     else:
         write_conf_stream(stream, conf, stanza_delim, sort)
@@ -216,7 +246,7 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
         sorter = list
 
     def write_stanza_body(items):
-        for (key, value) in sorter(items.iteritems()):
+        for (key, value) in sorted(items.items()):
             if value is None:
                 value = ""
             else:
@@ -229,18 +259,12 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
                 # Avoid a trailing whitespace to keep the git gods happy
                 stream.write("{0} =\n".format(key))
 
-    keys = sorter(conf)
-    # Global MUST be written first
-    # Todo, "[default]" (case sensitive?) should go second...
-    if GLOBAL_STANZA in keys:
-        keys.remove(GLOBAL_STANZA)
-        write_stanza_body(conf[GLOBAL_STANZA])
-        if keys:
-            stream.write(stanza_delim)
+    keys = _sort_stanza_keys(conf)
     while keys:
         section = keys.pop(0)
         cfg = conf[section]
-        stream.write("[{0}]\n".format(section))
+        if section is not GLOBAL_STANZA:
+            stream.write("[{0}]\n".format(section))
         write_stanza_body(cfg)
         if keys:
             stream.write(stanza_delim)
@@ -250,20 +274,20 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
     if os.path.isfile(filename):
         temp = StringIO()
         write_conf_stream(temp, conf, stanza_delim, sort)
-        with open(filename, "rb") as dest:
+        with open(filename, encoding=default_encoding) as dest:
             file_diff = fileobj_compare(temp, dest)
         if file_diff:
             return SMART_NOCHANGE
         else:
             tempfile = filename + temp_suffix
-            with open(tempfile, "wb") as dest:
+            with open(tempfile, "w", encoding=default_encoding) as dest:
                 dest.write(temp.getvalue())
             os.unlink(filename)
             os.rename(tempfile, filename)
             return SMART_UPDATE
     else:
         tempfile = filename + temp_suffix
-        with open(tempfile, "wb") as dest:
+        with open(tempfile, "w", encoding=default_encoding) as dest:
             write_conf_stream(dest, conf, stanza_delim, sort)
         os.rename(tempfile, filename)
         return SMART_CREATE
@@ -310,7 +334,7 @@ def inject_section_comments(section, prepend=None, append=None):
 
 def _drop_stanza_comments(stanza):
     n = {}
-    for (key, value) in stanza.iteritems():
+    for (key, value) in six.iteritems(stanza):
         if key.startswith("#"):
             continue
         n[key] = value

@@ -12,6 +12,8 @@ Install & register with:
 
 """
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import argparse
 import sys
 import textwrap
@@ -637,7 +639,7 @@ To recursively sort all files:
 
     try:
         return_code = args.funct(args)
-    except Exception, e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         raise
         return_code = EXIT_CODE_INTERNAL_ERROR

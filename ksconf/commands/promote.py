@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import shutil
 import sys
@@ -10,6 +12,7 @@ from ksconf.conf.merge import merge_conf_dicts
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
     EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT
 from ksconf.util.file import _samefile, file_fingerprint
+from six.moves import input
 
 
 def do_promote(args):
@@ -76,16 +79,16 @@ def do_promote(args):
         summarize_cfg_diffs(delta, sys.stderr)
 
         while True:
-            input = raw_input("Would you like to apply ALL changes?  (y/n/d/q)")
-            input = input[:1].lower()
-            if input == 'q':
+            resp = input("Would you like to apply ALL changes?  (y/n/d/q)")
+            resp = input[:1].lower()
+            if resp == 'q':
                 return EXIT_CODE_USER_QUIT
-            elif input == 'd':
+            elif resp == 'd':
                 show_diff(sys.stdout, delta, headers=(args.source.name, args.target.name))
-            elif input == 'y':
+            elif resp == 'y':
                 args.mode = "batch"
                 break
-            elif input == 'n':
+            elif resp == 'n':
                 args.mode = "interactive"
                 break
 
@@ -178,7 +181,7 @@ def _do_promote_interactive(cfg_src, cfg_tgt, args):
 
     def prompt_yes_no(prompt):
         while True:
-            r = raw_input(prompt + " (y/n)")
+            r = input(prompt + " (y/n)")
             if r.lower().startswith("y"):
                 return True
             elif r.lower().startswith("n"):

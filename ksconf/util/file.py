@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import re
 import shutil
@@ -6,6 +8,7 @@ from glob import glob
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
+from six.moves import range
 
 
 def _is_binary_file(filename, peek=2048):
@@ -73,7 +76,7 @@ _glob_to_regex = {
     r"\?": r".",
     r"\.\.\.": r".*",
 }
-_is_glob_re = re.compile("({})".format("|".join(_glob_to_regex.keys())))
+_is_glob_re = re.compile("({})".format("|".join(list(_glob_to_regex.keys()))))
 
 
 def match_bwlist(value, bwlist, escape=True):

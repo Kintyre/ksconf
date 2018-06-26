@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import sys
 
@@ -161,7 +163,7 @@ class ConfFileType(object):
                     try:
                         d = cfp.data
                         del d
-                    except ConfParserException, e:
+                    except ConfParserException as e:
                         raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
                 return cfp
             elif 'w' in self._mode:
@@ -185,9 +187,9 @@ class ConfFileType(object):
             except IOError as e:
                 message = "can't open '%s': %s"
                 raise ArgumentTypeError(message % (string, e))
-            except ConfParserException, e:
+            except ConfParserException as e:
                 raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
-            except TypeError, e:
+            except TypeError as e:
                 raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
 
     def __repr__(self):     # pragma: no cover

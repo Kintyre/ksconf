@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import sys
 from collections import Counter
@@ -27,13 +29,13 @@ def do_check(args):
             if not args.quiet:
                 sys.stdout.write("Successfully parsed {0}\n".format(conf))
                 sys.stdout.flush()
-        except ConfParserException, e:
+        except ConfParserException as e:
             sys.stderr.write("Error in file {0}:  {1}\n".format(conf, e))
             sys.stderr.flush()
             exit_code = EXIT_CODE_BAD_CONF_FILE
             # TODO:  Break out counts by error type/category (there's only a few of them)
             c["error"] += 1
-        except Exception, e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             sys.stderr.write("Unhandled top-level exception while parsing {0}.  "
                              "Aborting.\n{1}\n".format(conf, e))
             exit_code = EXIT_CODE_INTERNAL_ERROR

@@ -1,7 +1,8 @@
+from __future__ import absolute_import, print_function, unicode_literals
 import os
 import re
 import sys
-from StringIO import StringIO
+from io import StringIO, BytesIO
 from subprocess import list2cmdline
 
 from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker, \
@@ -41,7 +42,7 @@ def do_unarchive(args):
         gaf_app, gaf_relpath = gaf.path.split("/", 1)
         files += 1
         if gaf.path.endswith("app.conf") and gaf.payload:
-            conffile = StringIO(gaf.payload)
+            conffile = BytesIO(gaf.payload)
             conffile.name = os.path.join(args.tarball, gaf.path)
             app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
             del conffile
@@ -208,10 +209,10 @@ def do_unarchive(args):
     sys.stdout.write("Extracting app now...\n")
     for gaf in files_iter:
         if match_bwlist(gaf.path, excludes, escape=False):
-            print "Skipping [blacklist] {}".format(gaf.path)
+            print("Skipping [blacklist] {}".format(gaf.path))
             continue
         if not is_git or args.git_mode in ("nochange", "stage"):
-            print "{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode)
+            print("{0:60s} {2:o} {1:-6d}".format(gaf.path, gaf.size, gaf.mode))
         installed_files.add(gaf.path.split("/", 1)[1])
         full_path = os.path.join(args.dest, gaf.path)
         dir_exists(os.path.dirname(full_path))
@@ -262,10 +263,10 @@ def do_unarchive(args):
     for fn in files_to_delete:
         path = os.path.join(dest_app, fn)
         if is_git and args.git_mode in ("stage", "commit"):
-            print "git rm -f {}".format(path)
+            print("git rm -f {}".format(path))
             git_rm_queue.append(fn)
         else:
-            print "rm -f {}".format(path)
+            print("rm -f {}".format(path))
             os.unlink(path)
 
     if git_rm_queue:

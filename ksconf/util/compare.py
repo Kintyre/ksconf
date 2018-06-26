@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 def fileobj_compare(f1, f2):
     # Borrowed from filecmp
     f1.seek(0)

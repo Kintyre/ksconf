@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from collections import namedtuple
 from fnmatch import fnmatch
@@ -33,7 +35,7 @@ def _extract_tar(path, extract_filter=None):
                 print "Skipping {}  ({})".format(ti.name, ti.type)
                 '''
                 continue
-            mode = ti.mode & 0777
+            mode = ti.mode & 0o777
             if extract_filter is None or \
                     extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
                 tar_file_fp = tar.extractfile(ti)
@@ -43,7 +45,7 @@ def _extract_tar(path, extract_filter=None):
             yield GenArchFile(ti.name, mode, ti.size, buf)
 
 
-def _extract_zip(path, extract_filter=None, mode=0644):
+def _extract_zip(path, extract_filter=None, mode=0o644):
     import zipfile
     with zipfile.ZipFile(path, mode="r") as zipf:
         for zi in zipf.infolist():

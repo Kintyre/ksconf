@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import sys
 
 from ksconf.conf.parser import parse_conf, PARSECONF_STRICT, smart_write_conf, ConfParserException, \
@@ -27,7 +29,7 @@ def do_sort(args):
                 data = parse_conf(conf, profile=PARSECONF_STRICT)
                 conf.close()
                 smart_rc = smart_write_conf(conf.name, data, stanza_delim=stanza_delims, sort=True)
-            except ConfParserException, e:
+            except ConfParserException as e:
                 smart_rc = None
                 sys.stderr.write("Error trying to process file {0}.  "
                                  "Error:  {1}\n".format(conf.name, e))
@@ -50,6 +52,6 @@ def do_sort(args):
             try:
                 data = parse_conf(conf, profile=PARSECONF_STRICT)
                 write_conf(args.target, data, stanza_delim=stanza_delims, sort=True)
-            except ConfParserException, e:
+            except ConfParserException as e:
                 sys.stderr.write("Error trying processing {0}.  Error:  {1}\n".format(conf.name, e))
                 return EXIT_CODE_BAD_CONF_FILE

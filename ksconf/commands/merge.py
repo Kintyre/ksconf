@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from ksconf.conf.merge import merge_conf_files
 from ksconf.consts import EXIT_CODE_SUCCESS
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 # ANSI_COLOR = "\x1b[{0}m"
 ANSI_BOLD = 1
 ANSI_RED = 31

@@ -1,12 +1,15 @@
+from __future__ import absolute_import, unicode_literals
 import datetime
 import difflib
 import os
+from io import open
 from collections import namedtuple, defaultdict, Counter
 
-from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza
+from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, _sort_stanza_keys, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
+import six
 
 ####################################################################################################
 ## Diff logic
@@ -56,7 +59,7 @@ def compare_cfgs(a, b, allow_level0=True):
 
     # Level 0 - Compare entire file
     if allow_level0:
-        stanza_a, stanza_common, stanza_b = _cmp_sets(a.keys(), b.keys())
+        stanza_a, stanza_common, stanza_b = _cmp_sets(list(a.keys()), list(b.keys()))
         if a == b:
             return [DiffOp(DIFF_OP_EQUAL, DiffGlobal("global"), a, b)]
         if not stanza_common:
@@ -68,13 +71,13 @@ def compare_cfgs(a, b, allow_level0=True):
     # Level 1 - Compare stanzas
 
     # Make sure GLOBAL stanza is output first
-    all_stanzas = set(a.keys()).union(b.keys())
+    all_stanzas = set(a.keys()).union(list(b.keys()))
     if GLOBAL_STANZA in all_stanzas:
         all_stanzas.remove(GLOBAL_STANZA)
         all_stanzas = [GLOBAL_STANZA] + list(all_stanzas)
     else:
         all_stanzas = list(all_stanzas)
-    all_stanzas.sort()
+    all_stanzas = _sort_stanza_keys(all_stanzas)
 
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
@@ -84,7 +87,7 @@ def compare_cfgs(a, b, allow_level0=True):
             if a_ == b_:
                 delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza), a_, b_))
                 continue
-            kv_a, kv_common, kv_b = _cmp_sets(a_.keys(), b_.keys())
+            kv_a, kv_common, kv_b = _cmp_sets(list(a_.keys()), list(b_.keys()))
             if not kv_common:
                 # No keys in common, just swap
                 delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza), a_, b_))
@@ -185,7 +188,7 @@ def show_diff(stream, diffs, headers=None):
         if isinstance(value, dict):
             if stanza_ is not GLOBAL_STANZA:
                 stream.write("{0}[{1}]\n".format(prefix_, stanza_))
-            for x, y in sorted(value.iteritems()):
+            for x, y in sorted(six.iteritems(value)):
                 write_key(x, y, prefix_)
             stream.write("\n")
         else:
@@ -206,7 +209,7 @@ def show_diff(stream, diffs, headers=None):
             # previous (one or two) lines.  (Google and see if somebody else solved this one already)
             # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
             tty_color(stream, _diff_color_mapping.get(d[0], 0))
-            stream.write(d)
+            stream.write(d.decode(default_encoding))
             tty_color(stream, ANSI_RESET)
             stream.write("\n")
 
@@ -265,8 +268,8 @@ def show_diff(stream, diffs, headers=None):
 def show_text_diff(stream, a, b):
     _show_diff_header(stream, (a, b), "--text")
     differ = difflib.Differ()
-    lines_a = open(a, "rb").readlines()
-    lines_b = open(b, "rb").readlines()
+    lines_a = open(a, "r", encoding=default_encoding).readlines()
+    lines_b = open(b, "r", encoding=default_encoding).readlines()
     for d in differ.compare(lines_a, lines_b):
         # Someday add "?" highlighting.  Trick is this should change color mid-line on the
         # previous (one or two) lines.  (Google and see if somebody else solved this one already)

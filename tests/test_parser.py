@@ -3,9 +3,10 @@
 # For coverage info, can be run with nose2, like so:
 #  nose2 -s . -C
 
+from __future__ import absolute_import, unicode_literals
 import os
 import unittest
-from StringIO import StringIO
+from io import StringIO, BytesIO
 from textwrap import dedent
 
 from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
@@ -15,11 +16,15 @@ from ksconf.conf.parser import parse_conf_stream, DUP_EXCEPTION, DUP_MERGE, DUP_
     DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
     PARSECONF_MID, GLOBAL_STANZA
 from ksconf.util.file import relwalk
+import six
 
 
 def parse_string(text, profile=None, **kwargs):
     text = dedent(text)
-    f = StringIO(text)
+    if isinstance(text, bytes):
+        f = BytesIO(text)
+    else:
+        f = StringIO(text)
     if profile:
         return parse_conf(f, profile)
     else:
@@ -43,7 +48,7 @@ class ParserTestCase(unittest.TestCase):
             "stanza2": {"monkey": "banana", "dog": "cat"},
             "stanza3": {"key_with_no_value": ''},
         }
-        tfile = os.tmpfile()
+        tfile = StringIO()
         write_conf(tfile, d, sort=False)
         tfile.seek(0)
         d2 = parse_conf(tfile)
@@ -112,19 +117,24 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c["stanza2"][""], "whoopsie")
 
     def test_inputs_with_BOM(self):
+        from test_cli import TestWorkDir
+        twd = TestWorkDir()
         # "\\" in path due to non-raw string (Failing as of 87c5a11ca44; due to lack of BOM support)
-        c = parse_string("""\
-        \xef\xbb\xbf[monitor://D:\\syslogs\\10.0.31.1]
-        disabled = false
-        sourcetype = cisco:asa
-        host_segment = 2
-        ignoreOlderThan = 7d
-        """)
+        twd.write_file("inputs-bom.conf", b"\xef\xbb\xbf"
+        b"[monitor://D:\\syslogs\\10.0.31.1]\n"
+        b"disabled = false\n"
+        b"sourcetype = cisco:asa\n"
+        b"host_segment = 2\n"
+        b"ignoreOlderThan = 7d\n")
+        c = twd.read_conf("inputs-bom.conf")
         self.assertEqual(c[r"monitor://D:\syslogs\10.0.31.1"]["sourcetype"], "cisco:asa")
 
     def test_comments_with_BOM(self):
         # "\\" in path due to non-raw string (Failing as of 87c5a11ca44 if this is the FIRST line)
-        c = parse_string("\xef\xbb\xbf# This is a comment\nx = 1")
+        from test_cli import TestWorkDir
+        twd = TestWorkDir()
+        twd.write_file("comment-bom.conf",b"\xef\xbb\xbf# This is a comment\nx = 1")
+        c = twd.read_conf("comment-bom.conf")
         self.assertTrue(c[GLOBAL_STANZA])
 
     def test_whitespace_stanza(self):
@@ -330,7 +340,7 @@ class ParserTestCase(unittest.TestCase):
         # Note:  Types will not be preserved, but values should not be lost
         d = {"stanza": {"boolean1": True, "boolean2": False, "int1": 99, "int2": 0,
                         "none": None}}
-        tfile = os.tmpfile()
+        tfile = StringIO()
         write_conf(tfile, d)
         tfile.seek(0)
         d2 = parse_conf(tfile)
@@ -383,7 +393,7 @@ class ConfigDiffTestCase(unittest.TestCase):
         for op in diffs:
             if op.location.type == type:
                 match = True
-                for (attr, value) in kwargs.iteritems():
+                for (attr, value) in six.iteritems(kwargs):
                     if getattr(op.location, attr, None) != value:
                         match = False
                         break
