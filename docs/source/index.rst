@@ -31,6 +31,7 @@ Install
    install
    cli
    devel
+   changelog
    license
 ..   ksconf
 
