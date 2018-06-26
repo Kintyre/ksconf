@@ -18,6 +18,12 @@ class Token(object):
         memo[id(self)] = self
         return self
 
+    # Always sort to the top of the list (should only ever be GLOBAL stanza)
+    def __lt__(self, other):
+        return isinstance(other, six.text_type)
+
+    def __gt__(self, other):
+        return not isinstance(other, six.text_type)
 
 DUP_OVERWRITE = "overwrite"
 DUP_MERGE = "merge"
@@ -110,16 +116,6 @@ def detect_by_bom(path, default):
             # DEBUG -- print("FOUND ENCODING:  {} encoding={}".format(path, enc))
             return enc
     return default
-
-
-def bom_handler(iterable):
-    # Strip out any UTF-8 BOM markers, if present.
-    item = iterable.next()
-    yield item.lstrip(codecs.BOM_UTF8)
-    for item in iterable:
-        yield item
-    # Py 3 something...
-    # yield iterable
 
 
 def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
@@ -218,15 +214,6 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     return sections
 
 
-def _sort_stanza_keys(conf):
-    # Global MUST be written first
-    if GLOBAL_STANZA in conf:
-        conf = list(conf)
-        conf.remove(GLOBAL_STANZA)
-        return [ GLOBAL_STANZA ] + sorted(conf)
-    else:
-        return sorted(conf)
-
 
 def write_conf(stream, conf, stanza_delim="\n", sort=True):
     if not hasattr(stream, "write"):
@@ -259,7 +246,7 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
                 # Avoid a trailing whitespace to keep the git gods happy
                 stream.write("{0} =\n".format(key))
 
-    keys = _sort_stanza_keys(conf)
+    keys = sorted(conf)
     while keys:
         section = keys.pop(0)
         cfg = conf[section]

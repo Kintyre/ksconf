@@ -26,9 +26,9 @@ def gaf_filter_name_like(pattern):
     return filter
 
 
-def _extract_tar(path, extract_filter=None):
+def _extract_tar(path, extract_filter=None, encoding="utf-8"):
     import tarfile
-    with tarfile.open(path, "r") as tar:
+    with tarfile.open(path, "r", encoding=encoding) as tar:
         for ti in tar:
             if not ti.isreg():
                 '''
@@ -36,6 +36,9 @@ def _extract_tar(path, extract_filter=None):
                 '''
                 continue
             mode = ti.mode & 0o777
+            # PY2 doesn't return unicode file names
+            if hasattr(ti.name, "decode"):
+                ti.name = ti.name.decode(encoding)
             if extract_filter is None or \
                     extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
                 tar_file_fp = tar.extractfile(ti)
@@ -45,10 +48,13 @@ def _extract_tar(path, extract_filter=None):
             yield GenArchFile(ti.name, mode, ti.size, buf)
 
 
-def _extract_zip(path, extract_filter=None, mode=0o644):
+def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
+    # Note:  No encoding defined for Zip file spec.  Sticking with what WinZip uses by default.
     import zipfile
     with zipfile.ZipFile(path, mode="r") as zipf:
         for zi in zipf.infolist():
+            if hasattr(zi.filename, "decode"):
+                zi.filename = zi.filename.decode(encoding)
             if zi.filename.endswith('/'):
                 # Skip directories
                 continue

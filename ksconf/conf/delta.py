@@ -5,7 +5,7 @@ import os
 from io import open
 from collections import namedtuple, defaultdict, Counter
 
-from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, _sort_stanza_keys, default_encoding
+from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
@@ -77,7 +77,7 @@ def compare_cfgs(a, b, allow_level0=True):
         all_stanzas = [GLOBAL_STANZA] + list(all_stanzas)
     else:
         all_stanzas = list(all_stanzas)
-    all_stanzas = _sort_stanza_keys(all_stanzas)
+    all_stanzas = sorted(all_stanzas)
 
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
@@ -209,7 +209,10 @@ def show_diff(stream, diffs, headers=None):
             # previous (one or two) lines.  (Google and see if somebody else solved this one already)
             # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
             tty_color(stream, _diff_color_mapping.get(d[0], 0))
-            stream.write(d.decode(default_encoding))
+            # Differences in how difflib returns bytes/unicode?
+            if not isinstance(d, six.text_type):
+                d = d.decode(default_encoding)
+            stream.write(d)
             tty_color(stream, ANSI_RESET)
             stream.write("\n")
 

@@ -133,7 +133,7 @@ class ParserTestCase(unittest.TestCase):
         # "\\" in path due to non-raw string (Failing as of 87c5a11ca44 if this is the FIRST line)
         from test_cli import TestWorkDir
         twd = TestWorkDir()
-        twd.write_file("comment-bom.conf",b"\xef\xbb\xbf# This is a comment\nx = 1")
+        twd.write_file("comment-bom.conf", b"\xef\xbb\xbf# This is a comment\nx = 1")
         c = twd.read_conf("comment-bom.conf")
         self.assertTrue(c[GLOBAL_STANZA])
 

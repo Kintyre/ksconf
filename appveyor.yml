@@ -6,6 +6,12 @@ environment:
   matrix:
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python36-x64"
 
 # scripts that are called at very beginning, before repo cloning
 init:

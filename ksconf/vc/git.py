@@ -9,7 +9,7 @@ GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
 
 
-def git_cmd(args, shell=False, cwd=None, capture_std=True):
+def git_cmd(args, shell=False, cwd=None, capture_std=True, encoding="utf-8"):
     if isinstance(args, tuple):
         args = list(args)
     cmdline_args = [GIT_BIN] + args
@@ -19,6 +19,9 @@ def git_cmd(args, shell=False, cwd=None, capture_std=True):
         out = None
     proc = Popen(cmdline_args, stdout=out, stderr=out, shell=shell, cwd=cwd)
     (stdout, stderr) = proc.communicate()
+    if hasattr(stdout, "decode"):
+        stdout = stdout.decode(encoding)
+        stderr = stderr.decode(encoding)
     return GitCmdOutput(cmdline_args, proc.returncode, stdout, stderr, None)
 
 

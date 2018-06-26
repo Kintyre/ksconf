@@ -7,7 +7,7 @@ from subprocess import list2cmdline
 
 from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker, \
     gen_arch_file_remapper
-from ksconf.conf.parser import parse_conf, PARSECONF_LOOSE, ConfParserException
+from ksconf.conf.parser import parse_conf, PARSECONF_LOOSE, ConfParserException, default_encoding
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.file import file_hash, match_bwlist, dir_exists
@@ -42,7 +42,7 @@ def do_unarchive(args):
         gaf_app, gaf_relpath = gaf.path.split("/", 1)
         files += 1
         if gaf.path.endswith("app.conf") and gaf.payload:
-            conffile = BytesIO(gaf.payload)
+            conffile = StringIO(gaf.payload.decode(default_encoding))
             conffile.name = os.path.join(args.tarball, gaf.path)
             app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
             del conffile
