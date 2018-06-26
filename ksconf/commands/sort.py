@@ -5,6 +5,13 @@ from ksconf.conf.parser import parse_conf, PARSECONF_STRICT, smart_write_conf, C
 from ksconf.consts import SMART_NOCHANGE, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED
 
 
+def _has_nosort_marker(path):
+    # KISS:  Look for the KSCONF-NO-SORT string in the first 4k of this file.
+    with open(path, "rb") as stream:
+        prefix = stream.read(4096)
+    return b"KSCONF-NO-SORT" in prefix
+
+
 def do_sort(args):
     ''' Sort a single configuration file. '''
     stanza_delims = "\n" * args.newlines
@@ -13,8 +20,7 @@ def do_sort(args):
         changes = 0
         for conf in args.conf:
             try:
-                # KISS:  Look for the KSCONF-NO-SORT string in the first 4k of this file.
-                if not args.force and "KSCONF-NO-SORT" in open(conf.name).read(4096):
+                if not args.force and _has_nosort_marker(conf.name):
                     if not args.quiet:
                         sys.stderr.write("Skipping blacklisted file {}\n".format(conf.name))
                     continue

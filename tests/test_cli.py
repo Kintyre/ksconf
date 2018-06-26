@@ -22,7 +22,8 @@ from ksconf.conf.parser import parse_conf, write_conf, \
 def _debug_file(flag, fn):       # pragma: no cover
     """ Dump file contents with a message string to the output.  For quick'n'diry unittest
     debugging only """
-    content = open(fn).read()
+    with open(fn) as fp:
+         content = fp.read()
     length = len(content)
     hash = file_hash(fn)
     print "\n{flag} {fn}  len={length} hash={hash} \n{content}".format(**vars())
@@ -142,9 +143,26 @@ class TestWorkDir(object):
         content = dedent(content)
         path = self.get_path(rel_path)
         self.makedir(None, path=os.path.dirname(path))
-        with open(path, "w") as stream:
+        kw = {}
+        if isinstance(content, bytes):
+            kw["mode"] = "wb"
+        else:
+            kw["mode"] = "w"
+            content = dedent(content)
+        with open(path, **kw) as stream:
             stream.write(content)
         return path
+
+    def read_file(self, rel_path, as_bytes=False):
+        path = self.get_path(rel_path)
+        kw = {}
+        if as_bytes:
+            kw["mode"] = "rb"
+        else:
+            kw["mode"] = "r"
+        with open(path, **kw) as stream:
+            content = stream.read()
+        return content
 
     def write_conf(self, rel_path, conf):
         path = self.get_path(rel_path)
@@ -158,9 +176,9 @@ class TestWorkDir(object):
 
     def copy_static(self, static, rel_path):
         src = static_data(static)
-        with open(src, "r") as stream:
+        with open(src, "rb") as stream:
             content = stream.read()
-            return self.write_file(rel_path, content)
+        return self.write_file(rel_path, content)
 
 
 class CliSimpleTestCase(unittest.TestCase):
@@ -239,7 +257,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertEqual(cfg["aws:config"]["ANNOTATE_PUNCT"], "true")
             self.assertEqual(cfg["aws:config"]["EVAL-change_type"], '"configuration"')
             self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
-            nav_content = open(twd.get_path("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")).read()
+            nav_content = twd.read_file("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")
             self.assertIn("My custom view", nav_content)
         twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf", {
             "aws:config": {"TIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%6NZ"}
