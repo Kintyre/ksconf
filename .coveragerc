@@ -1,5 +1,5 @@
 [run]
 omit =
-    # omit everything in /usr
     /usr/*
     /Library/*
+    /home/*
