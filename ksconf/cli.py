@@ -28,7 +28,6 @@ from ksconf.util.completers import conf_files_completer
 
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
 
-from ksconf.commands.minimize import do_minimize
 from ksconf.commands.unarchive import do_unarchive
 
 
@@ -115,96 +114,6 @@ def cli(argv=None, _unittest=False):
 
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
-
-
-    # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
-    # Example workflow:
-    #   1. cp default/props.conf local/props.conf
-    #   2. vi local/props.conf (edit JUST the lines you want to change)
-    #   3. splconf minimize --target=local/props.conf default/props.conf
-    #  (You could take this a step further by appending "$SPLUNK_HOME/system/default/props.conf"
-    # and removing any SHOULD_LINEMERGE = true entries (for example)
-    sp_minz = subparsers.add_parser("minimize",
-                                    help="Minimize the target file by removing entries duplicated "
-                                         "in the default conf(s) provided.  ",
-                                    description="""\
-Minimize a conf file by removing the default settings
-
-Reduce local conf file to only your indented changes without manually tracking
-which entires you've edited.  Minimizing local conf files makes your local
-customizations easier to read and often results in cleaner add-on upgrades.
-
-A typical scenario & why does this matter:
-To customizing a Splunk app or add-on, start by copying the conf file from
-default to local and then applying your changes to the local file.  That's
-good.  But stopping here may complicated future upgrades, because the local
-file doesn't contain *just* your settings, it contains all the default
-settings too.  Fixes published by the app creator may be masked by your local
-settings.  A better approach is to reduce the local conf file leaving only the
-stanzas and settings that you indented to change.  This make your conf files
-easier to read and makes upgrades easier, but it's tedious to do by hand.
-
-For special cases, the '--explode-default' mode reduces duplication between
-entries normal stanzas and global/default entries.  If 'disabled = 0' is a
-global default, it's technically safe to remove that setting from individual
-stanzas.  But sometimes it's preferable to be explicit, and this behavior may
-be too heavy-handed for general use so it's off by default.  Use this mode if
-your conf file that's been fully-expanded.  (i.e., conf entries downloaded via
-REST, or the output of "btool list").  This isn't perfect, since many apps
-push their settings into the global namespace, but it can help.
-
-
-Example usage:
-
-    cd Splunk_TA_nix
-    cp default/inputs.conf local/inputs.conf
-
-    # Edit 'disabled' and 'interval' settings in-place
-    vi local/inputs.conf
-
-    # Remove all the extra (unmodified) bits
-    ksconf minimize --target=local/inputs.conf default/inputs.conf
-
-""",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    '''Make sure this works before advertising (same file as target and source????)
-    # Note:  Use the 'merge' command to "undo"
-    ksconf merge --target=local/inputs.conf default/inputs local/inputs.conf
-    '''
-    sp_minz.set_defaults(funct=do_minimize)
-    sp_minz.add_argument("conf", metavar="FILE", nargs="+",
-                         type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
-                         help="The default configuration file(s) used to determine what base "
-                              "settings are unnecessary to keep in the target file."
-                         ).completer = conf_files_completer
-    sp_minz.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT),
-                         help="This is the local file that you with to remove the duplicate "
-                              "settings from.  By default, this file will be read and the updated "
-                              "with a minimized version."
-                         ).completer = conf_files_completer
-    sp_mzg1 = sp_minz.add_mutually_exclusive_group()
-    sp_mzg1.add_argument("--dry-run", "-D", default=False, action="store_true",
-                         help="Enable dry-run mode.  Instead of writing the minimized value to "
-                              "TARGET, show a 'diff' of what would be removed.")
-    sp_mzg1.add_argument("--output",
-                         type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
-                         default=None,
-                         help="When this option is used, the new minimized file will be saved to "
-                              "this file instead of updating TARGET.  This can be use to preview "
-                              "changes or helpful in other workflows."
-                         ).completer = conf_files_completer
-    sp_minz.add_argument("--explode-default", "-E", default=False, action="store_true",
-                         help="Along with minimizing the same stanza across multiple config files, "
-                              "also take into consideration the [default] or global stanza values. "
-                              "This can often be used to trim out cruft in savedsearches.conf by "
-                              "pointing to etc/system/default/savedsearches.conf, for example.")
-    sp_minz.add_argument("-k", "--preserve-key",
-                         action="append", default=[],
-                         help="Specify a key that should be allowed to be a duplication but should "
-                              "be preserved within the minimized output.  For example the it's"
-                              "often desirable keep the 'disabled' settings in the local file, "
-                              "even if it's enabled by default.")
 
 
     # SUBCOMMAND:  splconf upgrade tarball
