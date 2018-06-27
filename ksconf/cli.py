@@ -16,7 +16,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import argparse
 import sys
-import textwrap
 
 import ksconf
 import ksconf.util
@@ -31,7 +30,6 @@ from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoin
 
 from ksconf.commands.merge import do_merge
 from ksconf.commands.minimize import do_minimize
-from ksconf.commands.promote import do_promote
 from ksconf.commands.unarchive import do_unarchive
 
 
@@ -120,111 +118,6 @@ def cli(argv=None, _unittest=False):
     # more useful for 'patch', very important for 'combine'
 
 
-    # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
-    sp_prmt = subparsers.add_parser("promote",
-                                    help="Promote .conf settings from one file into another either "
-                                         "in batch mode (all changes) or interactively allowing "
-                                         "the user to pick which stanzas and keys to integrate. "
-                                         "Changes made via the UI (stored in the local folder) "
-                                         "can be promoted (moved) to a version-controlled "
-                                         "directory.",
-                                    description="""\
-Propagate .conf settings applied in one file to another.  Typically this is
-used to take local changes made via the UI and push them into a default (or
-default.d/) location.
-
-NOTICE:  By default, changes are *MOVED*, not just copied.
-
-Promote has two different modes:  batch and interactive.  In batch mode all
-changes are applied automatically and the (now empty) source file is removed.
-In interactive mode the user is prompted to pick which stanzas and keys to
-integrate.  This can be used to push  changes made via the UI, which are
-stored in a 'local' file, to the version-controlled 'default' file.  Note that
-the normal operation moves changes from the SOURCE file to the TARGET,
-updating both files in the process.  But it's also possible to preserve the
-local file, if desired.
-
-If either the source file or target file is modified while a promotion is
-under progress, changes will be aborted.  And any custom selections you made
-will be lost.  (This needs improvement.)
-""",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    sp_prmt.set_defaults(funct=do_promote, mode="ask")
-    sp_prmt.add_argument("source", metavar="SOURCE",
-                         type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
-                         help="The source configuration file to pull changes from.  (Typically the "
-                              "'local' conf file)"
-                         ).completer = conf_files_completer
-    sp_prmt.add_argument("target", metavar="TARGET",
-                         type=ConfFileType("r+", "none", accept_dir=True,
-                                           parse_profile=PARSECONF_STRICT),
-                         help="Configuration file or directory to push the changes into. "
-                              "(Typically the 'default' folder) "
-                              "When a directory is given instead of a file then the same file name "
-                              "is assumed for both SOURCE and TARGET"
-                         ).completer = conf_files_completer
-    sp_prg1 = sp_prmt.add_mutually_exclusive_group()
-    sp_prg1.add_argument("--batch", "-b",
-                         action="store_const",
-                         dest="mode", const="batch",
-                         help="Use batch mode where all configuration settings are automatically "
-                              "promoted.  All changes are moved from the source to the target "
-                              "file and the source file will be blanked or removed.")
-    sp_prg1.add_argument("--interactive", "-i",
-                         action="store_const",
-                         dest="mode", const="interactive",
-                         help="Enable interactive mode where the user will be prompted to approve "
-                              "the promotion of specific stanzas and keys.  The user will be able "
-                              "to apply, skip, or edit the changes being promoted.  (This "
-                              "functionality was inspired by 'git add --patch').")
-    sp_prmt.add_argument("--force", "-f",
-                         action="store_true", default=False,
-                         help="Disable safety checks.")
-    sp_prmt.add_argument("--keep", "-k",
-                         action="store_true", default=False,
-                         help="Keep conf settings in the source file.  This means that changes "
-                              "will be copied into the target file instead of moved there.")
-    sp_prmt.add_argument("--keep-empty",
-                         action="store_true", default=False,
-                         help="Keep the source file, even if after the settings promotions the "
-                              "file has no content.  By default, SOURCE will be removed if all "
-                              "content has been moved into the TARGET location.  "
-                              "Splunk will re-create any necessary local files on the fly.")
-
-    """ Possible behaviors.... thinking through what CLI options make the most sense...
-
-    Things we may want to control:
-
-        Q: What mode of operation?
-            1.)  Automatic (merge all)
-            2.)  Interactive (user guided / sub-shell)
-            3.)  Batch mode:  CLI driven based on a stanza or key using either a name or pattern to
-                 select which content should be integrated.
-
-        Q: What happens to the original?
-            1.)  Updated
-              a.)  Only remove source content that has been integrated into the target.
-              b.)  Let the user pick
-            2.)  Preserved  (Dry-run, or don't delete the original mode);  if output is stdout.
-            3.)  Remove
-              a.)  Only if all content was integrated.
-              b.)  If user chose to discard entry.
-              c.)  Always (--always-remove)
-        Q: What to do with discarded content?
-            1.)  Remove from the original (destructive)
-            2.)  Place in a "discard" file.  (Allow the user to select the location of the file.)
-            3.)  Automatically backup discards to a internal store, and/or log.  (More difficult to
-                 recover, but content is always logged/recoverable with some effort.)
-
-
-    Interactive approach:
-
-        3 action options:
-            Integrate/Accept: Move content from the source to the target  (e.g., local to default)
-            Reject/Remove:    Discard content from the source; destructive (e.g., rm local setting)
-            Skip/Keep:        Don't push to target or remove from source (no change)
-
-    """
 
     # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
     sp_merg = subparsers.add_parser("merge",

@@ -5,7 +5,7 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,sort,unarchive,promote,merge,minimize} ...
+                  {check,combine,diff,promote,sort,merge,minimize,unarchive} ...
     
     Kintyre Splunk CONFig tool.
     
@@ -17,7 +17,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,sort,unarchive,promote,merge,minimize}
+      {check,combine,diff,promote,sort,merge,minimize,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Merge configuration files from one or more source
                             directories into a combined destination directory.
@@ -27,15 +27,14 @@ The following documents the CLI options
                             instances after a phased server migration.
         diff                Compares settings differences between two .conf files
                             ignoring spacing and sort order
-        sort                Sort a Splunk .conf file. Sorted output is echoed or
-                            files can be sorted inplace.
-        unarchive
         promote             Promote .conf settings from one file into another
                             either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
                             integrate. Changes made via the UI (stored in the
                             local folder) can be promoted (moved) to a version-
                             controlled directory.
+        sort                Sort a Splunk .conf file. Sorted output is echoed or
+                            files can be sorted inplace.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s) provided.
@@ -210,114 +209,6 @@ The following documents the CLI options
                             consistently)
 
 
-## ksconf sort
-    usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
-                       FILE [FILE ...]
-    
-    Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
-    config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the '-i' option is used.
-    
-    Conf files that are manually managed that you don't ever want sorted can be
-    'blacklisted' by placing the string 'KSCONF-NO-SORT' in a comment at the top
-    of the .conf file.
-    
-    To recursively sort all files:
-    
-        find . -name '*.conf' | xargs ksconf sort -i
-    
-    positional arguments:
-      FILE                  Input file to sort, or standard input.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            File to write results to. Defaults to standard output.
-      --inplace, -i         Replace the input file with a sorted version. Warning
-                            this a potentially destructive operation that may
-                            move/remove comments.
-    
-    In-place update arguments:
-      -F, --force           Force file sorting for all files, even for files
-                            containing the special 'KSCONF-NO-SORT' marker.
-      -q, --quiet           Reduce the output. Reports only updated or invalid
-                            files. This is useful for pre-commit hooks, for
-                            example.
-      -n LINES, --newlines LINES
-                            Lines between stanzas.
-
-
-## ksconf unarchive
-    usage: ksconf unarchive [-h] [--dest DIR] [--app-name NAME]
-                            [--default-dir DIR] [--exclude EXCLUDE] [--keep KEEP]
-                            [--allow-local]
-                            [--git-sanity-check {off,changed,untracked,ignored}]
-                            [--git-mode {nochange,stage,commit}] [--no-edit]
-                            [--git-commit-args GIT_COMMIT_ARGS]
-                            SPL
-    
-    positional arguments:
-      SPL                   The path to the archive to install.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --dest DIR            Set the destination path where the archive will be
-                            extracted. By default the current directory is used,
-                            but sane values include etc/apps, etc/deployment-apps,
-                            and so on. This could also be a git repository working
-                            tree where splunk apps are stored.
-      --app-name NAME       The app name to use when expanding the archive. By
-                            default, the app name is taken from the archive as the
-                            top-level path included in the archive (by convention)
-                            Expanding archives that contain multiple (ITSI) or
-                            nested apps (NIX, ES) is not supported.
-      --default-dir DIR     Name of the directory where the default contents will
-                            be stored. This is a useful feature for apps that use
-                            a dynamic default directory that's created by the
-                            'combine' mode.
-      --exclude EXCLUDE, -e EXCLUDE
-                            Add a file pattern to exclude. Splunk's psudo-glob
-                            patterns are supported here. '*' for any non-directory
-                            match, '...' for ANY (including directories), and '?'
-                            for a single character.
-      --keep KEEP, -k KEEP  Add a pattern of file to preserve during an upgrade.
-      --allow-local         Allow local/ and local.meta files to be extracted from
-                            the archive. This is a Splunk packaging violation and
-                            therefore by default these files are excluded.
-      --git-sanity-check {off,changed,untracked,ignored}
-                            By default a 'git status' is run on the destination
-                            folder to see if the working tree or index has
-                            modifications before the unarchive process starts. The
-                            choices go from least restrictive to most thorough:
-                            Use 'off' to prevent any 'git status' safely checks.
-                            Use 'changed' to abort only upon local modifications
-                            to files tracked by git. Use 'untracked' (by default)
-                            to look for changed and untracked files before
-                            considering the tree clean. Use 'ignored' to enable
-                            the most intense safety check which will abort if
-                            local changes, untracked, or ignored files are found.
-                            (These checks are automatically disabled if the app is
-                            not in a git working tree, or git is not present.)
-      --git-mode {nochange,stage,commit}
-                            Set the desired level of git integration. The default
-                            mode is 'stage', where new, updated, or removed files
-                            are automatically handled for you. If 'commit' mode is
-                            selected, then files are committed with an auto-
-                            generated commit message. To prevent any 'git add' or
-                            'git rm' commands from being run, pick the 'nochange'
-                            mode. Notes: (1) The git mode is irrelevant if the app
-                            is not in a git working tree. (2) If a git commit is
-                            incorrect, simply roll it back with 'git reset' or fix
-                            it with a 'git commit --amend' before the changes are
-                            pushed anywhere else. (That's why you're using git in
-                            the first place, right?)
-      --no-edit             Tell git to skip opening your editor. By default you
-                            will be prompted to review/edit the commit message.
-                            (Git Tip: Delete the content of the message to abort
-                            the commit.)
-      --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
-
-
 ## ksconf promote
     usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
                           [--keep-empty]
@@ -370,6 +261,43 @@ The following documents the CLI options
                          will be removed if all content has been moved into the
                          TARGET location. Splunk will re-create any necessary
                          local files on the fly.
+
+
+## ksconf sort
+    usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
+                       FILE [FILE ...]
+    
+    Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
+    config file will be echoed to the screen.  (2) the config files are updated
+    inplace when the '-i' option is used.
+    
+    Conf files that are manually managed that you don't ever want sorted can be
+    'blacklisted' by placing the string 'KSCONF-NO-SORT' in a comment at the top
+    of the .conf file.
+    
+    To recursively sort all files:
+    
+        find . -name '*.conf' | xargs ksconf sort -i
+    
+    positional arguments:
+      FILE                  Input file to sort, or standard input.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --target FILE, -t FILE
+                            File to write results to. Defaults to standard output.
+      --inplace, -i         Replace the input file with a sorted version. Warning
+                            this a potentially destructive operation that may
+                            move/remove comments.
+    
+    In-place update arguments:
+      -F, --force           Force file sorting for all files, even for files
+                            containing the special 'KSCONF-NO-SORT' marker.
+      -q, --quiet           Reduce the output. Reports only updated or invalid
+                            files. This is useful for pre-commit hooks, for
+                            example.
+      -n LINES, --newlines LINES
+                            Lines between stanzas.
 
 
 ## ksconf merge
@@ -467,5 +395,76 @@ The following documents the CLI options
                             minimized output. For example the it'soften desirable
                             keep the 'disabled' settings in the local file, even
                             if it's enabled by default.
+
+
+## ksconf unarchive
+    usage: ksconf unarchive [-h] [--dest DIR] [--app-name NAME]
+                            [--default-dir DIR] [--exclude EXCLUDE] [--keep KEEP]
+                            [--allow-local]
+                            [--git-sanity-check {off,changed,untracked,ignored}]
+                            [--git-mode {nochange,stage,commit}] [--no-edit]
+                            [--git-commit-args GIT_COMMIT_ARGS]
+                            SPL
+    
+    positional arguments:
+      SPL                   The path to the archive to install.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --dest DIR            Set the destination path where the archive will be
+                            extracted. By default the current directory is used,
+                            but sane values include etc/apps, etc/deployment-apps,
+                            and so on. This could also be a git repository working
+                            tree where splunk apps are stored.
+      --app-name NAME       The app name to use when expanding the archive. By
+                            default, the app name is taken from the archive as the
+                            top-level path included in the archive (by convention)
+                            Expanding archives that contain multiple (ITSI) or
+                            nested apps (NIX, ES) is not supported.
+      --default-dir DIR     Name of the directory where the default contents will
+                            be stored. This is a useful feature for apps that use
+                            a dynamic default directory that's created by the
+                            'combine' mode.
+      --exclude EXCLUDE, -e EXCLUDE
+                            Add a file pattern to exclude. Splunk's psudo-glob
+                            patterns are supported here. '*' for any non-directory
+                            match, '...' for ANY (including directories), and '?'
+                            for a single character.
+      --keep KEEP, -k KEEP  Add a pattern of file to preserve during an upgrade.
+      --allow-local         Allow local/ and local.meta files to be extracted from
+                            the archive. This is a Splunk packaging violation and
+                            therefore by default these files are excluded.
+      --git-sanity-check {off,changed,untracked,ignored}
+                            By default a 'git status' is run on the destination
+                            folder to see if the working tree or index has
+                            modifications before the unarchive process starts. The
+                            choices go from least restrictive to most thorough:
+                            Use 'off' to prevent any 'git status' safely checks.
+                            Use 'changed' to abort only upon local modifications
+                            to files tracked by git. Use 'untracked' (by default)
+                            to look for changed and untracked files before
+                            considering the tree clean. Use 'ignored' to enable
+                            the most intense safety check which will abort if
+                            local changes, untracked, or ignored files are found.
+                            (These checks are automatically disabled if the app is
+                            not in a git working tree, or git is not present.)
+      --git-mode {nochange,stage,commit}
+                            Set the desired level of git integration. The default
+                            mode is 'stage', where new, updated, or removed files
+                            are automatically handled for you. If 'commit' mode is
+                            selected, then files are committed with an auto-
+                            generated commit message. To prevent any 'git add' or
+                            'git rm' commands from being run, pick the 'nochange'
+                            mode. Notes: (1) The git mode is irrelevant if the app
+                            is not in a git working tree. (2) If a git commit is
+                            incorrect, simply roll it back with 'git reset' or fix
+                            it with a 'git commit --amend' before the changes are
+                            pushed anywhere else. (That's why you're using git in
+                            the first place, right?)
+      --no-edit             Tell git to skip opening your editor. By default you
+                            will be prompted to review/edit the commit message.
+                            (Git Tip: Delete the content of the message to abort
+                            the commit.)
+      --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
 
 
