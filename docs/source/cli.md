@@ -5,7 +5,7 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,promote,sort,merge,minimize,unarchive} ...
+                  {check,combine,diff,merge,promote,sort,minimize,unarchive} ...
     
     Kintyre Splunk CONFig tool.
     
@@ -17,7 +17,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,promote,sort,merge,minimize,unarchive}
+      {check,combine,diff,merge,promote,sort,minimize,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Merge configuration files from one or more source
                             directories into a combined destination directory.
@@ -27,6 +27,7 @@ The following documents the CLI options
                             instances after a phased server migration.
         diff                Compares settings differences between two .conf files
                             ignoring spacing and sort order
+        merge               Merge two or more .conf files
         promote             Promote .conf settings from one file into another
                             either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
@@ -35,7 +36,6 @@ The following documents the CLI options
                             controlled directory.
         sort                Sort a Splunk .conf file. Sorted output is echoed or
                             files can be sorted inplace.
-        merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s) provided.
         unarchive           Install or overwrite an existing app in a git-friendly
@@ -209,6 +209,35 @@ The following documents the CLI options
                             consistently)
 
 
+## ksconf merge
+    usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
+                        FILE [FILE ...]
+    
+    Merge two or more .conf files into a single combined .conf file.
+    
+    This could be used to merge the props.conf file from ALL technology addons into a single file:
+    
+    ksconf merge --target=master-props.conf etc/apps/*TA*/{default,local}/props.conf
+    
+    positional arguments:
+      FILE                  The source configuration file to pull changes from.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --target FILE, -t FILE
+                            Save the merged configuration files to this target
+                            file. If not given, the default is to write the merged
+                            conf to standard output.
+      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
+                            show what changes would be made to it in the form of a
+                            'diff'. If TARGET doesn't exist, then show the merged
+                            file.
+      --banner BANNER, -b BANNER
+                            A banner or warning comment to add to the TARGET file.
+                            Often used to warn Splunk admins from editing a auto-
+                            generated file.
+
+
 ## ksconf promote
     usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
                           [--keep-empty]
@@ -298,29 +327,6 @@ The following documents the CLI options
                             example.
       -n LINES, --newlines LINES
                             Lines between stanzas.
-
-
-## ksconf merge
-    usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
-                        FILE [FILE ...]
-    
-    positional arguments:
-      FILE                  The source configuration file to pull changes from.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            Save the merged configuration files to this target
-                            file. If not given, the default is to write the merged
-                            conf to standard output.
-      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
-                            show what changes would be made to it in the form of a
-                            'diff'. If TARGET doesn't exist, then show the merged
-                            file.
-      --banner BANNER, -b BANNER
-                            A banner or warning comment to add to the TARGET file.
-                            Often used to warn Splunk admins from editing a auto-
-                            generated file.
 
 
 ## ksconf minimize

@@ -28,7 +28,6 @@ from ksconf.util.completers import conf_files_completer
 
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
 
-from ksconf.commands.merge import do_merge
 from ksconf.commands.minimize import do_minimize
 from ksconf.commands.unarchive import do_unarchive
 
@@ -117,30 +116,6 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
-
-
-    # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
-    sp_merg = subparsers.add_parser("merge",
-                                    help="Merge two or more .conf files",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    sp_merg.set_defaults(funct=do_merge)
-    sp_merg.add_argument("conf", metavar="FILE", nargs="+",
-                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID),
-                         help="The source configuration file to pull changes from."
-                         ).completer = conf_files_completer
-    sp_merg.add_argument("--target", "-t", metavar="FILE",
-                         type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
-                         default=ConfFileProxy("<stdout>", "w", sys.stdout),
-                         help="Save the merged configuration files to this target file.  If not "
-                              "given, the default is to write the merged conf to standard output."
-                         ).completer = conf_files_completer
-    sp_merg.add_argument("--dry-run", "-D", default=False, action="store_true",
-                         help="Enable dry-run mode.  Instead of writing to TARGET, show what "
-                              "changes would be made to it in the form of a 'diff'. "
-                              "If TARGET doesn't exist, then show the merged file.")
-    sp_merg.add_argument("--banner", "-b", default="",
-                         help="A banner or warning comment to add to the TARGET file.  Often used "
-                              "to warn Splunk admins from editing a auto-generated file.")
 
     # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
     # Example workflow:
