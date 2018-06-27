@@ -14,6 +14,11 @@ from ksconf.util.file import file_hash, match_bwlist, dir_exists
 from ksconf.vc.git import git_is_working_tree, git_ls_files, git_is_clean, git_status_ui, \
     git_cmd_iterable, git_cmd
 
+from ksconf.commands import KsconfCmd, dedent
+
+class UnarchiveCmd(KsconfCmd):
+    pass
+
 
 def do_unarchive(args):
     """ Install / upgrade a Splunk app from an archive file """

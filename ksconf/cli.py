@@ -25,15 +25,17 @@ from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 from ksconf.commands import ConfFileProxy, ConfFileType
 from ksconf.conf.parser import PARSECONF_MID_NC, PARSECONF_STRICT_NC, PARSECONF_STRICT, \
     PARSECONF_MID, PARSECONF_LOOSE
+from ksconf.util.completers import conf_files_completer
 
-from ksconf.commands.check import do_check
+from ksconf.commands import KsconfCmd, get_entrypoints
+
 from ksconf.commands.combine import do_combine
 from ksconf.commands.diff import do_diff
 from ksconf.commands.merge import do_merge
 from ksconf.commands.minimize import do_minimize
 from ksconf.commands.promote import do_promote
-from ksconf.commands.sort import do_sort
 from ksconf.commands.unarchive import do_unarchive
+
 
 
 
@@ -84,8 +86,24 @@ def cli(argv=None, _unittest=False):
                                      description=_cli_description,
                                      prog="ksconf")
 
-    # Someday add *.meta (once more testing is done with those files
-    conf_files_completer = FilesCompleter(allowednames=["*.conf"])
+    subparsers = parser.add_subparsers()
+
+    version_info = '%(prog)s {}\n'.format(ksconf.version)
+
+    version_info += "\nCommands:"
+    # Add entry-point subcommands
+    for (name, entry) in get_entrypoints("ksconf_cmd").items():
+        #sys.stderr.write("Loading {} from entry point:  {!r}\n".format(name, entry))
+        cmd_cls = entry.load()
+        distro = entry.dist or "Unknown"
+        version_info += "\n    {:15} ({})".format(name, distro)
+
+        if not issubclass(cmd_cls, KsconfCmd):
+            raise RuntimeError("Entry point {!r} targets a class not derived from KsconfCmd.".format(entry))
+
+        cmd = cmd_cls(entry.name)
+        cmd.add_parser(subparsers)
+
 
     # Common settings
     '''
@@ -105,7 +123,7 @@ def cli(argv=None, _unittest=False):
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
     '''
-    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(ksconf.version))
+    parser.add_argument('--version', action='version', version=version_info)
     parser.add_argument("--force-color", action="store_true", default=False,
                         help="Force TTY color mode on.  Useful if piping the output a color-aware "
                              "pager, like 'less -R'")
@@ -113,30 +131,6 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
-    subparsers = parser.add_subparsers()
-
-    # SUBCOMMAND:  splconf check <CONF>
-    sp_chck = subparsers.add_parser("check",
-                                    help="Perform basic syntax and sanity checks on .conf files",
-                                    description=
-                                    "Provide basic syntax and sanity checking for Splunk's .conf "
-                                    "files.  Use Splunk's builtin 'btool check' for a more robust "
-                                    "validation of keys and values.\n\n"
-                                    "Consider using this utility as part of a pre-commit hook.")
-    sp_chck.set_defaults(funct=do_check)
-    sp_chck.add_argument("conf", metavar="FILE", nargs="+",
-                         help="One or more configuration files to check.  If the special value of "
-                              "'-' is given, then the list of files to validate is read from "
-                              "standard input"
-                         ).completer = conf_files_completer
-    sp_chck.add_argument("--quiet", "-q", default=False, action="store_true",
-                         help="Reduce the volume of output.")
-    ''' # Do we really need this?
-    sp_chck.add_argument("--max-errors", metavar="INT", type=int, default=0,
-                         help="Abort check if more than this many files fail validation.  Useful
-                         for a pre-commit hook where any failure is unacceptable.")
-    '''
-    # Usage example:   find . -name '*.conf' | splconf check -  (Nice little pre-commit script)
 
     # SUBCOMMAND:  splconf combine --target=<DIR> <SRC1> [ <SRC-n> ]
     sp_comb = subparsers.add_parser("combine",
@@ -512,48 +506,6 @@ Example usage:
                               "often desirable keep the 'disabled' settings in the local file, "
                               "even if it's enabled by default.")
 
-    # SUBCOMMAND:  splconf sort <CONF>
-    sp_sort = subparsers.add_parser("sort",
-                                    help="Sort a Splunk .conf file.  Sorted output can be echoed "
-                                         "or files can be sorted inplace.",
-                                    description="""\
-Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
-config file will be echoed to the screen.  (2) the config files are updated
-inplace when the '-i' option is used.
-
-Conf files that are manually managed that you don't ever want sorted can be
-'blacklisted' by placing the string 'KSCONF-NO-SORT' in a comment at the top
-of the .conf file.
-
-To recursively sort all files:
-
-    find . -name '*.conf' | xargs ksconf sort -i
-""",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    sp_sort.set_defaults(funct=do_sort)
-
-    sp_sort.add_argument("conf", metavar="FILE", nargs="+",
-                         type=argparse.FileType('r'), default=[sys.stdin],
-                         help="Input file to sort, or standard input."
-                         ).completer = conf_files_completer
-    group = sp_sort.add_mutually_exclusive_group()
-    group.add_argument("--target", "-t", metavar="FILE",
-                       type=argparse.FileType('w'), default=sys.stdout,
-                       help="File to write results to.  Defaults to standard output."
-                       ).completer = conf_files_completer
-    group.add_argument("--inplace", "-i",
-                       action="store_true", default=False,
-                       help="Replace the input file with a sorted version.  Warning this a "
-                            "potentially destructive operation that may move/remove comments.")
-    sp_sog1 = sp_sort.add_argument_group("In-place update arguments")
-    sp_sog1.add_argument("-F", "--force", action="store_true",
-                         help="Force file sorting for all files, even for files containing the "
-                              "special 'KSCONF-NO-SORT' marker.")
-    sp_sog1.add_argument("-q", "--quiet", action="store_true",
-                         help="Reduce the output.  Reports only updated or invalid files.  "
-                              "This is useful for pre-commit hooks, for example.")
-    sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
-                         help="Lines between stanzas.")
 
     # SUBCOMMAND:  splconf upgrade tarball
     sp_unar = subparsers.add_parser("unarchive",

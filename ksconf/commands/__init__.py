@@ -2,9 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
 import sys
+import logging
+
+from textwrap import dedent
 
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException
 from ksconf.consts import SMART_CREATE
+from ksconf.util import memoize
 
 
 class ConfDirProxy(object):
@@ -196,3 +200,99 @@ class ConfFileType(object):
         args = self._mode, self._action, self._parse_profile
         args_str = ', '.join(repr(arg) for arg in args if arg != -1)
         return '%s(%s)' % (type(self).__name__, args_str)
+
+
+
+
+class KsconfCmd(object):
+    """ Ksconf command specification base class. """
+    help = None
+    description = None
+    #formatter_class = None
+
+    def __init__(self, name):
+        self.name = name.lower()
+        # XXX:  Add logging support, after we figure clean lines between logging and UI/console output.
+        self.logger = logging.getLogger("ksconf.cmd.{}".format(self.name))
+        self.stdin = sys.stdin
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
+
+    def redirect_io(self, stdin=None, stdout=None, stderr=None):
+        if stdin is not None:
+            self.stdin = stdin
+        if stdout is not None:
+            self.stdout = stdout
+        if stderr is not None:
+            self.stderr = stderr
+
+    def exit(self, exit_code):
+        """ Allow overriding for unittesting or other high-level functionality, like an
+        interactive interface. """
+        sys.exit(exit_code)
+
+    def add_parser(self, subparser):
+        # Passing in the object return by 'ArgumentParser.add_subparsers()'
+        # XXX: Formatter?
+        self.parser = subparser.add_parser(self.name, help=self.help, description=self.description)
+        self.parser.set_defaults(funct=self.launch)
+        self.register_args(self.parser)
+
+    def register_args(self, parser):
+        """ This function in passed the """
+        parser.add_argument("--wacky", action="store_true",
+                            help="Enable wackiness.  Forgot to override {}.register_args()?".format(self.__class__.__name__))
+
+    def launch(self, args):
+        """ Handle flow control betweeen pre_run() / run() / post_run() """
+        # If this fails, exception is passed up, no handling errors/logging done here.
+        self.pre_run(args)
+
+        exc = None
+        try:
+            return_code = self.run(args)
+        except:
+            exc = sys.exc_info()
+            raise
+        finally:
+            # No matter what, post_run is called.
+            self.post_run(args, exc)
+        return return_code
+
+    def pre_run(self, args):
+        """ Pre-run hook.  Any exceptions here prevent run() from being called. """
+        pass
+
+    def run(self, args):
+        """ Actual works happens here.  Return code should be an EXIT_CODE_* from consts. """
+        raise NotImplementedError
+
+    def post_run(self, args, exec_info=None):
+        """ Any custom clean up work that needs done.  Allways called if run() was.  Presence of
+       exc_info indicates failure. """
+        pass
+
+
+# This caching is *mostly* beneficial for unittesth CLI testing
+@memoize
+def get_entrypoints(group, name=None):
+    try:
+        import entrypoints
+        # Monkey patch some attributes for better API compatibility
+        entrypoints.EntryPoint.dist = property(lambda self: self.distro)
+
+        if name:
+            return entrypoints.get_single(group, name)
+        else:
+            return entrypoints.get_group_named(group)
+    except ImportError:
+        try:
+            # Part of setuptools (widely used but quite slow); It's presence can't be assumed
+            import pkg_resources
+            d = {}
+            for entrypoint in pkg_resources.iter_entry_points(group):
+                d[entrypoint.name] = entrypoint
+            return d
+        except ImportError:
+            # XXX:  Implement a fallback mechanism for at least the local tools (needed for embedded Splunk scenario)
+            raise RuntimeError("Try installing setuptools (pip install setuptools).  Fallback mechanism not yet implemented.")
