@@ -13,8 +13,8 @@ from ksconf.conf.parser import parse_conf, PARSECONF_STRICT, smart_write_conf, C
     write_conf
 from ksconf.consts import SMART_NOCHANGE, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED, \
     EXIT_CODE_SUCCESS
-from ksconf.util.completers import conf_files_completer, FilesCompleter
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.util.completers import conf_files_completer
+from ksconf.commands import KsconfCmd
 
 
 def _has_nosort_marker(path):
@@ -40,9 +40,7 @@ To recursively sort all files:
 
     find . -name '*.conf' | xargs ksconf sort -i
 """
-
-    # XXX:  Use custom formatter here...
-    #formatter_class = MyDescriptionHelpFormatter
+    format = "manual"
 
     def register_args(self, parser):
         import sys, argparse

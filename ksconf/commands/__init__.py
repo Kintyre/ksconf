@@ -3,7 +3,10 @@ from __future__ import unicode_literals
 import os
 import sys
 import logging
+import argparse
+import textwrap
 
+# Used by ksconf.commands.* (not locally here)
 from textwrap import dedent
 
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException
@@ -203,12 +206,24 @@ class ConfFileType(object):
 
 
 
+# For now, just effectively a copy of RawDescriptionHelpFormatter
+class MyDescriptionHelpFormatter(argparse.HelpFormatter):
+    def _fill_text(self, text, width, indent):
+        # Looks like this one is ONLY used for the top-level description
+        return ''.join([indent + line for line in text.splitlines(True)])
+
+    def _split_lines(self, text, width):
+        text = self._whitespace_matcher.sub(' ', text).strip()
+        return textwrap.wrap(text, width)
+
+
+
 
 class KsconfCmd(object):
     """ Ksconf command specification base class. """
     help = None
     description = None
-    #formatter_class = None
+    format = "default"
 
     def __init__(self, name):
         self.name = name.lower()
@@ -233,8 +248,13 @@ class KsconfCmd(object):
 
     def add_parser(self, subparser):
         # Passing in the object return by 'ArgumentParser.add_subparsers()'
-        # XXX: Formatter?
-        self.parser = subparser.add_parser(self.name, help=self.help, description=self.description)
+        kwargs = {
+            "help" : self.help,
+            "description" : self.description,
+        }
+        if self.format == "manual":
+            kwargs["formatter_class"] = MyDescriptionHelpFormatter
+        self.parser = subparser.add_parser(self.name, **kwargs)
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
 
@@ -284,6 +304,15 @@ def get_entrypoints(group, name=None):
         if name:
             return entrypoints.get_single(group, name)
         else:
+            from collections import OrderedDict
+            # Copied from 'get_group_named()' except that it preserves order
+            result = OrderedDict()
+            for ep in entrypoints.get_group_all(group):
+                if ep.name not in result:
+                    result[ep.name] = ep
+            return result
+
+
             return entrypoints.get_group_named(group)
     except ImportError:
         try:

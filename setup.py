@@ -94,7 +94,7 @@ setup(name="kintyre-splunk-conf",
           ],
         "ksconf_cmd" : [
             "check      = ksconf.commands.check:CheckCmd",
-#            "combine    = ksconf.commands.combine:CombineCmd",
+            "combine    = ksconf.commands.combine:CombineCmd",
 #            "diff       = ksconf.commands.diff:DiffCmd"
 #            "promote    = ksconf.commands.promote:PromotCmd"
 #            "merge      = ksconf.commands.merge:MergeCmd"
