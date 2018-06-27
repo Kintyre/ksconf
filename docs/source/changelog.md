@@ -5,10 +5,9 @@
 
 Add Python 3 support, tox and vagrant for testing.
 
-### Release v0.5.0 (pending)
- * Adds Python 3 support.
+### Release v0.5.0 (2018-06-26)
+ * Python 3 support.
  * Many bug fixes and improvements resulting from wider testsing.
- * Fixed some long-term bugs with testing on Windows (without running as admin) 
 
 
 ## Ksconf 0.4.x
