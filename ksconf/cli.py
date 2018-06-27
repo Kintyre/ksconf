@@ -29,7 +29,6 @@ from ksconf.util.completers import conf_files_completer
 
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
 
-from ksconf.commands.diff import do_diff
 from ksconf.commands.merge import do_merge
 from ksconf.commands.minimize import do_minimize
 from ksconf.commands.promote import do_promote
@@ -120,38 +119,6 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
-
-
-
-
-
-    # SUBCOMMAND:  splconf diff <CONF> <CONF>
-    sp_diff = subparsers.add_parser("diff",
-                                    help="Compares settings differences of two .conf files "
-                                         "ignoring textual and sorting differences",
-                                    description="""\
-Compares the content differences of two .conf files
-
-This command ignores textual differences (like order, spacing, and comments)
-and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-within any given value will be compared.  Multiline fields are compared in are
-compared in a more traditional 'diff' output so that long savedsearches and
-macros can be compared more easily.
-""",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    sp_diff.set_defaults(funct=do_diff)
-    sp_diff.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",
-                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
-                         ).completer = conf_files_completer
-    sp_diff.add_argument("conf2", metavar="CONF2", help="Right side of the comparison",
-                         type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
-                         ).completer = conf_files_completer
-    sp_diff.add_argument("-o", "--output", metavar="FILE",
-                         type=argparse.FileType('w'), default=sys.stdout,
-                         help="File where difference is stored.  Defaults to standard out.")
-    sp_diff.add_argument("--comments", "-C",
-                         action="store_true", default=False,
-                         help="Enable comparison of comments.  (Unlikely to work consistently)")
 
     # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
     sp_prmt = subparsers.add_parser("promote",

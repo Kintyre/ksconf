@@ -5,7 +5,7 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,sort,unarchive,diff,promote,merge,minimize} ...
+                  {check,combine,diff,sort,unarchive,promote,merge,minimize} ...
     
     Kintyre Splunk CONFig tool.
     
@@ -17,7 +17,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,sort,unarchive,diff,promote,merge,minimize}
+      {check,combine,diff,sort,unarchive,promote,merge,minimize}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Merge configuration files from one or more source
                             directories into a combined destination directory.
@@ -25,11 +25,11 @@ The following documents the CLI options
                             configuration layers within a single app. Ad-hoc uses
                             include merging the 'users' directory across several
                             instances after a phased server migration.
+        diff                Compares settings differences between two .conf files
+                            ignoring spacing and sort order
         sort                Sort a Splunk .conf file. Sorted output is echoed or
                             files can be sorted inplace.
         unarchive
-        diff                Compares settings differences of two .conf files
-                            ignoring textual and sorting differences
         promote             Promote .conf settings from one file into another
                             either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
@@ -186,6 +186,30 @@ The following documents the CLI options
                             files.
 
 
+## ksconf diff
+    usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
+    
+    Compares the content differences of two .conf files
+    
+    This command ignores textual differences (like order, spacing, and comments)
+    and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
+    within any given value will be compared.  Multiline fields are compared in are
+    compared in a more traditional 'diff' output so that long savedsearches and
+    macros can be compared more easily.
+    
+    positional arguments:
+      CONF1                 Left side of the comparison
+      CONF2                 Right side of the comparison
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -o FILE, --output FILE
+                            File where difference is stored. Defaults to standard
+                            out.
+      --comments, -C        Enable comparison of comments. (Unlikely to work
+                            consistently)
+
+
 ## ksconf sort
     usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
                        FILE [FILE ...]
@@ -292,30 +316,6 @@ The following documents the CLI options
                             (Git Tip: Delete the content of the message to abort
                             the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
-
-
-## ksconf diff
-    usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
-    
-    Compares the content differences of two .conf files
-    
-    This command ignores textual differences (like order, spacing, and comments)
-    and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-    within any given value will be compared.  Multiline fields are compared in are
-    compared in a more traditional 'diff' output so that long savedsearches and
-    macros can be compared more easily.
-    
-    positional arguments:
-      CONF1                 Left side of the comparison
-      CONF2                 Right side of the comparison
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      -o FILE, --output FILE
-                            File where difference is stored. Defaults to standard
-                            out.
-      --comments, -C        Enable comparison of comments. (Unlikely to work
-                            consistently)
 
 
 ## ksconf promote
