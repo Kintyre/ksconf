@@ -24,9 +24,12 @@ init:
 install:
   - echo PATH=%PATH%
   - python --version
+  - pip --version
   - pip install coverage
   - pip install codecov
   - pip install .
+  # This will report setuptools and wheel
+  - pip freeze --all
 
 test_script:
   - ksconf --version
