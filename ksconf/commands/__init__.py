@@ -292,35 +292,63 @@ class KsconfCmd(object):
         pass
 
 
-# This caching is *mostly* beneficial for unittesth CLI testing
+
+def _get_entrypoints_lib(group, name=None):
+    import entrypoints
+
+    # Monkey patch some attributes for better API compatibility
+    entrypoints.EntryPoint.dist = property(lambda self: self.distro)
+
+    if name:
+        return entrypoints.get_single(group, name)
+    else:
+        from collections import OrderedDict
+        # Copied from 'get_group_named()' except that it preserves order
+        result = OrderedDict()
+        for ep in entrypoints.get_group_all(group):
+            if ep.name not in result:
+                result[ep.name] = ep
+        return result
+
+""" Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
+function is called outside of our control.   Going with 'entrypoints' module or local fallback,
+giving up on the built-in utility...
+
+def _get_pkgresources_lib(group, name=None):
+    # Part of setuptools (widely used but quite slow); It's presence can't be assumed
+    if name: raise NotImplementedError
+    import pkg_resources
+    d = {}
+    try:
+        for entrypoint in pkg_resources.iter_entry_points(group):
+            d[entrypoint.name] = entrypoint
+    except pkg_resources.DistributionNotFound:
+        # Not really the same thing, but for our purposes; it's close enough, and we can't catch
+        # this directly as we can't guarantee pkg_resources is available in the first place...
+        raise ImportError
+    return d
+"""
+
+
+def _get_fallback(group, name=None):
+    from ksconf.setup_entrypoints import get_entrypoints_fallback
+    if name: raise NotImplementedError
+    return get_entrypoints_fallback(group)
+
+# Removed _get_pkgresources_lib as middle option
+__get_entity_resolvers = [ _get_entrypoints_lib, _get_fallback ]
+
+
+# This caching is *mostly* beneficial for unittest CLI testing
 @memoize
 def get_entrypoints(group, name=None):
-    try:
-        import entrypoints
-        # Monkey patch some attributes for better API compatibility
-        entrypoints.EntryPoint.dist = property(lambda self: self.distro)
 
-        if name:
-            return entrypoints.get_single(group, name)
-        else:
-            from collections import OrderedDict
-            # Copied from 'get_group_named()' except that it preserves order
-            result = OrderedDict()
-            for ep in entrypoints.get_group_all(group):
-                if ep.name not in result:
-                    result[ep.name] = ep
-            return result
-
-
-            return entrypoints.get_group_named(group)
-    except ImportError:
+    for resolver in list(__get_entity_resolvers):
+        results = None
         try:
-            # Part of setuptools (widely used but quite slow); It's presence can't be assumed
-            import pkg_resources
-            d = {}
-            for entrypoint in pkg_resources.iter_entry_points(group):
-                d[entrypoint.name] = entrypoint
-            return d
+            results = resolver(group, name=name)
         except ImportError:
-            # XXX:  Implement a fallback mechanism.  Read from setup.cfg
-            raise RuntimeError("Try installing setuptools (pip install setuptools).  Fallback mechanism not yet implemented.")
+            __get_entity_resolvers.remove(resolver)
+        if results:
+            return results
+        # Otherwise try next technique ...

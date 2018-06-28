@@ -6,6 +6,8 @@ import os
 import re
 from setuptools import setup
 
+from ksconf.setup_entrypoints import get_entrypoints_setup
+
 def get_ver():
     # Todo: Add fall-back method for tarballs (sdist) builds.  See what others have done.
     from ksconf.vc.git import git_cmd
@@ -84,6 +86,8 @@ setup(name="kintyre-splunk-conf",
         "six",
         "entrypoints",
       ],
+      # Wacky reason for this explained in ksconf/setup_entrypoints.py
+      entry_points = get_entrypoints_setup(),
       # Not required, but useful.
       extras_require = {
         "bash" : [ "argcomplete" ],
