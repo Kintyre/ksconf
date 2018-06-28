@@ -45,4 +45,4 @@ def do_check(args):
         sys.stdout.write("Completed checking {0[checked]} files.  rc={1} Breakdown:\n"
                          "   {0[okay]} files were parsed successfully.\n"
                          "   {0[error]} files failed.\n".format(c, exit_code))
-    sys.exit(exit_code)
+    return exit_code

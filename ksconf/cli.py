@@ -115,7 +115,7 @@ def cli(argv=None, _unittest=False):
 
     subparsers = parser.add_subparsers()
 
-    # SUBCOMMAND:  splconf check <CONF>
+    # SUBCOMMAND:  ksconf check <CONF>
     sp_chck = subparsers.add_parser("check",
                                     help="Perform basic syntax and sanity checks on .conf files",
                                     description=
@@ -136,9 +136,9 @@ def cli(argv=None, _unittest=False):
                          help="Abort check if more than this many files fail validation.  Useful
                          for a pre-commit hook where any failure is unacceptable.")
     '''
-    # Usage example:   find . -name '*.conf' | splconf check -  (Nice little pre-commit script)
+    # Usage example:   find . -name '*.conf' | ksconf check -  (Nice little pre-commit script)
 
-    # SUBCOMMAND:  splconf combine --target=<DIR> <SRC1> [ <SRC-n> ]
+    # SUBCOMMAND:  ksconf combine --target=<DIR> <SRC1> [ <SRC-n> ]
     sp_comb = subparsers.add_parser("combine",
                                     help=
                                     "Merge configuration files from one or more source directories "
@@ -266,7 +266,7 @@ Commands:
                                  "edit hand-edit this file! ****",
                          help="A warning banner telling discouraging editing of conf files.")
 
-    # SUBCOMMAND:  splconf diff <CONF> <CONF>
+    # SUBCOMMAND:  ksconf diff <CONF> <CONF>
     sp_diff = subparsers.add_parser("diff",
                                     help="Compares settings differences of two .conf files "
                                          "ignoring textual and sorting differences",
@@ -294,7 +294,7 @@ macros can be compared more easily.
                          action="store_true", default=False,
                          help="Enable comparison of comments.  (Unlikely to work consistently)")
 
-    # SUBCOMMAND:  splconf promote --target=<CONF> <CONF>
+    # SUBCOMMAND:  ksconf promote --target=<CONF> <CONF>
     sp_prmt = subparsers.add_parser("promote",
                                     help="Promote .conf settings from one file into another either "
                                          "in batch mode (all changes) or interactively allowing "
@@ -400,7 +400,7 @@ will be lost.  (This needs improvement.)
 
     """
 
-    # SUBCOMMAND:  splconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
+    # SUBCOMMAND:  ksconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
     sp_merg = subparsers.add_parser("merge",
                                     help="Merge two or more .conf files",
                                     formatter_class=MyDescriptionHelpFormatter)
@@ -423,11 +423,11 @@ will be lost.  (This needs improvement.)
                          help="A banner or warning comment to add to the TARGET file.  Often used "
                               "to warn Splunk admins from editing a auto-generated file.")
 
-    # SUBCOMMAND:  splconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
+    # SUBCOMMAND:  ksconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
     # Example workflow:
     #   1. cp default/props.conf local/props.conf
     #   2. vi local/props.conf (edit JUST the lines you want to change)
-    #   3. splconf minimize --target=local/props.conf default/props.conf
+    #   3. ksconf minimize --target=local/props.conf default/props.conf
     #  (You could take this a step further by appending "$SPLUNK_HOME/system/default/props.conf"
     # and removing any SHOULD_LINEMERGE = true entries (for example)
     sp_minz = subparsers.add_parser("minimize",
@@ -512,7 +512,7 @@ Example usage:
                               "often desirable keep the 'disabled' settings in the local file, "
                               "even if it's enabled by default.")
 
-    # SUBCOMMAND:  splconf sort <CONF>
+    # SUBCOMMAND:  ksconf sort <CONF>
     sp_sort = subparsers.add_parser("sort",
                                     help="Sort a Splunk .conf file.  Sorted output can be echoed "
                                          "or files can be sorted inplace.",
@@ -555,7 +555,7 @@ To recursively sort all files:
     sp_sort.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                          help="Lines between stanzas.")
 
-    # SUBCOMMAND:  splconf upgrade tarball
+    # SUBCOMMAND:  ksconf upgrade tarball
     sp_unar = subparsers.add_parser("unarchive",
                                     help="Install or overwrite an existing app in a git-friendly "
                                          "way.  If the app already exist, steps will be taken to "

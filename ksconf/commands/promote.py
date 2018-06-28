@@ -80,7 +80,7 @@ def do_promote(args):
 
         while True:
             resp = input("Would you like to apply ALL changes?  (y/n/d/q)")
-            resp = input[:1].lower()
+            resp = resp[:1].lower()
             if resp == 'q':
                 return EXIT_CODE_USER_QUIT
             elif resp == 'd':
