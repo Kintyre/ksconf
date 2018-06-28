@@ -59,12 +59,13 @@ script:
   - |
     if [[ $BUILD_SDIST == "true" && $TRAVIS_BRANCH =~ ^v.* ]]; then export DO_RELEASE=True; fi
     echo DO_RELEASE=$DO_RELEASE
+  - ksconf --version
   - coverage run -m unittest discover -s tests
 after_success:
-  - coveralls
   # Manually make coverage.xml since codecov sometimes fails when launching this directly
   - coverage xml -i
   - codecov
+  - coveralls
   - '[[ $BUILD_SDIST == "True" ]] && ./make_zipapp'
 deploy:
   - provider: releases
