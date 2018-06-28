@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 import textwrap
 
 # Used by ksconf.commands.* (not locally here)
@@ -227,7 +227,7 @@ class KsconfCmd(object):
 
     def __init__(self, name):
         self.name = name.lower()
-        # XXX:  Add logging support, after we figure clean lines between logging and UI/console output.
+        # XXX:  Add logging support.  Find clean lines between logging and UI/console output.
         self.logger = logging.getLogger("ksconf.cmd.{}".format(self.name))
         self.stdin = sys.stdin
         self.stdout = sys.stdout
@@ -260,8 +260,7 @@ class KsconfCmd(object):
 
     def register_args(self, parser):
         """ This function in passed the """
-        parser.add_argument("--wacky", action="store_true",
-                            help="Enable wackiness.  Forgot to override {}.register_args()?".format(self.__class__.__name__))
+        raise NotImplementedError
 
     def launch(self, args):
         """ Handle flow control betweeen pre_run() / run() / post_run() """
@@ -323,5 +322,5 @@ def get_entrypoints(group, name=None):
                 d[entrypoint.name] = entrypoint
             return d
         except ImportError:
-            # XXX:  Implement a fallback mechanism for at least the local tools (needed for embedded Splunk scenario)
+            # XXX:  Implement a fallback mechanism.  Read from setup.cfg
             raise RuntimeError("Try installing setuptools (pip install setuptools).  Fallback mechanism not yet implemented.")

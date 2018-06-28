@@ -5,41 +5,38 @@ Usage example:   (Nice pre-commit script)
     find . -name '*.conf' | ksconf check -
 
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import os
 from collections import Counter
 
+from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import parse_conf, PARSECONF_STRICT_NC, ConfParserException
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR
-from ksconf.util.file import _stdin_iter
-from ksconf.commands import KsconfCmd, dedent
 from ksconf.util.completers import conf_files_completer
-
-
+from ksconf.util.file import _stdin_iter
 
 
 class CheckCmd(KsconfCmd):
     help = "Perform basic syntax and sanity checks on .conf files"
     description = dedent("""
-        Provide basic syntax and sanity checking for Splunk's .conf
-        files.  Use Splunk's builtin 'btool check' for a more robust
-        validation of keys and values.
+    Provide basic syntax and sanity checking for Splunk's .conf
+    files.  Use Splunk's builtin 'btool check' for a more robust
+    validation of keys and values.
 
-        Consider using this utility as part of a pre-commit hook.""")
+    Consider using this utility as part of a pre-commit hook.""")
 
-    def register_args(self, p):
-        p.add_argument("conf", metavar="FILE", nargs="+",
-                       help="One or more configuration files to check.  If the special value of "
-                            "'-' is given, then the list of files to validate is read from "
-                            "standard input"
+    def register_args(self, parser):
+        parser.add_argument("conf", metavar="FILE", nargs="+", help="""
+            One or more configuration files to check.
+            If '-' is given, then read a list of files to validate from standard input"""
                          ).completer = conf_files_completer
-        p.add_argument("--quiet", "-q", default=False, action="store_true",
-                         help="Reduce the volume of output.")
+        parser.add_argument("--quiet", "-q", default=False, action="store_true",
+                            help="Reduce the volume of output.")
         ''' # Do we really need this?
-        p.add_argument("--max-errors", metavar="INT", type=int, default=0,
-                         help="Abort check if more than this many files fail validation.  Useful
-                         for a pre-commit hook where any failure is unacceptable.")
+        parser.add_argument("--max-errors", metavar="INT", type=int, default=0, help=
+            "Abort check if more than this many files fail validation.  "
+            "Useful for a pre-commit hook where any failure is unacceptable.")
         '''
 
     def run(self, args):

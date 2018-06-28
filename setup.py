@@ -88,21 +88,6 @@ setup(name="kintyre-splunk-conf",
       extras_require = {
         "bash" : [ "argcomplete" ],
       },
-      entry_points={
-          "console_scripts": [
-              "ksconf = ksconf.cli:cli",
-          ],
-        "ksconf_cmd" : [
-            "check      = ksconf.commands.check:CheckCmd",
-            "combine    = ksconf.commands.combine:CombineCmd",
-            "diff       = ksconf.commands.diff:DiffCmd",
-            "promote    = ksconf.commands.promote:PromoteCmd",
-            "merge      = ksconf.commands.merge:MergeCmd",
-            "minimize   = ksconf.commands.minimize:MinimizeCmd",
-            "sort       = ksconf.commands.sort:SortCmd",
-            "unarchive  = ksconf.commands.unarchive:UnarchiveCmd",
-        ],
-      },
       include_package_data=True,
       zip_safe=True
 )

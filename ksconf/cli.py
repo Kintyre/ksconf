@@ -14,43 +14,25 @@ Install & register with:
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import argparse
 import sys
 
 import ksconf
 import ksconf.util
-
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
-from ksconf.commands import ConfFileProxy, ConfFileType
-from ksconf.conf.parser import PARSECONF_MID_NC, PARSECONF_STRICT_NC, PARSECONF_STRICT, \
-    PARSECONF_MID, PARSECONF_LOOSE
-from ksconf.util.completers import conf_files_completer
-
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
+from ksconf.util.completers import autocomplete
 
-
-# Optional argcomplete library for CLI (BASH-based) tab completion
-try:
-    from argcomplete import autocomplete
-    from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-except ImportError:  # pragma: no cover
-    def _argcomplete_noop(*args, **kwargs): del args, kwargs
-
-
-    autocomplete = _argcomplete_noop
-    # noinspection PyPep8Naming
-    FilesCompleter = DirectoriesCompleter = _argcomplete_noop
-
-
-####################################################################################################
+###################################################################################################
 ## CLI definition
 
 
 # ------------------------------------------ wrap to 80 chars ----------------v
-_cli_description = """Kintyre Splunk CONFig tool.
+_cli_description = """Ksconf: Kintyre Splunk CONFig tool
 
 This utility handles a number of common Splunk app maintenance tasks in a small
-and easy to relocate package.  Specifically, this tools deals with many of the
+and easy to deploy package.  Specifically, this tools deals with many of the
 nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
 repository.  Merging changes from the live system's (local) folder to the
 version controlled (default) folder, and dealing with more than one layer of
@@ -78,7 +60,7 @@ def cli(argv=None, _unittest=False):
         version_info += "\n    {:15} ({})".format(name, distro)
 
         if not issubclass(cmd_cls, KsconfCmd):
-            raise RuntimeError("Entry point {!r} targets a class not derived from KsconfCmd.".format(entry))
+            raise RuntimeError("Entry point {!r} not derived from KsconfCmd.".format(entry))
 
         cmd = cmd_cls(entry.name)
         cmd.add_parser(subparsers)

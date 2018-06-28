@@ -5,45 +5,43 @@ Usage example:
     ksconf diff default/props.conf default/props.conf
 
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import argparse
 
-from ksconf.conf.delta import compare_cfgs, show_diff
-from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
-from ksconf.conf.parser import PARSECONF_MID_NC
-
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
-from ksconf.util.completers import DirectoriesCompleter, FilesCompleter, conf_files_completer
-
+from ksconf.conf.delta import compare_cfgs, show_diff
+from ksconf.conf.parser import PARSECONF_MID_NC
+from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
+from ksconf.util.completers import conf_files_completer
 
 
 class DiffCmd(KsconfCmd):
-    help = "Compares settings differences between two .conf files ignoring spacing and sort order"
+    help = "Compare settings differences between two .conf files ignoring spacing and sort order"
     description = dedent("""
-Compares the content differences of two .conf files
+    Compares the content differences of two .conf files
 
-This command ignores textual differences (like order, spacing, and comments)
-and focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-within any given value will be compared.  Multiline fields are compared in are
-compared in a more traditional 'diff' output so that long savedsearches and
-macros can be compared more easily.
-        """)
+    This command ignores textual differences (like order, spacing, and comments) and
+    focuses strictly on comparing stanzas, keys, and values.  Note that spaces
+    within any given value will be compared.  Multiline fields are compared in are
+    compared in a more traditional 'diff' output so that long savedsearches and
+    macros can be compared more easily.
+    """)
     format = "manual"
 
     def register_args(self, parser):
         parser.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",
-                             type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
-                             ).completer = conf_files_completer
+                            type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
+                            ).completer = conf_files_completer
         parser.add_argument("conf2", metavar="CONF2", help="Right side of the comparison",
-                             type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
-                             ).completer = conf_files_completer
+                            type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
+                            ).completer = conf_files_completer
         parser.add_argument("-o", "--output", metavar="FILE",
-                             type=argparse.FileType('w'), default=self.stdout,
-                             help="File where difference is stored.  Defaults to standard out.")
+                            type=argparse.FileType('w'), default=self.stdout,
+                            help="File where difference is stored.  Defaults to standard out.")
         parser.add_argument("--comments", "-C",
-                             action="store_true", default=False,
-                             help="Enable comparison of comments.  (Unlikely to work consistently)")
+                            action="store_true", default=False,
+                            help="Enable comparison of comments.  (Unlikely to work consistently)")
 
     def run(self, args):
         ''' Compare two configuration files. '''
