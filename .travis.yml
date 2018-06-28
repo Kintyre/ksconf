@@ -51,7 +51,7 @@ install:
     fi
   - pip install coverage
   - pip install coveralls
-#  - pip install codecov
+  - pip install codecov
   - pip install .
   - echo "Build $TRAVIS_BUILD_NUMBER BRANCH=$TRAVIS_BRANCH TAG=$TRAVIS_TAG"
 # command to run tests
@@ -62,8 +62,9 @@ script:
   - coverage run -m unittest discover -s tests
 after_success:
   - coveralls
-#  - coverage xml -i
-  - bash <(curl -s https://codecov.io/bash)
+  # Manually make coverage.xml since codecov sometimes fails when launching this directly
+  - coverage xml -i
+  - codecov
   - '[[ $BUILD_SDIST == "True" ]] && ./make_zipapp'
 deploy:
   - provider: releases
