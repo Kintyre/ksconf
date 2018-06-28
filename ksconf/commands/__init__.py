@@ -1,10 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import argparse
+import logging
 import os
 import sys
+import textwrap
+
+# Used by ksconf.commands.* (not locally here)
+from textwrap import dedent
 
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException
 from ksconf.consts import SMART_CREATE
+from ksconf.util import memoize
 
 
 class ConfDirProxy(object):
@@ -196,3 +203,152 @@ class ConfFileType(object):
         args = self._mode, self._action, self._parse_profile
         args_str = ', '.join(repr(arg) for arg in args if arg != -1)
         return '%s(%s)' % (type(self).__name__, args_str)
+
+
+
+# For now, just effectively a copy of RawDescriptionHelpFormatter
+class MyDescriptionHelpFormatter(argparse.HelpFormatter):
+    def _fill_text(self, text, width, indent):
+        # Looks like this one is ONLY used for the top-level description
+        return ''.join([indent + line for line in text.splitlines(True)])
+
+    def _split_lines(self, text, width):
+        text = self._whitespace_matcher.sub(' ', text).strip()
+        return textwrap.wrap(text, width)
+
+
+
+
+class KsconfCmd(object):
+    """ Ksconf command specification base class. """
+    help = None
+    description = None
+    format = "default"
+
+    def __init__(self, name):
+        self.name = name.lower()
+        # XXX:  Add logging support.  Find clean lines between logging and UI/console output.
+        self.logger = logging.getLogger("ksconf.cmd.{}".format(self.name))
+        self.stdin = sys.stdin
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
+
+    def redirect_io(self, stdin=None, stdout=None, stderr=None):
+        if stdin is not None:
+            self.stdin = stdin
+        if stdout is not None:
+            self.stdout = stdout
+        if stderr is not None:
+            self.stderr = stderr
+
+    def exit(self, exit_code):
+        """ Allow overriding for unittesting or other high-level functionality, like an
+        interactive interface. """
+        sys.exit(exit_code)
+
+    def add_parser(self, subparser):
+        # Passing in the object return by 'ArgumentParser.add_subparsers()'
+        kwargs = {
+            "help" : self.help,
+            "description" : self.description,
+        }
+        if self.format == "manual":
+            kwargs["formatter_class"] = MyDescriptionHelpFormatter
+        self.parser = subparser.add_parser(self.name, **kwargs)
+        self.parser.set_defaults(funct=self.launch)
+        self.register_args(self.parser)
+
+    def register_args(self, parser):
+        """ This function in passed the """
+        raise NotImplementedError
+
+    def launch(self, args):
+        """ Handle flow control betweeen pre_run() / run() / post_run() """
+        # If this fails, exception is passed up, no handling errors/logging done here.
+        self.pre_run(args)
+
+        exc = None
+        try:
+            return_code = self.run(args)
+        except:
+            exc = sys.exc_info()
+            raise
+        finally:
+            # No matter what, post_run is called.
+            self.post_run(args, exc)
+        return return_code
+
+    def pre_run(self, args):
+        """ Pre-run hook.  Any exceptions here prevent run() from being called. """
+        pass
+
+    def run(self, args):
+        """ Actual works happens here.  Return code should be an EXIT_CODE_* from consts. """
+        raise NotImplementedError
+
+    def post_run(self, args, exec_info=None):
+        """ Any custom clean up work that needs done.  Allways called if run() was.  Presence of
+       exc_info indicates failure. """
+        pass
+
+
+
+def _get_entrypoints_lib(group, name=None):
+    import entrypoints
+
+    # Monkey patch some attributes for better API compatibility
+    entrypoints.EntryPoint.dist = property(lambda self: self.distro)
+
+    if name:
+        return entrypoints.get_single(group, name)
+    else:
+        from collections import OrderedDict
+        # Copied from 'get_group_named()' except that it preserves order
+        result = OrderedDict()
+        for ep in entrypoints.get_group_all(group):
+            if ep.name not in result:
+                result[ep.name] = ep
+        return result
+
+""" Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
+function is called outside of our control.   Going with 'entrypoints' module or local fallback,
+giving up on the built-in utility...
+
+def _get_pkgresources_lib(group, name=None):
+    # Part of setuptools (widely used but quite slow); It's presence can't be assumed
+    if name: raise NotImplementedError
+    import pkg_resources
+    d = {}
+    try:
+        for entrypoint in pkg_resources.iter_entry_points(group):
+            d[entrypoint.name] = entrypoint
+    except pkg_resources.DistributionNotFound:
+        # Not really the same thing, but for our purposes; it's close enough, and we can't catch
+        # this directly as we can't guarantee pkg_resources is available in the first place...
+        raise ImportError
+    return d
+"""
+
+
+def _get_fallback(group, name=None):
+    from ksconf.setup_entrypoints import get_entrypoints_fallback
+    if name: raise NotImplementedError
+    return get_entrypoints_fallback(group)
+
+# Removed _get_pkgresources_lib as middle option
+__get_entity_resolvers = [ _get_entrypoints_lib, _get_fallback ]
+
+
+# This caching is *mostly* beneficial for unittest CLI testing
+@memoize
+def get_entrypoints(group, name=None):
+
+    for resolver in list(__get_entity_resolvers):
+        results = None
+        try:
+            results = resolver(group, name=name)
+        except ImportError:
+            __get_entity_resolvers.remove(resolver)
+        if results:
+            return results
+        # Otherwise try next technique ...

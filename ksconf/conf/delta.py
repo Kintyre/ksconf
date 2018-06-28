@@ -1,15 +1,17 @@
 from __future__ import absolute_import, unicode_literals
+
 import datetime
 import difflib
 import os
-from io import open
 from collections import namedtuple, defaultdict, Counter
+from io import open
+
+import six
 
 from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
-import six
 
 ####################################################################################################
 ## Diff logic
