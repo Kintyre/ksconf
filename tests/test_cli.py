@@ -405,7 +405,7 @@ class CliDiffTest(unittest.TestCase):
         '''
 
     def test_diff_multiline(self):
-        """ Force the generate of a multi-line value diff """
+        """ Force the generation of a multi-line value diff """
         twd = TestWorkDir()
         conf1 = twd.write_file("savedsearches-1.conf", r"""
         [indexed_event_counts_hourly]
@@ -520,7 +520,7 @@ class CliCheckTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
     def test_mixed_stdin(self):
-        """ Make sure that if even a single file files, the exit code should be "BAD CONF" """
+        """ Make sure that if even a single file fails the exit code should be "BAD CONF" """
         try:
             _stdin = sys.stdin
             sys.stdin = StringIO("\n".join([self.conf_good, self.conf_bad]))
@@ -531,7 +531,7 @@ class CliCheckTest(unittest.TestCase):
             sys.stdin = _stdin
 
     def test_mixed_quiet(self):
-        """ Make sure that if even a single file files, the exit code should be "BAD CONF" """
+        """ Make sure that if even a single file fails the exit code should be "BAD CONF" """
         with ksconf_cli:
             ko = ksconf_cli("check", self.conf_good, self.conf_bad)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
