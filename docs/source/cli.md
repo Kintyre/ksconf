@@ -40,7 +40,7 @@ The following documents the CLI options
                             files can be sorted inplace.
         unarchive           Install or overwrite an existing app in a git-friendly
                             way. If the app already exist, steps will be taken to
-                            upgrade it safely.
+                            upgrade it safely
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -411,6 +411,14 @@ The following documents the CLI options
                             [--git-mode {nochange,stage,commit}] [--no-edit]
                             [--git-commit-args GIT_COMMIT_ARGS]
                             SPL
+    
+    Install or overwrite an existing app in a git-friendly way.
+    If the app already exist, steps will be taken to upgrade it safely.
+    
+    The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
+    whatever which is helpful if you're using the ksconf 'combine' mode.)
+    
+    Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)
     
     positional arguments:
       SPL                   The path to the archive to install.

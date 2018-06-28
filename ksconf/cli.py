@@ -28,11 +28,6 @@ from ksconf.util.completers import conf_files_completer
 
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
 
-from ksconf.commands.unarchive import do_unarchive
-
-
-
-
 
 # Optional argcomplete library for CLI (BASH-based) tab completion
 try:
@@ -115,83 +110,6 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
-
-    # SUBCOMMAND:  splconf upgrade tarball
-    sp_unar = subparsers.add_parser("unarchive",
-                                    help="Install or overwrite an existing app in a git-friendly "
-                                         "way.  If the app already exist, steps will be taken to "
-                                         "upgrade it safely.",
-                                    formatter_class=MyDescriptionHelpFormatter)
-    # Q:  Should this also work for fresh installs?
-    sp_unar.set_defaults(funct=do_unarchive)
-    sp_unar.add_argument("tarball", metavar="SPL",
-                         help="The path to the archive to install."
-                         ).completer = FilesCompleter(allowednames=("*.tgz", "*.tar.gz", "*.spl",
-                                                                    "*.zip"))
-    sp_unar.add_argument("--dest", metavar="DIR", default=".",
-                         help="Set the destination path where the archive will be extracted.  "
-                              "By default the current directory is used, but sane values include "
-                              "etc/apps, etc/deployment-apps, and so on.  This could also be a "
-                              "git repository working tree where splunk apps are stored."
-                         ).completer = DirectoriesCompleter()
-    sp_unar.add_argument("--app-name", metavar="NAME", default=None,
-                         help="The app name to use when expanding the archive.  By default, the "
-                              "app name is taken from the archive as the top-level path included "
-                              "in the archive (by convention)  Expanding archives that contain "
-                              "multiple (ITSI) or nested apps (NIX, ES) is not supported.")
-    sp_unar.add_argument("--default-dir", default="default", metavar="DIR",
-                         help="Name of the directory where the default contents will be stored.  "
-                              "This is a useful feature for apps that use a dynamic default "
-                              "directory that's created by the 'combine' mode."
-                         ).completer = DirectoriesCompleter()
-    sp_unar.add_argument("--exclude", "-e", action="append", default=[],
-                         help="Add a file pattern to exclude.  Splunk's psudo-glob "
-                              "patterns are supported here.  '*' for any non-directory match, "
-                              "'...' for ANY (including directories), and '?' for a single "
-                              "character.")
-    sp_unar.add_argument("--keep", "-k", action="append", default=[],
-                         help="Add a pattern of file to preserve during an upgrade.")
-    sp_unar.add_argument("--allow-local", default=False, action="store_true",
-                         help="Allow local/ and local.meta files to be extracted from the archive. "
-                              "This is a Splunk packaging violation and therefore by default these "
-                              "files are excluded.")
-    sp_unar.add_argument("--git-sanity-check",
-                         choices=["off", "changed", "untracked", "ignored"],
-                         default="untracked",
-                         help="By default a 'git status' is run on the destination folder to see "
-                              "if the working tree or index has modifications before the unarchive "
-                              "process starts.  "
-                              "The choices go from least restrictive to most thorough: "
-                              "Use 'off' to prevent any 'git status' safely checks. "
-                              "Use 'changed' to abort only upon local modifications to files "
-                              "tracked by git. "
-                              "Use 'untracked' (by default) to look for changed and untracked "
-                              "files before considering the tree clean. "
-                              "Use 'ignored' to enable the most intense safety check which will "
-                              "abort if local changes, untracked, or ignored files are found. "
-                              "(These checks are automatically disabled if the app is not in a git "
-                              "working tree, or git is not present.)")
-    sp_unar.add_argument("--git-mode", default="stage",
-                         choices=["nochange", "stage", "commit"],
-                         help="Set the desired level of git integration.  "
-                              "The default mode is 'stage', where new, updated, or removed files "
-                              "are automatically handled for you.  If 'commit' mode is selected, "
-                              "then files are committed with an  auto-generated commit message.  "
-                              "To prevent any 'git add' or 'git rm' commands from being run, pick "
-                              "the 'nochange' mode. "
-                              "  Notes:  "
-                              "(1) The git mode is irrelevant if the app is not in a git working "
-                              "tree.  "
-                              "(2) If a git commit is incorrect, simply roll it back with "
-                              "'git reset' or fix it with a 'git commit --amend' before the "
-                              "changes are pushed anywhere else.  (That's why you're using git in "
-                              "the first place, right?)")
-    sp_unar.add_argument("--no-edit",
-                         action="store_true", default=False,
-                         help="Tell git to skip opening your editor.  By default you will be "
-                              "prompted to review/edit the commit message.  (Git Tip:  Delete the "
-                              "content of the message to abort the commit.)")
-    sp_unar.add_argument("--git-commit-args", "-G", default=[], action="append")
 
     autocomplete(parser)
     args = parser.parse_args(argv)
