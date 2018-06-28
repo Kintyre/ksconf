@@ -30,6 +30,9 @@ install:
   - pip install .
   # This will report setuptools and wheel
   - pip freeze --all
+  - dir %PYTHON%\Scripts
+  # List all entrypoints (console_script)
+  - python -m entrypoints
 
 test_script:
   - ksconf --version
