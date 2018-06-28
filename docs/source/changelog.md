@@ -3,11 +3,19 @@
 
 ## Ksconf 0.5.x
 
-Add Python 3 support, tox and vagrant for testing.
+Add Python 3 support, external command plugins, tox and vagrant for testing.
+
+### Release v0.5.1 (2018-06-28)
+ * Support external ksconf command plugins through custom 'entry_points', allowing for others to
+   develop their own custom extensions as needed.
+ * Many internal changes:  Refactoring of all CLI commands to use new entry_points as well as pave
+   the way for future CLI unittest improvements.
+ * Docs cleanup / improvements.
+
 
 ### Release v0.5.0 (2018-06-26)
  * Python 3 support.
- * Many bug fixes and improvements resulting from wider testsing.
+ * Many bug fixes and improvements resulting from wider testing.
 
 
 ## Ksconf 0.4.x

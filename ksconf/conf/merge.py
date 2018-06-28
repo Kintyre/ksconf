@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 import sys
 from copy import deepcopy
 
+import six
+
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments
 from ksconf.consts import SMART_UPDATE
-import six
 
 ####################################################################################################
 ## Merging logic

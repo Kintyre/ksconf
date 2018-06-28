@@ -12,7 +12,10 @@ from subprocess import Popen, PIPE
 
 
 def cmd_output(*cmd):
-    p = Popen(cmd, stdout=PIPE, env={b"PYTHONWARNINGS": b"ignore", b"PYTHONIOENCODING": b"utf-8"})
+    p = Popen(cmd, stdout=PIPE, env={
+        b"PYTHONWARNINGS": b"ignore",
+        b"PYTHONIOENCODING": b"utf-8",
+        b"KSCONF_DISABLE_PLUGINS": b"ksconf_cmd"})
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
 
