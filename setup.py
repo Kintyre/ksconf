@@ -31,7 +31,7 @@ def get_ver():
         version = {0!r}
         build = {1!r}
         vcs_info = {2!r}
-        """).format(version, os.environ.get("TRAVIS_BUILD", None), vc_info)
+        """).format(version, os.environ.get("TRAVIS_BUILD_NUMBER", None), vc_info)
     open(ver_file, "w").write(code_block)
     return version
 
