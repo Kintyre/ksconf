@@ -65,7 +65,7 @@ The following documents the CLI options
 """)
 
 print("Building docs for ksconf")
-write_doc_for(readme, ["-m", "ksconf.cli"], cmd_name="ksconf", level=2, level_inc=0)
+write_doc_for(readme, ["-m", "ksconf"], cmd_name="ksconf", level=2, level_inc=0)
 
 readme.close()
 

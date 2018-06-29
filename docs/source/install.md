@@ -197,7 +197,7 @@ Run the following:
     cat > $SPLUNK_HOME/bin/ksconf <<HERE
     #!/bin/sh
     export PYTHONPATH=$PYTHONPATH:$SPLUNK_HOME/Kintyre
-    exec $SPLUNK_HOME/bin/python -m ksconf.cli \$*
+    exec $SPLUNK_HOME/bin/python -m ksconf \$*
     HERE
     chmod +x $SPLUNK_HOME/bin/ksconf
 
@@ -220,7 +220,7 @@ Test the install:
         SET SPLUNK_HOME=C:\Program Files\Splunk
         SET PYTHONPATH=%SPLUNK_HOME%\bin;%SPLUNK_HOME%\Python-2.7\Lib\site-packages\win32;%SPLUNK_HOME%\Python-2.7\Lib\site-packages;%SPLUNK_HOME%\Python-2.7\Lib
         SET PYTHONPATH=%PYTHONPATH%;%SPLUNK_HOME%\Kintyre
-        CALL "%SPLUNK_HOME%\bin\python.exe" -m ksconf.cli %*
+        CALL "%SPLUNK_HOME%\bin\python.exe" -m ksconf %*
 
  7. Move `ksconf.bat` to the `Splunk\bin` folder.  (This assumes that `%SPLUNK_HOME%/bin` is part of
     your `%PATH%`.  If not, add it, or find an appropriate install location.)

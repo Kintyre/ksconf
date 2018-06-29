@@ -15,7 +15,7 @@ from textwrap import dedent
 import six
 
 from ksconf.consts import *
-from ksconf.cli import cli
+from ksconf.__main__ import cli
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 

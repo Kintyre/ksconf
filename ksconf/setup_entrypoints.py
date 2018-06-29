@@ -18,7 +18,7 @@ Ep = namedtuple("Ep", ("name", "module_name", "object_name")) #, "extras", "dist
 
 _entry_points = {
     "console_scripts" : [
-        Ep("ksconf", "ksconf.cli", "cli"),
+        Ep("ksconf", "ksconf.__main__", "cli"),
     ],
     # Custom end_point for ksconf subcommand registration
     "ksconf_cmd" : [
