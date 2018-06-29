@@ -21,7 +21,6 @@ import sys
 import ksconf
 import ksconf.util
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 from ksconf.util.completers import autocomplete
 
 ###################################################################################################
@@ -49,15 +48,26 @@ def cli(argv=None, _unittest=False):
 
     subparsers = parser.add_subparsers()
 
-    version_info = '%(prog)s {}\n'.format(ksconf.version)
+    version_info = []
 
-    version_info += "\nCommands:"
+    from random import choice
+    # XXX:  Check terminal size before picking a signature
+    version_info.append(choice(ksconf.__ascii_sigs__))
+    version_info.append("%(prog)s {}  (Build {})".format(ksconf.__version__, ksconf.__build__))
+    if ksconf.__vcs_info__:
+        version_info.append(ksconf.__vcs_info__)
+    version_info.append("Written by {}.".format(ksconf.__author__))
+    version_info.append("Copyright {}.".format(ksconf.__copyright__))
+    version_info.append("Licensed under {}".format(ksconf.__license__))
+
+    version_info.append("\nCommands:")
     # Add entry-point subcommands
+    # XXX:  Eventually lazy load subcommands to save resources.   (Low priority)
     for (name, entry) in get_entrypoints("ksconf_cmd").items():
-        #sys.stderr.write("Loading {} from entry point:  {!r}\n".format(name, entry))
+    # sys.stderr.write("Loading {} from entry point:  {!r}\n".format(name, entry))
         cmd_cls = entry.load()
         distro = entry.dist or "Unknown"
-        version_info += "\n    {:15} ({})".format(name, distro)
+        version_info.append("    {:15} ({})".format(name, distro))
 
         if not issubclass(cmd_cls, KsconfCmd):
             raise RuntimeError("Entry point {!r} not derived from KsconfCmd.".format(entry))
@@ -84,7 +94,7 @@ def cli(argv=None, _unittest=False):
                              "keeping the latest.  Mode 'exception', the default, aborts if "
                              "duplicate keys are found.")
     '''
-    parser.add_argument('--version', action='version', version=version_info)
+    parser.add_argument('--version', action='version', version="\n".join(version_info))
     parser.add_argument("--force-color", action="store_true", default=False,
                         help="Force TTY color mode on.  Useful if piping the output a color-aware "
                              "pager, like 'less -R'")
