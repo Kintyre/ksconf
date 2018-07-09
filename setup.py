@@ -22,7 +22,7 @@ def get_ver():
     version = version.lstrip("v")   # Tags format is v0.0.0
     # replace hash with local version format
     ### XXX:  Wow. this needs unittests.  smh
-    version = re.sub(r'-(\d+)-g([a-f0-9]+)(?:(-dirty))', r'.dev\1+\2\3', version)
+    version = re.sub(r'-(\d+)-g([a-f0-9]+)((?:-dirty)?)', r'.dev\1+\2\3', version)
     version = re.sub(r'\d+\.\d+-dirty$', r'.dev0+dirty', version)
     version = version.replace("-dirty",".dirty")
     print("Version:  {}".format(version))

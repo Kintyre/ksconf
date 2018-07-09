@@ -15,10 +15,33 @@ fi
 echo "Building stanadalone zipapp for $version"
 
 pip install . --target=$install_temp --no-compile
+# Install backported configparser for python2.7; required since build script runs on 3.6 but .pyz may be run with an embedded Splunk python (2.7)
+pip install confiparser --target=$install_temp --no-compile
 
-# Python must be 3.5 or greater
-
-python -m zipapp $install_temp --output ${zipapp}.pyz --python '/usr/bin/env python' --main ksconf.cli:cli
+# zipapp module requires Python 3.5 or greater
+python -m zipapp $install_temp --output ${zipapp}.pyz --python '/usr/bin/env python' --main ksconf.__main__:cli
 python -m zipapp ${zipapp}.pyz --output ${zipapp}-splunk.pyz --python '/opt/splunk/bin/python'
+
+# From here on out, we want to specify specific python versions ('pythonX.Y') and not have pyenv get in our way)
+
+unset PYENV_VERSION
+
+TEST_PY_VERS="python3.6 python2.7"
+
+echo "Testing pyz file."
+for py in $TEST_PY_VERS
+do
+    echo "Testing pyz with $py $($py --version)"
+    echo "running:  $py ${zipapp}.pyz --version"
+    $py ${zipapp}.pyz --version
+    echo
+done
+
+
+echo "Test as executable"
+echo "Using $(head -1 ${zipapp}.pyz)"
+chmod +x ${zipapp}.pyz
+./${zipapp}.pyz --version
+
 
 echo "done"
