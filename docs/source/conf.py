@@ -22,9 +22,9 @@ from recommonmark.parser import CommonMarkParser
 
 project = u'KSConf'
 copyright = u'2018, Kintyre Solutions, Inc.'
-author = u'Lowell Alleman'
+#author = u'Lowell Alleman'
 
-from ksconf import version as release
+from ksconf import __version__ as release, __author__ as author
 
 # The short X.Y version
 version = ".".join(release.split(".")[:-1])
