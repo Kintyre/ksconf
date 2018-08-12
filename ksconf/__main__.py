@@ -54,6 +54,7 @@ def cli(argv=None, _unittest=False):
     # XXX:  Check terminal size before picking a signature
     version_info.append(choice(ksconf.__ascii_sigs__))
     version_info.append("%(prog)s {}  (Build {})".format(ksconf.__version__, ksconf.__build__))
+    version_info.append("Python: {}  ({})".format(sys.version.split()[0], sys.executable))
     if ksconf.__vcs_info__:
         version_info.append(ksconf.__vcs_info__)
     version_info.append("Written by {}.".format(ksconf.__author__))

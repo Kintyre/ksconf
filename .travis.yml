@@ -48,12 +48,15 @@ install:
         pyenv install -s $PYENV_VERSION
         pyenv rehash
         pip install wheel
+        # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
+        pip show kintyre-splunk-conf && pip uninstall -y kintyre-splunk-conf
     fi
   - pip install coverage
   - pip install coveralls
   - pip install codecov
   - pip install .
   - echo "Build $TRAVIS_BUILD_NUMBER BRANCH=$TRAVIS_BRANCH TAG=$TRAVIS_TAG"
+  - pip list
 # command to run tests
 script:
   - |
