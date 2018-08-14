@@ -49,7 +49,7 @@ install:
         pyenv rehash
         pip install wheel
         # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
-        pip show kintyre-splunk-conf && pip uninstall -y kintyre-splunk-conf
+        if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
     fi
   - pip install coverage
   - pip install coveralls
