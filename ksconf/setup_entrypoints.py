@@ -1,12 +1,13 @@
-"""
+""" Defines all command prompt entry points for CLI actions
+
 This is a silly hack that serves 2 purposes:
 
   (1) It works around and apparent Python 3.4/3.5 bug on Windows where [options.entry_point] in
-      setup.cfg is ignored.. hence 'ksconf' isn't installed and custom ksconf_* entry points are
-      not available.  (So everything breaks)
+      setup.cfg is ignored hence 'ksconf' isn't installed as a console script and custom ksconf_*
+      entry points are not available.  (So no CLI commands are available)
   (2) It allows for fallback mechanism when
        (a) running unit tests (can happen before install)
-       (b) if entrypoints or pkg_resources are not available at run time.
+       (b) if entrypoints or pkg_resources are not available at run time (Splunk's embedded python)
 """
 
 from __future__ import absolute_import, unicode_literals

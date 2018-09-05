@@ -22,6 +22,7 @@ import ksconf
 import ksconf.util
 from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
 from ksconf.util.completers import autocomplete
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 
 ###################################################################################################
 ## CLI definition
@@ -117,8 +118,8 @@ def cli(argv=None, _unittest=False):
     try:
         return_code = args.funct(args)
     except Exception as e:  # pragma: no cover
+        # Todo:  Make a CLI arg or ENV var to enable stacktrace for debugging
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
-        raise
         return_code = EXIT_CODE_INTERNAL_ERROR
 
     if _unittest:

@@ -99,7 +99,7 @@ Please change `venv` to a suitable path for your environment.
 ***Note:  This requires admin access.***
 
 This is the absolute easiest install method where 'ksconf' is available to all users on the system
-but it requires root access.
+but it requires root access and `pip` must be installed and up-to-date.
 
 On Mac or Linux, run:
 
@@ -108,6 +108,18 @@ On Mac or Linux, run:
 On Windows, run this commands from an Administrator console.
 
     pip install kintyre-splunk-conf
+
+
+### CentOS (RedHat derived) distros
+
+    # Enable the EPEL repo so that `pip` can be installed.
+    sudo yum install -y epel-release
+
+    # Install pip
+    sudo yum install -y python-pip
+
+    # Install ksconf (globally, for all users)
+    sudo pip install kintyre-splunk-conf
 
 
 ### Install from GIT
@@ -127,7 +139,7 @@ See [developer docs](devel.html) for additional details about contributing to ks
 
 Ksconf can be installed as a standalone executable zip app.  This approach still requires a python
 interpreter to be present either from the OS or the one embedded with Splunk Enterprise.  This works
-well for testing or when all other options fail.  
+well for testing or when all other options fail.
 
 From the [GitHub releases][gh-releases] page, grab the file name `ksconf-*.pyz`, download it, copy
 it to a `bin` folder in your PATH and rename it `ksconf`.  The default shebang looks for 'python' in
@@ -286,6 +298,89 @@ OS-specific notes:
  * **Windows**:  Argcomplete doesn't work on windows Bash for GIT.
    See [argcomplete issue 142][argcomplete-142] for more info.  If you really want this, use Linux
    subsystem for Windows instead.
+
+
+## Offline installation
+
+Installing ksconf to an offline or network restricted computer requires three steps: (1) download
+the latest packages from the Internet to a staging location, (2) transfer the staged content (often
+as a zip file) to the restricted host, and (3) use pip to install packages from the staged copy.
+Fortunately, pip makes offline workflows quite easy to achieve.  Pip can download a python package
+with all dependencies stored as wheels files into a single directory, and pip can be told to install
+from that directory instead of attempting to talk to the Internet.
+
+The process of transferring these files is very organization-specific.  The example below shows the
+creation of a tarball (since `tar` is universally available on Unix systems), but any acceptable
+method is fine.  If security is a high concern, this step is frequently where safety checks are
+implemented.  For example, antivirus scans, static code analysis, manual inspection, and/or
+comparison of cryptographic file hashes.
+
+One additional use-case for this workflow is to ensure the exact same version of all packages are
+deployed consistently across all servers and environments.  Often building a `requirements.txt` file
+by running `pip freeze` is a more appropriate solution, but this is technically more secure.
+
+
+### Offline installation steps
+
+**NOTE:**  Pip must be installed on the destination server for this process to work.  If pip is NOT
+installed see the *Offline installation of pip* section below.
+
+
+**Step 1**: Use pip to download the latest package and their dependencies.  Be sure to use the same
+version of python that is running on destination machine
+
+    # download packages
+    python2.7 -m pip download -d ksconf-packages kintyre-splunk-conf
+
+A new directory named 'ksconf-packages' will be created and will contain the neccesary `*.whl` files.
+
+**Step 2**: Transfer the directory or archive to the remote computer.  Insert whatever security and
+file copy procedures necessary for your organization.
+
+    # Compress directory (on staging computer)
+    tar -czvf ksconf-packages.tgz ksconf-packages
+
+    # Copy file using whatever means
+    scp ksconf-packages.tgz user@server:/tmp/ksconf-packages.tgz
+
+    # Extract the archive (on destination server)
+    tar -xzvf ksconf-packages.tgz
+
+**Step 3**:
+
+    # Install ksconf package with pip
+    pip install --no-index --find-links ksconf-packages kntyre-splunk-conf
+
+    # Test the installation
+    ksconf --version
+
+The `ksconf-packages` folder can now safely be removed.
+
+
+### Offline installation of pip
+
+Use the recommended `pip` install procedures listed elsewhere if possible.  But if a remote
+bootstrap of pip is your only option, then here are the steps.  (This process mirrors the steps
+above and can be combined, if needed.)
+
+
+**Step 1**:  Fetch boostrap script and necessary wheels
+
+    mkdir ksconf-packages
+    curl https://bootstrap.pypa.io/get-pip.py -o ksconf-packages/get-pip.py
+    python2.7 -m pip download -d /tmp/my_packages pip setuptools wheel
+
+The `ksconf-pacakges` folder should contain 1 script, and 3 wheel (`*.whl) files.
+
+**Step 2**: Archive and/or copy to offline server
+
+**Step 3**: Boostrap pip
+
+    sudo python get-pip.py --no-index --find-links=ksconf-packages/
+
+    # Test with
+    pip --version
+
 
 
 ## Frequent gotchas

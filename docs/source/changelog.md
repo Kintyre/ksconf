@@ -5,13 +5,22 @@
 
 Add Python 3 support, external command plugins, tox and vagrant for testing.
 
+### Release v0.5.3 (UNRELEASED)
+ * Expand install docs specifically for offline mode and some OS-specific notes.
+ * Add changelog for v0.5.2 (whoops)
+
+### Release v0.5.2 (2018-08-13)
+ * Expand CLI output for `--help` and `--version`
+ * Internal cleanup of CLI entry point module name.  Now the ksconf CLI can be invoked as
+   `python -m ksconf`, you know, for anyone who's into that sort of thing.
+ * Minor docs and CI/testing improvements.
+
 ### Release v0.5.1 (2018-06-28)
  * Support external ksconf command plugins through custom 'entry_points', allowing for others to
    develop their own custom extensions as needed.
  * Many internal changes:  Refactoring of all CLI commands to use new entry_points as well as pave
    the way for future CLI unittest improvements.
  * Docs cleanup / improvements.
-
 
 ### Release v0.5.0 (2018-06-26)
  * Python 3 support.
@@ -45,7 +54,7 @@ registration (installation via `pip install` and, online docs.
 
 ### Release v0.4.3 (2018-06-04)
  * Rename PyPI package `kintyre-splunk-conf`
- * Add support for building a standalone executable (zipapp).  
+ * Add support for building a standalone executable (zipapp).
  * Revamp install docs and location
  * Add GitHub release for the standalone executable.
 
@@ -57,7 +66,7 @@ registration (installation via `pip install` and, online docs.
 
 ### Release v0.4.0 (2018-05-19)
  * Refactor entire code base.  Switched from monolithic all-in-one file to clean-cut modules.
- * Versioning is now discoverable via `ksconf --version`, and controlled via git tags (via 
+ * Versioning is now discoverable via `ksconf --version`, and controlled via git tags (via
    `git describe --tags`).
 
 #### Module layout
@@ -75,7 +84,7 @@ First public releases.
 ### Release v0.3.2 (2018-04-24)
  * Add AppVeyor for Windows platform testing
  * Add codecov integration
- * Created ConfFileProxy.dump() 
+ * Created ConfFileProxy.dump()
 
 ### Release v0.3.1 (2018-04-21)
  * Setup automation via Travis CI
