@@ -35,4 +35,5 @@ Docs:
 
 Presentations:
 
-  * [Managing Splunk Deployments With Git and KSCONF](http://kintyre.rocks/70d87) Philly Splunk Meetup - June 6, 2018
+  * [The joys and pitfalls of managing your Splunk deployment with Git](http://kintyre.rocks/70d87) Philly Splunk Meetup - June 6, 2018
+  * [Managing Splunk Deployments With Git and KSCONF](https://kintyre.rocks/ksconf18) Splunk .conf bsides talk - Oct 2, 2018
