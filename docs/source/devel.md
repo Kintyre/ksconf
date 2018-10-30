@@ -8,8 +8,7 @@ The following steps highlight the developer install process.
 If you are a developer then we strongly suggest installing into a virtual environment to prevent
 overwriting the production version of ksconf and for the installation of the developer tools.  (The
 virtualenv name `ksconfdev-pyve` is used below, but this can be whatever suites, just make sure not
-to commit it.
-.)
+to commit it.)
 
     # Setup and activate virtual environment
     virtualenv ksconfdev-pyve
@@ -63,7 +62,7 @@ The ksconf project uses the [pre-commit][pre-commit] hook to enable the followin
 
 Note that this repo both uses pre-commit for it's own validation (as discussed here) and provides a
 pre-commit hook service to other repos.  This way repositories housing Splunk apps can, for example,
-use 'ksconf --check' or `ksconf --sort` against their own `.conf` files for validation purposes.
+use `ksconf --check` or `ksconf --sort` against their own `.conf` files for validation purposes.
 
 ### Installing the pre-commit hook
 

@@ -317,7 +317,8 @@ comparison of cryptographic file hashes.
 
 One additional use-case for this workflow is to ensure the exact same version of all packages are
 deployed consistently across all servers and environments.  Often building a `requirements.txt` file
-by running `pip freeze` is a more appropriate solution, but this is technically more secure.
+with `pip freeze` is a more appropriate solution.  Or consider using `pipenv lock` for even more
+security benefits. 
 
 
 ### Offline installation steps
