@@ -277,6 +277,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         default = twd.get_path("etc/apps/Splunk_TA_aws/default")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             cfg = parse_conf(twd.get_path("etc/apps/Splunk_TA_aws/default/props.conf"))
             self.assertIn("aws:config", cfg)
             self.assertEqual(cfg["aws:config"]["ANNOTATE_PUNCT"], "true")
@@ -297,6 +298,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_file("etc/apps/Splunk_TA_aws/default/data/dead.conf", "# File to remove")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stdout, r'[\r\n][-]\s*<view name="search"')
             self.assertRegex(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
         with ksconf_cli:

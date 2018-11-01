@@ -161,10 +161,10 @@ class CombineCmd(KsconfCmd):
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
-            self.stderr.write("Combining conf files into {}\n".format(args.target))
+            self.stderr.write("Combining conf files into directory {}\n".format(args.target))
         args.source = list(_expand_glob_list(args.source))
         for src in args.source:
-            self.stderr.write("Reading conf files from {}\n".format(src))
+            self.stderr.write("Reading conf files from directory {}\n".format(src))
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
         if os.path.isdir(args.target):
@@ -174,9 +174,9 @@ class CombineCmd(KsconfCmd):
                 return EXIT_CODE_COMBINE_MARKER_MISSING
         elif args.dry_run:
             self.stderr.write(
-                "Skipping creating destination folder {0} (dry-run)\n".format(args.target))
+                "Skipping creating destination directory {0} (dry-run)\n".format(args.target))
         else:
-            self.stderr.write("Creating destination folder {0}\n".format(args.target))
+            self.stderr.write("Creating destination directory {0}\n".format(args.target))
             os.mkdir(args.target)
             open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
 
@@ -204,6 +204,8 @@ class CombineCmd(KsconfCmd):
                     target_extra_files.add(tgt_file)
 
         for (dest_fn, src_files) in sorted(src_file_index.items()):
+            # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
+            src_files = sorted(src_files)
             dest_path = os.path.join(args.target, dest_fn)
 
             # Make missing destination folder, if missing
@@ -235,17 +237,23 @@ class CombineCmd(KsconfCmd):
                     self.stderr.write(
                         "Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
             else:
-                # Handle merging conf files
-                dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
-                                     parse_profile=PARSECONF_MID)
-                srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
-                # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
-                smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
-                                            banner_comment=args.banner)
-                if smart_rc != SMART_NOCHANGE:
-                    self.stderr.write(
-                        "Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
-                                                                    src_files))
+                try:
+                    # Handle merging conf files
+                    dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
+                                         parse_profile=PARSECONF_MID)
+                    srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
+                    # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
+                    smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
+                                                banner_comment=args.banner)
+                    if smart_rc != SMART_NOCHANGE:
+                        self.stderr.write(
+                            "Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
+                                                                        src_files))
+                finally:
+                    # Protect against any dangling open files:  (ResourceWarning: unclosed file)
+                    dest.close()
+                    for src in srcs:
+                        src.close()
 
         if True and target_extra_files:  # Todo: Allow for cleanup to be disabled via CLI
             self.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".
