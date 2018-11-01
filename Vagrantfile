@@ -12,7 +12,10 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
+
+  # Should work with either.  Take your pick.
   config.vm.box = "centos/7"
+  config.vm.box = "ubuntu/trusty64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -63,8 +66,18 @@ Vagrant.configure("2") do |config|
 
   # https://gist.github.com/clozed2u/b0421d8af60e26d97372
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
-    sudo yum install -y vim
-    sudo yum install -y gcc gcc-c++ make git patch openssl-devel zlib-devel readline-devel sqlite-devel bzip2-devel
+  if [[ -x $(command -v yum ) ]]; then
+        echo "Using RedHat/CentOS  package names..."
+        sudo yum install -y vim
+        sudo yum install -y gcc gcc-c++ make git patch openssl-devel zlib-devel readline-devel sqlite-devel bzip2-devel xz-devel libffi-devel
+    else
+        echo "Assuming debian base distro.  Using 'apt'"
+        sudo apt install -y vim
+        sudo apt install -y build-essential git
+        sudo apt install -y libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev libffi-dev
+
+    fi
+
     git clone git://github.com/yyuu/pyenv.git ~/.pyenv --depth=20
     echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc
     echo 'eval "$(pyenv init -)"' >> ~/.bashrc
@@ -74,16 +87,23 @@ Vagrant.configure("2") do |config|
     echo 'GIT_PROMPT_ONLY_IN_REPO=1' >> ~/.bashrc
     echo 'source ~/.bash-git-prompt/gitprompt.sh' >> ~/.bashrc
 
-    # Reload shell
-    source ~/.bashrc
+    # Prep shell
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
 
-    pyenv install 2.7.15
-    pyenv install 3.6.5
-    pyenv install 3.5.5
-    pyenv install 3.4.8
-    pyenv install pypy2.7-6.0.0
+    # Keep python versions in just one list to reduce number of edits and typos ;-)
+    PYVERS="2.7.15 3.7.1 3.6.7 3.5.6 3.4.9 pypy2.7-6.0.0"
 
-    pyenv global 2.7.15 3.6.5 3.5.5 3.4.8 pypy2.7-6.0.0
+    for ver in $PYVERS
+    do
+        pyenv install $ver && echo $ver >> ~/.pyver-installed-okay
+    done
+
+    # Fallback to the first version (in case any compiles fail) :   pyver global ${PYVERS%% *}
+    pyenv global $(cat ~/.pyver-installed-okay)
+
+    # Another option: (down side, priority list is different, but 2.7 is still the first.  Probably be good enough)
+    # pyenv global $(pyenv versions --bare)
     pyenv rehash
 
     # Intall tox
