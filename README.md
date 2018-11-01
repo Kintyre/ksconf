@@ -26,12 +26,22 @@ Confirm installation with the following command:
 
     ksconf --help
 
+
 Docs:
 
   * [Official docs](https://ksconf.readthedocs.io/en/latest/)  Hosted via ReadTheDocs.io
   * [Command line reference](./docs/source/cli.md)
   * [Installation docs](./docs/source/install.md)
   * [Change log](./docs/source/changelog.md)
+
+
+Get Involved:
+
+ * [Ask questions](https://github.com/Kintyre/ksconf/issues/new?labels=question)
+ * [Report bugs](https://github.com/Kintyre/ksconf/issues/new?template=bug.md&labels=bug)
+ * [Request new features](https://github.com/Kintyre/ksconf/issues/new?template=feature-request.md&labels=enhancement)
+ * [Contribute code](./docs/source/devel.md)
+
 
 Presentations:
 
