@@ -105,18 +105,34 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
         yield section, buf
 
 
-def detect_by_bom(path, default):
+def _detect_lite(byte_str):
+    """ A super simple drop-in replacement for chardet.detect(byte_str) that ONLY looks for BOM or
+    assumes "utf-8".
+    If someday the full chardet features are needed, we could use this for optional (oportunistic)
+    chardet support with this as the local fall-back function. """
     # https://stackoverflow.com/a/24370596/315892
-    with open(path, 'rb') as f:
-        raw = f.read(4)    # will read less if the file is smaller
+    # UTF-8 BOM is 3 bytes, UTF-16 is 2 bytes, UTF-32 is 4 bytes
     for (enc, boms) in (
             ('utf-8-sig', (codecs.BOM_UTF8,)),\
             ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),\
             ('utf-32', (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE))):
-        if any(raw.startswith(bom) for bom in boms):
-            # DEBUG -- print("FOUND ENCODING:  {} encoding={}".format(path, enc))
-            return enc
-    return default
+        if any(byte_str.startswith(bom) for bom in boms):
+            return { "encoding" : enc }
+    return { "encoding" : default_encoding }
+
+
+""" # Not ready for this approach yet!  (more testing scenarios required)
+try:
+    from chardet import detect
+else:
+    _detect_lite = detect
+"""
+
+def detect_by_bom(path):
+    with open(path, 'rb') as f:
+        raw = f.read(4)    # will read less if the file is smaller
+    encoding = _detect_lite(raw)
+    return encoding["encoding"]
 
 
 def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
@@ -158,7 +174,7 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
         return parse_conf_stream(stream, **profile)
     else:
         if not encoding:
-            encoding = detect_by_bom(stream, default_encoding)
+            encoding = detect_by_bom(stream)
         # Assume it's a filename
         with open(stream, "r", encoding=encoding) as stream:
             return parse_conf_stream(stream, **profile)

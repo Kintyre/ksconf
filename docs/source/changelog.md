@@ -6,6 +6,8 @@
 Add Python 3 support, external command plugins, tox and vagrant for testing.
 
 ### Release v0.5.3 (UNRELEASED)
+ * Fixed more issues with handling files with BOM encodings.  BOMs and encodings in general are NOT
+   preserved by ksconf.  If this is an issue for you, please add an enhancement issue.
  * Expand install docs specifically for offline mode and some OS-specific notes.
  * Add changelog for v0.5.2 (whoops)
 

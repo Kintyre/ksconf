@@ -6,10 +6,13 @@ import os
 import sys
 import textwrap
 
+from io import open
+
 # Used by ksconf.commands.* (not locally here)
 from textwrap import dedent
 
-from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException
+from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
+                               detect_by_bom
 from ksconf.consts import SMART_CREATE
 from ksconf.util import memoize
 
@@ -183,7 +186,8 @@ class ConfFileType(object):
             return ConfFileProxy(string, self._mode, parse_profile=self._parse_profile)
         else:
             try:
-                stream = open(string, self._mode)
+                encoding = detect_by_bom(string)
+                stream = open(string, self._mode, encoding=encoding)
                 cfp = ConfFileProxy(string, self._mode, stream=stream,
                                     parse_profile=self._parse_profile, is_file=True)
                 if self._action == "load":
