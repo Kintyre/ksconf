@@ -120,6 +120,7 @@ def cli(argv=None, _unittest=False):
     except Exception as e:  # pragma: no cover
         # Todo:  Make a CLI arg or ENV var to enable stacktrace for debugging
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
+        ksconf.util.debug_traceback()
         return_code = EXIT_CODE_INTERNAL_ERROR
 
     if _unittest:

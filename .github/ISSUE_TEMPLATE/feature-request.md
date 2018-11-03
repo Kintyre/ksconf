@@ -18,7 +18,7 @@ A clear and concise description of any alternative solutions or features you've 
 
 ## How serious are you about this change?  [ For not-trivial changes ]
 
-Is this a nice-to-have or showstopper for your use case?  Are you will and able to contibute code, time, or resources to make this change happen?
+Is this a nice-to-have or showstopper for your use case?  Are you willing and able to contribute code, time, or resources to make this change happen?
 
 ## Additional information 
 

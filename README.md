@@ -34,14 +34,17 @@ Docs:
   * [Installation docs](./docs/source/install.md)
   * [Change log](./docs/source/changelog.md)
 
+Need help?
+
+ * [Ask questions](https://github.com/Kintyre/ksconf/issues/new?labels=question)
+ * Chat about [#ksconf](https://slack.com/app_redirect?channel=CDVT14KUN) on Splunk's [Slack](https://splunk-usergroups.slack.com) channel
 
 Get Involved:
 
- * [Ask questions](https://github.com/Kintyre/ksconf/issues/new?labels=question)
- * [Report bugs](https://github.com/Kintyre/ksconf/issues/new?template=bug.md&labels=bug)
+ * [Report bugs](https://github.com/Kintyre/ksconf/issues/new?template=bug.md)
+ * Review [known bugs](https://github.com/Kintyre/ksconf/labels/bug)
  * [Request new features](https://github.com/Kintyre/ksconf/issues/new?template=feature-request.md&labels=enhancement)
  * [Contribute code](./docs/source/devel.md)
-
 
 Presentations:
 

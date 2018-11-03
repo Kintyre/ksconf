@@ -14,7 +14,7 @@ from textwrap import dedent
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
                                detect_by_bom
 from ksconf.consts import SMART_CREATE
-from ksconf.util import memoize
+from ksconf.util import memoize, debug_traceback
 
 
 class ConfDirProxy(object):
@@ -197,10 +197,13 @@ class ConfFileType(object):
                 return cfp
             except IOError as e:
                 message = "can't open '%s': %s"
+                debug_traceback()
                 raise ArgumentTypeError(message % (string, e))
             except ConfParserException as e:
+                debug_traceback()
                 raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
             except TypeError as e:
+                debug_traceback()
                 raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
 
     def __repr__(self):     # pragma: no cover

@@ -5,11 +5,15 @@
 
 Add Python 3 support, external command plugins, tox and vagrant for testing.
 
-### Release v0.5.3 (UNRELEASED)
+### Release v0.5.3 (2018-11-02)
+ * Fixed bug where `ksconf combine` could incorrectly order directories on certain file systems
+   (like ext4), effectively ignoring priorities.  Repeated runs may resulted in undefined behavior.
+   Solved by explicitly sorting input paths forcing processing to be done in lexicographical order.
  * Fixed more issues with handling files with BOM encodings.  BOMs and encodings in general are NOT
    preserved by ksconf.  If this is an issue for you, please add an enhancement issue.
+ * Add Python 3.7 support
  * Expand install docs specifically for offline mode and some OS-specific notes.
- * Add changelog for v0.5.2 (whoops)
+ * Enable additional tracebacks for CLI debugging by setting `KSCONF_DEBUG=1` in the environment.
 
 ### Release v0.5.2 (2018-08-13)
  * Expand CLI output for `--help` and `--version`

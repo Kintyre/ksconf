@@ -13,6 +13,7 @@ from collections import Counter
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import parse_conf, PARSECONF_STRICT_NC, ConfParserException
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR
+from ksconf.util import debug_traceback
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import _stdin_iter
 
@@ -68,6 +69,7 @@ class CheckCmd(KsconfCmd):
             except Exception as e:  # pragma: no cover
                 self.stderr.write("Unhandled top-level exception while parsing {0}.  "
                                   "Aborting.\n{1}\n".format(conf, e))
+                debug_traceback()
                 exit_code = EXIT_CODE_INTERNAL_ERROR
                 c["error"] += 1
                 break
