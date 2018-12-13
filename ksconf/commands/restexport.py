@@ -18,8 +18,8 @@ from __future__ import absolute_import, unicode_literals
 import sys
 import os
 
-from urllib import quote
 from argparse import FileType
+from six.moves.urllib.parse import quote
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
