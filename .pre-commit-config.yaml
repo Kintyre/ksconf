@@ -21,7 +21,7 @@ repos:
 - repo: local
   hooks:
     - id: make-cli-docs
-      name: Build CLI docs to - generate top-level README.md
+      name: Generating CLI reference docs -> docs/source/cli.md
       language: script
       entry: make_cli_docs.py
       type: [ python ]

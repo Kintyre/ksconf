@@ -30,6 +30,7 @@ _entry_points = {
         Ep("merge",     "ksconf.commands.merge",    "MergeCmd"),
         Ep("minimize",  "ksconf.commands.minimize", "MinimizeCmd"),
         Ep("sort",      "ksconf.commands.sort",     "SortCmd"),
+        Ep("rest-export", "ksconf.commands.restexport", "RestExportCmd"),
         Ep("unarchive", "ksconf.commands.unarchive","UnarchiveCmd"),
     ],
 }
