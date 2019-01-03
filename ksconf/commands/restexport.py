@@ -134,17 +134,22 @@ class RestExportCmd(KsconfCmd):
 
         Some inspiration in the form of CURL commands...
 
+        [single_quote_kv]
+        REGEX = ([^=\s]+)='([^']+)'
+        FORMAT = $1::$2
+        MV_ADD = 0
+
         CREATE NEW:
 
         curl -k https://SPLUNK:8089/servicesNS/nobody/my_app/configs/conf-transforms \
          -H "Authorization: Splunk $SPLUNKDAUTH" -X POST \
          -d name=single_quote_kv \
-         -d REGEX="([^=\s]+)='([^']+)'" \
+         -d REGEX="(%5B%5E%3D%5Cs%5D%2B)%3D%27(%5B%5E%27%5D%2B)%27" \
          -d FORMAT='$1::$2'
 
         UPDATE EXISTING:  (note the change in URL/name attribute)
 
-        curl -k https://SPLUNK:8089/servicesNS/nobody/my_app/onfigs/conf-transforms/single_quote_kv\
+        curl -k https://SPLUNK:8089/servicesNS/nobody/my_app/configs/conf-transforms/single_quote_kv \
          -H "Authorization: Splunk $SPLUNKDAUTH" -X POST \
          -d REGEX="(%5B%5E%3D%5Cs%5D%2B)%3D%27(%5B%5E%27%5D%2B)%27" \
          -d FORMAT='$1::$2' \
