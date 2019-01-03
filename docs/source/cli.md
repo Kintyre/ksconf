@@ -5,7 +5,8 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,promote,merge,minimize,sort,unarchive} ...
+                  {check,combine,diff,promote,merge,minimize,sort,rest-export,unarchive}
+                  ...
     
     Ksconf: Kintyre Splunk CONFig tool
     
@@ -17,7 +18,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,promote,merge,minimize,sort,unarchive}
+      {check,combine,diff,promote,merge,minimize,sort,rest-export,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -39,6 +40,8 @@ The following documents the CLI options
                             duplicated in the default conf(s)
         sort                Sort a Splunk .conf file creating a normalized format
                             appropriate for version control
+        rest-export         Export .conf settings as a curl script to apply to a
+                            Splunk instance later (via REST)
         unarchive           Install or upgrade an existing app in a git-friendly
                             and safe way
     
@@ -399,6 +402,44 @@ The following documents the CLI options
       -q, --quiet           Reduce the output. Reports only updated or invalid
                             files. This is useful for pre-commit hooks, for
                             example.
+
+
+## ksconf rest-export
+    usage: ksconf rest-export [-h] [--output FILE] [-u] [--url URL] [--app APP]
+                              [--user USER]
+                              FILE [FILE ...]
+    
+    Build an executable script of the stanzas in a configuration file that can be later applied to
+    a running Splunk instance via the Splunkd REST endpoint.
+    
+    This can be helpful when pushing complex props & transforms to an instance where you only have
+    UI access and can't directly publish an app.
+    
+    WARNING:  This command is indented for manual admin workflows.  It's quite possible that shell
+    escaping bugs exist that may allow full shell access if you put this into an automated workflow.
+    Evalute the risks, review the code, and run as a least-privilege user, and be responsible.
+    
+    For now the assumption is that 'curl' command will be used.  (Patches to support the Power Shell
+    Invoke-WebRequest cmdlet would be greatly welcomed!)
+    
+    ksconf rest-export --output=apply_props.sh etc/app/Splunk_TA_aws/local/props.conf
+    
+    positional arguments:
+      FILE                  Configuration file(s) to export settings from.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --output FILE, -t FILE
+                            Save the shell script output to this file. If not
+                            provided, the output is written to standard output.
+      -u, --update          Assume that the REST entities already exist. By
+                            default output assumes stanzas are being created.
+                            (This is an unfortunate quark of the configs REST API)
+      --url URL             URL of Splunkd. Default: https://localhost:8089
+      --app APP             Set the namespace (app name) for the endpoint
+      --user USER           Set the user associated. Typically the default of
+                            'nobody' is ideal if you want to share the
+                            configurations at the app-level.
 
 
 ## ksconf unarchive
