@@ -4,6 +4,7 @@ set -e
 version=$(git describe --tags --always)
 version=${version/v/}
 test -d build || mkdir build
+test -d dist || mkdir dist
 zipapp=dist/ksconf-${version}
 install_temp=build/ksconf-$version
 test -d $install_temp && rm -rf $install_temp
