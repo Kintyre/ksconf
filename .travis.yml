@@ -72,7 +72,7 @@ script:
 after_success:
   - codecov
   - coveralls
-  - '[[ $BUILD_SDIST == "True" ]] && ./make_zipapp'
+  - '[[ $BUILD_SDIST == "true" ]] && ./make_zipapp'
 deploy:
   - provider: releases
     api_key:
@@ -82,7 +82,7 @@ deploy:
     skip_cleanup: true
     on:
       all_branches: true
-      condition: $DO_RELEASE = "True"
+      condition: $DO_RELEASE = True
   - provider: pypi
     user: lowellalleman
     password:
