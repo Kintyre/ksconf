@@ -21,7 +21,7 @@ from recommonmark.parser import CommonMarkParser
 # -- Project information -----------------------------------------------------
 
 project = u'KSConf'
-copyright = u'2018, Kintyre Solutions, Inc.'
+copyright = u'2019, Kintyre Solutions, Inc.'
 #author = u'Lowell Alleman'
 
 from ksconf import __version__ as release, __author__ as author

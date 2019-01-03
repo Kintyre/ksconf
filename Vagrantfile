@@ -14,8 +14,8 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
 
   # Should work with either.  Take your pick.
-  config.vm.box = "centos/7"
-  config.vm.box = "ubuntu/trusty64"
+  #config.vm.box = "centos/7"
+  config.vm.box = "ubuntu/bionic64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -75,7 +75,8 @@ Vagrant.configure("2") do |config|
         sudo apt install -y vim
         sudo apt install -y build-essential git
         sudo apt install -y libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev libffi-dev
-
+        # https://github.com/pyenv/pyenv/issues/945
+        sudo apt install -y libssl1.0-dev
     fi
 
     git clone git://github.com/yyuu/pyenv.git ~/.pyenv --depth=20

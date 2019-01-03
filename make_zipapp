@@ -1,8 +1,11 @@
 #!/bin/bash
+echo "Building zipapp"
+set -e
 version=$(git describe --tags --always)
 version=${version/v/}
 test -d build || mkdir build
-zipapp=dist/ksconf-${version}
+test -d zdist || mkdir zdist
+zipapp=zdist/ksconf-${version}
 install_temp=build/ksconf-$version
 test -d $install_temp && rm -rf $install_temp
 
@@ -16,7 +19,7 @@ echo "Building stanadalone zipapp for $version"
 
 pip install . --target=$install_temp --no-compile
 # Install backported configparser for python2.7; required since build script runs on 3.6 but .pyz may be run with an embedded Splunk python (2.7)
-pip install confiparser --target=$install_temp --no-compile
+pip install configparser --target=$install_temp --no-compile
 
 # zipapp module requires Python 3.5 or greater
 python -m zipapp $install_temp --output ${zipapp}.pyz --python '/usr/bin/env python' --main ksconf.__main__:cli

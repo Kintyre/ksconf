@@ -5,6 +5,12 @@
 
 Add Python 3 support, external command plugins, tox and vagrant for testing.
 
+### Release v0.5.4 (UNRELEASED)
+ * Fix typo in `KSCONF_DEBUG`.
+ * Resolving some build issues.
+ * Improved support for development/testing environments using Vagrant (fixes) and Docker (new).
+   Thanks to Lars Jonsson for these enhancements.
+
 ### Release v0.5.3 (2018-11-02)
  * Fixed bug where `ksconf combine` could incorrectly order directories on certain file systems
    (like ext4), effectively ignoring priorities.  Repeated runs may resulted in undefined behavior.
