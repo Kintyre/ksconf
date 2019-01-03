@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SUBCOMMAND:  ksconf rest-expot --output=script.sh <CONF>
+SUBCOMMAND:  ksconf rest-export --output=script.sh <CONF>
 
 Usage example:
 
@@ -126,7 +126,6 @@ class RestExportCmd(KsconfCmd):
         # for now this is not likely to be a big issue given app and user name restrictions.
         url = "{}/servicesNS/{}/{}/configs/conf-{}".format(base, user, app, conf)
         return url
-
 
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''
