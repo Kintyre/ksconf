@@ -17,7 +17,7 @@ from argparse import FileType
 from ksconf import __version__, __vcs_info__
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_MID_NC, parse_conf, ConfParserException, GLOBAL_STANZA
-from ksconf.consts import EXIT_CODE_SUCCESS
+from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_NO_SUCH_FILE
 from ksconf.util.file import file_hash
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
 
@@ -27,9 +27,6 @@ class ConfSnapshotConfig(object):
 
     # max_files = 10000
     # include_parts = [ "conf", "meta", "lookups", "data/ui", "data/model", "data/ui/nav" ]
-
-
-PARSECONF_MID_NC
 
 
 class ConfSnapshot(object):
@@ -50,6 +47,7 @@ class ConfSnapshot(object):
         # meta["level"] = local vs default
         # meta["folder"] = apps, deployment-apps, master-apps, users, ...
         # Eventually need some kind of "data/*" decoder as well.
+        # XXX: Extract the app name ...
         return meta
 
     @staticmethod
@@ -109,7 +107,17 @@ class ConfSnapshot(object):
             },
         }
         record["records"] = self._data
-        json.dump(record, stream, **kwargs)
+
+        # Workaround for unittesting (Py2.7 issue only);  there's probably a better solution
+        try:
+            json.dump(record, stream, **kwargs)
+        except TypeError:
+            from io import StringIO
+            if isinstance(stream, StringIO):
+                s = json.dumps(record, **kwargs)
+                stream.write(s.decode("utf-8"))
+            else:
+                raise
 
 
 class SnapshotCmd(KsconfCmd):
@@ -125,24 +133,25 @@ class SnapshotCmd(KsconfCmd):
     def register_args(self, parser):
         parser.add_argument("path", metavar="PATH", nargs="+", type=str,
                             help="Directory from which to load configuration files.  "
-                                 "Recursive by default."
+                                 "All .conf and .meta file are included recursively."
                             ).completer = DirectoriesCompleter()
-        parser.add_argument("--output", "-t", metavar="FILE",
-                            type=FileType("w"), default=sys.stdout,
+        parser.add_argument("--output", "-o", metavar="FILE",
+                            type=FileType("w"), default=self.stdout,
                             help="""
             Save the snapshot to the named files.  If not provided, the snapshot is written to
             standard output."""
-                            ).completer =  FilesCompleter(allowednames=["*.json"])
+                            ).completer = FilesCompleter(allowednames=["*.json"])
         parser.add_argument("--minimize", action="store_true", default=False, help="""
             Reduce the size of the JSON output by removing whitespace.  Reduces readability.  """)
 
-
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''
-
         cfg = ConfSnapshotConfig()
         confSnap = ConfSnapshot(cfg)
         for path in args.path:
+            if not os.path.isdir(path):
+                self.stderr.write("No such directory {}\n".format(path))
+                return EXIT_CODE_NO_SUCH_FILE
             confSnap.snapshot_dir(path)
 
         if args.minimize:

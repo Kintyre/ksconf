@@ -6,6 +6,7 @@ import stat
 import sys
 import tempfile
 import unittest
+import json
 from io import open, StringIO
 from collections import namedtuple
 from glob import glob
@@ -882,6 +883,45 @@ class CliPromoteTest(unittest.TestCase):
 
 
 
+class CliKsconfSnapshotTest(unittest.TestCase):
+
+    def test_app_simple(self):
+        twd = TestWorkDir()
+        twd.write_file("apps/MyApp/default/app.conf","""\
+        [install]
+        is_configured = false
+        state = disabled
+        build = 1
+
+        [launcher]
+        author = Kintyre
+        version = 0.6.0
+        description = Custom IT Events add-on for db connect events.  Includes CIM compliance for ES.
+
+        [ui]
+        is_visible = true
+        label = CLIENT IT Events add-on
+        """)
+        twd.write_file("apps/MyApp/local/app.conf", """\
+        [install]
+        is_configured = true
+        state = enabled
+
+        [ui]
+        is_visible = false
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("snapshot", twd.get_path("apps"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            # Load output as JSON
+
+            d = json.loads(ko.stdout)
+            self.assertTrue(d["records"])
+            self.assertTrue(d["schema_version"] > 0)
+            self.assertTrue(d["software"])
+
+
+
 class CliKsconfUnarchiveTestCase(unittest.TestCase):
 
     '''
@@ -891,7 +931,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
     '''
 
     def setUp(self):
-	# Setup environmental variables to avoid GIT commit errors regarding missing user.email, user.name configs
+	    # Setup environmental variables to avoid GIT commit errors regarding missing user.email, user.name configs
         env = os.environ
         env["GIT_AUTHOR_NAME"]  = env["GIT_COMMITTER_NAME"]  = "Ksconf Unit Tests"
         env["GIT_AUTHOR_EMAIL"] = env["GIT_COMMITTER_EMAIL"] = "automated-tests@bogus.kintyre.co"

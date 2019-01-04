@@ -380,12 +380,12 @@ The following documents the CLI options
     --output=daily.json /opt/splunk/etc/app/
     
     positional arguments:
-      PATH                  Directory from which to load configuration files.
-                            Recursive by default.
+      PATH                  Directory from which to load configuration files. All
+                            .conf and .meta file are included recursively.
     
     optional arguments:
       -h, --help            show this help message and exit
-      --output FILE, -t FILE
+      --output FILE, -o FILE
                             Save the snapshot to the named files. If not provided,
                             the snapshot is written to standard output.
       --minimize            Reduce the size of the JSON output by removing

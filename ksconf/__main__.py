@@ -76,7 +76,9 @@ def cli(argv=None, _unittest=False):
 
         cmd = cmd_cls(entry.name)
         cmd.add_parser(subparsers)
-
+        del cmd_cls, distro
+    del name, entry
+    del subparsers
 
     # Common settings
     '''
