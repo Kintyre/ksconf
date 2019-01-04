@@ -128,6 +128,7 @@ class RestExportCmd(KsconfCmd):
         url = "{}/servicesNS/{}/{}/configs/conf-{}".format(base, user, app, conf)
         return url
 
+
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''
         """

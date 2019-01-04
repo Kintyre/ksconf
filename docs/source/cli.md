@@ -5,7 +5,7 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,promote,merge,minimize,sort,rest-export,unarchive}
+                  {check,combine,diff,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
                   ...
     
     Ksconf: Kintyre Splunk CONFig tool
@@ -18,7 +18,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,promote,merge,minimize,sort,rest-export,unarchive}
+      {check,combine,diff,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -38,6 +38,8 @@ The following documents the CLI options
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s)
+        snapshot            Snapshot .conf file directories into a JSON dump
+                            format
         sort                Sort a Splunk .conf file creating a normalized format
                             appropriate for version control
         rest-export         Export .conf settings as a curl script to apply to a
@@ -366,6 +368,28 @@ The following documents the CLI options
                             minimized output. For example, it may be desirable
                             keep the 'disabled' settings in the local file, even
                             if it's enabled by default.
+
+
+## ksconf snapshot
+    usage: ksconf snapshot [-h] [--output FILE] [--minimize] PATH [PATH ...]
+    
+    Build a static snapshot of various configuration files stored within a
+    structured json export format. If the .conf files being captured are within a
+    standard Splunk directory structure, then certain metadata is assumed based on
+    path locations. Otherwise, less metadata is recorded. ksconf snapshot
+    --output=daily.json /opt/splunk/etc/app/
+    
+    positional arguments:
+      PATH                  Directory from which to load configuration files. All
+                            .conf and .meta file are included recursively.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --output FILE, -o FILE
+                            Save the snapshot to the named files. If not provided,
+                            the snapshot is written to standard output.
+      --minimize            Reduce the size of the JSON output by removing
+                            whitespace. Reduces readability.
 
 
 ## ksconf sort

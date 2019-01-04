@@ -271,7 +271,7 @@ class KsconfCmd(object):
         raise NotImplementedError
 
     def launch(self, args):
-        """ Handle flow control betweeen pre_run() / run() / post_run() """
+        """ Handle flow control between pre_run() / run() / post_run() """
         # If this fails, exception is passed up, no handling errors/logging done here.
         self.pre_run(args)
 
