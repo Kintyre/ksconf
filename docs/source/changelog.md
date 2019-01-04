@@ -5,7 +5,15 @@
 
 Add Python 3 support, external command plugins, tox and vagrant for testing.
 
-### Release v0.5.4 (UNRELEASED)
+### Release v0.5.4 (2019-01-04)
+ * New commands added:
+  * *snapshot* will dump a set of configuration files to a JSON formatted file.  This can be used 
+    used for incremental "snapshotting" of running Splunk apps to track changes overtime.
+  * *rest-export* builds a series of custom `curl` commands that can be used to publish or update
+    stanzas on a remote instance without file system access.  This can be helpful when pushing
+    configs to Splunk Cloud when all you have is REST (splunkd) access.  This command is indented
+    for interactive admin not batch operations.
+ * Added the concept of command maturity.  A listing is aviable by running `ksconf --version`
  * Fix typo in `KSCONF_DEBUG`.
  * Resolving some build issues.
  * Improved support for development/testing environments using Vagrant (fixes) and Docker (new).
