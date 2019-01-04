@@ -28,6 +28,7 @@ class DiffCmd(KsconfCmd):
     macros can be compared more easily.
     """)
     format = "manual"
+    maturity = "stable"
 
     def register_args(self, parser):
         parser.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",

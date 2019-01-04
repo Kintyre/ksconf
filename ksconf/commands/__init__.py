@@ -231,6 +231,7 @@ class KsconfCmd(object):
     help = None
     description = None
     format = "default"
+    maturity = "alpha"
 
     def __init__(self, name):
         self.name = name.lower()

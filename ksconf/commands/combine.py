@@ -132,6 +132,7 @@ class CombineCmd(KsconfCmd):
         ksconf combine default.d/* --target=default
         """)
     format = "manual"
+    maturity = "beta"
 
     def register_args(self, parser):
         parser.add_argument("source", nargs="+", help="""

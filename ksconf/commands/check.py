@@ -26,6 +26,7 @@ class CheckCmd(KsconfCmd):
     validation of keys and values.
 
     Consider using this utility as part of a pre-commit hook.""")
+    maturity = "stable"
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="FILE", nargs="+", help="""

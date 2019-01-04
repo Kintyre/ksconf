@@ -48,7 +48,7 @@ class MinimizeCmd(KsconfCmd):
     Minimize a conf file by removing the default settings
 
     Reduce local conf file to only your indented changes without manually tracking
-    which entires you've edited.  Minimizing local conf files makes your local
+    which entries you've edited.  Minimizing local conf files makes your local
     customizations easier to read and often results in cleaner add-on upgrades.
 
     A typical scenario & why does this matter:
@@ -84,6 +84,7 @@ class MinimizeCmd(KsconfCmd):
         ksconf minimize --target=local/inputs.conf default/inputs.conf
     """)
     format = "manual"
+    maturity = "beta"
 
 
     ''' Make sure this works before advertising (same file as target and source????)
@@ -111,7 +112,7 @@ class MinimizeCmd(KsconfCmd):
         grp1.add_argument("--output",
                           type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                           default=None, help="""
-            Write the minimzed output to a separate file instead of updating TARGET.
+            Write the minimized output to a separate file instead of updating TARGET.
             This can be use to preview changes if dry-run produces a large diff.
             This may also be helpful in other workflows."""
                           ).completer = conf_files_completer
@@ -124,7 +125,7 @@ class MinimizeCmd(KsconfCmd):
             etc/system/default/savedsearches.conf""")
         parser.add_argument("-k", "--preserve-key", action="append", default=[], help="""
             Specify a key that should be allowed to be a duplication but should be preserved
-            within the minimized output.  For example, it may be esirable keep the
+            within the minimized output.  For example, it may be desirable keep the
             'disabled' settings in the local file, even if it's enabled by default.""")
 
     def run(self, args):

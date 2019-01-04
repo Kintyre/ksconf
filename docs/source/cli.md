@@ -288,7 +288,7 @@ The following documents the CLI options
                             exist, then show the merged file.
       --banner BANNER, -b BANNER
                             A banner or warning comment added to the top of the
-                            TARGET file. This is pften used to warn Splunk admins
+                            TARGET file. This is often used to warn Splunk admins
                             from editing an auto-generated file.
 
 
@@ -300,7 +300,7 @@ The following documents the CLI options
     Minimize a conf file by removing the default settings
     
     Reduce local conf file to only your indented changes without manually tracking
-    which entires you've edited.  Minimizing local conf files makes your local
+    which entries you've edited.  Minimizing local conf files makes your local
     customizations easier to read and often results in cleaner add-on upgrades.
     
     A typical scenario & why does this matter:
@@ -348,7 +348,7 @@ The following documents the CLI options
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimizing
                             the TARGET file, preview what what be removed in the
                             form of a 'diff'.
-      --output OUTPUT       Write the minimzed output to a separate file instead
+      --output OUTPUT       Write the minimized output to a separate file instead
                             of updating TARGET. This can be use to preview changes
                             if dry-run produces a large diff. This may also be
                             helpful in other workflows.
@@ -363,9 +363,9 @@ The following documents the CLI options
       -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
                             Specify a key that should be allowed to be a
                             duplication but should be preserved within the
-                            minimized output. For example, it may be esirable keep
-                            the 'disabled' settings in the local file, even if
-                            it's enabled by default.
+                            minimized output. For example, it may be desirable
+                            keep the 'disabled' settings in the local file, even
+                            if it's enabled by default.
 
 
 ## ksconf sort

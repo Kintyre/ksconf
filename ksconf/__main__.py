@@ -69,8 +69,7 @@ def cli(argv=None, _unittest=False):
     # sys.stderr.write("Loading {} from entry point:  {!r}\n".format(name, entry))
         cmd_cls = entry.load()
         distro = entry.dist or "Unknown"
-        version_info.append("    {:15} ({})".format(name, distro))
-
+        version_info.append("    {:15}  ({}, from {})".format(name, cmd_cls.maturity, distro))
         if not issubclass(cmd_cls, KsconfCmd):
             raise RuntimeError("Entry point {!r} not derived from KsconfCmd.".format(entry))
 

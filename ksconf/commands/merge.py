@@ -25,6 +25,7 @@ class MergeCmd(KsconfCmd):
 
     """)
     format = "manual"
+    maturity = "stable"
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="FILE", nargs="+",
@@ -43,7 +44,7 @@ class MergeCmd(KsconfCmd):
             If TARGET doesn't exist, then show the merged file.""")
         parser.add_argument("--banner", "-b", default="", help="""
             A banner or warning comment added to the top of the TARGET file.
-            This is pften used to warn Splunk admins from editing an auto-generated file.""")
+            This is often used to warn Splunk admins from editing an auto-generated file.""")
 
     def run(self, args):
         ''' Merge multiple configuration files into one '''

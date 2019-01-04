@@ -38,6 +38,7 @@ class UnarchiveCmd(KsconfCmd):
     Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)
     """)
     format = "manual"
+    maturity = "beta"
 
     def register_args(self, parser):
         parser.add_argument("tarball", metavar="SPL",

@@ -91,6 +91,7 @@ class RestExportCmd(KsconfCmd):
     ksconf rest-export --output=apply_props.sh etc/app/Splunk_TA_aws/local/props.conf
     """)
     format = "manual"
+    maturity = "beta"
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="FILE", nargs="+",

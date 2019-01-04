@@ -37,6 +37,7 @@ class SortCmd(KsconfCmd):
         find . -name '*.conf' | xargs ksconf sort -i
     """)
     format = "manual"
+    maturity = "stable"
 
     def register_args(self, parser):
         import argparse

@@ -92,6 +92,7 @@ class PromoteCmd(KsconfCmd):
     lost.  (This needs improvement.)
     """)
     format = "manual"
+    maturity = "beta"
 
     def register_args(self, parser):
         parser.set_defaults(mode="ask")
