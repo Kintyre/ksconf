@@ -910,6 +910,10 @@ class CliKsconfSnapshotTest(unittest.TestCase):
         [ui]
         is_visible = false
         """)
+        twd.write_file("apps/MyApp/metadata/default.conf","""\
+        []
+        export = system
+        """)
         with ksconf_cli:
             ko = ksconf_cli("snapshot", twd.get_path("apps"))
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
@@ -919,6 +923,26 @@ class CliKsconfSnapshotTest(unittest.TestCase):
             self.assertTrue(d["records"])
             self.assertTrue(d["schema_version"] > 0)
             self.assertTrue(d["software"])
+        # Make sure minimize mode doesn't die
+        with ksconf_cli:
+            ko = ksconf_cli("snapshot", "--minimize", twd.get_path("apps"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            json.loads(ko.stdout)
+
+    def test_bad_conf_file(self):
+        twd = TestWorkDir()
+        twd.write_file("apps/MyApp/default/crap.conf","""\
+        happy = 0
+        [the start of something beautiful
+        """)
+        twd.write_file("apps/MyApp/default/not-a-conf-file.txt", "Nothing to see here!")
+        twd.makedir("apps/MyApp/bin")
+        with ksconf_cli:
+            ko = ksconf_cli("snapshot", twd.get_path("apps"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            # XXX:  Add a better failure test here...
+            self.assertRegex(ko.stdout, r"\"failure\"\s*:\s*\"")
+            json.loads(ko.stdout)
 
 
 

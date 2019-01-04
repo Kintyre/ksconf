@@ -93,9 +93,8 @@ class ConfSnapshot(object):
                 if avoid in dirnames:
                     dirnames.remove(avoid)
             for fn in filenames:
-                if not (fn.endswith(".conf") or fn.endswith(".meta")):
-                    continue
-                self.snapshot_file_conf(os.path.join(path, dirpath, fn))
+                if fn.endswith(".conf") or fn.endswith(".meta"):
+                    self.snapshot_file_conf(os.path.join(path, dirpath, fn))
 
     def write_snapshot(self, stream, **kwargs):
         record = {
@@ -116,7 +115,7 @@ class ConfSnapshot(object):
             if isinstance(stream, StringIO):
                 s = json.dumps(record, **kwargs)
                 stream.write(s.decode("utf-8"))
-            else:
+            else:   # pragma: no cover
                 raise
 
 
