@@ -30,20 +30,10 @@ from ksconf.util.completers import conf_files_completer
 class FilteredList(object):
     IGNORECASE = I = 1
 
-    def __init__(self, match_mode="string", flags=0):
+    def __init__(self, flags=0):
         self.data = []
         self.flags = flags
-        self._match = self._set_match_func(match_mode)
-
-    def _set_match_func(self, match_mode):
-        if match_mode == "string":
-            return self._match_string
-        elif match_mode == "regex":
-            return self._match_regex
-        elif match_mode == "wildcard":
-            return self._match_wildcard
-        else:
-            raise ValueError("Unknown matching mode {!r}".format(match_mode))
+        self._prep = True
 
     @staticmethod
     def _feed_from_file(path):
@@ -65,9 +55,18 @@ class FilteredList(object):
             self.data.extend(self._feed_from_file(filename))
         else:
             self.data.append(item)
+        # New items added.  Mark prep-work as incomplete
+        self._prep = False
+
+    def _pre_match(self):
+        pass
 
     def match(self, item):
         if self.data:
+            # Kick off any first-time preparatory activities
+            if self._prep is False:
+                self._pre_match()
+                self._prep = True
             return self._match(item)
         else:
             #  No patterns defined.  No filter rule(s) => allow all through
@@ -77,38 +76,65 @@ class FilteredList(object):
     def has_rules(self):
         return len(self.data) > 0
 
-    def _match_string(self, item):
-        if self.flags & self.IGNORECASE:
+    def _match(self, item):
+        raise NotImplementedError
 
+
+class FilteredListString(FilteredList):
+    """ Handle simple string comparisons """
+    def _pre_match(self):
+        if self.flags & self.IGNORECASE:
             # Lower-case all strings in self.data.  (Only need to do this once)
-            if not getattr(self, "_match_string_lc_fixup", False):
-                print("ONE TIME CONVERSTION!")
-                self.data = [i.lower() for i in self.data]
-                self._match_string_lc_fixup = True
+            self.data = [i.lower() for i in self.data]
+
+    def _match(self, item):
+        if self.flags & self.IGNORECASE:
             item = item.lower()
         print('{} in {}  ==> {}'.format(item, self.data, item in self.data))
         return item in self.data
 
-    def _match_regex(self, item):
+
+class FilteredListRegex(FilteredList):
+    """ Regular Expression support """
+    def _pre_match(self):
         re_flags = 0
         if self.flags & self.IGNORECASE:
             re_flags |= re.IGNORECASE
-        for pattern in self.data:
-            pattern_re = re.compile(pattern, re_flags)
+        # Compile all regular expressions
+        # XXX: Add better error handling here for friendlier user feedback
+        self.data = [ re.compile(pattern, re_flags) for pattern in self.data ]
+
+    def _match(self, item):
+        for pattern_re in self.data:
             if pattern_re.match(item):
                 return True
         return False
 
-    def _match_wildcard(self, item):
+
+class FilterListWildcard(FilteredList):
+    """ Wildcard support (handling '*' and ?') """
+
+    def _match(self, item):
         if self.flags & self.IGNORECASE:
             match = fnmatch
         else:
             match = fnmatchcase
+
         for pattern in self.data:
             if match(pattern, item):
                 return True
         return False
 
+
+def create_filtered_list(match_mode, flags):
+    if match_mode == "string":
+        return FilteredListString(flags)
+    elif match_mode == "wildcard":
+        return FilterListWildcard(flags)
+    elif match_mode == "regex":
+        return FilteredListRegex(flags)
+    else:
+        raise ValueError("Unknown matching mode {!r}".format(match_mode))
 
 
 
@@ -170,6 +196,7 @@ class FilterCmd(KsconfCmd):
         pg_out.add_argument("--count", "-c", action="store_true",
                             help="Count matching stanzas")
 
+
         pg_sel = parser.add_argument_group("Stanza selection", """
             Include or exclude entire stanzas using these filter options.
 
@@ -201,6 +228,7 @@ class FilterCmd(KsconfCmd):
             PATTERN supports the special 'file://' syntax.""")
         '''
 
+
         '''
         pg_con = parser.add_argument_group("Attribute retention","""
             Include or exclude entire stanzas using these options.
@@ -215,11 +243,11 @@ class FilterCmd(KsconfCmd):
         if args.ignore_case:
             flags |= FilteredList.IGNORECASE
 
-        self.stanza_filters = FilteredList(args.match, flags)
+        self.stanza_filters = create_filtered_list(args.match, flags)
         for pattern in args.stanza:
             self.stanza_filters.feed(pattern)
 
-        self.attr_presence_filters = FilteredList(args.match, flags)
+        self.attr_presence_filters = create_filtered_list(args.match, flags)
         for pattern in args.attr_present:
             self.attr_presence_filters.feed(pattern)
 
