@@ -5,7 +5,7 @@ The following documents the CLI options
 
 ## ksconf
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
+                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
                   ...
     
     Ksconf: Kintyre Splunk CONFig tool
@@ -18,7 +18,7 @@ The following documents the CLI options
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
+      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -29,6 +29,7 @@ The following documents the CLI options
                             several instances after a phased server migration.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
+        filter              A stanza-aware GREP tool for conf files
         promote             Promote .conf settings from one file into another
                             either in batch mode (all changes) or interactively
                             allowing the user to pick which stanzas and keys to
@@ -209,6 +210,65 @@ The following documents the CLI options
                             out.
       --comments, -C        Enable comparison of comments. (Unlikely to work
                             consistently)
+
+
+## ksconf filter
+    usage: ksconf filter [-h] [-o FILE] [--comments]
+                         [--match {regex,wildcard,string}] [--ignore-case]
+                         [--invert-match] [--files-with-matches] [--count]
+                         [--stanza PATTERN] [--attr-present ATTR]
+                         [--attr-eq ATTR PATTERN]
+                         CONF [CONF ...]
+    
+    Filter the contents of a conf file in various ways. Stanzas can be included or
+    excluded based on provided filter, based on the presents or value of a key.
+    Where possible, this command supports GREP-like arguments to bring a familiar
+    feel.
+    
+    positional arguments:
+      CONF                  Input conf file
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -o FILE, --output FILE
+                            File where the filtered results are written. Defaults
+                            to standard out.
+      --comments, -C        Preserve comments. Comments are discarded by default.
+      --match {regex,wildcard,string}, -m {regex,wildcard,string}
+                            Specify pattern matching mode. Defaults to 'wildcard'
+                            allowing for '*' and '?' matching. Use 'regex' for
+                            more power but watch out for shell escaping. Use
+                            'string' enable literal matching.
+      --ignore-case, -i     Ignore case when comparing or matching strings. By
+                            default matches are case-sensitive.
+      --invert-match, -v    Invert match results. This can be used to show what
+                            content does NOT match, or make a backup copy of
+                            excluded content.
+    
+    Output mode:
+      Select an alternate output mode. If any of the following options are used,
+      the stanza output is not shown.
+    
+      --files-with-matches, -l
+                            List files that match the given search criteria
+      --count, -c           Count matching stanzas
+    
+    Stanza selection:
+      Include or exclude entire stanzas using these filter options. All filter
+      options can be provided multiple times. If you have a long list of
+      filters, they can be saved in a file and referenced using the special
+      'file://' prefix.
+    
+      --stanza PATTERN      Match any stanza who's name matches the given pattern.
+                            PATTERN supports bulk patterns via the 'file://'
+                            prefix.
+      --attr-present ATTR   Match any stanza that includes the ATTR attribute.
+                            ATTR supports bulk attribute patterns via the
+                            'file://' prefix.
+      --attr-eq ATTR PATTERN
+                            Match any stanza that includes an attribute matching
+                            the pattern. PATTERN supports the special
+                            'file://filename' syntax.
 
 
 ## ksconf promote
