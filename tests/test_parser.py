@@ -4,19 +4,25 @@
 #  nose2 -s . -C
 
 from __future__ import absolute_import, unicode_literals
+
 import os
+import sys
 import unittest
-from io import StringIO, BytesIO
+from io import StringIO
 from textwrap import dedent
 
+import six
+
+# Allow interactive execution from CLI,  cd tests; ./test_cli.py
+if __package__ is None:
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tests.cli_helper import TestWorkDir
 from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
     DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
-from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import parse_conf_stream, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
     DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
     PARSECONF_MID, GLOBAL_STANZA
-from ksconf.util.file import relwalk
-import six
 
 
 def parse_string(text, profile=None, **kwargs):
@@ -26,12 +32,6 @@ def parse_string(text, profile=None, **kwargs):
         return parse_conf(f, profile)
     else:
         return parse_conf_stream(f, **kwargs)
-
-
-
-# Py27 workaround for new naming convention
-if not hasattr(unittest.TestCase, "assertRegex"):
-    unittest.TestCase.assertRegex = unittest.TestCase.assertRegexpMatches
 
 
 class ParserTestCase(unittest.TestCase):
@@ -120,21 +120,19 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c["stanza2"][""], "whoopsie")
 
     def test_inputs_with_BOM(self):
-        from test_cli import TestWorkDir
         twd = TestWorkDir()
         # "\\" in path due to non-raw string (Failing as of 87c5a11ca44; due to lack of BOM support)
         twd.write_file("inputs-bom.conf", b"\xef\xbb\xbf"
-        b"[monitor://D:\\syslogs\\10.0.31.1]\n"
-        b"disabled = false\n"
-        b"sourcetype = cisco:asa\n"
-        b"host_segment = 2\n"
-        b"ignoreOlderThan = 7d\n")
+                                          b"[monitor://D:\\syslogs\\10.0.31.1]\n"
+                                          b"disabled = false\n"
+                                          b"sourcetype = cisco:asa\n"
+                                          b"host_segment = 2\n"
+                                          b"ignoreOlderThan = 7d\n")
         c = twd.read_conf("inputs-bom.conf")
         self.assertEqual(c[r"monitor://D:\syslogs\10.0.31.1"]["sourcetype"], "cisco:asa")
 
     def test_comments_with_BOM(self):
         # "\\" in path due to non-raw string (Failing as of 87c5a11ca44 if this is the FIRST line)
-        from test_cli import TestWorkDir
         twd = TestWorkDir()
         twd.write_file("comment-bom.conf", b"\xef\xbb\xbf# This is a comment\nx = 1")
         c = twd.read_conf("comment-bom.conf")
@@ -328,7 +326,7 @@ class ParserTestCase(unittest.TestCase):
     def test_splksysdfltjunk(self):
         # This is copied from Splunk's system/default/props.conf file.  (We are CERTAINLY more
         # picky than splunk when it comes to parsing these files.
-        # WHoops, semi-colons aren't comments!
+        # Whoops, semi-colons aren't comments!
         t = """
         [sar]
         ; break on blanklines, clock-resets, or common headers attributes (/s, %, or alpha-)
@@ -434,70 +432,3 @@ class ConfigDiffTestCase(unittest.TestCase):
         diffs = compare_cfgs(c1, c2)
         output = StringIO()
         summarize_cfg_diffs(diffs, output)
-        out = output.getvalue()
-        # Very basic check for now.
-        self.assertRegex(out, r"\[imapsync\]\s*3 keys")
-        self.assertRegex(out, r"\[other2\]")
-
-    def test_compare_no_common(self):
-        c1 = parse_string(self.cfg_macros_1)
-        c2 = parse_string(self.cfg_props_imapsync_1)
-        diffs = compare_cfgs(c1, c2)
-        self.assertEqual(len(diffs), 1)
-        self.assertEqual(diffs[0].location.type, "global")
-
-
-class ConfigMergeTestCase(unittest.TestCase):
-
-    @staticmethod
-    def merge(*cfg_txts, **parse_args):
-        dicts = [parse_string(txt, **parse_args) for txt in cfg_txts]
-        return merge_conf_dicts(*dicts)
-
-    def test_merge_simple_2(self):
-        d = self.merge("""
-        [x]
-        a = 1
-        [y]
-        b = 2
-        [z]
-        """, """
-        [v]
-        new_stanza = true
-        [x]
-        a = one
-        [y]
-        c = 3
-        """)
-        self.assertEqual(d["x"]["a"], "one")
-        self.assertEqual(d["y"]["b"], "2")
-        self.assertEqual(d["y"]["c"], "3")
-        self.assertIn("z", d)
-
-    def test_merge_drop_stanza(self):
-        d = self.merge("""
-        [x]
-        a = 1
-        [y]
-        b = 2
-        [z]
-        """, """
-        [x]
-        a = one
-        [y]
-        _stanza = <<DROP>>
-        """)
-        self.assertNotIn("y", d)
-
-
-class UtilFunctionTestCase(unittest.TestCase):
-
-    def test_relwalk_prefix_preserve(self):
-        cwd = os.path.realpath(os.getcwd())
-        a = list(relwalk(cwd))
-        b = list(relwalk(cwd + os.path.sep))
-        self.assertListEqual(a, b, "should return the same paths with or without a trailing slash")
-
-
-if __name__ == '__main__':  # pragma: no cover
-    unittest.main()
