@@ -117,24 +117,5 @@ class CliSortTest(unittest.TestCase):
             self.assertNotRegex(ko.stderr, r"[\r\n]Skipping [^\r\n]+?[/\\]transforms.conf")
             self.assertNotRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
 
-    if not hasattr(unittest.TestCase, "assertNotRegex"):
-        def assertNotRegex(self, text, unexpected_regex, msg=None):
-            # Copied from standard library; Missing from Python 3.4.  Should probably find a
-            # better way to support this in general, but for now only this set of test needs it.
-            """Fail the test if the text matches the regular expression."""
-            import re
-            if isinstance(unexpected_regex, (str, bytes)):
-                unexpected_regex = re.compile(unexpected_regex)
-            match = unexpected_regex.search(text)
-            if match:
-                standardMsg = 'Regex matched: %r matches %r in %r' % (
-                    text[match.start(): match.end()],
-                    unexpected_regex.pattern,
-                    text)
-                # _formatMessage ensures the longMessage option is respected
-                msg = self._formatMessage(msg, standardMsg)
-                raise self.failureException(msg)
-
-
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()
