@@ -16,6 +16,13 @@ from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfPar
 from ksconf.consts import SMART_CREATE
 from ksconf.util import memoize, debug_traceback
 
+__all__ = [
+    "KsconfCmd",
+    "ConfDirProxy",
+    "ConfFileProxy",
+    "ConfFileType",
+    "dedent",
+]
 
 class ConfDirProxy(object):
     def __init__(self, name, mode, parse_profile=None):
@@ -46,7 +53,7 @@ class ConfFileProxy(object):
     def is_file(self):
         return self._is_file
 
-    def _type(self):
+    def _type(self):    # pragma: no cover  (only used in exceptions)
         if self._is_file:
             return "file"
         else:
@@ -67,10 +74,7 @@ class ConfFileProxy(object):
             if self.is_file():
                 self.close()
             else:
-                try:
-                    self.stream.seek(0)
-                except:
-                    raise
+                self.stream.seek(0)
 
     def set_parser_option(self, **kwargs):
         """ Setting a key to None will remove that setting. """
@@ -100,7 +104,6 @@ class ConfFileProxy(object):
         return self._data
 
     def load(self, profile=None):
-
         if "r" not in self._mode:
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
             raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
@@ -112,7 +115,7 @@ class ConfFileProxy(object):
         return data
 
     def dump(self, data):
-        if "+" not in self._mode and "w" not in self._mode:
+        if "+" not in self._mode and "w" not in self._mode:     # pragma: no cover
             raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
                                                                             self._mode))
         # Feels like the right thing to do????  OR self._data = data
@@ -130,6 +133,7 @@ class ConfFileProxy(object):
         self.close()
         return os.unlink(self.name)
 
+    '''
     def backup(self, bkname=None):
         # One option:  Write this file directly to the git object store.  Just need to store some
         # kind of index to allow the users to pull it back.   (Sill, would need of fall-back
@@ -138,7 +142,7 @@ class ConfFileProxy(object):
 
     def checksum(self, hash="sha256"):
         raise NotImplementedError
-
+    '''
 
 class ConfFileType(object):
     """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
@@ -241,6 +245,7 @@ class KsconfCmd(object):
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
+    '''
     def redirect_io(self, stdin=None, stdout=None, stderr=None):
         if stdin is not None:
             self.stdin = stdin
@@ -253,6 +258,7 @@ class KsconfCmd(object):
         """ Allow overriding for unittesting or other high-level functionality, like an
         interactive interface. """
         sys.exit(exit_code)
+    '''
 
     def add_parser(self, subparser):
         # Passing in the object return by 'ArgumentParser.add_subparsers()'
@@ -266,7 +272,7 @@ class KsconfCmd(object):
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
 
-    def register_args(self, parser):
+    def register_args(self, parser):        # pragma: no cover
         """ This function in passed the """
         raise NotImplementedError
 
@@ -278,7 +284,7 @@ class KsconfCmd(object):
         exc = None
         try:
             return_code = self.run(args)
-        except:
+        except:     # pragma: no cover
             exc = sys.exc_info()
             raise
         finally:
@@ -290,13 +296,13 @@ class KsconfCmd(object):
         """ Pre-run hook.  Any exceptions here prevent run() from being called. """
         pass
 
-    def run(self, args):
+    def run(self, args):    # pragma: no cover
         """ Actual works happens here.  Return code should be an EXIT_CODE_* from consts. """
         raise NotImplementedError
 
     def post_run(self, args, exec_info=None):
-        """ Any custom clean up work that needs done.  Allways called if run() was.  Presence of
-       exc_info indicates failure. """
+        """ Any custom clean up work that needs done.  Always called if run() was.  Presence of
+        exc_info indicates failure. """
         pass
 
 
@@ -346,7 +352,7 @@ def _get_fallback(group, name=None):
 # Removed _get_pkgresources_lib as middle option
 __get_entity_resolvers = [ _get_entrypoints_lib, _get_fallback ]
 
-if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):
+if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):    # pragma: no cover
     # Only use the fallback built in mechanism.  This is helpful when unittesting and building docs
     # as we don't want to accidentally document/test code from other packages.
     __get_entity_resolvers = [ _get_fallback ]
@@ -360,7 +366,7 @@ def get_entrypoints(group, name=None):
         results = None
         try:
             results = resolver(group, name=name)
-        except ImportError:
+        except ImportError as e:    # pragma: no cover
             __get_entity_resolvers.remove(resolver)
         if results:
             return results

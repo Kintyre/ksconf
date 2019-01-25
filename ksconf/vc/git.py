@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import namedtuple, Counter
-from subprocess import Popen, PIPE, list2cmdline
+from subprocess import Popen, PIPE, list2cmdline, call
 
 from ksconf.util import _xargs
 
 GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
 
+unitesting = False
 
 def git_cmd(args, shell=False, cwd=None, capture_std=True, encoding="utf-8"):
     if isinstance(args, tuple):
@@ -93,9 +94,10 @@ def git_ls_files(path, *modifiers):
                            .format(proc.returncode))
     return proc.stdout.splitlines()
 
-
-def git_status_ui(path, *args):
-    from subprocess import call
+def git_status_ui(path, *args):  # pragma: no cover
+    # For unittesting purposes, this function is a nuisance
+    if unitesting:
+        return
     # Don't redirect the std* streams; let the output go straight to the console
     cmd = [GIT_BIN, "status", "."]
     cmd.extend(args)

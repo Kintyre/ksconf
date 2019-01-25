@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 def _xargs(iterable, cmd_len=1024):
     fn_len = 0
     buf = []

@@ -1,8 +1,8 @@
-""" SUBCOMMAND:  ksconf upgrade tarball
+""" SUBCOMMAND:  ksconf unarchive <tarball>
 
 Usage example:
 
-    ksconf upgrade tarball
+    ksconf unarchive splunk-add-on-for-amazon-web-services_111.tgz
 
 """
 

@@ -70,6 +70,7 @@ script:
   - ksconf --version
   - coverage run -m unittest discover -s tests
 after_success:
+  - '[[ $BUILD_SDIST == "true" ]] && coverage run -a -m make_cli_docs'
   - codecov
   - coveralls
   - '[[ $BUILD_SDIST == "true" ]] && ./make_zipapp'

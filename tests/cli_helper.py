@@ -259,6 +259,10 @@ class TestWorkDir(object):
             content = stream.read()
         return content
 
+    def remove_file(self, rel_path):
+        path = self.get_path(rel_path)
+        os.unlink(path)
+
     def write_conf(self, rel_path, conf):
         path = self.get_path(rel_path)
         self.makedir(None, path=os.path.dirname(path))

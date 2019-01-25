@@ -9,7 +9,7 @@ import unittest
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import EXIT_CODE_SUCCESS
+from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_FAILED_SAFETY_CHECK
 from tests.cli_helper import TestWorkDir, static_data, ksconf_cli
 
 
@@ -19,6 +19,15 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
         super(CliKsconfUnarchiveTestCase, self).__init__(*args, **kwargs)
         self._modsec_workdir = TestWorkDir(git_repo=True)
     '''
+
+
+    @classmethod
+    def setUpClass(cls):
+        # Tell the VC/git module that unit testing is in progress and therefore don't run git
+        # command with the sole purpose of dumping junk to to the terminal.  Only run if unit
+        # testing is actually invoked.
+        import ksconf.vc.git
+        ksconf.vc.git.unitesting = True
 
     def setUp(self):
         # Setup environmental variables to avoid GIT commit errors regarding missing user.email, user.name configs
@@ -54,12 +63,21 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
         twd.write_file("Junk.bak", "# An ignored file.")
 
     def _modsec01_untracked_files(self, twd):
-        twd.write_file("untracked_file", "content")
+        twd.write_file("apps/Splunk_TA_modsecurity/untracked_file", "content")
+        twd.write_file("apps/Splunk_TA_modsecurity/ignored.bak", "Ignored file")
         with ksconf_cli:
             kco = ksconf_cli("unarchive", static_data("apps/modsecurity-add-on-for-splunk_12.tgz"),
                              "--dest", twd.get_path("apps"), "--git-sanity-check=ignored",
                              "--git-mode=commit", "--no-edit")
-
+            self.assertEqual(kco.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
+            # Rollback upgrade and try again
+            twd.git("reset", "--hard", "HEAD")
+            # Remove offending files
+            twd.remove_file("apps/Splunk_TA_modsecurity/untracked_file")
+            twd.remove_file("apps/Splunk_TA_modsecurity/ignored.bak")
+            kco = ksconf_cli("unarchive", static_data("apps/modsecurity-add-on-for-splunk_12.tgz"),
+                             "--dest", twd.get_path("apps"), "--git-sanity-check", "ignored",
+                             "--git-mode=commit", "--no-edit")
             self.assertEqual(kco.returncode, EXIT_CODE_SUCCESS)
 
     def _modsec01_upgrade(self, twd, app_tgz):

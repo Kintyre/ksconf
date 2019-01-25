@@ -2,13 +2,14 @@
 from __future__ import absolute_import, print_function, unicode_literals
 import os
 import sys
-import unittest
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.cli_helper import ksconf_cli
+from tests.cli_helper import ksconf_cli, TestWorkDir, FakeStdin
+from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_USER_QUIT
+import unittest
 
 
 class CliSimpleTestCase(unittest.TestCase):
@@ -16,8 +17,39 @@ class CliSimpleTestCase(unittest.TestCase):
 
     def test_help(self):
         out = ksconf_cli("--help")
-        self.assertIn("Kintyre Splunk CONFig tool", out.stdout)
-        self.assertIn("usage: ", out.stdout)
+        with ksconf_cli:
+            self.assertIn("Kintyre Splunk CONFig tool", out.stdout)
+            self.assertIn("usage: ", out.stdout)
+            self.assertEqual(out.returncode, EXIT_CODE_SUCCESS)
+
+    def test_conffileproxy_invalid_arg(self):
+        bad_conf = """
+        [dangling stanza
+        attr = 1
+        bad file =  very true"""
+        twd = TestWorkDir()
+        badfile = twd.write_file("bad_conf.conf", bad_conf)
+        with ksconf_cli:
+            ko = ksconf_cli("merge", twd.get_path("a_non_existant_file.conf"))
+            self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
+            self.assertRegex(ko.stderr, r".*\b(can't open '[^']+\.conf'|invalid ConfFileType).*")
+
+            ko = ksconf_cli("merge", badfile)
+            self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
+            self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+
+            with FakeStdin(bad_conf):
+                ko = ksconf_cli("merge", "-")
+                self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
+                self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+
+
+    def test_entrypoints(self):
+        from ksconf.commands import get_entrypoints, _get_fallback
+        get_entrypoints("ksconf_cmd", "sort")
+
+        # Just to exercise this (coverage and prevent regressions)
+        _get_fallback("ksconf_cmd")
 
 
 if __name__ == '__main__':  # pragma: no cover
