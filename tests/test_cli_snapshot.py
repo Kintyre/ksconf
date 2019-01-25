@@ -60,6 +60,21 @@ class CliKsconfSnapshotTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             json.loads(ko.stdout)
 
+    def test_single_file_mode(self):
+        twd = TestWorkDir()
+        fn = twd.write_file("apps/MyApp/default/app.conf", """\
+        [install]
+        is_configured = false
+        state = disabled
+        build = 1
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("snapshot", fn)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            # Load output as JSON
+            d = json.loads(ko.stdout)
+            self.assertTrue(d["records"])
+
     def test_bad_conf_file(self):
         twd = TestWorkDir()
         twd.write_file("apps/MyApp/default/crap.conf", """\

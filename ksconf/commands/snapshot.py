@@ -30,7 +30,7 @@ class ConfSnapshotConfig(object):
 
 
 class ConfSnapshot(object):
-    schema_version = 0.1
+    schema_version = 0.2
 
     def __init__(self, config):
         self.config = config
@@ -75,11 +75,15 @@ class ConfSnapshot(object):
             data = parse_conf(path, profile=PARSECONF_MID_NC)
             # May need to format this differently.   Specifically need some way to textually
             # indicate the global stanza
-            record["conf"] = data
-            if GLOBAL_STANZA in data:
-                g = data[GLOBAL_STANZA]
-                data["**GLOBAL_STANZA**"] = g
-                del data[GLOBAL_STANZA]
+            conf = record["conf"] = []
+            for (stanza, stanza_data) in data.items():
+                rec = {
+                    "stanza" : stanza,
+                    "attributes" : stanza_data
+                }
+                if stanza is GLOBAL_STANZA:
+                    rec["stanza"] = "**GLOBAL_STANZA**"
+                conf.append(rec)
         except ConfParserException as e:
             record["conf"] = None
             record["failure"] = "{}".format(e)
@@ -148,10 +152,13 @@ class SnapshotCmd(KsconfCmd):
         cfg = ConfSnapshotConfig()
         confSnap = ConfSnapshot(cfg)
         for path in args.path:
-            if not os.path.isdir(path):
-                self.stderr.write("No such directory {}\n".format(path))
+            if os.path.isfile(path):
+                confSnap.snapshot_file_conf(path)
+            elif os.path.isdir(path):
+                confSnap.snapshot_dir(path)
+            else:
+                self.stderr.write("No such file or directory {}\n".format(path))
                 return EXIT_CODE_NO_SUCH_FILE
-            confSnap.snapshot_dir(path)
 
         if args.minimize:
             confSnap.write_snapshot(args.output)
