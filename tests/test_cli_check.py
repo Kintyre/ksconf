@@ -51,14 +51,12 @@ class CliCheckTest(unittest.TestCase):
 
     def test_mixed_stdin(self):
         """ Make sure that if even a single file fails the exit code should be "BAD CONF" """
-        try:
-            _stdin = sys.stdin
-            sys.stdin = StringIO("\n".join([self.conf_good, self.conf_bad]))
+        instream = StringIO("\n".join([self.conf_good, self.conf_bad]))
+        with FakeStdin(instream):
             with ksconf_cli:
                 ko = ksconf_cli("check", "-")
                 self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-        finally:
-            sys.stdin = _stdin
+                self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
     def test_mixed_quiet(self):
         """ Make sure that if even a single file fails the exit code should be "BAD CONF" """

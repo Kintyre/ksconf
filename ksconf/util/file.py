@@ -71,6 +71,7 @@ def _expand_glob_list(iterable):
             yield item
 
 
+# This is a Splunk-style (props) stanza style glob:  where '* is a single path component, and '...' means any level of path
 _glob_to_regex = {
     r"\*": r"[^/\\]*",
     r"\?": r".",

@@ -16,10 +16,9 @@ Future things to support:
 from __future__ import absolute_import, unicode_literals
 
 import argparse
-import sys
+import fnmatch
 import re
-
-from fnmatch import fnmatch, fnmatchcase
+import sys
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
@@ -90,7 +89,6 @@ class FilteredListString(FilteredList):
     def _match(self, item):
         if self.flags & self.IGNORECASE:
             item = item.lower()
-        print('{} in {}  ==> {}'.format(item, self.data, item in self.data))
         return item in self.data
 
 
@@ -111,19 +109,16 @@ class FilteredListRegex(FilteredList):
         return False
 
 
-class FilterListWildcard(FilteredList):
-    """ Wildcard support (handling '*' and ?') """
+class FilterListWildcard(FilteredListRegex):
+    """ Wildcard support (handling '*' and ?')
+    Technically fnmatch also supports [] and [!] character ranges, but we don't advertise that
+    """
 
-    def _match(self, item):
-        if self.flags & self.IGNORECASE:
-            match = fnmatch
-        else:
-            match = fnmatchcase
-
-        for pattern in self.data:
-            if match(pattern, item):
-                return True
-        return False
+    def _pre_match(self):
+        # Use fnmatch to translate wildcard expression to a regex
+        self.data = [ fnmatch.translate(pat) for pat in self.data ]
+        # Now call regex (parent version)
+        super(FilterListWildcard, self)._pre_match()
 
 
 def create_filtered_list(match_mode, flags):
@@ -214,20 +209,20 @@ class FilterCmd(KsconfCmd):
             Match any stanza that includes the ATTR attribute.
             ATTR supports bulk attribute patterns via the 'file://' prefix.""")
 
+        '''# Add next
         pg_sel.add_argument("--attr-eq", metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
             PATTERN supports the special 'file://filename' syntax.""")
-
         '''
+        ''' # This will be more difficult
         pg_sel.add_argument("--attr-ne",  metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
             PATTERN supports the special 'file://' syntax.""")
         '''
-
 
         '''
         pg_con = parser.add_argument_group("Attribute retention","""
@@ -266,7 +261,7 @@ class FilterCmd(KsconfCmd):
         ''' Filter configuration files. '''
         self.prep_filters(args)
 
-        # By allowing mutliple input CONF files, this means that we could have duplicate stanzas (not detected by the parser)
+        # By allowing multiple input CONF files, this means that we could have duplicate stanzas (not detected by the parser)
         # so for now that just means duplicate stanzas on the output, but that may be problematic
         # I guess this is really up to the invoker to know if they care about that or not... Still would be helpful for a quick "grep" of a large number of files
 
@@ -287,7 +282,9 @@ class FilterCmd(KsconfCmd):
 
             if cfg_out:
                 if len(args.conf) > 1:
-                    args.output.write("#  {}".format(conf.name))
+                    args.output.write("#  {}\n".format(conf.name))
                 write_conf_stream(args.output, cfg_out)
+                # Explicit flush used to resolve a CLI unittest timing issue in pypy
+                args.output.flush()
 
         return EXIT_CODE_SUCCESS

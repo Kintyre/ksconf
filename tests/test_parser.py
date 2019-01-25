@@ -9,7 +9,6 @@ import os
 import sys
 import unittest
 from io import StringIO
-from textwrap import dedent
 
 import six
 
@@ -17,21 +16,12 @@ import six
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.cli_helper import TestWorkDir
+from tests.cli_helper import TestWorkDir, parse_string
 from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
     DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
-from ksconf.conf.parser import parse_conf_stream, DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
+from ksconf.conf.parser import DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
     DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
     PARSECONF_MID, GLOBAL_STANZA
-
-
-def parse_string(text, profile=None, **kwargs):
-    text = dedent(text)
-    f = StringIO(text)
-    if profile:
-        return parse_conf(f, profile)
-    else:
-        return parse_conf_stream(f, **kwargs)
 
 
 class ParserTestCase(unittest.TestCase):

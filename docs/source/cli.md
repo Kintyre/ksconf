@@ -217,7 +217,6 @@ The following documents the CLI options
                          [--match {regex,wildcard,string}] [--ignore-case]
                          [--invert-match] [--files-with-matches] [--count]
                          [--stanza PATTERN] [--attr-present ATTR]
-                         [--attr-eq ATTR PATTERN]
                          CONF [CONF ...]
     
     Filter the contents of a conf file in various ways. Stanzas can be included or
@@ -265,10 +264,6 @@ The following documents the CLI options
       --attr-present ATTR   Match any stanza that includes the ATTR attribute.
                             ATTR supports bulk attribute patterns via the
                             'file://' prefix.
-      --attr-eq ATTR PATTERN
-                            Match any stanza that includes an attribute matching
-                            the pattern. PATTERN supports the special
-                            'file://filename' syntax.
 
 
 ## ksconf promote

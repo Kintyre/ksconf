@@ -10,6 +10,8 @@ from io import open, StringIO
 from subprocess import list2cmdline
 from textwrap import dedent
 
+import six
+
 # Some unittest fixup for various python versions
 import tests.compat as _
 del _
@@ -18,7 +20,7 @@ from ksconf.__main__ import cli
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
-from ksconf.conf.parser import parse_conf, write_conf, \
+from ksconf.conf.parser import parse_conf, write_conf, parse_conf_stream, \
     GLOBAL_STANZA, PARSECONF_MID
 
 # What to export
@@ -26,8 +28,10 @@ __all__ = [
     "static_data",
     "ksconf_cli",
     "TestWorkDir",
+    "FakeStdin",
     "GLOBAL_STANZA",
     "parse_conf",
+    "parse_string",
     "write_conf",
     "_debug_file",
 ]
@@ -50,6 +54,14 @@ def static_data(path):
     parts = path.split("/")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "data", *parts))
 
+def parse_string(text, profile=None, **kwargs):
+    text = dedent(text)
+    f = StringIO(text)
+    if profile:
+        return parse_conf(f, profile)
+    else:
+        return parse_conf_stream(f, **kwargs)
+
 
 '''
 # Let's try to avoid launching external processes (makes coverage more difficult, and so on)
@@ -65,6 +77,7 @@ def ksconf_exec(args):
 '''
 
 
+
 class _KsconfCli():
     """
     CLI Wrapper context management class for unit testing;
@@ -76,7 +89,20 @@ class _KsconfCli():
     tmpfile:    os.tmpfile, or StringIO?
     """
 
-    KsconfOutput = namedtuple("KsconfOutput", ["returncode", "stdout", "stderr"])
+    class KsconfOutput(object):
+        """ Container for the results from a KsconfCli call."""
+        __slots__ = ("returncode", "stdout", "stderr")
+
+        def __init__(self, *args):
+            self.returncode, self.stdout, self.stderr = args
+
+        def get_conf(self, profile=None, **kwargs):
+            """ Parse stdout as a .conf file"""
+            f = StringIO(self.stdout)
+            if profile:
+                return parse_conf(f, profile)
+            else:
+                return parse_conf_stream(f, **kwargs)
 
     @staticmethod
     def _as_string(stream):
@@ -131,6 +157,25 @@ class _KsconfCli():
 ksconf_cli = _KsconfCli()
 
 
+class FakeStdin(object):
+    def __init__(self, content):
+        if isinstance(content, six.string_types):
+            content = StringIO(content)
+        self.stream = content
+
+    def __enter__(self):
+        self._real_stdin = sys.stdin
+        sys.stdin = self.stream
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Don't worry with coverage here.  It gets plenty of testing DURING unittest development ;-)
+        sys.stdin = self._real_stdin
+        if exc_type is not None:  # pragma: no cover
+            # Re-raise exception
+            return False
+
+
 class TestWorkDir(object):
     """ Create a temporary working directory to create app-like structures and other supporting
     file system artifacts necessary for many CLI tests.  Cleanup is done automatically. """
@@ -146,7 +191,14 @@ class TestWorkDir(object):
         self.git_repo = git_repo
 
     def __del__(self):
-        if "KSCONF_KEEP_TEST_FILES" in os.environ:
+        self.clean()
+
+    def clean(self, force=False):
+        """ Explicitly clean/wipe the working directory. """
+        if not hasattr(self, "_path"):
+            return
+
+        if "KSCONF_KEEP_TEST_FILES" in os.environ and not force:
             return
 
         # Remove read-only file handler (e.g. clean .git/objects/xx/* files on Windows)
@@ -156,8 +208,9 @@ class TestWorkDir(object):
             os.chmod(name, stat.S_IWRITE)
             os.remove(name)
             del action, exc
-
         shutil.rmtree(self._path, onerror=del_rw)
+        # Prevent the class from being used further
+        del self._path
 
     def git(self, *args):
         o = git_cmd(args, cwd=self._path)

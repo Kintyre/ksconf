@@ -1,15 +1,22 @@
 # Changelog
 
+*Changes in master, but not released yet are in the **DRAFT** section.*
 
 ## Ksconf 0.5.x
 
-Add Python 3 support, external command plugins, tox and vagrant for testing.
+Add Python 3 support, new commands, support for external command plugins, tox and vagrant for testing.
+
+### Release v0.5.5 (DRAFT)
+ * New `filter` command added for slicing up a conf file into smaller peices.  Think of this as
+   GREP that's stanza-aware.
+ * Refactored all CLI unittests for increased readability and long-term maitenance.  Unit tests
+   now can also be run individually as scripts from the command line.
 
 ### Release v0.5.4 (2019-01-04)
  * New commands added:
-   * *snapshot* will dump a set of configuration files to a JSON formatted file.  This can be used 
+   * `snapshot` will dump a set of configuration files to a JSON formatted file.  This can be used
      used for incremental "snapshotting" of running Splunk apps to track changes overtime.
-   * *rest-export* builds a series of custom `curl` commands that can be used to publish or update
+   * `rest-export` builds a series of custom `curl` commands that can be used to publish or update
      stanzas on a remote instance without file system access.  This can be helpful when pushing
      configs to Splunk Cloud when all you have is REST (splunkd) access.  This command is indented
      for interactive admin not batch operations.

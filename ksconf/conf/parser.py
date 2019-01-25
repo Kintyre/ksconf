@@ -1,3 +1,18 @@
+"""
+
+Parse and write Splunk's .conf files
+
+
+According to this doc:
+
+https://docs.splunk.com/Documentation/Splunk/7.2.3/Admin/Howtoeditaconfigurationfile
+
+ 1.  Comments must start at the beginning of a line (#)
+ 2.  Comments may not be after a stanza name or on an attribute's value
+ 3.  Supporting encoding is UTF-8 (and therefore ASCII too)
+
+"""
+
 from __future__ import absolute_import, unicode_literals
 
 import codecs
@@ -108,13 +123,13 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
 def _detect_lite(byte_str):
     """ A super simple drop-in replacement for chardet.detect(byte_str) that ONLY looks for BOM or
     assumes "utf-8".
-    If someday the full chardet features are needed, we could use this for optional (oportunistic)
+    If someday the full chardet features are needed, we could use this for optional (opportunistic)
     chardet support with this as the local fall-back function. """
     # https://stackoverflow.com/a/24370596/315892
     # UTF-8 BOM is 3 bytes, UTF-16 is 2 bytes, UTF-32 is 4 bytes
     for (enc, boms) in (
-            ('utf-8-sig', (codecs.BOM_UTF8,)),\
-            ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),\
+            ('utf-8-sig', (codecs.BOM_UTF8,)),
+            ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),
             ('utf-32', (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE))):
         if any(byte_str.startswith(bom) for bom in boms):
             return { "encoding" : enc }
