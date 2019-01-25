@@ -38,7 +38,8 @@ except ImportError:
                 return rv
         return wrapper
 
-def debug_traceback():
+
+def debug_traceback():  # pragma: no cover
     """ If the 'KSCONF_DEBUG' environmental variable is set, then show a stack trace. """
     from os import environ
     if b"KSCONF_DEBUG" in environ:

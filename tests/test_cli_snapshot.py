@@ -41,7 +41,12 @@ class CliKsconfSnapshotTest(unittest.TestCase):
         [ui]
         is_visible = false
         """)
-        twd.write_file("apps/MyApp/metadata/default.conf", """\
+        twd.write_file("apps/MyApp/local/props.conf", """\
+        # very bad idea...
+        SHOULD_LINEMERGE = true
+        """)
+
+        twd.write_file("apps/MyApp/metadata/local.meta", """\
         []
         export = system
         """)
@@ -89,6 +94,14 @@ class CliKsconfSnapshotTest(unittest.TestCase):
             # XXX:  Add a better failure test here...
             self.assertRegex(ko.stdout, r"\"failure\"\s*:\s*\"")
             json.loads(ko.stdout)
+
+    def test_missing_conf_file(self):
+        twd = TestWorkDir()
+        with ksconf_cli:
+            ko = ksconf_cli("snapshot", twd.get_path("not/a/file.conf"))
+            self.assertEqual(ko.returncode, EXIT_CODE_NO_SUCH_FILE)
+            self.assertRegex(ko.stderr, r"No such file")
+
 
 
 if __name__ == '__main__':  # pragma: no cover

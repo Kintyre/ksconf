@@ -14,10 +14,9 @@ def git_cmd(args, shell=False, cwd=None, capture_std=True, encoding="utf-8"):
     if isinstance(args, tuple):
         args = list(args)
     cmdline_args = [GIT_BIN] + args
+    out = None
     if capture_std:
         out = PIPE
-    else:
-        out = None
     proc = Popen(cmdline_args, stdout=out, stderr=out, shell=shell, cwd=cwd)
     (stdout, stderr) = proc.communicate()
     if hasattr(stdout, "decode"):

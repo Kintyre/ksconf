@@ -12,6 +12,7 @@ if __package__ is None:
 
 from ksconf.consts import *
 from tests.cli_helper import *
+from ksconf.conf.parser import PARSECONF_STRICT
 
 class CliKsconfFilter(unittest.TestCase):
 
@@ -237,7 +238,6 @@ class CliKsconfFilter(unittest.TestCase):
         conf = self.sample01
         matched = self.twd.get_path("output-match.conf")
         rejected = self.twd.get_path("output-rejected.conf")
-
         with ksconf_cli:
             # Simple direct stanza match (saved to an output file)
             ko = ksconf_cli("filter", conf, "--stanza", "Errors in the last hour",
@@ -251,6 +251,7 @@ class CliKsconfFilter(unittest.TestCase):
                             "--invert-match", "--output", rejected)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             out = self.twd.read_conf("output-rejected.conf")
+            self.twd.read_file("output-match.conf", as_bytes=True)  # Boost code coverage
             self.assertEqual(len(out), 3)
 
             # Combine 2 output files, then compare to original
@@ -268,7 +269,7 @@ class CliKsconfFilter(unittest.TestCase):
             with ksconf_cli:
                 ko = ksconf_cli("filter", "-", "--stanza", "Errors in the last hour")
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-                out = ko.get_conf()
+                out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
                 self.assertIn("Errors in the last hour", out)
 
     def test_has_attr(self):

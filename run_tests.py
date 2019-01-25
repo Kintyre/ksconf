@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # May eventually switch to some other mechanism (possibly nose) but for now this works
 
-# Note:  TestLoader.discover() is new in Python 2.7 (won't work in 2.6, if we care)
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import sys
 import unittest
@@ -22,9 +20,9 @@ def run_all():
     suite = loader.discover("tests")
     runner = unittest.TextTestRunner()
     results = runner.run(suite)
-    if results.errors:
+    if results.errors:  # pragma: no cover
         return 2
-    elif results.failures:
+    elif results.failures:  # pragma: no cover
         return 1
 
 

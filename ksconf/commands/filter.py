@@ -41,9 +41,8 @@ class FilteredList(object):
             for line in f:
                 line = line.rstrip()
                 # Skip empty or "comment" lines
-                if not line or line[0] == "#":
-                    continue
-                items.append(line)
+                if line and line[0] != "#":
+                    items.append(line)
         sys.stderr.write("Loaded patterns from {}.  Found {} entries.\n".format(path, len(items)))
         return items
 
@@ -57,7 +56,7 @@ class FilteredList(object):
         # New items added.  Mark prep-work as incomplete
         self._prep = False
 
-    def _pre_match(self):
+    def _pre_match(self):  # pragma: no cover
         pass
 
     def match(self, item):
@@ -75,12 +74,13 @@ class FilteredList(object):
     def has_rules(self):
         return len(self.data) > 0
 
-    def _match(self, item):
+    def _match(self, item):  # pragma: no cover
         raise NotImplementedError
 
 
 class FilteredListString(FilteredList):
     """ Handle simple string comparisons """
+
     def _pre_match(self):
         if self.flags & self.IGNORECASE:
             # Lower-case all strings in self.data.  (Only need to do this once)
@@ -100,7 +100,7 @@ class FilteredListRegex(FilteredList):
             re_flags |= re.IGNORECASE
         # Compile all regular expressions
         # XXX: Add better error handling here for friendlier user feedback
-        self.data = [ re.compile(pattern, re_flags) for pattern in self.data ]
+        self.data = [re.compile(pattern, re_flags) for pattern in self.data]
 
     def _match(self, item):
         for pattern_re in self.data:
@@ -116,7 +116,7 @@ class FilterListWildcard(FilteredListRegex):
 
     def _pre_match(self):
         # Use fnmatch to translate wildcard expression to a regex
-        self.data = [ fnmatch.translate(pat) for pat in self.data ]
+        self.data = [fnmatch.translate(pat) for pat in self.data]
         # Now call regex (parent version)
         super(FilterListWildcard, self)._pre_match()
 
@@ -128,9 +128,8 @@ def create_filtered_list(match_mode, flags):
         return FilterListWildcard(flags)
     elif match_mode == "regex":
         return FilteredListRegex(flags)
-    else:
+    else:   # pragma: no cover
         raise ValueError("Unknown matching mode {!r}".format(match_mode))
-
 
 
 class FilterCmd(KsconfCmd):
@@ -144,7 +143,6 @@ class FilterCmd(KsconfCmd):
 
     # format = "manual"
     maturity = "alpha"
-
 
     def __init__(self, *args, **kwargs):
         super(FilterCmd, self).__init__(*args, **kwargs)
@@ -181,7 +179,6 @@ class FilterCmd(KsconfCmd):
             This can be used to show what content does NOT match,
             or make a backup copy of excluded content.""")
 
-
         pg_out = parser.add_argument_group("Output mode", """
             Select an alternate output mode.
             If any of the following options are used, the stanza output is not shown.
@@ -190,7 +187,6 @@ class FilterCmd(KsconfCmd):
                             help="List files that match the given search criteria")
         pg_out.add_argument("--count", "-c", action="store_true",
                             help="Count matching stanzas")
-
 
         pg_sel = parser.add_argument_group("Stanza selection", """
             Include or exclude entire stanzas using these filter options.

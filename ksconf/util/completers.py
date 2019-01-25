@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 try:
     from argcomplete import autocomplete
     from argcomplete.completers import FilesCompleter, DirectoriesCompleter
-except ImportError:  # pragma: no cover
+except ImportError:
 
     def _argcomplete_noop(*args, **kwargs):
         del args, kwargs

@@ -162,7 +162,7 @@ class CombineCmd(KsconfCmd):
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
-            self.stderr.write("Combining conf files into directory {}\n".format(args.target))
+        self.stderr.write("Combining conf files into directory {}\n".format(args.target))
         args.source = list(_expand_glob_list(args.source))
         for src in args.source:
             self.stderr.write("Reading conf files from directory {}\n".format(src))

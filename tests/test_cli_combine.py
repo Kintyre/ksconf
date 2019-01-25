@@ -74,6 +74,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         """)
         default = twd.get_path("etc/apps/Splunk_TA_aws/default")
         with ksconf_cli:
+            ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             cfg = parse_conf(twd.get_path("etc/apps/Splunk_TA_aws/default/props.conf"))
@@ -83,6 +84,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
             nav_content = twd.read_file("etc/apps/Splunk_TA_aws/default/data/ui/nav/default.xml")
             self.assertIn("My custom view", nav_content)
+
         twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf", {
             "aws:config": {"TIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%6NZ"}
         })
@@ -94,6 +96,13 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         </nav>
         """)
         twd.write_file("etc/apps/Splunk_TA_aws/default/data/dead.conf", "# File to remove")
+        twd.write_file("etc/apps/Splunk_TA_aws/default/data/tags.conf", "# Locally created file")
+
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-blah/same.txt", "SAME TEXT")
+        twd.write_file("etc/apps/Splunk_TA_aws/default/same.txt", "SAME TEXT")
+
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-blah/binary.bin", b"#BINARY \xff \x00")
+        twd.write_file("etc/apps/Splunk_TA_aws/default/binary.bin", b"#BINARY NEW \x00 \xff \xFB")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
@@ -107,6 +116,14 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             ko = ksconf_cli("combine", "source-dir")
             self.assertRegex(ko.stderr, "Must provide [^\r\n]+--target")
 
+    def test_missing_combine_dir(self):
+        twd = TestWorkDir()
+        twd.write_file("source-dir/someapp/default/blah.conf", "[entry]\nboring=yes\n")
+        twd.write_file("dest-dir/someapp/default//blah.conf", "[entry]\nboring=yes\n")
+
+        ko = ksconf_cli("combine", twd.get_path("source-dir"), "--target", twd.get_path("dest-dir"))
+        self.assertEqual(ko.returncode, EXIT_CODE_COMBINE_MARKER_MISSING)
+        self.assertRegex(ko.stderr, r".*Marker file missing\b.*")
 
 
 if __name__ == '__main__':  # pragma: no cover

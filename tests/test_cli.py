@@ -44,13 +44,5 @@ class CliSimpleTestCase(unittest.TestCase):
                 self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
 
 
-    def test_entrypoints(self):
-        from ksconf.commands import get_entrypoints, _get_fallback
-        get_entrypoints("ksconf_cmd", "sort")
-
-        # Just to exercise this (coverage and prevent regressions)
-        _get_fallback("ksconf_cmd")
-
-
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

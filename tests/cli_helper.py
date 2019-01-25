@@ -5,7 +5,6 @@ import shutil
 import stat
 import sys
 import tempfile
-from collections import namedtuple
 from io import open, StringIO
 from subprocess import list2cmdline
 from textwrap import dedent
@@ -14,6 +13,7 @@ import six
 
 # Some unittest fixup for various python versions
 import tests.compat as _
+
 del _
 
 from ksconf.__main__ import cli
@@ -54,6 +54,7 @@ def static_data(path):
     parts = path.split("/")
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "data", *parts))
 
+
 def parse_string(text, profile=None, **kwargs):
     text = dedent(text)
     f = StringIO(text)
@@ -75,7 +76,6 @@ def ksconf_exec(args):
     rc = call(args)
     return KsconfOutput(rc, ...)
 '''
-
 
 
 class _KsconfCli():
@@ -120,7 +120,7 @@ class _KsconfCli():
             temp_stderr = sys.stderr = StringIO()
             try:
                 rc = cli(args, _unittest=True)
-            except SystemExit as e:
+            except SystemExit as e: # pragma: no cover
                 if hasattr(e, "code"):  # PY3
                     rc = e.code
                 else:
@@ -198,16 +198,17 @@ class TestWorkDir(object):
         if not hasattr(self, "_path"):
             return
 
-        if "KSCONF_KEEP_TEST_FILES" in os.environ and not force:
+        if "KSCONF_KEEP_TEST_FILES" in os.environ and not force:  # pragma: no cover
             return
 
         # Remove read-only file handler (e.g. clean .git/objects/xx/* files on Windows)
-        def del_rw(action, name, exc):
+        def del_rw(action, name, exc):  # pragma: no cover (infrequently used)
             # https://stackoverflow.com/a/21263493/315892
             # Not checking for file vs dir, ...
             os.chmod(name, stat.S_IWRITE)
             os.remove(name)
             del action, exc
+
         shutil.rmtree(self._path, onerror=del_rw)
         # Prevent the class from being used further
         del self._path

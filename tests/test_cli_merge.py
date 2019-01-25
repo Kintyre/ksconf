@@ -53,5 +53,19 @@ class CliMergeTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stdout, r"^$")
 
+    def test_magic_stanza_drop(self):
+        twd = TestWorkDir()
+        conf1 = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        conf2 = twd.write_file("inputs2.conf", """
+        [script://./bin/ps.sh]
+        _stanza = <<DROP>>
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("merge", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            conf = ko.get_conf()
+            self.assertNotIn("script://./bin/ps.sh", conf)
+
+
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

@@ -14,6 +14,7 @@ matrix:
     python: '3.4'
   - os: linux
     python: '3.5'
+    env: EXTRA_PKGS="argcomplete"
   - os: linux
     python: '3.6'
     env: BUILD_SDIST=true
@@ -56,7 +57,7 @@ install:
         # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
         if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
     fi
-  - pip install coverage
+  - pip install coverage $EXTRA_PKGS
   - pip install coveralls
   - pip install codecov
   - pip install .

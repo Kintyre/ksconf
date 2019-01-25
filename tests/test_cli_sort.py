@@ -82,6 +82,11 @@ class CliSortTest(unittest.TestCase):
             self.assertRegex(ko.stderr, r"badfile\.conf")
     '''
 
+    def test_bad_file(self):
+        with ksconf_cli:
+            ko = ksconf_cli("sort", self.conf_bad)
+            self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
+
     def test_sort_mixed(self):
         # Not yet implemented.  Currently relying on the shell to do this.
         with ksconf_cli:

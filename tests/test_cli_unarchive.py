@@ -11,6 +11,7 @@ if __package__ is None:
 
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_FAILED_SAFETY_CHECK
 from tests.cli_helper import TestWorkDir, static_data, ksconf_cli
+from ksconf.vc.git import git_ls_files
 
 
 class CliKsconfUnarchiveTestCase(unittest.TestCase):
@@ -70,11 +71,13 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
                              "--dest", twd.get_path("apps"), "--git-sanity-check=ignored",
                              "--git-mode=commit", "--no-edit")
             self.assertEqual(kco.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
+            git_ls_files(twd._path, "cached")  # Bump code coverage
             # Rollback upgrade and try again
             twd.git("reset", "--hard", "HEAD")
             # Remove offending files
             twd.remove_file("apps/Splunk_TA_modsecurity/untracked_file")
             twd.remove_file("apps/Splunk_TA_modsecurity/ignored.bak")
+
             kco = ksconf_cli("unarchive", static_data("apps/modsecurity-add-on-for-splunk_12.tgz"),
                              "--dest", twd.get_path("apps"), "--git-sanity-check", "ignored",
                              "--git-mode=commit", "--no-edit")
