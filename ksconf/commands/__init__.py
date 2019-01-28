@@ -273,6 +273,7 @@ class KsconfCmd(object):
         self.register_args(self.parser)
 
     def register_args(self, parser):        # pragma: no cover
+        # type: (ArgumentParser) -> None
         """ This function in passed the """
         raise NotImplementedError
 

@@ -15,40 +15,58 @@ NOTE:
 """
 from __future__ import absolute_import, unicode_literals
 
-import sys
 import os
+import shlex
+import sys
+from argparse import ArgumentParser, FileType
+from collections import OrderedDict
 
-from argparse import FileType
 from six.moves.urllib.parse import quote
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
-from collections import OrderedDict
 
+
+class Literal(object):
+    def __init__(self, value):
+        self.value = value
+
+    '''
+    def __str__(self):
+        return self.value
+    '''
 
 
 class CurlCommand(object):
     def __init__(self):
         self.url = None
-        self.pre_args = [ "-k" ]
+        self.method = None  # curl defaults this to POST
+        self.pre_args = ["-k"]
         self.post_args = []
         self.headers = OrderedDict()
         self.data = OrderedDict()
+        self.pretty_format = True
 
     @classmethod
     def quote(cls, s):
+        if isinstance(s, Literal):
+            return s.value
         if "$" in s:
             s = '"{}"'.format(s)
-        elif " " in s or "$" in s:
+        elif " " in s:
             s = "'{}'".format(s)
         return s
 
     def get_command(self):
         cmd = ["curl"]
-
         args = []
+
+        if self.method:
+            args.append("-X")
+            args.append(self.method)
+
         if self.headers:
             for header in self.headers:
                 value = self.headers[header]
@@ -57,19 +75,25 @@ class CurlCommand(object):
         if self.data:
             for key in self.data:
                 value = self.data[key]
-                args.append("-d")
+                if self.pretty_format:
+                    args.append(Literal("\\\n -d"))
+                else:
+                    args.append("-d")
                 args.append("{}={}".format(quote(key), quote(value)))
 
-
-        if self.pre_args:
-            cmd.append(" ".join(self.pre_args))
+        # if self.pre_args:
+        #    cmd.append(" ".join(self.pre_args))
+        cmd.extend(self.pre_args)
         cmd.append(self.url)
-        args = [ self.quote(arg) for arg in args ]
-        cmd.extend(args)
-        if self.post_args:
-            cmd.append(" ".join(self.post_args))
+        cmd.extend(self.quote(arg) for arg in args)
+        cmd.extend(self.quote(arg) for arg in self.post_args)
         return " ".join(cmd)
 
+    def extend_args(self, args):
+        # Use shlex parsing to handle embedded quotes
+        # There are some known unicode limitations around shlex...
+        args = (s.decode("utf8") for s in shlex.split(args))
+        self.post_args.extend(args)
 
 
 class RestExportCmd(KsconfCmd):
@@ -83,7 +107,7 @@ class RestExportCmd(KsconfCmd):
 
     WARNING:  This command is indented for manual admin workflows.  It's quite possible that shell
     escaping bugs exist that may allow full shell access if you put this into an automated workflow.
-    Evalute the risks, review the code, and run as a least-privilege user, and be responsible.
+    Evaluate the risks, review the code, and run as a least-privilege user, and be responsible.
 
     For now the assumption is that 'curl' command will be used.  (Patches to support the Power Shell
     Invoke-WebRequest cmdlet would be greatly welcomed!)
@@ -94,7 +118,8 @@ class RestExportCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE", nargs="+",
+        # type: (ArgumentParser) -> None
+        parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                             help="Configuration file(s) to export settings from."
                             ).completer = conf_files_completer
@@ -102,16 +127,34 @@ class RestExportCmd(KsconfCmd):
                             type=FileType("w"), default=sys.stdout,
                             help="Save the shell script output to this file.  "
                                  "If not provided, the output is written to standard output.")
+
+        prsout = parser.add_argument_group("Output Control")
+
         '''
-        parser.add_argument("--syntax", choices=["curl", "powershell"],  # curl-windows?
+        prsout.add_argument("--syntax", choices=["curl", "powershell"],  # curl-windows?
                             default="curl",
                             help="Pick the output syntax mode.  "
                                  "Currently only 'curl' is supported.")
         '''
-        parser.add_argument("-u", "--update", action="store_true", default=False,
+        prsout.add_argument("--disable-auth-output", action="store_true", default=False,
+                            help="Turn off sample login curl commands from the output.")
+        prsout.add_argument("--pretty-print", "-p", action="store_true", default=False,
+                            help="""
+            Enable pretty-printing.
+            Make shell output a bit more readable by splitting entries across lines.""")
+
+        parsg1 = parser.add_mutually_exclusive_group(required=False)
+        parsg1.add_argument("-u", "--update", action="store_true", default=False,
                             help="Assume that the REST entities already exist.  "
                                  "By default output assumes stanzas are being created.  "
                                  "(This is an unfortunate quark of the configs REST API)")
+        parsg1.add_argument("-D", "--delete", action="store_true", default=False,
+                            help="""
+            Remove existing REST entities.  This is a destructive operation.
+            In this mode, stanzas attributes are unnecessary and ignored.
+            NOTE:  This works for 'local' entities only; the default folder cannot be updated.
+            """)
+
         parser.add_argument("--url", default="https://localhost:8089",
                             help="URL of Splunkd.  Default:  %(default)s")
         parser.add_argument("--app", default="$SPLUNK_APP",
@@ -119,6 +162,17 @@ class RestExportCmd(KsconfCmd):
         parser.add_argument("--user", default="nobody",
                             help="Set the user associated.  Typically the default of 'nobody' is "
                                  "ideal if you want to share the configurations at the app-level.")
+        parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
+                            help="""
+            Explicitly set the configuration file type.  By default this is derived from CONF, but
+            sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
+            example include 'app', 'props', 'tags', 'savesdearches', and so on.""")
+
+        parser.add_argument("--extra-args", action="append",
+                            help="""
+            Extra arguments to pass to all CURL commands.
+            Quote arguments on the commandline to prevent confusion between arguments to ksconf vs
+            curl.""")
 
     @staticmethod
     def build_rest_url(base, user, app, conf):
@@ -127,7 +181,6 @@ class RestExportCmd(KsconfCmd):
         # for now this is not likely to be a big issue given app and user name restrictions.
         url = "{}/servicesNS/{}/{}/configs/conf-{}".format(base, user, app, conf)
         return url
-
 
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''
@@ -156,28 +209,39 @@ class RestExportCmd(KsconfCmd):
          -d FORMAT='$1::$2' \
          -d MV_ADD=0
         """
-        #  XXX:  Someday make multiline output that looks pretty...  someday
-
         stream = args.output
 
-        if True:
+        if args.pretty_print:
+            line_breaks = 2
+        else:
+            line_breaks = 1
+
+        if args.disable_auth_output is False:
             # Make this preamble optional
             stream.write("## Example of creating a local SPLUNKDAUTH token\n")
             stream.write("export SPLUNKDAUTH=$("
                          "curl -ks {}/services/auth/login -d username=admin -d password=changeme "
                          "| grep sessionKey "
-                         r"| sed -re 's/\s*<sessionKey>(.*)<.sessionKey>/\1/')".format(args.url))
+                         r"| sed -E 's/[ ]*<sessionKey>(.*)<.sessionKey>/\1/')".format(args.url))
+            stream.write('; [[ -n $SPLUNKDAUTH ]] && echo "Login token created"')
             stream.write("\n\n\n")
 
         for conf_proxy in args.conf:
             conf = conf_proxy.data
-            conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
+            if args.conf_type:
+                conf_type = args.conf_type
+            else:
+                conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
             stream.write("# CURL REST commands for {}\n".format(conf_proxy.name))
 
             for stanza_name, stanza_data in conf.items():
                 cc = CurlCommand()
+                cc.pretty_format = args.pretty_print
                 cc.url = self.build_rest_url(args.url, args.user, args.app, conf_type)
+                if args.extra_args:
+                    for extra_arg in args.extra_args:
+                        cc.extend_args(extra_arg)
 
                 if stanza_name is GLOBAL_STANZA:
                     # XXX:  Research proper handling of default/global stanazas..
@@ -187,20 +251,23 @@ class RestExportCmd(KsconfCmd):
                                  "expected.  Or it may work, but be reported as a failure.  "
                                  "Patches welcome!\n")
                     cc.url += "/default"
-                elif args.update:
-                    cc.url += "/" + quote(stanza_name, "")   # Must quote '/'s too.
+                elif args.update or args.delete:
+                    cc.url += "/" + quote(stanza_name, "")  # Must quote '/'s too.
                 else:
                     cc.data["name"] = stanza_name
 
-                # Add individual keys
-                for (key, value) in stanza_data.items():
-                    cc.data[key] = value
+                if args.delete:
+                    cc.method = "DELETE"
+                else:
+                    # Add individual keys
+                    for (key, value) in stanza_data.items():
+                        cc.data[key] = value
 
                 cc.headers["Authorization"] = "Splunk $SPLUNKDAUTH"
 
                 stream.write(cc.get_command())
-                stream.write("\n")
-            stream.write("\n")
+                stream.write("\n" * line_breaks)
+            stream.write("\n\n" * line_breaks)
         stream.write("\n")
 
         return EXIT_CODE_SUCCESS
