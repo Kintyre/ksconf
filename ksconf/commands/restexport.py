@@ -91,9 +91,12 @@ class CurlCommand(object):
 
     def extend_args(self, args):
         # Use shlex parsing to handle embedded quotes
-        # There are some known unicode limitations around shlex...
-        args = (s.decode("utf8") for s in shlex.split(args))
-        self.post_args.extend(args)
+        # Work around some of the known unicode limitations in shlex prior to Python 3.
+        # Technically, this does more than just parse quotes, but should be a good enough handler
+        for s in shlex.split(args):
+            if hasattr(s, "decode"):
+                s = s.decode("utf8")
+            self.post_args.append(s)
 
 
 class RestExportCmd(KsconfCmd):
