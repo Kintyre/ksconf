@@ -6,11 +6,14 @@
 
 Add Python 3 support, new commands, support for external command plugins, tox and vagrant for testing.
 
-### Release v0.5.5 (DRAFT)
- * New `filter` command added for slicing up a conf file into smaller peices.  Think of this as
-   GREP that's stanza-aware.
- * Refactored all CLI unittests for increased readability and long-term maitenance.  Unit tests
+### Release v0.5.5 (2019-01-28)
+ * New `filter` command added for slicing up a conf file into smaller pieces.  Think of this as
+   GREP that's stanza-aware.  Can also whitelist or blacklist attributes, if desirable.
+ * Expanded `rest-export` CLI capabilities to include a new '--delete' option, pretty-printing,
+   and now supports stdin by allowing the user to explicitly set the file type using '--conf'.
+ * Refactored all CLI unittests for increased readability and long-term maintenance.  Unit tests
    now can also be run individually as scripts from the command line.
+ * Minor tweaks to the `snapshot` output format, v0.2.  This feature is still highly experimental.
 
 ### Release v0.5.4 (2019-01-04)
  * New commands added:
@@ -20,7 +23,7 @@ Add Python 3 support, new commands, support for external command plugins, tox an
      stanzas on a remote instance without file system access.  This can be helpful when pushing
      configs to Splunk Cloud when all you have is REST (splunkd) access.  This command is indented
      for interactive admin not batch operations.
- * Added the concept of command maturity.  A listing is aviable by running `ksconf --version`
+ * Added the concept of command maturity.  A listing is available by running `ksconf --version`
  * Fix typo in `KSCONF_DEBUG`.
  * Resolving some build issues.
  * Improved support for development/testing environments using Vagrant (fixes) and Docker (new).
