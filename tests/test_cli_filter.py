@@ -276,8 +276,8 @@ class CliKsconfFilter(unittest.TestCase):
         "Keep all stanzas with given attribute"
         with ksconf_cli:
             ko = ksconf_cli("filter", self.props01, "--attr-present", "BREAK_ONLY_*")
-            out = ko.get_conf()
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
             self.assertEqual(len(out), 1)
             self.assertIn("apache", out)
             self.assertEqual(out["apache"]["BREAK_ONLY_BEFORE"], r"^\[")
@@ -285,10 +285,92 @@ class CliKsconfFilter(unittest.TestCase):
     def test_has_attr_inverse(self):
         with ksconf_cli:
             ko = ksconf_cli("filter", self.props01, "-v", "--attr-present", "BREAK_ONLY_*")
-            out = ko.get_conf()
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
             self.assertEqual(len(out), 1)
             self.assertNotIn("apache", out)
+
+    @property
+    def props03(self):
+        return self.twd.write_file("props.conf", """
+        [statsd]
+        METRICS_PROTOCOL = statsd
+        NO_BINARY_CHECK = true
+        SHOULD_LINEMERGE = false
+        TIMESTAMP_FIELDS = false
+        DATETIME_CONFIG = CURRENT
+        # remove indextime fields that aren't super useful.
+        ADD_EXTRA_TIME_FIELDS = false
+        ANNOTATE_PUNCT = false
+        disabled = false
+        pulldown_type = true
+        category = Metrics
+        description = Statsd daemon output format. Accepts the plain StatsD line metric protocol or the StatsD line metric protocol with dimensions extension.
+
+        [collectd_http]
+        METRICS_PROTOCOL = collectd_http
+        NO_BINARY_CHECK = true
+        SHOULD_LINEMERGE = false
+        ADD_EXTRA_TIME_FIELDS = false
+        ANNOTATE_PUNCT = false
+        disabled = false
+        pulldown_type = true
+        TIMESTAMP_FIELDS = time
+        KV_MODE=none
+        category = Metrics
+        description = Collectd daemon format. Uses the write_http plugin to send metrics data to a Splunk platform data input via the HTTP Event Collector.
+
+        [kvstore]
+        SHOULD_LINEMERGE = false
+        TIMESTAMP_FIELDS = datetime
+        TIME_FORMAT = %m-%d-%Y %H:%M:%S.%l %z
+        INDEXED_EXTRACTIONS = json
+        KV_MODE = none
+        TRUNCATE = 1000000
+        JSON_TRIM_BRACES_IN_ARRAY_NAMES = true
+        """)
+
+    def test_filter_attrs_whitelist(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.props03, "--keep-attrs", "SHOULD_LINEMERGE")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
+            self.assertEqual(len(out["collectd_http"]),1)
+            self.assertEqual(len(out["statsd"]), 1)
+            self.assertEqual(len(out["kvstore"]), 1)
+            self.assertEqual(list(out["kvstore"]), ["SHOULD_LINEMERGE"])
+
+    def test_filter_attrs_blacklist(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.props03,
+                            "--reject-attrs", "METRICS_PROTOCOL NO_BINARY_CHECK")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
+            keys = set()
+            for i in out.values():
+                keys.update(i)
+            self.assertNotIn("METRICS_PROTOCOL", keys)
+            self.assertNotIn("NO_BINARY_CHECK", keys)
+            self.assertIn("ANNOTATE_PUNCT", keys)
+            self.assertIn("JSON_TRIM_BRACES_IN_ARRAY_NAMES", keys)
+
+    def test_filter_attrs_whbllist(self):
+        """ Confirm that blacklist is applied after whitelist """
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.props03, self.props02,
+                            "--keep-attrs", "*TIME*",
+                            "--keep-attrs", "*FIELD*",
+                            "--reject-attrs", "TIME_FORMAT")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
+            keys = set()
+            for i in out.values():
+                keys.update(i)
+            self.assertNotIn("TIME_FORMAT", keys)
+            self.assertIn("TIMESTAMP_FIELDS", keys)
+            self.assertIn("ADD_EXTRA_TIME_FIELDS", keys)
+            self.assertIn("DATETIME_CONFIG", keys)
+            self.assertEqual(len(out["iis"]), 0)
 
 
 

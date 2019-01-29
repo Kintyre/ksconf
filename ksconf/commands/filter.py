@@ -28,6 +28,7 @@ from ksconf.util.completers import conf_files_completer
 
 class FilteredList(object):
     IGNORECASE = I = 1
+    BLACKLIST = B = 2
 
     def __init__(self, flags=0):
         self.data = []
@@ -56,6 +57,12 @@ class FilteredList(object):
         # New items added.  Mark prep-work as incomplete
         self._prep = False
 
+    def feedall(self, iterable):
+        if iterable:
+            for i in iterable:
+                self.feed(i)
+        return self
+
     def _pre_match(self):  # pragma: no cover
         pass
 
@@ -65,10 +72,14 @@ class FilteredList(object):
             if self._prep is False:
                 self._pre_match()
                 self._prep = True
-            return self._match(item)
+            result = self._match(item)
         else:
             #  No patterns defined.  No filter rule(s) => allow all through
             return True
+        if self.flags & self.BLACKLIST:
+            return not result
+        else:
+            return result
 
     @property
     def has_rules(self):
@@ -220,27 +231,42 @@ class FilterCmd(KsconfCmd):
             PATTERN supports the special 'file://' syntax.""")
         '''
 
-        '''
-        pg_con = parser.add_argument_group("Attribute retention","""
-            Include or exclude entire stanzas using these options.
-            By default all attributes are preserved.""")
+        pg_con = parser.add_argument_group("Attribute selection", """
+            Include or exclude attributes passed through.
+            By default all attributes are preserved.
+            Whitelist (keep) operations are preformed before blacklist (reject) operations.""")
 
-        pg_con.add_argument("--filter-attrs", help="When enabled, only the matching attributes "
-                                                   "names will be exported."
-        '''
+        pg_con.add_argument("--keep-attrs", metavar="WC-ATTR", default=[], action="append",
+                            help="""
+            Select which attribute(s) will be preserved.
+            This space separated list of attributes indicates what to preserve.
+            Supports wildcards.""")
+
+        pg_con.add_argument("--reject-attrs", metavar="WC-ATTR", default=[], action="append",
+                            help="""
+            Select which attribute(s) will be discarded.
+            This space separated list of attributes indicates what to discard.
+            Supports wildcards.""")
 
     def prep_filters(self, args):
         flags = 0
         if args.ignore_case:
             flags |= FilteredList.IGNORECASE
 
-        self.stanza_filters = create_filtered_list(args.match, flags)
-        for pattern in args.stanza:
-            self.stanza_filters.feed(pattern)
-
+        self.stanza_filters = create_filtered_list(args.match, flags).feedall(args.stanza)
         self.attr_presence_filters = create_filtered_list(args.match, flags)
-        for pattern in args.attr_present:
-            self.attr_presence_filters.feed(pattern)
+        self.attr_presence_filters.feedall(args.attr_present)
+
+        if args.keep_attrs or args.reject_attrs:
+            self.attrs_keep_filter = FilterListWildcard()
+            for attrs in args.keep_attrs:
+                self.attrs_keep_filter.feedall(attrs.split(" "))
+            self.attrs_reject_filter = FilterListWildcard(FilteredList.BLACKLIST)
+            for attrs in args.reject_attrs:
+                self.attrs_reject_filter.feedall(attrs.split(" "))
+        else:
+            # Bypass filter
+            self.filter_attrs = lambda x: x
 
     def _test_stanza(self, stanza, attributes):
         if self.stanza_filters.match(stanza):
@@ -252,6 +278,13 @@ class FilterCmd(KsconfCmd):
                 if self.attr_presence_filters.match(attr):
                     return True
         return False
+
+    def filter_attrs(self, content):
+        d = {}
+        for (attr, value) in content.items():
+            if self.attrs_keep_filter.match(attr) and self.attrs_reject_filter.match(attr):
+                d[attr] = content[attr]
+        return d
 
     def run(self, args):
         ''' Filter configuration files. '''
@@ -267,14 +300,9 @@ class FilterCmd(KsconfCmd):
             # Should this be an ordered dict?
             cfg_out = dict()
             for stanza_name, attributes in cfg.items():
-                '''
-                keep = self._test_stanza(stanza_name, attributes)
-                if args.invert_match:
-                    keep = not keep
-                '''
                 keep = self._test_stanza(stanza_name, attributes) ^ args.invert_match
                 if keep:
-                    cfg_out[stanza_name] = attributes
+                    cfg_out[stanza_name] = self.filter_attrs(attributes)
 
             if cfg_out:
                 if len(args.conf) > 1:

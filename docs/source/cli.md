@@ -217,6 +217,7 @@ The following documents the CLI options
                          [--match {regex,wildcard,string}] [--ignore-case]
                          [--invert-match] [--files-with-matches] [--count]
                          [--stanza PATTERN] [--attr-present ATTR]
+                         [--keep-attrs WC-ATTR] [--reject-attrs WC-ATTR]
                          CONF [CONF ...]
     
     Filter the contents of a conf file in various ways. Stanzas can be included or
@@ -264,6 +265,19 @@ The following documents the CLI options
       --attr-present ATTR   Match any stanza that includes the ATTR attribute.
                             ATTR supports bulk attribute patterns via the
                             'file://' prefix.
+    
+    Attribute selection:
+      Include or exclude attributes passed through. By default all attributes
+      are preserved. Whitelist (keep) operations are preformed before blacklist
+      (reject) operations.
+    
+      --keep-attrs WC-ATTR  Select which attribute(s) will be preserved. This
+                            space separated list of attributes indicates what to
+                            preserve. Supports wildcards.
+      --reject-attrs WC-ATTR
+                            Select which attribute(s) will be discarded. This
+                            space separated list of attributes indicates what to
+                            discard. Supports wildcards.
 
 
 ## ksconf promote
