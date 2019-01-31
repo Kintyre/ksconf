@@ -122,6 +122,27 @@ On Windows, run this commands from an Administrator console.
     sudo pip install kintyre-splunk-conf
 
 
+#### RedHat Software Collections
+
+The following assumes the `python27` software collection, but other version of Python are supported
+too.  The initial setup and deployment of Software Collections is beyond the scope of this doc.
+
+    sudo scl enable python27 python -m pip install kintyre-splunk-conf
+
+(If pip isn't installed, try running `yum install python27-python-pip`)
+
+Unfortunately, the `ksconf` entrypoint script (in the `bin` folder) will not work correctly on it's
+own because it doesn't know about the scl environment, nor is it in the default PATH. To solve this
+run the following:
+
+    sudo cat > /usr/local/bin/ksconf <<HERE
+    #!/bin/sh
+    source scl_source enable python27
+    exec /opt/rh/python27/root/usr/bin/ksconf "$@"
+    HERE
+    chmod +x /usr/local/bin/ksconf
+
+
 ### Install from GIT
 
 If you'd like to contribute to ksconf, or just build the latest and greatest, then install from the
@@ -333,7 +354,7 @@ version of python that is running on destination machine
     # download packages
     python2.7 -m pip download -d ksconf-packages kintyre-splunk-conf
 
-A new directory named 'ksconf-packages' will be created and will contain the neccesary `*.whl` files.
+A new directory named 'ksconf-packages' will be created and will contain the necessary `*.whl` files.
 
 **Step 2**: Transfer the directory or archive to the remote computer.  Insert whatever security and
 file copy procedures necessary for your organization.
@@ -350,7 +371,7 @@ file copy procedures necessary for your organization.
 **Step 3**:
 
     # Install ksconf package with pip
-    pip install --no-index --find-links ksconf-packages kntyre-splunk-conf
+    pip install --no-index --find-links=ksconf-packages kntyre-splunk-conf
 
     # Test the installation
     ksconf --version
@@ -365,23 +386,45 @@ bootstrap of pip is your only option, then here are the steps.  (This process mi
 above and can be combined, if needed.)
 
 
-**Step 1**:  Fetch boostrap script and necessary wheels
+**Step 1**:  Fetch bootstrap script and necessary wheels
 
     mkdir ksconf-packages
     curl https://bootstrap.pypa.io/get-pip.py -o ksconf-packages/get-pip.py
     python2.7 -m pip download -d /tmp/my_packages pip setuptools wheel
 
-The `ksconf-pacakges` folder should contain 1 script, and 3 wheel (`*.whl) files.
+The `ksconf-pacakges` folder should contain 1 script, and 3 wheel (`*.whl`) files.
 
 **Step 2**: Archive and/or copy to offline server
 
-**Step 3**: Boostrap pip
+**Step 3**: Bootstrap pip
 
     sudo python get-pip.py --no-index --find-links=ksconf-packages/
 
     # Test with
     pip --version
 
+
+#### Use pip without installing it
+
+If you have a copy of the `pip*.whl` (wheel) file, then it can be executed directly by python.  This
+can be used to run `pip` without actually installing it, or for install pip initially (bypassing the
+`get-pip.py` script step noted above.)
+
+Here's an example of how this could work:
+
+**Step 1:** Download the pip wheel on a machine where `pip` works, by running:
+
+    pip download pip -d .
+
+This will create a file like `pip-19.0.1-py2.py3-none-any.whl` in the current working directory.
+
+**Step 2:** Copy the pip wheel to another machine (likely where pip isn't installed.)
+
+**Step 3:** Execute the wheel by running:
+
+    python pip-19.0.1-py2.py3-none-any.whl/pip list
+
+Just substitute the `list` command with whatever action you need (like `install` or whatever)
 
 
 ## Frequent gotchas
@@ -408,6 +451,17 @@ Helpful links:
 
  * [Not able to install Python packages [SSL: TLSV1_ALERT_PROTOCOL_VERSION]](https://stackoverflow.com/a/49769015/315892)
  * ['pip install' fails for every package ("Could not find a version that satisfies the requirement")](https://stackoverflow.com/a/49748494/315892)
+
+
+### No module named 'command.install''
+
+If, while trying to install `pip` or run a `pip` command you see the following error:
+
+    ImportError: No module named command.install
+
+Likely this is because you are using a crippled version of Python; like the one that ships with
+Splunk.  This won't work.  Either get a pre-package version (the `.pyz` file or install using the
+OS-level Python.
 
 
 ## Resources
