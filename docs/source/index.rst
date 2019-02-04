@@ -1,6 +1,9 @@
 Kintyre's Splunk CONFiguration tool
 ===================================
 
+.. image:: example.png
+   :alt: Ksconf logo
+
 
 Intro
 -----

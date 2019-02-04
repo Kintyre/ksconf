@@ -8,6 +8,9 @@
 [![Documentation Status](https://readthedocs.org/projects/ksconf/badge/?version=latest)](https://ksconf.readthedocs.io/en/latest/?badge=latest)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 
+![Ksconf logo][logo]
+
+
 
 This utility handles a number of common Splunk app maintenance tasks in an installable python
 package.  Specifically, this tools deals with many of the nuances with storing Splunk apps in a
@@ -52,3 +55,5 @@ Presentations:
   * [Managing Splunk Deployments With Git and KSCONF](https://youtu.be/-NIME9XRqlo)
     ([slides](https://kintyre.rocks/ksconf18)) Splunk .conf bsides talk - Oct 2, 2018
 
+
+[logo]: docs/source/logo.png
