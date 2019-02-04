@@ -49,9 +49,9 @@ class CliKsconfFilter(unittest.TestCase):
         return self.twd.write_file("savedsearches.conf", self._sample01)
 
     def test_filter_stanas(self):
-        "Test simple stanza filter"
+        "Test simple stanza filter (wildcard is the default)"
         with ksconf_cli:
-            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in the last hour")
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in the last *")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             out = ko.get_conf()
             self.assertIn("Errors in the last hour", out)
@@ -173,6 +173,19 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("Errors in the last 24 hours", out)
             self.assertIn("Splunk errors last 24 hours", out)
 
+    def test_no_match(self):
+        "No match (\w verbose) should be reported to stderr"
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "NOT A REAL STANZA", "--verbose")
+            out = ko.get_conf()
+            # Should the exit code be different here?
+            #self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertEqual(len(out), 0)
+            self.assertRegex(ko.stderr, "No matching stanzas")
+
+            # Same test but with "-l" added
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "BOGUS", "--verbose", "-l")
+            self.assertRegex(ko.stderr, "No matching stanzas")
 
     def test_match_from_flat_file(self):
         "Load a list of stanzas to keep from a text file"
@@ -180,14 +193,15 @@ class CliKsconfFilter(unittest.TestCase):
         Splunk errors last 24 hours
         Messages by minute last 3 hours
         """)
-        # Test multiple '--stanza'
-        ko = ksconf_cli("filter", self.sample01, "--match", "string",
-                        "--stanza", "file://{}".format(flatfile))
-        self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-        out = ko.get_conf()
-        self.assertEqual(len(out), 2, "Expecting 2 stanzas")
-        self.assertIn("Splunk errors last 24 hours", out)
-        self.assertIn("Messages by minute last 3 hours", out)
+        with ksconf_cli:
+            # Test multiple '--stanza'
+            ko = ksconf_cli("filter", "--verbose", self.sample01, "--match", "string",
+                            "--stanza", "file://{}".format(flatfile))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            out = ko.get_conf()
+            self.assertEqual(len(out), 2, "Expecting 2 stanzas")
+            self.assertIn("Splunk errors last 24 hours", out)
+            self.assertIn("Messages by minute last 3 hours", out)
 
     @property
     def props01(self):
@@ -263,6 +277,31 @@ class CliKsconfFilter(unittest.TestCase):
             ko = ksconf_cli("diff", conf, merged)
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_EQUAL)
 
+    def test_output_linecount(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, self.props02, "--stanza", "Errors in *", "-l")
+            self.assertRegex(ko.stdout, r"[/\\]savedsearches.conf[\r\n]")
+
+    def test_output_count(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-c")
+            self.assertEqual( int(ko.stdout), 2)
+
+    def test_output_brief(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-b")
+            self.assertRegex(ko.stdout, r"Errors in the last hour[\r\n]")
+            self.assertRegex(ko.stdout, r"Errors in the last 24 hours[\r\n]")
+
+    def test_output_list_combos(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-l", "-b")
+            self.assertRegex(ko.stdout, r"savedsearches.conf:\s*Errors in the last hour[\r\n]")
+            self.assertRegex(ko.stdout, r"savedsearches.conf:\s*Errors in the last 24 hours[\r\n]")
+
+            ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-l", "-c")
+            self.assertRegex(ko.stdout, r"savedsearches.conf(:| has)\s*2\s")
+
     def test_conf_via_stdin(self):
         "Stream in an input file over stdin"
         with FakeStdin(self._sample01):
@@ -274,13 +313,16 @@ class CliKsconfFilter(unittest.TestCase):
 
     def test_has_attr(self):
         "Keep all stanzas with given attribute"
-        with ksconf_cli:
-            ko = ksconf_cli("filter", self.props01, "--attr-present", "BREAK_ONLY_*")
-            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            out = ko.get_conf()
-            self.assertEqual(len(out), 1)
-            self.assertIn("apache", out)
-            self.assertEqual(out["apache"]["BREAK_ONLY_BEFORE"], r"^\[")
+        # Test with and without case sensitivity
+        for extra_args in (["--attr-present", "BREAK_ONLY_*"],
+                           ["--attr-present", "break_only_*", "-i"]):
+            with ksconf_cli:
+                ko = ksconf_cli("filter", self.props01, *extra_args)
+                self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+                out = ko.get_conf()
+                self.assertEqual(len(out), 1)
+                self.assertIn("apache", out)
+                self.assertEqual(out["apache"]["BREAK_ONLY_BEFORE"], r"^\[")
 
     def test_has_attr_inverse(self):
         with ksconf_cli:
@@ -357,7 +399,7 @@ class CliKsconfFilter(unittest.TestCase):
     def test_filter_attrs_whbllist(self):
         """ Confirm that blacklist is applied after whitelist """
         with ksconf_cli:
-            ko = ksconf_cli("filter", self.props03, self.props02,
+            ko = ksconf_cli("filter", self.props03, self.props02, "--ignore-case",
                             "--keep-attrs", "*TIME*",
                             "--keep-attrs", "*FIELD*",
                             "--reject-attrs", "TIME_FORMAT")
@@ -371,6 +413,7 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("ADD_EXTRA_TIME_FIELDS", keys)
             self.assertIn("DATETIME_CONFIG", keys)
             self.assertEqual(len(out["iis"]), 0)
+
 
 
 

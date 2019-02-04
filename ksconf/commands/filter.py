@@ -29,14 +29,14 @@ from ksconf.util.completers import conf_files_completer
 class FilteredList(object):
     IGNORECASE = I = 1
     BLACKLIST = B = 2
+    VERBOSE = V = 4
 
     def __init__(self, flags=0):
         self.data = []
         self.flags = flags
         self._prep = True
 
-    @staticmethod
-    def _feed_from_file(path):
+    def _feed_from_file(self, path):
         items = []
         with open(path) as f:
             for line in f:
@@ -44,7 +44,8 @@ class FilteredList(object):
                 # Skip empty or "comment" lines
                 if line and line[0] != "#":
                     items.append(line)
-        sys.stderr.write("Loaded patterns from {}.  Found {} entries.\n".format(path, len(items)))
+        if self.flags & self.VERBOSE:
+            sys.stderr.write("Loaded {} patterns from {}\n".format(len(items), path))
         return items
 
     def feed(self, item):
@@ -139,8 +140,8 @@ def create_filtered_list(match_mode, flags):
         return FilterListWildcard(flags)
     elif match_mode == "regex":
         return FilteredListRegex(flags)
-    else:   # pragma: no cover
-        raise ValueError("Unknown matching mode {!r}".format(match_mode))
+    else:
+        raise NotImplementedError("Matching mode {!r} undefined".format(match_mode))
 
 
 class FilterCmd(KsconfCmd):
@@ -161,8 +162,9 @@ class FilterCmd(KsconfCmd):
         self.attr_presence_filters = None
 
     def register_args(self, parser):
+        # type: (argparse.ArgumentParser) -> None
         parser.add_argument("conf", metavar="CONF", help="Input conf file", nargs="+",
-                            type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
+                            type=ConfFileType("r", parse_profile=PARSECONF_MID_NC)
                             ).completer = conf_files_completer
         parser.add_argument("-o", "--output", metavar="FILE",
                             type=argparse.FileType('w'), default=self.stdout,
@@ -171,10 +173,12 @@ class FilterCmd(KsconfCmd):
         parser.add_argument("--comments", "-C",
                             action="store_true", default=False,
                             help="Preserve comments.  Comments are discarded by default.")
+        parser.add_argument("--verbose", action="store_true", default=False,
+                            help="Enable additional output.")
 
         parser.add_argument("--match", "-m",  # metavar="MODE",
                             choices=["regex", "wildcard", "string"],
-                            default="regex",
+                            default="wildcard",
                             help="""
             Specify pattern matching mode.
             Defaults to 'wildcard' allowing for '*' and  '?' matching.
@@ -196,8 +200,11 @@ class FilterCmd(KsconfCmd):
             """)
         pg_out.add_argument("--files-with-matches", "-l", action="store_true",
                             help="List files that match the given search criteria")
-        pg_out.add_argument("--count", "-c", action="store_true",
+        pg_om1 = pg_out.add_mutually_exclusive_group()
+        pg_om1.add_argument("--count", "-c", action="store_true",
                             help="Count matching stanzas")
+        pg_om1.add_argument("--brief", "-b", action="store_true",
+                            help="List name of matching stanzas")
 
         pg_sel = parser.add_argument_group("Stanza selection", """
             Include or exclude entire stanzas using these filter options.
@@ -252,16 +259,18 @@ class FilterCmd(KsconfCmd):
         flags = 0
         if args.ignore_case:
             flags |= FilteredList.IGNORECASE
+        if args.verbose:
+            flags |= FilteredList.VERBOSE
 
         self.stanza_filters = create_filtered_list(args.match, flags).feedall(args.stanza)
         self.attr_presence_filters = create_filtered_list(args.match, flags)
         self.attr_presence_filters.feedall(args.attr_present)
 
         if args.keep_attrs or args.reject_attrs:
-            self.attrs_keep_filter = FilterListWildcard()
+            self.attrs_keep_filter = FilterListWildcard(flags)
             for attrs in args.keep_attrs:
                 self.attrs_keep_filter.feedall(attrs.split(" "))
-            self.attrs_reject_filter = FilterListWildcard(FilteredList.BLACKLIST)
+            self.attrs_reject_filter = FilterListWildcard(FilteredList.BLACKLIST | flags)
             for attrs in args.reject_attrs:
                 self.attrs_reject_filter.feedall(attrs.split(" "))
         else:
@@ -286,6 +295,34 @@ class FilterCmd(KsconfCmd):
                 d[attr] = content[attr]
         return d
 
+    def output(self, args, matches, filename):
+        if args.files_with_matches:
+            if matches:
+                if args.count:
+                    args.output.write("{} has {} matching stanza(s)\n".format(filename, len(matches)))
+                elif args.brief:
+                    for stanza_name in matches:
+                        args.output.write("{}: {}\n".format(filename, stanza_name))
+                else:
+                    # Just show a single file
+                    args.output.write("{}\n".format(filename))
+            elif args.verbose:
+                self.stderr.write("No matching stanzas in {}\n".format(filename))
+        elif args.count:
+            args.output.write("{}\n".format(len(matches)))
+        elif args.brief:
+            for stanza_name in matches:
+                args.output.write("{}\n".format(stanza_name))
+        else:
+            if len(args.conf) > 1:
+                args.output.write("#  {}\n".format(filename))
+            if matches:
+                write_conf_stream(args.output, matches)
+            elif args.verbose:
+                self.stderr.write("No matching stanzas in {}\n".format(filename))
+            if args.verbose:
+                sys.stderr.write("Matched {} stanzas from {}\n".format(len(matches), filename))
+
     def run(self, args):
         ''' Filter configuration files. '''
         self.prep_filters(args)
@@ -304,11 +341,8 @@ class FilterCmd(KsconfCmd):
                 if keep:
                     cfg_out[stanza_name] = self.filter_attrs(attributes)
 
-            if cfg_out:
-                if len(args.conf) > 1:
-                    args.output.write("#  {}\n".format(conf.name))
-                write_conf_stream(args.output, cfg_out)
-                # Explicit flush used to resolve a CLI unittest timing issue in pypy
-                args.output.flush()
+            self.output(args, cfg_out, conf.name)
+            # Explicit flush used to resolve a CLI unittest timing issue in pypy
+            args.output.flush()
 
         return EXIT_CODE_SUCCESS

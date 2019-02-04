@@ -213,11 +213,12 @@ The following documents the CLI options
 
 
 ## ksconf filter
-    usage: ksconf filter [-h] [-o FILE] [--comments]
+    usage: ksconf filter [-h] [-o FILE] [--comments] [--verbose]
                          [--match {regex,wildcard,string}] [--ignore-case]
-                         [--invert-match] [--files-with-matches] [--count]
-                         [--stanza PATTERN] [--attr-present ATTR]
-                         [--keep-attrs WC-ATTR] [--reject-attrs WC-ATTR]
+                         [--invert-match] [--files-with-matches]
+                         [--count | --brief] [--stanza PATTERN]
+                         [--attr-present ATTR] [--keep-attrs WC-ATTR]
+                         [--reject-attrs WC-ATTR]
                          CONF [CONF ...]
     
     Filter the contents of a conf file in various ways. Stanzas can be included or
@@ -234,6 +235,7 @@ The following documents the CLI options
                             File where the filtered results are written. Defaults
                             to standard out.
       --comments, -C        Preserve comments. Comments are discarded by default.
+      --verbose             Enable additional output.
       --match {regex,wildcard,string}, -m {regex,wildcard,string}
                             Specify pattern matching mode. Defaults to 'wildcard'
                             allowing for '*' and '?' matching. Use 'regex' for
@@ -252,6 +254,7 @@ The following documents the CLI options
       --files-with-matches, -l
                             List files that match the given search criteria
       --count, -c           Count matching stanzas
+      --brief, -b           List name of matching stanzas
     
     Stanza selection:
       Include or exclude entire stanzas using these filter options. All filter
