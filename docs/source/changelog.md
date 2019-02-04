@@ -6,6 +6,12 @@
 
 Add Python 3 support, new commands, support for external command plugins, tox and vagrant for testing.
 
+### Release v0.5.6 (2019-02-04)
+ * Fixes and improvements to the `filter` command.  Found issue with processing from stdin,
+   inconsistency in some CLI arguments, and finished implementation for various output modes.
+ * Add logo (fist attempt).
+
+
 ### Release v0.5.5 (2019-01-28)
  * New `filter` command added for slicing up a conf file into smaller pieces.  Think of this as
    GREP that's stanza-aware.  Can also whitelist or blacklist attributes, if desirable.

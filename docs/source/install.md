@@ -453,7 +453,7 @@ Helpful links:
  * ['pip install' fails for every package ("Could not find a version that satisfies the requirement")](https://stackoverflow.com/a/49748494/315892)
 
 
-### No module named 'command.install''
+### No module named 'command.install'
 
 If, while trying to install `pip` or run a `pip` command you see the following error:
 

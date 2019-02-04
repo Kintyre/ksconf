@@ -56,4 +56,4 @@ Presentations:
     ([slides](https://kintyre.rocks/ksconf18)) Splunk .conf bsides talk - Oct 2, 2018
 
 
-[logo]: docs/source/logo.png
+[logo]: docs/images/logo.png
