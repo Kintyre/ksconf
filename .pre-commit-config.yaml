@@ -2,7 +2,7 @@
 # See http://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  sha: v1.4.0
+  sha: v2.0.0
   hooks:
     - id: trailing-whitespace
       exclude: \.md$
@@ -24,13 +24,13 @@ repos:
       name: Generating CLI reference docs -> docs/source/cli.md
       language: script
       entry: make_cli_docs.py
-      type: [ python ]
+      types: [ python ]
       pass_filenames: false
     - id: ksconf-unittest
       name: Run all unit tests for ksconf
       language: script
       entry: run_tests.py
-      type: [ python ]
+      types: [ python ]
       pass_filenames: false
 
 # Way too much noise.... (or I just have bad code, either way it's too much)

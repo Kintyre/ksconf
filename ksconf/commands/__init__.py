@@ -365,8 +365,11 @@ def _get_pkgresources_lib(group, name=None):
 
 def _get_fallback(group, name=None):
     from ksconf.setup_entrypoints import get_entrypoints_fallback
-    if name: raise NotImplementedError
-    return get_entrypoints_fallback(group)
+    entrypoints = get_entrypoints_fallback(group)
+    if name is None:
+        return entrypoints
+    else:
+        return entrypoints[name]
 
 # Removed _get_pkgresources_lib as middle option
 __get_entity_resolvers = [ _get_entrypoints_lib, _get_fallback ]

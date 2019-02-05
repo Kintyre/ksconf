@@ -7,6 +7,13 @@ import os
 import sys
 import unittest
 
+# Run tests from this working directory; not from a previous 'pip install' run.
+home = os.path.dirname(os.path.abspath(sys.argv[0] or __file__))
+sys.path.insert(0, home)
+
+import ksconf
+print("Running all KSCONF unit tests.   KSCONF home:  {}".format(ksconf.__path__[0]))
+
 # Because this script is run from the 'pre-commit' hooks, and some of these
 # unittests do git automation, we need to purge all the "GIT_*" variables
 for k in list(os.environ):
