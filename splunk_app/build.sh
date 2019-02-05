@@ -65,6 +65,6 @@ DIST="$PROJECT_DIR/zdist"
 
 test -d "$DIST" || mkdir "$DIST"
 echo "Building Splunk app tarball"
-APP_FILE=$DIST/splunk-$KSCONF_VERSION.tgz
+APP_FILE=$DIST/ksconf-splunk-app-$KSCONF_VERSION.tgz
 tar -czvf "$APP_FILE" "ksconf"
 echo "Wrote Splunk app to $APP_FILE"

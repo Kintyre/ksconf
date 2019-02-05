@@ -76,6 +76,7 @@ after_success:
   - coveralls
   - '[[ $BUILD_SDIST == "true" ]] && ./make_zipapp'
   - '[[ $BUILD_SDIST == "true" ]] && ./splunk_app/build.sh'
+  - '[[ $BUILD_SDIST == "true" ]] && ls -lsh zdist'
 deploy:
   - provider: releases
     api_key:
