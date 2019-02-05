@@ -154,11 +154,29 @@ class ConfFileType(object):
     Instances of FileType are typically passed as type= arguments to the
     ArgumentParser add_argument() method.
 
-    Keyword Arguments:
-        - mode      A string indicating how the file is to be opened.  Accepts "r", "w", and "r+".
-        - action    'none', 'open', 'load'.   'none' means no preparation or tests;  'open' means
-                    make sure the file exists/openable;  'load' means make sure the file can be
-                    opened and parsed successfully.
+
+    :param mode: How the file is to be opened.  Accepts "r", "w", and "r+".
+    :type mode: str
+    :param action: Determine how much work should be handled during argument parsing vs handed off
+                   to the caller.  Supports 'none', 'open', 'load'.  Full descriptions below.
+    :type action: str
+    :param parse_profile: parsing configuration settings passed along to the parser
+    :param bool accept_dir: Should the CLI accept a directory of config files instead of an
+                            individual file.  Defaults to `False`.
+
+    **Values for action**
+
+    ========    =============
+    Action      Description
+    ========    =============
+    `none`      No preparation or testing is done on the filename.
+    `open`      Ensure the file exists an can be opened.
+    `load`      Ensure the file can be opened and parsed successfully.
+    ========    =============
+
+
+    Once invoked, instances of this class will return a :class:`ConfFileProxy` object, or a
+    :class:`ConfDirProxy` object if a directory is passed in via the CLI.
     """
 
     def __init__(self, mode='r', action="open", parse_profile=None, accept_dir=False):

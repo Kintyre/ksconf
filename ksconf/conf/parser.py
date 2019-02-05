@@ -27,6 +27,7 @@ from ..util.compare import fileobj_compare
 
 default_encoding = "utf-8"
 
+
 class Token(object):
     """ Immutable token object.  deepcopy returns the same object """
 
@@ -40,6 +41,7 @@ class Token(object):
 
     def __gt__(self, other):
         return not isinstance(other, six.text_type)
+
 
 DUP_OVERWRITE = "overwrite"
 DUP_MERGE = "merge"
@@ -98,11 +100,17 @@ class DuplicateStanzaException(ConfParserException):
 
 def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
     """
-    Break a configuration file stream into 2 components sections.  Each section is yielded as
-    (section_name, lines_of_text)
+    This generator break a configuration file stream into sections.  Each section contains a name
+    and a list of text lines held within that section.
 
     Sections that have no entries may be dropped.  Any lines before the first section are send back
     with the section name of None.
+
+    :param stream: configuration file input stream
+    :type stream: file
+    :param section_re: regular expression for detecting stanza headers
+    :return: sections in the form of `(section_name, lines_of_text)`
+    :rtype: tuple
     """
     buf = []
     section = None
@@ -151,6 +159,20 @@ def detect_by_bom(path):
 
 
 def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
+    r"""
+    Look for trailing backslashes ("`\\`") which indicate a value for an attribute is split across
+    multiple lines.  This function will group such lines together, and pass all other lines through
+    as-is.  Note that the continuation character must be the very last character on the line,
+    trailing whitespace is not allowed.
+
+    :param iterable: lines from a configuration file
+    :type iterable: iter
+    :param continue_re: regular expression to detect the continuation character
+    :param breaker: joining string when combining continued lines into a single string.
+           Default '`\\n`'
+    :return: lines of text
+    :rtype: str
+    """
     buf = ""
     for line in iterable:
         mo = continue_re.match(line)
@@ -167,6 +189,18 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
 
 
 def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=False, strict=False):
+    """
+    Break up 'attribute=value' entries in a configuration file.
+
+    :param lines: the body of a stanza containing associated attributes and values
+    :type lines: iter
+    :param comments_re: Regular expression used to detect comments.
+    :param keep_comments: Should comments be preserved in the output.  Defaults to `False`.
+    :type keep_comments: bool, optional
+    :param strict: Should unknown content in the stanza stop processing. Defaults to `False` allowing "junk" to be silently ignored allowing for a best-effort parse.
+    :type strict: bool, optional
+    :return: iterable of (attribute,value) tuples
+    """
     comment = 0
     for entry in lines:
         if comments_re.search(entry):
@@ -184,6 +218,17 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
 
 
 def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
+    """
+    Parse a .conf file.  This is a wrapper around :func:`parse_conf_stream` that allows filenames
+    or stream to be passed in.
+
+    :param stream: the path to a configuration file or open file-like object to be parsed
+    :type stream: str, file
+    :param profile: parsing configuration settings
+    :param encoding: Defaults to the system default, "uft-8"
+    :return: a mapping of the stanza and attributes.  The resulting output is accessible as [stanaza][attribute] -> value
+    :rtype: dict
+    """
     # Placeholder stub for an eventual migration to proper class-oriented parser
     if hasattr(stream, "read"):
         return parse_conf_stream(stream, **profile)

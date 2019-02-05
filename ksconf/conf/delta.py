@@ -29,26 +29,35 @@ DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
 
 def compare_cfgs(a, b, allow_level0=True):
     '''
-    Opcode tags borrowed from difflib.SequenceMatcher
+    Return list of 5-tuples describing how to turn a into b.
 
-    Return list of 5-tuples describing how to turn a into b. Each tuple is of the form
+    .. note:: The `Opcode` tags borrowed from :class:`SequenceMatcher` class in the :mod:`difflib`
+              standard Python module.
+
+    Each tuple takes the form:
 
         (tag, location, a, b)
 
-    tag:
+    *tag:*
 
+    =========   ============================================
     Value	    Meaning
+    =========   ============================================
     'replace'	same element in both, but different values.
     'delete'	remove value b
     'insert'    insert value a
     'equal'	    same values in both
+    =========   ============================================
 
-    location is a tuple that can take the following forms:
+    *location* is a tuple that can take the following forms:
 
-    (level, pos0, ... posN)
-    (0)                 Global file level context (e.g., both files are the same)
-    (1, stanza)         Stanzas are the same, or completely different (no shared keys)
-    (2, stanza, key)    Key level, indicating
+    ===================  ===============================================================
+    Tuple form           Description
+    ===================  ===============================================================
+    `(0)`                Global file level context (e.g., both files are the same)
+    `(1, stanza)`        Stanzas are the same, or completely different (no shared keys)
+    `(2, stanza, key)`   Key level, indicating
+    ===================  ===============================================================
 
 
     Possible alternatives:
