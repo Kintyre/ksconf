@@ -62,7 +62,7 @@ install:
   - pip install codecov
   - pip install .
   - echo "Build $TRAVIS_BUILD_NUMBER BRANCH=$TRAVIS_BRANCH TAG=$TRAVIS_TAG"
-  - pip list
+  - pip list --format=columns
 # command to run tests
 script:
   - |

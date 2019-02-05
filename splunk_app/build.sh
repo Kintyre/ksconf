@@ -29,8 +29,12 @@ find "$PIP_TARGET" -type f -name '*.py[co]' -delete
 # I'd like to remove the dist-info folders too, but not sure that's a good idea since we'd like to have entrypoints work.  Just not sure how that will work with app installs where things are never cleaned up.  May need to implement my own manifest and cleanup mechanism....?!?!
 ( cd "$PIP_TARGET" || exit 9 ; find . -ls > "$PIP_TARGET/../manifest.txt"; )
 
+
+# Wonky workaround, run setup.py first so that ksconf/_version.py is created.  :-(
+$PY setup.py --help >/dev/null 2>&1
+
 # Load KSCONF_VERSION and KSCONF_BUILD; This assumes setup.py was run, causing _version.py to be generated
-eval "$(cd "$PROJECT_DIR" || exit 8; python -m ksconf._version)"
+eval "$(cd "$PROJECT_DIR" || exit 8; $PY -m ksconf._version)"
 export KSCONF_VERSION KSCONF_BUILD
 
 echo "KSCONF v$KSCONF_VERSION"

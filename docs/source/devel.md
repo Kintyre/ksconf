@@ -42,7 +42,7 @@ the following (for building docs, and the like):
 (Doh!  Still doesn't work, instructions are incomplete for mac latex, ....)
 
 
-# Contributing back
+# Contributing
 
 Pull requests are greatly welcome!  If you plan on contributing code back to the main `ksconf` repo,
 please follow the standard GitHub fork and pull-request work-flow.  We also ask that you enable a
