@@ -52,7 +52,7 @@ echo "KSCONF v$KSCONF_VERSION"
   echo "Making HTML docs"
   make html || { echo "Failed to make docs."; exit 2; }
   rm -rf "$APP_DOCS"
-  mkdir "$(dirname $APP_DOCS)"
+  mkdir -p "$(dirname $APP_DOCS)"
   echo "Copying docs into the KSCONF Splunk app"
   cp -a "$DOCS/build/html" "$APP_DOCS"
 )
