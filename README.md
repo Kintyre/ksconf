@@ -32,7 +32,7 @@ Confirm installation with the following command:
 
 Docs:
 
-  * [Official docs](https://ksconf.readthedocs.io/en/latest/)  Hosted via ReadTheDocs.io
+  * [Official docs](https://ksconf.readthedocs.io/en/latest/) hosted via ReadTheDocs.io
   * [Command line reference](./docs/source/cli.md)
   * [Installation docs](./docs/source/install.md)
   * [Change log](./docs/source/changelog.md)
