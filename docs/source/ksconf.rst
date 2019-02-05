@@ -22,18 +22,18 @@ ksconf.archive module
     :undoc-members:
     :show-inheritance:
 
-ksconf.cli module
------------------
-
-.. automodule:: ksconf.cli
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ksconf.consts module
 --------------------
 
 .. automodule:: ksconf.consts
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ksconf.setup\_entrypoints module
+--------------------------------
+
+.. automodule:: ksconf.setup_entrypoints
     :members:
     :undoc-members:
     :show-inheritance:

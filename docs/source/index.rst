@@ -1,7 +1,7 @@
 Kintyre's Splunk CONFiguration tool
 ===================================
 
-.. image:: logo.png
+.. image:: ../images/logo.png
    :alt: Ksconf logo
 
 
@@ -35,6 +35,7 @@ Install
    cli
    devel
    changelog
+   known_issues
    license
 ..   ksconf
 

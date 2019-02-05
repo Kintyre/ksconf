@@ -86,6 +86,15 @@ empty-line, body format.  You can enable it with:
     gitlint install-hook
 
 
+## Refresh module listing
+
+After making changes to the module hierarchy or simply adding new commands, refresh the listing for
+the autodoc extension by running the following command.   Note that this may not remove old
+packages.
+
+    sphinx-apidoc -o docs/source/ ksconf --force
+
+
 
 [gitlint]: https://jorisroovers.github.io/gitlint/
 [pre-commit]: https://pre-commit.com/

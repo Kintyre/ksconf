@@ -12,6 +12,14 @@ ksconf.util.compare module
     :undoc-members:
     :show-inheritance:
 
+ksconf.util.completers module
+-----------------------------
+
+.. automodule:: ksconf.util.completers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ksconf.util.file module
 -----------------------
 

@@ -28,6 +28,14 @@ ksconf.commands.diff module
     :undoc-members:
     :show-inheritance:
 
+ksconf.commands.filter module
+-----------------------------
+
+.. automodule:: ksconf.commands.filter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ksconf.commands.merge module
 ----------------------------
 
@@ -48,6 +56,22 @@ ksconf.commands.promote module
 ------------------------------
 
 .. automodule:: ksconf.commands.promote
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ksconf.commands.restexport module
+---------------------------------
+
+.. automodule:: ksconf.commands.restexport
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+ksconf.commands.snapshot module
+-------------------------------
+
+.. automodule:: ksconf.commands.snapshot
     :members:
     :undoc-members:
     :show-inheritance:
