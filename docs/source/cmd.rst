@@ -59,10 +59,6 @@ Command                Description
 
    cmd_main
 
-..  If we want to give alternate titles.  Couldn't find a way to list title \w summary / description field.  argparse drop the nice summary lines, so we had to add them above.
-
-..   Check <cmd_check>
-..   Combine <cmd_combine>
    cmd_check
    cmd_diff
    cmd_filter
