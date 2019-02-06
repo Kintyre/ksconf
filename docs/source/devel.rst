@@ -11,7 +11,7 @@ overwriting the production version of ksconf and for the installation of the dev
 virtualenv name ``ksconfdev-pyve`` is used below, but this can be whatever suites, just make sure
 not to commit it.)
 
-::
+.. code-block:: sh
 
    # Setup and activate virtual environment
    virtualenv ksconfdev-pyve
@@ -23,7 +23,7 @@ not to commit it.)
 Install ksconf
 --------------
 
-::
+.. code-block:: sh
 
    git clone https://github.com/Kintyre/ksconf.git
    cd ksconf
@@ -32,7 +32,7 @@ Install ksconf
 Building the docs
 -----------------
 
-::
+.. code-block:: sh
 
    cd ksconf
    . ksconfdev-pyve/bin/activate
@@ -44,7 +44,7 @@ Building the docs
 If you’d like to build PDF, then you’ll need some extra tools. On Mac, you may also want to install
 the following (for building docs, and the like):
 
-::
+.. code-block:: sh
 
    brew install homebrew/cask/mactex-no-gui
 
@@ -83,7 +83,7 @@ pre-commit_.
 
 Install:
 
-::
+.. code-block:: sh
 
    sudo pip install pre-commit
 
@@ -94,10 +94,10 @@ Install:
 Install gitlint
 ---------------
 
-Gitlint will check to ensure that commit messages are in compliance with the standard subject,
+Gitlint_ will check to ensure that commit messages are in compliance with the standard subject,
 empty-line, body format. You can enable it with:
 
-::
+.. code-block:: sh
 
    gitlint install-hook
 
@@ -107,7 +107,7 @@ Refresh module listing
 After making changes to the module hierarchy or simply adding new commands, refresh the listing for
 the autodoc extension by running the following command. Note that this may not remove old packages.
 
-::
+.. code-block:: sh
 
    sphinx-apidoc -o docs/source/ ksconf --force
 

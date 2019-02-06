@@ -1,5 +1,13 @@
 ksconf diff
 ***********************
+*Compare settings differences between two .conf files ignoring spacing and sort order.*
+
+
+.. topic:: Summary
+
+   Compare settings differences between two .conf files
+   ignoring spacing and sort order
+
 
 .. argparse::
    :module: ksconf.__main__
