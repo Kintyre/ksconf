@@ -91,6 +91,8 @@ class CombineCmd(KsconfCmd):
 
     EXAMPLE:
 
+    ::
+
         Splunk_CiscoSecuritySuite/
         ├── README
         ├── default.d

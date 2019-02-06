@@ -1,7 +1,7 @@
 pre-commit
 gitlint
 sphinx
-sphinx-autobuild
+sphinx-argparse
 recommonmark
 sphinx_rtd_theme
 

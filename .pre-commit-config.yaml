@@ -20,12 +20,12 @@ repos:
 
 - repo: local
   hooks:
-    - id: make-cli-docs
-      name: Generating CLI reference docs -> docs/source/cli.md
-      language: script
-      entry: make_cli_docs.py
-      types: [ python ]
-      pass_filenames: false
+#    - id: make-cli-docs
+#      name: Generating CLI reference docs -> docs/source/cli.md
+#      language: script
+#      entry: make_cli_docs.py
+#      types: [ python ]
+#      pass_filenames: false
     - id: ksconf-unittest
       name: Run all unit tests for ksconf
       language: script

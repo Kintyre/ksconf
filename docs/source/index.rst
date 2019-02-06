@@ -32,11 +32,12 @@ Install
    :caption: Contents:
 
    install
-   cli
+   cmd
    devel
    changelog
    known_issues
    license
+   cli
 ..   ksconf
 
 

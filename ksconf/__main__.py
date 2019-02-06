@@ -41,12 +41,14 @@ version controlled (default) folder, and dealing with more than one layer of
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
-def cli(argv=None, _unittest=False):
-    parser = argparse.ArgumentParser(fromfile_prefix_chars="@",
-                                     formatter_class=MyDescriptionHelpFormatter,
-                                     description=_cli_description,
-                                     prog="ksconf")
-
+def build_cli_parser(do_formatter=False):
+    parser_kwargs = dict(
+        fromfile_prefix_chars="@",
+        description=_cli_description,
+        prog="ksconf")
+    if do_formatter:
+        parser_kwargs["formatter_class"]=MyDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 
     version_info = []
@@ -105,8 +107,14 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
+    return parser
 
-    autocomplete(parser)
+
+def cli(argv=None, _unittest=False):
+    parser = build_cli_parser(True)
+    if not _unittest:
+        autocomplete(parser)
+
     args = parser.parse_args(argv)
 
     ksconf.util.terminal.FORCE_TTY_COLOR = args.force_color
