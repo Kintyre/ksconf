@@ -2,6 +2,23 @@
 
 *Changes in master, but not released yet are in the **DRAFT** section.*
 
+## Ksconf 0.6.x
+
+Add deployment as a Splunk app for simplicity and significant docs cleanup.
+
+### Release v0.6.0 (2019-02-06)
+ * Add initial support for building ksconf into a Splunk app.
+   * App contains a local copy of the docs, helpful for anyone who's working offline.
+   * Credit to Sarah Larson for the ksconf logos.
+   * No `ksconf` functionality exposed to the Splunk UI at the moment.
+ * Docs/Sphinx improvements (more comming)
+   * Begin work on cleaning up API docs.
+   * Started converting various document pages into reStructuredText for greatly improved docs.
+   * Improved PDF fonts and fixed a bunch of sphinx errors/warnings.
+ * Refactored the install docs into 2 parts.  With the new ability to install ksconf as a Splunk app
+   it's quite likely that most of the wonky corner cases will be less frequently needed, hence all
+   the more exotic content was moved into the "Advanced Install Guide", tidying things up.
+
 ## Ksconf 0.5.x
 
 Add Python 3 support, new commands, support for external command plugins, tox and vagrant for testing.
