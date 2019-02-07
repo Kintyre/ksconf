@@ -108,14 +108,6 @@ class RestExportCmd(KsconfCmd):
     This can be helpful when pushing complex props & transforms to an instance where you only have
     UI access and can't directly publish an app.
 
-    WARNING:  This command is indented for manual admin workflows.  It's quite possible that shell
-    escaping bugs exist that may allow full shell access if you put this into an automated workflow.
-    Evaluate the risks, review the code, and run as a least-privilege user, and be responsible.
-
-    For now the assumption is that 'curl' command will be used.  (Patches to support the Power Shell
-    Invoke-WebRequest cmdlet would be greatly welcomed!)
-
-    ksconf rest-export --output=apply_props.sh etc/app/Splunk_TA_aws/local/props.conf
     """)
     format = "manual"
     maturity = "beta"
@@ -142,9 +134,9 @@ class RestExportCmd(KsconfCmd):
         prsout.add_argument("--disable-auth-output", action="store_true", default=False,
                             help="Turn off sample login curl commands from the output.")
         prsout.add_argument("--pretty-print", "-p", action="store_true", default=False,
-                            help="""
+                            help=dedent("""\
             Enable pretty-printing.
-            Make shell output a bit more readable by splitting entries across lines.""")
+            Make shell output a bit more readable by splitting entries across lines."""))
 
         parsg1 = parser.add_mutually_exclusive_group(required=False)
         parsg1.add_argument("-u", "--update", action="store_true", default=False,
@@ -152,11 +144,11 @@ class RestExportCmd(KsconfCmd):
                                  "By default output assumes stanzas are being created.  "
                                  "(This is an unfortunate quark of the configs REST API)")
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
-                            help="""
+                            help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.
             In this mode, stanzas attributes are unnecessary and ignored.
             NOTE:  This works for 'local' entities only; the default folder cannot be updated.
-            """)
+            """))
 
         parser.add_argument("--url", default="https://localhost:8089",
                             help="URL of Splunkd.  Default:  %(default)s")
@@ -166,16 +158,16 @@ class RestExportCmd(KsconfCmd):
                             help="Set the user associated.  Typically the default of 'nobody' is "
                                  "ideal if you want to share the configurations at the app-level.")
         parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
-                            help="""
+                            help=dedent("""\
             Explicitly set the configuration file type.  By default this is derived from CONF, but
             sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
-            example include 'app', 'props', 'tags', 'savesdearches', and so on.""")
+            example include 'app', 'props', 'tags', 'savesdearches', and so on."""))
 
         parser.add_argument("--extra-args", action="append",
-                            help="""
+                            help=dedent("""\
             Extra arguments to pass to all CURL commands.
             Quote arguments on the commandline to prevent confusion between arguments to ksconf vs
-            curl.""")
+            curl."""))
 
     @staticmethod
     def build_rest_url(base, user, app, conf):

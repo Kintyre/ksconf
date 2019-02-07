@@ -1,5 +1,5 @@
 Commands
-********
+========
 
 
 .. We COULD import the breif description from each sub page, but that gets tedious.  Also, the breif listing provided here may end up being TOO breif for the subcommand page.
@@ -56,16 +56,8 @@ Command                Description
 .. toctree::
    :maxdepth: 1
    :titlesonly:
+   :glob:
 
    cmd_main
 
-   cmd_check
-   cmd_diff
-   cmd_filter
-   cmd_merge
-   cmd_minimize
-   cmd_promote
-   cmd_restexport
-   cmd_snapshot
-   cmd_sort
-   cmd_unarchive
+   cmd_*

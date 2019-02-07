@@ -34,17 +34,17 @@ class MergeCmd(KsconfCmd):
                             ).completer = conf_files_completer
         parser.add_argument("--target", "-t", metavar="FILE",
                             type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
-                            default=ConfFileProxy("<stdout>", "w", self.stdout), help="""
+                            default=ConfFileProxy("<stdout>", "w", self.stdout), help=dedent("""\
             Save the merged configuration files to this target file.
-            If not provided. the the merged conf is written to standard output."""
+            If not provided. the the merged conf is written to standard output.""")
                             ).completer = conf_files_completer
-        parser.add_argument("--dry-run", "-D", default=False, action="store_true", help="""
+        parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes in 'diff' format.
-            If TARGET doesn't exist, then show the merged file.""")
-        parser.add_argument("--banner", "-b", default="", help="""
+            If TARGET doesn't exist, then show the merged file."""))
+        parser.add_argument("--banner", "-b", default="", help=dedent("""\
             A banner or warning comment added to the top of the TARGET file.
-            This is often used to warn Splunk admins from editing an auto-generated file.""")
+            This is often used to warn Splunk admins from editing an auto-generated file."""))
 
     def run(self, args):
         ''' Merge multiple configuration files into one '''

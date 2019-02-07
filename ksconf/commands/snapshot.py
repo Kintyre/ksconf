@@ -140,12 +140,12 @@ class SnapshotCmd(KsconfCmd):
                             ).completer = DirectoriesCompleter()
         parser.add_argument("--output", "-o", metavar="FILE",
                             type=FileType("w"), default=self.stdout,
-                            help="""
+                            help=dedent("""\
             Save the snapshot to the named files.  If not provided, the snapshot is written to
-            standard output."""
+            standard output.""")
                             ).completer = FilesCompleter(allowednames=["*.json"])
-        parser.add_argument("--minimize", action="store_true", default=False, help="""
-            Reduce the size of the JSON output by removing whitespace.  Reduces readability.  """)
+        parser.add_argument("--minimize", action="store_true", default=False, help=
+            "Reduce the size of the JSON output by removing whitespace.  Reduces readability.")
 
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''

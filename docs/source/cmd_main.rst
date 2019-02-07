@@ -1,5 +1,5 @@
 ksconf
-******
+======
 
 .. argparse::
    :module: ksconf.__main__

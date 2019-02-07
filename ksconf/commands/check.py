@@ -29,9 +29,9 @@ class CheckCmd(KsconfCmd):
     maturity = "stable"
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE", nargs="+", help="""
+        parser.add_argument("conf", metavar="FILE", nargs="+", help=dedent("""\
             One or more configuration files to check.
-            If '-' is given, then read a list of files to validate from standard input"""
+            If '-' is given, then read a list of files to validate from standard input""")
                          ).completer = conf_files_completer
         parser.add_argument("--quiet", "-q", default=False, action="store_true",
                             help="Reduce the volume of output.")
