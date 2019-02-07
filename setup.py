@@ -23,7 +23,7 @@ def get_ver():
     # replace hash with local version format
     ### XXX:  Wow. this needs unittests.  smh
     version = re.sub(r'-(\d+)-g([a-f0-9]+)((?:-dirty)?)', r'.dev\1+\2\3', version)
-    version = re.sub(r'\d+\.\d+-dirty$', r'.dev0+dirty', version)
+    version = re.sub(r'(\d+\.\d+)-dirty$', r'\1.dev0+dirty', version)
     version = version.replace("-dirty",".dirty")
     print("Version:  {}".format(version))
     code_block = dedent("""\
@@ -83,7 +83,7 @@ setup(name="kintyre-splunk-conf",
         "Programming Language :: Python :: 3.7",
         "Topic :: Utilities",
       ],
-      python_requires='>=2.7,!=3.0.*,!=3.1.*',
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
       license="Apache Software License",
       keywords='ksconf splunk kinytre conf tool',
       author="Lowell Alleman",

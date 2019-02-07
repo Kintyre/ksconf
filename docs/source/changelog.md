@@ -6,6 +6,9 @@
 
 Add deployment as a Splunk app for simplicity and significant docs cleanup.
 
+### Release v0.6.1 (2019-02-07)
+ * (Trivial) Fixed some small issues with the Splunk App (online AppInspect)
+
 ### Release v0.6.0 (2019-02-06)
  * Add initial support for building ksconf into a Splunk app.
    * App contains a local copy of the docs, helpful for anyone who's working offline.

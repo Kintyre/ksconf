@@ -1,5 +1,5 @@
 [install]
-is_configured = 1
+is_configured = 0
 build = {{BUILD}}
 
 [ui]

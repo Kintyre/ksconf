@@ -94,7 +94,7 @@ DIST="$PROJECT_DIR/zdist"
 
 # Have to wait to run this cleanup as building the docs would recreate all the '.pyc' files anyways
 echo "Cleaning up python compiled (.pyc) files and other banned content (Splunk packaging standards)"
-find "$APP" -type f -name '*.py[co]' -o -name '.DS_Store' -o -name '.*.swp' -ls -delete
+find "$APP" -type f \( -name '*.py[co]' -o -name '.DS_Store' -o -name '.*.swp' \) -ls -delete
 
 test -d "$DIST" || mkdir "$DIST"
 echo "Building Splunk app tarball"
