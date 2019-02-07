@@ -72,6 +72,7 @@ step from the UI.
    :caption: Reference
 
    install_advanced
+   git
 
 
 Indices and tables
