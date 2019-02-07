@@ -1,5 +1,6 @@
 """ ksconf - Kintyre Splunk CONFig tool
 
+
 Design goals:
 
  * Multi-purpose go-to ``.conf`` tool.
@@ -10,6 +11,7 @@ Design goals:
  * Good scripting interface for deployment scripts and/or git hooks
 
 """
+
 from __future__ import absolute_import
 from __future__ import unicode_literals
 

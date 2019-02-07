@@ -22,25 +22,24 @@ app.  More notes and troubleshooting tips are located in the :doc:`install_advan
 Overview
 --------
 
-.. tabularcolumns:: |l|c|p{5cm}|
+.. tabularcolumns:: |l|l|L|
 
-================   ==============================================  ===============================================
-Install option     Advantages                                      Potential pitfalls
-================   ==============================================  ===============================================
-Python package     - Most 'pure' and flexible way to install.      - Lots of potential variations and pitfalls
-                   - Many Linux distro's don't ship with ``pip``   - More install options muddy the water.
-                   - One command install.  All downloads handled   - Must consider/coordinate install user.
-                     automatically, and easily upgraded            - Often requires some admin access.
-Splunk app         - Quick installation (single download)          - No argument completion
-                   - One time bootstrap command to make CLI work   - Can't add custom extensions
-                   - Self contained; no admin access require       - Limited python install (no ``pip``)
-                   - Great way to get started with minimal fuss.   - Because ``ksconf`` manages apps, you can run
-                                                                     into some odd scenarios if it tries to manage
-                                                                     or upgrade itself.
-Offline package    - Helpful when security screening and strict    - Requires many steps.
-                     change control are mandatory.                 - Inherits all the complications from the
-                   - See :doc:`install_advanced`.                    'Python package ' method above.
-================   ==============================================  ===============================================
++---------+-----------------------------------------------+------------------------------------------------+
+|Install  | Advantages                                    | Potential pitfalls                             |
++=========+===============================================+================================================+
+|Python   | - Most 'pure' and flexible way to install.    | - Lots of potential variations and pitfalls    |
+|package  | - Many Linux distro's don't ship with ``pip`` | - Too many install options (complexity)        |
+|         | - One command install.  (ideally)             | - Must consider/coordinate install user.       |
+|         | - Easy upgrades                               | - Often requires some admin access.            |
++---------+-----------------------------------------------+------------------------------------------------+
+|Splunk   | - Quick installation (single download)        | - No CLI completion (yet)                      |
+|app      | - Requires one time bootstrap command         | - Can't add custom extensions (entrypoints)    |
+|         | - Self contained; no admin access require     | - Crippled Python install (no ``pip``)         |
+|         | - Great way to get started with minimal fuss. | - :ref:`Grandfather paradox`                   |
++---------+-----------------------------------------------+------------------------------------------------+
+|Offline  | - Security: strict review and change control  | - Requires many steps.                         |
+|package  | - See :doc:`install_advanced`.                | - Inherits 'Python package' pitfalls.          |
++---------+-----------------------------------------------+------------------------------------------------+
 
 
 
@@ -78,8 +77,8 @@ If you're on a Mac or Linux, and would like to enable bash completion, run these
    pip install argcomplete
    echo 'eval "$(register-python-argcomplete ksconf)"' >> ~/.bashrc
 
-(Currently unavaiable for Splunk APP installs; not because it can't work, but because it's not
-documented or tested yet. Pull request welcome.)
+(Currently for Splunk APP installs; not because it can't work, but because it's not documented or
+tested yet. Pull request welcome.)
 
 Requirements
 ------------
