@@ -1,0 +1,104 @@
+#!/bin/bash
+# shellcheck disable=SC1091
+#
+# Build the Splunk APP
+#
+
+set -e
+
+# https://stackoverflow.com/a/246128/315892
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Note:  We need both Python 2.7 and 3.x at the same time.  To be compatible with Splunk's python,
+#        the 'bin/' folder install with pip must be handled with 2.7 (to grab backported packages).
+#        Building docs with sphinx-argparse seems to only work correctly with 3.x, so we use
+#        'python3' for that part.
+PY2=python2.7
+PY3=python3
+
+APP=${PROJECT_DIR}/splunk_app/ksconf
+PIP_TARGET=${APP}/bin/lib
+DOCS=${PROJECT_DIR}/docs
+APP_DOCS=$APP/appserver/static/docs
+
+echo "Building splunk app"
+echo
+echo "project dir: $PROJECT_DIR"
+echo "docs home:   $DOCS"
+echo "APP folder:  $APP"
+echo "pip target:  $PIP_TARGET"
+echo "APP docs:    $APP_DOCS"
+
+cd "$PROJECT_DIR" || { echo "Can't find $PROJECT_DIR"; exit 1; }
+
+# Load KSCONF_VERSION and KSCONF_BUILD; This assumes setup.py was run, causing _version.py to be generated
+eval "$(cd "$PROJECT_DIR" || exit 8; $PY2 setup.py --help > /dev/null 2>&1; $PY2 -m ksconf._version)"
+export KSCONF_VERSION KSCONF_BUILD
+
+echo "VERSION:     $KSCONF_VERSION"
+echo "BUILD:       $KSCONF_BUILD"
+
+echo
+echo "Installing python package into splunk app"
+
+if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"; fi
+mkdir -p "$PIP_TARGET"
+
+
+$PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}"
+
+# Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
+rm -rf "${PIP_TARGET:?}/bin"
+
+echo "Building splunk package manifest file"
+# I'd like to remove the dist-info folders too, but not sure that's a good idea since we'd like to have entrypoints work.  Just not sure how that will work with app installs where things are never cleaned up.  May need to implement my own manifest and cleanup mechanism....?!?!
+( cd "$PIP_TARGET" || exit 9; B=$(basename "$PIP_TARGET"); cd ..; find "$B" ! -name '*.py[co]' > manifest.txt; )
+
+
+echo "KSCONF v$KSCONF_VERSION"
+
+(
+    cd "${DOCS}" || { echo "Can't find docs."; exit 1; }
+    if [[ ! -d venv ]];
+    then
+        echo "First time setup: Creating 'venv' with all requirements for dev"
+        $PY3 -m pip install virtualenv
+        $PY3 -m virtualenv venv
+        . venv/bin/activate
+        $PY3 -m pip install -r $PROJECT_DIR/requirements-doc.txt
+  else
+        echo "Using existing virtualenv"
+        . venv/bin/activate
+  fi
+  # Use the classic theme (~ 1Mb output vs 11+ mb, due to web fonts)
+  export KSCONF_DOCS_THEME="classic"
+  echo "Making HTML docs"
+  make html || { echo "Failed to make docs."; exit 2; }
+  rm -rf "$APP_DOCS" || echo "No previous app docs dir"
+  mkdir -p "$(dirname $APP_DOCS)"
+  echo "Copying docs into the KSCONF Splunk app"
+  cp -a "$DOCS/build/html" "$APP_DOCS"
+  rm -f $APP_DOCS/.buildinfo
+)
+
+# Build the app.conf file.
+# XXX:  the app.conf.template file should be removed from the archive
+sed -E "s/\\{\\{BUILD\\}\\}/${KSCONF_BUILD}/; s/\\{\\{VERSION\\}\\}/${KSCONF_VERSION}/" "$APP/default/app.conf.template" > "$APP/default/app.conf"
+
+
+# MAC OSX undocumented hack to prevent creation of '._*' folders
+export COPYFILE_DISABLE=1
+DIST="$PROJECT_DIR/zdist"
+
+
+
+# Have to wait to run this cleanup as building the docs would recreate all the '.pyc' files anyways
+echo "Cleaning up python compiled (.pyc) files and other banned content (Splunk packaging standards)"
+find "$APP" -type f -name '*.py[co]' -o -name '.DS_Store' -o -name '.*.swp' -ls -delete
+
+test -d "$DIST" || mkdir "$DIST"
+echo "Building Splunk app tarball"
+
+APP_FILE=$DIST/ksconf-app_for_splunk-$KSCONF_VERSION.tgz
+tar -czvf "$APP_FILE" -C "$(dirname "$APP")" "ksconf"
+echo "Wrote Splunk app to $APP_FILE"

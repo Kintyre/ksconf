@@ -31,6 +31,9 @@ def get_ver():
         version = {0!r}
         build = {1!r}
         vcs_info = {2!r}
+
+        if __name__ == '__main__':
+            print('KSCONF_VERSION="{0}"\\nKSCONF_BUILD="{1}"\\nKSCONF_VCS_INFO="{2}"')
         """).format(version, os.environ.get("TRAVIS_BUILD_NUMBER", None), vc_info)
     open(ver_file, "w").write(code_block)
     return version
