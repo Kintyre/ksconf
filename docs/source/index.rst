@@ -4,6 +4,8 @@ Kintyre's Splunk CONFiguration tool
 .. image:: ../images/logo.png
    :alt: Ksconf logo
 
+Welcome to KSCONF |version|
+
 
 Intro
 -----
@@ -55,16 +57,21 @@ step from the UI.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    install
    cli
    devel
    changelog
    known_issues
-   install_advanced
    license
-..   ksconf
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+
+   install_advanced
 
 
 Indices and tables
