@@ -22,7 +22,7 @@ Install with
 
     pip install kintyre-splunk-conf
 
-See full install documentation in the [install](./docs/source/install.md) document.
+See full install documentation in the [install](./docs/source/install.rst) document.
 
 
 Confirm installation with the following command:
@@ -32,9 +32,9 @@ Confirm installation with the following command:
 
 Docs:
 
-  * [Official docs](https://ksconf.readthedocs.io/en/latest/)  Hosted via ReadTheDocs.io
+  * [Official docs](https://ksconf.readthedocs.io/en/latest/) hosted via ReadTheDocs.io
   * [Command line reference](./docs/source/cli.md)
-  * [Installation docs](./docs/source/install.md)
+  * [Installation docs](./docs/source/install.rst)
   * [Change log](./docs/source/changelog.md)
 
 Need help?

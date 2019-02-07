@@ -62,7 +62,7 @@ install:
   - pip install codecov
   - pip install .
   - echo "Build $TRAVIS_BUILD_NUMBER BRANCH=$TRAVIS_BRANCH TAG=$TRAVIS_TAG"
-  - pip list
+  - pip list --format=columns
 # command to run tests
 script:
   - |
@@ -75,11 +75,13 @@ after_success:
   - codecov
   - coveralls
   - '[[ $BUILD_SDIST == "true" ]] && ./make_zipapp'
+  - '[[ $BUILD_SDIST == "true" ]] && ./make_splunk_app'
+  - '[[ $BUILD_SDIST == "true" ]] && ls -lsh zdist'
 deploy:
   - provider: releases
     api_key:
       secure: 0EyoBqjUj6AZct5sRmHhjuD8E0d0gYuTu3MUUIR/TM69L3AITSrrS1n6AO/It9G5hn03dekejHfecAbhZfhWeX2M/7q9Yv7Rwj0otOsoNpc/wg85g8GOKwoAMMhE1JsYrYkrQ8bTt0N9uojxpDnMKhtE4K1K9E6c9Mc/+B87/GW/lK3+pOap5fisPT6Q76pfZsPd/mP62hazIwBp4arsTygStqMmRh0NatOMOKHch2+gnMAT7gpxCVR1wRv5f+r2hNJCuJstgmHEks5Wuqi4GDVCqpUqYCga3AUE7SNuSfkpNupeb46HG8ITZ6cOlKnrf/7TNpDmtDCH6IZn37ULQDT9ILXnGu0oKFaVfDpAVJBcPK1mGp8wCicfJHarOeVwunAFiIH8BnykeqsFw/743bxZFp8FVjo3nbo42PcFt0oJQ2gweuNT03r62DgRA1ujblgDwac8jxnaqkoCQJe+hS8OqCj4V+npNjewhJWb6b+QFqHJfaoKJXStoNAZF+eIX0wqG5xoUM5MZlkg3D5LyvDiMTYYpw4i4qq0WcizwVJrmci9W88sHn9GlWhv+sHpb9fGfnl1PvikNEveSFlsa7TfJYPGxOOblOYLa+Us2IkfuCQn+c0QbddOCywuPijERaiYo1FzAdHjjsVhDQSpjCvL9bVQfnUiYwoIlSt6wUM=
-    file: zdist/ksconf-*.pyz
+    file: zdist/ksconf-*
     file_glob: true
     skip_cleanup: true
     on:
