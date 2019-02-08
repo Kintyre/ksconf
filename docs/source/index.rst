@@ -15,14 +15,8 @@ unittests and coverage monitoring for any regressions.
 Install
 -------
 
-Ksconf can be directly installed as a Python (via ``pip``) or as a Splunk app.
-The python package approach has been the traditional option, but for many reasons isn't always easy
-for non-python developers so we've added the Splunk app option to make things easier
+Ksconf can be directly installed as a Python (via ``pip``) or as a Splunk app.  The Splunk app option is often easier.
 
-.. note:: What's the difference?
-   At this time the Splunk app approach should still be considered a "preview" feature.  But
-   this is purely a question of distribution; the content and functionality is exactly the same no
-   matter how you choose to install ksconf.
 
 To install as a **python package**, run the following:
 
@@ -30,18 +24,13 @@ To install as a **python package**, run the following:
 
     pip install kintyre-splunk-conf
 
-If you'd like to install via the Splunk app, download the latest
-:file:`ksconf-app_for_splunk-{ver}.tgz` file from the GitHub releases page and install it into
-Splunk.  Then, run the one-time registration command to make ``ksconf`` executable:
+
+To install the **Splunk app**, download the latest `KSCONF App for Splunk`_ release.  Note that a
+one-time registration command is need to make ``ksconf`` executable:
 
 .. code-block:: shell
 
     splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py
-
-This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
-or worse case ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
-``ksconf`` should work too.  At some point we may add an option for you to do this setup
-step from the UI.
 
 
 
@@ -80,3 +69,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. include:: common

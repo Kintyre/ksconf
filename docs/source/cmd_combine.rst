@@ -1,13 +1,14 @@
-ksconf combine
-==============
-
 .. note:: Key concepts
 
    Before diving into the ``combine`` command, it may be helpful to brush up on the concept of
    :ref:`configuration layers <configuration-layers>`.
 
 
+ksconf combine
+==============
+
 .. _ksconf_cmd_combine:
+
 .. argparse::
    :module: ksconf.__main__
    :func: build_cli_parser
@@ -28,8 +29,11 @@ that ``combine`` command will gracefully handle non-conf files intelligently, no
    This also allows for different layers to be mixed-and-matched by selectively including which
    layers to combine.
 
-Example
--------
+Examples
+--------
+
+Merging a multilayed app
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Let's assume you have a directory structure that looks like the following.
 This example features the Cisco Security Suite.
@@ -96,3 +100,9 @@ these layers shown above.
 
    The :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade apps stored
    in a version controlled system in a layer-aware manor.
+
+
+Consolidaing the 'users' directories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``combine`` can consolidate 'users' directory across several instances after a phased server migration.

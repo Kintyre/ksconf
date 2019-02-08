@@ -32,13 +32,10 @@ class CombineCmd(KsconfCmd):
     destination directory.  This allows for an arbitrary number of splunk
     configuration layers to coexist within a single app.  Useful in both ongoing
     merge and one-time ad-hoc use.
-
-    For example, combine can consolidate 'users' directory across several instances
-    after a phased server migration.
     """)
     description = dedent("""\
     Merge .conf settings from multiple source directories into a combined target
-    directory.   Configuration files can be stored in a '/etc/*.d' like directory
+    directory.   Configuration files can be stored in a ``/etc/*.d`` like directory
     structure and consolidated back into a single 'default' directory.
 
     This command supports both one-time operations and recurring merge jobs.  For
@@ -50,14 +47,14 @@ class CombineCmd(KsconfCmd):
 
     The 'combine' command takes your logical layers of configs (upstream, corporate,
     splunk admin fixes, and power user knowledge objects, ...) expressed as
-    individual folders and merges them all back into the single 'default' folder
+    individual folders and merges them all back into the single ``default`` folder
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
 
     No directory layout is mandatory, but but one simple approach is to model your
     layers using a prioritized 'default.d' directory structure. (This idea is
     borrowed from the Unix System V concept where many services natively read their
-    config files from '/etc/*.d' directories.)
+    config files from ``/etc/*.d`` directories.)
     """)
     format = "manual"
     maturity = "beta"
@@ -67,7 +64,7 @@ class CombineCmd(KsconfCmd):
             The source directory where configuration files will be merged from.
             When multiple sources directories are provided, start with the most general and end
             with the specific; later sources will override values from the earlier ones.
-            Supports wildcards so a typical Unix 'conf.d/##-NAME' directory structure works well."""
+            Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well."""
                             )).completer = DirectoriesCompleter()
         parser.add_argument("--target", "-t", help=dedent("""
             Directory where the merged files will be stored.

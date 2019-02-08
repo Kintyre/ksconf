@@ -71,6 +71,17 @@ account and run this one-time bootstrap command.
 
    splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py
 
+This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
+or worse case ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
+``ksconf`` should work too.)
+
+At some point we may add an option for you to do this setup step from the UI.
+
+.. note:: Alternate download
+
+   You can also download the latest (and pre-release) SPL from the `GitHub Releases`_ page.
+   Download the file named like  :file:`ksconf-app_for_splunk-{ver}.tgz`
+
 
 .. _install_python:
 
