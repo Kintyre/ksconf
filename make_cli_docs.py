@@ -61,7 +61,7 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
         write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
-readme_file = os.path.join("docs", "source", "cli.rst")
+readme_file = os.path.join("docs", "source", "dyn", "cli.rst")
 readme_file_tmp = readme_file + ".tmp"
 readme = open(readme_file_tmp, "w", newline="\n", encoding="utf-8")
 readme.write("""\

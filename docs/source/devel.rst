@@ -48,8 +48,6 @@ the following (for building docs, and the like):
 
    brew install homebrew/cask/mactex-no-gui
 
-(Doh! Still doesn’t work, instructions are incomplete for mac latex, ….)
-
 Contributing
 ============
 

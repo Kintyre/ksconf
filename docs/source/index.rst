@@ -56,7 +56,7 @@ one-time registration command is need to make ``ksconf`` executable:
    :maxdepth: 1
    :caption: Reference
 
-   cli
+   dyn/cli
    install_advanced
    git
    random

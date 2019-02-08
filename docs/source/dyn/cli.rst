@@ -95,7 +95,7 @@ ksconf combine
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
-    directory.   Configuration files can be stored in a ``/etc/*.d`` like directory
+    directory.   Configuration files can be stored in a '/etc/*.d' like directory
     structure and consolidated back into a single 'default' directory.
     
     This command supports both one-time operations and recurring merge jobs.  For
@@ -107,14 +107,14 @@ ksconf combine
     
     The 'combine' command takes your logical layers of configs (upstream, corporate,
     splunk admin fixes, and power user knowledge objects, ...) expressed as
-    individual folders and merges them all back into the single ``default`` folder
+    individual folders and merges them all back into the single 'default' folder
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
     
     No directory layout is mandatory, but but one simple approach is to model your
     layers using a prioritized 'default.d' directory structure. (This idea is
     borrowed from the Unix System V concept where many services natively read their
-    config files from ``/etc/*.d`` directories.)
+    config files from '/etc/*.d' directories.)
     
     positional arguments:
       source                The source directory where configuration files will be
@@ -122,7 +122,7 @@ ksconf combine
                             provided, start with the most general and end with the
                             specific; later sources will override values from the
                             earlier ones. Supports wildcards so a typical Unix
-                            ``conf.d/##-NAME`` directory structure works well.
+                            'conf.d/##-NAME' directory structure works well.
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -554,9 +554,9 @@ ksconf unarchive
                             by the 'combine' mode.
       --exclude EXCLUDE, -e EXCLUDE
                             Add a file pattern to exclude. Splunk's psudo-glob
-                            patterns are supported here. ``*`` for any non-
-                            directory match, ``...`` for ANY (including
-                            directories), and ``?`` for a single character.
+                            patterns are supported here. '*' for any non-directory
+                            match, '...' for ANY (including directories), and '?'
+                            for a single character.
       --keep KEEP, -k KEEP  Specify a pattern for files to preserve during an
                             upgrade. Repeat this argument to keep multiple
                             patterns.

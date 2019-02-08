@@ -234,14 +234,29 @@ class ConfFileType(object):
         return '%s(%s)' % (type(self).__name__, args_str)
 
 
-
-# For now, just effectively a copy of RawDescriptionHelpFormatter
 class MyDescriptionHelpFormatter(argparse.HelpFormatter):
+
+
+    @staticmethod
+    def strip_simple_rest(s):
+        # No hanling of embedded backticks for now...  let's keep this simple
+        import re
+        # Replace literals ``X`` with single quote version:  'X'
+        s = re.sub(r'``([^`]*)``', r"'\1'", s)
+        # Handle simple references and other named inline markups
+        # Handle explicitly named entry first, Use "<title>"
+        s = re.sub(r':[a-z-]{3,10}:`[^`]*? <([^`>]*)>\s*`', r"\1", s)
+        # Just keep the content of the ref name as-is.  (no "<title>")
+        s = re.sub(r':[a-z-]{3,10}:`([^`])`', r"\1", s)
+        return s
+
     def _fill_text(self, text, width, indent):
+        text = self.strip_simple_rest(text)
         # Looks like this one is ONLY used for the top-level description
         return ''.join([indent + line for line in text.splitlines(True)])
 
     def _split_lines(self, text, width):
+        text = self.strip_simple_rest(text)
         text = self._whitespace_matcher.sub(' ', text).strip()
         return textwrap.wrap(text, width)
 

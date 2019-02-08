@@ -7,7 +7,7 @@ repos:
     - id: trailing-whitespace
       exclude: (cli\.rst|\.md)$
     - id: end-of-file-fixer
-      exclude: (cli\.rst|\.md)$
+      exclude: (cli\.rst|\.md|\.csv)$
     - id: check-ast
     - id: check-added-large-files
       args: [ '--maxkb=200' ]

@@ -1,7 +1,8 @@
 Introduction
 ------------
 
-Ksconf is a command-line tool that helps administrators and developers manage their Splunk
+:abbr:`ksconf (Kintyre's Splunk Configuration tool)`
+is a command-line tool that helps administrators and developers manage their Splunk
 environments by enhancing control of their configuration files.  By design, the interface is modular
 so that each function (aka subcommand) can be learned quickly and used independently.  Most Ksconf
 commands are simple enough to use for a quick one-off job, and yet designed to reliable enough to
@@ -36,4 +37,4 @@ Common uses for ksconf
 - Merge or separate configuration files
 - Git pre-commit hook for validation
 - Git post-checkout hook for workflow automation
-- Send .conf stanzas to a REST endpoint (Splunk Cloud or no file sytem access)
+- Send .conf stanzas to a REST endpoint (Splunk Cloud or no file system access)
