@@ -91,6 +91,7 @@ setup(name="kintyre-splunk-conf",
       url="https://github.com/Kintyre/ksconf",
       project_urls = {
         "Documentation" : "https://ksconf.readthedocs.io/",
+        "Splunk app" : "https://splunkbase.splunk.com/app/4383/",
       },
       packages=[
           "ksconf",

@@ -10,25 +10,29 @@
 
 ![Ksconf logo][logo]
 
-
-
 This utility handles a number of common Splunk app maintenance tasks in an installable python
 package.  Specifically, this tools deals with many of the nuances with storing Splunk apps in a
 version control system like git and pointing live Splunk apps to a working tree, merging changes
 from the live system's (local) folder to the version controlled (default) folder, and dealing with
 more than one layer of "default" (which splunk can't handle natively).
 
-Install with
+
+## Install
+
+**Splunk:**
+
+ 1. Download and install [KSCONF App for Splunk](https://splunkbase.splunk.com/app/4383/)
+ 2. Run the command:  `splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py`
+
+**Python:**
 
     pip install kintyre-splunk-conf
 
-See full install documentation in the [install](./docs/source/install.rst) document.
-
-
-Confirm installation with the following command:
+**Confirm installation** with the following command:
 
     ksconf --help
 
+## Resources
 
 Docs:
 
@@ -37,17 +41,20 @@ Docs:
   * [Installation docs](./docs/source/install.rst)
   * [Change log](./docs/source/changelog.md)
 
+
 Need help?
 
- * [Ask questions](https://github.com/Kintyre/ksconf/issues/new?labels=question)
+ * Ask questions on [GitHub](https://github.com/Kintyre/ksconf/issues/new?labels=question) or [Splunk Answers](https://answers.splunk.com/app/questions/4383.html)
  * Chat about [#ksconf](https://slack.com/app_redirect?channel=CDVT14KUN) on Splunk's [Slack](https://splunk-usergroups.slack.com) channel
 
-Get Involved:
+
+Get involved:
 
  * [Report bugs](https://github.com/Kintyre/ksconf/issues/new?template=bug.md)
  * Review [known bugs](https://github.com/Kintyre/ksconf/labels/bug)
  * [Request new features](https://github.com/Kintyre/ksconf/issues/new?template=feature-request.md&labels=enhancement)
  * [Contribute code](./docs/source/devel.md)
+
 
 Presentations:
 
