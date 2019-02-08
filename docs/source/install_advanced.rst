@@ -1,7 +1,7 @@
 Advanced Installation Guide
 ===========================
 
-The content in this document was split out from the `Install Guide <install.html>`__ because it became
+The content in this document was split out from the :doc:`install` because it became
 unruly and the number of possible Python installation combinations and gotchas became very intense.
 However, that means that there's lots of truly helpful stuff in here, but becoming a python
 packaging expert isn't my goal, so the Splunk app install approach was introduced to alleviate much
@@ -10,10 +10,26 @@ of this pain.
 A portion of this document is targeted at those who can't install packages as Admin or are forced to
 use Splunk's embedded Python. For everyone else, please start with the one-liner!
 
-.. note:: Who should use this doc?
 
-   So if you can't easily get ``ksconf`` installed as a python package, and you have reason to avoid
-   installing it as a Splunk app, then keep reading, and good luck.
+.. tip:: **Do any of these words for phrases strike fear in your heart?**
+
+   .. hlist::
+      :columns: 3
+
+      - ``pip``
+      - ``pipenv``
+      - ``virtualenv``
+      - ``wheel``
+      - ``pyenv`` (not the same as ``pyvenv``)
+      - ``python2.7`` vs ``python27`` vs ``py -27``
+      - ``PYTHONPATH``
+      - ``LD_LIBARY``
+      - RedHat Software Collections
+
+   If this list seems daungting, head over to :ref:`install_splunk_app`.  There's no shame in it.
+
+
+.. contents::
 
 Flowchart
 ---------
@@ -187,7 +203,7 @@ Reasons why this is a non-ideal install approach:
 Install the Wheel manually (offline mode)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Download the latest "Wheel" file file from `PyPI <https://pypi.org/project/kintyre-splunk-conf/#files>`__, copy it to the destination server
+Download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_, copy it to the destination server
 and install with pip.
 
 Offline pip install:
@@ -202,7 +218,7 @@ Install with Splunk's Python
 
 .. deprecated:: 0.6.0
 
-   Don't do this anymore. Please use the `KSCONF App for Splunk <https://github.com/Kintyre/ksconf/releases/latest>`__ instead.
+   Don't do this anymore. Please use the `KSCONF App for Splunk`_ instead.
 
 Splunk Enterprise 6.x and later installs an embedded Python 2.7 environment.
 However, Splunk does not provide packing tools (such as ``pip`` or the ``distutils`` standard library
@@ -215,7 +231,7 @@ hope.
 On Linux or Mac
 ^^^^^^^^^^^^^^^
 
-Download the latest "Wheel" file file from `PyPI <https://pypi.org/project/kintyre-splunk-conf/#files>`__. The path to this download will be
+Download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_. The path to this download will be
 set in the ``pkg`` variable as shown below.
 
 Setup the shell:
@@ -251,7 +267,8 @@ Test the install:
 On Windows
 ^^^^^^^^^^
 
-1. Open a browser and download the latest "Wheel" file file from `PyPI <https://pypi.org/project/kintyre-splunk-conf/#files>`__.
+
+1. Open a browser and download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_.
 2. Rename the ``.whl`` extension to ``.zip``. (This may require showing file extensions in Explorer.)
 3. Extract the zip file to a temporary folder. (This should create a folder named "ksconf")
 4. Create a new folder called "Kintyre" under the Splunk installation path (aka ``SPLUNK_HOME``)
@@ -272,17 +289,7 @@ On Windows
    your ``%PATH%``. If not, add it, or find an appropriate install location.)
 8. Test this by running ``ksconf --version`` from the command line.
 
-Validate the install
---------------------
 
-Confirm installation with the following command:
-
-.. code-block:: sh
-
-   ksconf --help
-
-If this works, it means that ``ksconf`` installed and is part of your ``PATH`` and should be useable
-everywhere in your system. Go forth and conquer!
 
 Offline installation
 --------------------
@@ -311,7 +318,7 @@ Offline installation steps
 .. important::
 
    Pip must be installed on the destination server for this process to work. If pip is NOT installed
-   see the :ref:`Offline installation of pip <offline_install_pip>` section below.
+   see the :ref:`offline_install_pip` section below.
 
 **Step 1**: Use pip to download the latest package and their dependencies. Be sure to use the same
 version of python that is running on destination machine
@@ -450,6 +457,77 @@ Likely this is because you are using a crippled version of Python; like the one 
 Splunk. This won't work. Either get a pre-package version (the ``.pyz`` file or install using the
 OS-level Python.
 
+
+.. _python_troubleshooting:
+
+Troublehsooting
+---------------
+
+Here are a few fact gathering type commands that may help you begin to track down problems.
+
+
+Check Python version
+~~~~~~~~~~~~~~~~~~~~
+
+Check your installed python version by running:
+
+.. code-block:: sh
+
+   python --version
+
+Note that Linux distributions and Mac OS X that ship with multiple version of Python may have
+renamed this to ``python2``, ``python2.7`` or similar.
+
+
+Check PIP Version
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: sh
+
+   pip --version
+
+If you are running a different python interpreter version, you can instead run this as:
+
+.. code-block:: sh
+
+   python2.7 -m pip --version
+
+
+
+.. _adv_validate_install:
+
+Validate the install
+~~~~~~~~~~~~~~~~~~~~
+
+Confirm installation with the following command:
+
+.. code-block:: sh
+
+   ksconf --version
+
+If this works, it means that ``ksconf`` installed and is part of your ``PATH`` and should be useable
+everywhere in your system. Go forth and conquer!
+
+If this doesn't work here are a few things to try:
+
+ 1. Check that your ``PATH`` is set correctly.
+ 2. Try running ksconf as a "module" (sometimes works around a PATH issue).   Run ``python -m ksconf``
+ 3. If you're running the Splunk app, try running the following:
+
+    .. code-block:: sh
+
+       cd $SPLUNK_HOME/etc/apps/ksconf/bin/lib
+       python -m ksconf --version
+
+    If this works, then the issue has something to do with your path.
+
+
+It may be helpful to uninstall (remove) the Splunk app and reinstall from scratch.
+
+
+
+
+
 Resources
 ---------
 
@@ -460,7 +538,4 @@ Resources
    releases before Python 2.7.9 do not.
 
 
-
-.. _ksconf app for splunk: https://github.com/Kintyre/ksconf/releases/latest
-.. _virtualenv: https://virtualenv.pypa.io/en/stable/
-.. _kintyre-splunk-conf:  https://pypi.org/project/kintyre-splunk-conf
+.. include:: common

@@ -1,5 +1,5 @@
-ksconf
-======
+API Reference
+=============
 
 .. toctree::
    :maxdepth: 4

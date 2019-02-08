@@ -1,0 +1,13 @@
+
+
+.. External resources
+
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
+.. _kintyre-splunk-conf-wheel:  https://pypi.org/project/kintyre-splunk-conf/#files
+.. _kintyre-splunk-conf:  https://pypi.org/project/kintyre-splunk-conf
+.. _ksconf app for splunk: https://splunkbase.splunk.com/app/4383/
+.. _python: https://www.python.org/downloads/
+.. _virtualenv: https://virtualenv.pypa.io/en/stable/
+
+
+.. vim:ft=rst:

@@ -1,5 +1,5 @@
-ksconf package
-==============
+ksconf
+======
 
 Subpackages
 -----------

@@ -33,9 +33,9 @@ Confirm installation with the following command:
 Docs:
 
   * [Official docs](https://ksconf.readthedocs.io/en/latest/) hosted via ReadTheDocs.io
-  * [Command line reference](./docs/source/cli.md)
+  * [Command line reference](./docs/source/cli.rst)
   * [Installation docs](./docs/source/install.rst)
-  * [Change log](./docs/source/changelog.md)
+  * [Change log](./docs/source/changelog.rst)
 
 Need help?
 

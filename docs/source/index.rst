@@ -6,16 +6,10 @@ Kintyre's Splunk CONFiguration tool
 
 Welcome to KSCONF |version|
 
-
-Intro
------
-
-This utility handles a number of common Splunk app maintenance tasks surrounding the management of
-``.conf`` files.
-Specifically, this tools deals with many of the nuances with storing Splunk apps in a
-version control system like git and pointing live Splunk apps to a working tree, merging changes
-from the live system's (local) folder to the version controlled (default) folder, and dealing with
-more than one layer of "default" (which Splunk can't handle natively).
+Ksconf is a command-line tool that helps administrators and developers manage their Splunk
+environments by enhancing control of their configuration files.  The interface is
+modular, making it easy to learn and independent.  The implementation is robust with automated
+unittests and coverage monitoring for any regressions.
 
 
 Install
@@ -59,6 +53,8 @@ step from the UI.
    :maxdepth: 2
    :caption: Contents
 
+   intro
+   concepts
    install
    cmd
    devel
@@ -74,6 +70,8 @@ step from the UI.
    cli
    install_advanced
    git
+   random
+   modules
 
 
 Indices and tables

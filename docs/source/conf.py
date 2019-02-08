@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
-#
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
@@ -15,7 +14,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
-from recommonmark.parser import CommonMarkParser
+#from recommonmark.parser import CommonMarkParser
 
 
 # -- Project information -----------------------------------------------------
@@ -49,15 +48,16 @@ extensions = [
 templates_path = ['_templates']
 
 
-source_parsers = {
-    '.md' :  CommonMarkParser,
-}
+#source_parsers = {
+#    '.md' :  CommonMarkParser,
+#}
 
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
+#source_suffix = ['.rst', '.md']
+source_suffix = ['.rst']
 
 # The master toctree document.
 master_doc = 'index'

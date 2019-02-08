@@ -34,6 +34,10 @@ def prefix(iterable, indent=4):
     for line in iterable:
         yield p + line
 
+def restructured_header(header, level):
+    level_symbols= '#*=-^"~'
+    char = level_symbols[level-1]
+    return "{}\n{}\n".format(header, char * len(header))
 
 def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     subcmds = list(subcmds)
@@ -43,26 +47,29 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
         cmd = [cmd]
     args = [sys.executable] + cmd + subcmds + ["--help"]
     out = list(cmd_output(*args))
-    stream.write("{} {}\n".format("#" * level, " ".join([cmd_name] + subcmds)))
+    heading = " ".join([cmd_name] + subcmds)
+    ref = "_".join(["", cmd_name, "cli"] + subcmds)
+    stream.write(".. {}:\n\n{}\n".format(ref, restructured_header(heading, level)))
+    stream.write(" .. code-block:: none\n\n")
+    #stream.write("::\n\n") # This still has some weird keyword highlighting
     for line in prefix(out):
         stream.write(line + "\n")
-    stream.write("\n\n")
+    stream.write("\n\n\n")
     for subcmd in parse_subcommand(out):
         sc = subcmds + [subcmd]
         print("  Subcmd docs for {} {}".format(cmd_name, " ".join(sc)))
         write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
-readme_file = os.path.join("docs", "source", "cli.md")
+readme_file = os.path.join("docs", "source", "cli.rst")
 readme_file_tmp = readme_file + ".tmp"
 readme = open(readme_file_tmp, "w", newline="\n", encoding="utf-8")
 readme.write("""\
-# Command line reference
+{}
 
+KSCONF supports the following CLI options
 
-The following documents the CLI options
-
-""")
+""".format(restructured_header("Command line reference", 1)))
 
 print("Building docs for ksconf")
 write_doc_for(readme, ["-m", "ksconf"], cmd_name="ksconf", level=2, level_inc=0)

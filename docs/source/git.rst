@@ -73,18 +73,3 @@ Edit :file:`~/.config/git/attributes` and add:
    .. code-block:: sh
 
       git config diff.conf.xfuncname
-
-
-.. _Grandfather Paradox:
-
-Grandfather Paradox
--------------------
-
-The KSCONF Splunk app breaks it's designed paradigm (not in a good way).  Ksconf was designed to be
-the thing that manages all your other apps, so by deploying ksconf as an app itself, we open up the
-possiblity that ksconf could upgrade it self or deploy itself, or manage itself.   Basically it
-could cut off the limb that it's standing on.   So practically this can get messy, especially if
-you're on Windows where file locking is also likely to cause issues for you.
-
-So sure, if you want to be picky, "Grandfather paradox" is probably the wrong annalogy.
-Pull requests welcome.

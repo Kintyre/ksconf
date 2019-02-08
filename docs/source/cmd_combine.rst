@@ -1,49 +1,11 @@
 ksconf combine
 ==============
 
-What's the problem?
--------------------
+.. note:: Key concepts
 
-Before diving into the ``combine`` command, let's look at the problem space.
+   Before diving into the ``combine`` command, it may be helpful to brush up on the concept of
+   :ref:`configuration layers <configuration-layers>`.
 
-In a typical enterprise deployment of Splunk, a single app can easily have multiple logical sources of configuration:
-
-  (1) Upstream app developer (typically via Splunkbase)
-  (2) Local developer app-developer adds organization-specific customizations or
-      fixes
-  (3) Splunk admin tweaks the inappropriate ``indexes.conf`` settings, and
-  (4) Custom knowledge objects added by your subject matter experts.
-
-Ideally we'd like to version control these, but doing so is complicated because normally you have to manage all 4 of these logical layers in one 'default' folder.
-
-.. note:: Isn't that what the **local** folder is for?
-
-   Splunk requires that app settings be located either in 'default' or 'local';
-   and managing local files with version control leads to merge conflicts;
-   so effectively, all version controlled settings need to be in 'default',
-   or risk merge conflicts.
-
-Let's suppose a new upstream version is released.  If you aren't managing layers independently, then
-you have to manually upgrade the app being careful to preserve all custom configurations.  Compare
-this to the solution provided by the 'combine' functionality.  Because logical sources can be
-stored separately in their own directories changes can managed independently.  The changes in the
-"upstream" layer will only ever be from official release; there's no combing through the commit log
-to see what default was changed to figure out what custom changes need to be preserved and
-reapplied.
-
-While this doesn't completely remove the need for a human to review app upgrades, it does lower the
-overhead enough that updates can be pulled in more frequently, thus reducing the divergence
-potential.  (Merge frequently.)
-
-.. note::  Mixing layers
-
-   Just like all layers can be managed independently, they can also be combined in any way you'd
-   like.  While this workflow is out side the scope of the examples provided here, it's a very
-   doable use case.  This also allows for different layers to be mixed-and-matched by selectively
-   including which layers to combine.
-
-
-**ksconf combine**
 
 .. _ksconf_cmd_combine:
 .. argparse::
@@ -58,10 +20,19 @@ subcommands.  That's because under the covers they are using much of the same co
 operations essentially does a recursive merge between a set of directories.  One big difference is
 that ``combine`` command will gracefully handle non-conf files intelligently, not just conf files.
 
+
+.. note::  Mixing layers
+
+   Just like all layers can be managed independently, they can also be combined in any way you'd
+   like.  While this workflow is out side the scope of the examples provided here, it's very doable.
+   This also allows for different layers to be mixed-and-matched by selectively including which
+   layers to combine.
+
 Example
 -------
 
-Let's assume you have a directory structure that looks like this.   This example features the Cisco Security Suite.
+Let's assume you have a directory structure that looks like the following.
+This example features the Cisco Security Suite.
 
 ::
 
@@ -119,3 +90,9 @@ these layers shown above.
 
     cd Splunk_CiscoSecuritySuite
     ksconf combine default.d/* --target=default
+
+
+.. seealso::
+
+   The :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade apps stored
+   in a version controlled system in a layer-aware manor.
