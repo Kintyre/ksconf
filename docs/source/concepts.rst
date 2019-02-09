@@ -51,7 +51,7 @@ potential.  (Merge frequently.)
 Minimizing files
 ----------------
 
-What's the importance of minimizing files?
+.. topic:: What's the importance of minimizing files?
 
 A typical scenario & why does this matter:
 

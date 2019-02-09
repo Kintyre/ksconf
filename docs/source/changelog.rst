@@ -8,6 +8,26 @@ Ksconf 0.6.x
 
 Add deployment as a Splunk app for simplicity and significant docs cleanup.
 
+Release v0.6.2 (2019-02-09)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Massive rewrite and restructuring of the docs.  Highlights include:
+
+    -   Reference material has been moved out of the user manual into a different top-level section.
+    -   Many new topics were added, such as
+
+        -   :ref:`ksconf_ext_diff`
+        -   :ref:`splunk conf updates`
+        -   :ref:`configuration-layers`
+        -   :ref:`What's so important about minimizing files? <minimizing_files>`
+
+    -   A new approach for CLI documentation.  We're moving away from the **WALL OF TEXT** thing.
+        (Yeah, it was really just the output from ``--help``).  That was limiting formatting,
+        linking, and making the CLI output way too long.
+
+-   Refreshed Splunk app icons.  Add missing alt icon.
+-   Several minor internal cleanups.  Specifically the output of ``--version`` had a face lift.
+
 Release v0.6.1 (2019-02-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
