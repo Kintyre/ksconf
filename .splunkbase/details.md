@@ -1,8 +1,9 @@
+
 # What is KSCONF?
 
 KSCONF is a command-line tool that helps administrators and developers manage their Splunk environments by enhancing control of their configuration files.  The interface is modular so that each function (or subcommand) can be learned quickly and used independently.  While most users will probably only use a subset of the total capabilities of this tool, it’s reassuring to have a deep toolbox of power goodies ready to be unleashed at a moments notice.  Ksconf works with (and does not replace) your existing Splunk deployment mechanisms and version control tools.
 
-KSCONF is open source and an open development effort.  Check us out on [GitHub](https://github.com/Kintyre/ksconf#kintyres-splunk-configuration-tool).
+KSCONF is open source and an open development effort.  Check us out on [GitHub](https://github.com/Kintyre/ksconf#kintyres-splunk-configuration-tool)
 
 Pronounced:   k·s·kȯnf
 
@@ -36,7 +37,7 @@ Full documentation for ksconf and, therefore this app, is hosted at read-the-doc
 ## Docs
 
   * [Official docs](https://ksconf.readthedocs.io/en/latest/) hosted via ReadTheDocs.io
-  * [Command line reference](https://ksconf.readthedocs.io/en/latest/cli.html)
+  * [Command line reference](https://ksconf.readthedocs.io/en/latest/cmd.html)
 
 ## Need help?
 

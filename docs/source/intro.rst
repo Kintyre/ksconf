@@ -53,3 +53,13 @@ Common uses for ksconf
 - Git pre-commit hook for validation
 - Git post-checkout hook for workflow automation
 - Send *.conf* stanzas to a REST endpoint (Splunk Cloud or no file system access)
+
+
+Getting started
+~~~~~~~~~~~~~~~
+
+You're already in the right place.  If you're completely new, try checking out of these first:
+
+-   :doc:`cheatsheet` - Like jumping in the deep end, or prefer examples of descriptions?  Start here.
+-   :doc:`concepts` - To get a more theoretical background on why these things matter.
+-   :doc:`cmd` -  Start here if you'd like a more thorough introduction.

@@ -1,6 +1,84 @@
 Git tips & tricks
 =================
 
+.. _ksconf_pre_commit:
+
+Pre-commit hooks
+----------------
+
+Ksconf is setup to work as a `pre-commit`_ hook by simply listing the ksconf repo in your pre-commit
+configuration file.  If you haven't done any of this before, it's not difficult to setup but beyond
+the scope of this guide.  Go read those docs and circle back here when ready to setup the hooks.
+
+
+Hooks provided by ksconf
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two hooks are currently defined by the ksconf repository:
+
+
+    .. _pchook_ksconf-check:
+
+    ksconf-check
+        This hook runs :ref:`ksconf_cmd_check` to perform basic validation tests again all files
+        in your repo that end with ``.conf`` or ``.meta`` by default.  Any errors will be reported by
+        the UI and you'll be able to correct any mistake before committing bogus files to your repo.
+        If you're not sure why you'd need this, check out :ref:`Why validate my conf files? <why_check>`
+
+    .. _pchook_ksconf-sort:
+
+    ksconf-sort
+        This hook run :ref:`ksconf_cmd_sort` to normalize any of your ``.conf`` or ``.meta`` files which
+        will make merging easier in the long run.  As with any hook, you can customize the filename
+        pattern of which files this applies to.  For example, I pref to manually organize my
+        :file:`props.conf` file so I exclude that pattern.  It's your call.
+
+
+Configuring pre-commit hooks in you repo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To add ksconf pre-commit hooks to your repository, add the following content to your
+:file:`.pre-commit-config.yaml` file:
+
+
+..  code-block:: yaml
+    :name: .pre-commit-config.yaml
+
+    repos:
+    - repo: https://github.com/Kintyre/ksconf
+      sha: v0.6.1
+      hooks:
+        - id: ksconf-check
+        - id: ksconf-sort
+
+
+For general reference, here's a copy of what I frequently use for my own repos.
+
+..  code-block:: yaml
+
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      sha: v2.0.0
+      hooks:
+        - id: trailing-whitespace
+          exclude: README.md
+        - id: end-of-file-fixer
+          exclude: README.md$
+        - id: check-json
+        - id: check-xml
+        - id: check-ast
+        - id: check-added-large-files
+          args: [ '--maxkb=50' ]
+        - id: check-merge-conflict
+        - id: detect-private-key
+        - id: mixed-line-ending
+          args: [ '--fix=lf' ]
+    - repo: https://github.com/Kintyre/ksconf
+      sha: v0.6.1
+      hooks:
+        - id: ksconf-check
+        - id: ksconf-sort
+          exclude: (props|logging)\.conf
+
 
 Git configuration tweaks
 -----------------------------
@@ -76,3 +154,8 @@ Edit :file:`~/.config/git/attributes` and add:
    ..  code-block:: sh
 
        git config diff.conf.xfuncname
+
+
+
+
+..  include:: common

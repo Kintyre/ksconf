@@ -110,5 +110,4 @@ the autodoc extension by running the following command. Note that this may not r
     sphinx-apidoc -o docs/source/ ksconf --force
 
 
-..  _gitlint: https://jorisroovers.github.io/gitlint/
-..  _pre-commit: https://pre-commit.com/
+..  include:: common

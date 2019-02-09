@@ -8,6 +8,13 @@ Ksconf 0.6.x
 
 Add deployment as a Splunk app for simplicity and significant docs cleanup.
 
+
+Release v0.6.3 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Added :doc:`cheatsheet` to the docs.
+
+
 Release v0.6.2 (2019-02-09)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

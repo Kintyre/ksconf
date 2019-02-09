@@ -55,6 +55,7 @@ User Guide
     concepts
     install
     cmd
+    cheatsheet
     devel
     git
     random

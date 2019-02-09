@@ -158,34 +158,36 @@ The output should look something like this:
 
 ::
 
-                                     #
-                                     ##
-    ###  ##     #### ###### #######  ###  ##  #######
-    ### ##     ###  ###           ## #### ##
-    #####      ###  ###      ##   ## #######  #######
-    ### ##     ###  ###      ##   ## ### ###  ##
-    ###  ## #####    ######   #####  ###  ##  ##
-                                           #
+                                      #
+                                      ##
+     ###  ##     #### ###### #######  ###  ##  #######
+     ### ##     ###  ###           ## #### ##
+     #####      ###  ###      ##   ## #######  #######
+     ### ##     ###  ###      ##   ## ### ###  ##
+     ###  ## #####    ######   #####  ###  ##  ##
+                                            #
 
-   ksconf 0.6.1  (Build 252)
-   Python: 2.7.15  (/Applications/splunk/bin/python)
-   Git SHA1 dd218785 committed on 2019-02-07
-   Written by Lowell Alleman <lowell@kintyre.co>.
-   Copyright (c) 2019 Kintyre Solutions, Inc.
-   Licensed under Apache Public License v2
+    ksconf 0.6.2  (Build 270)
+    Python: 2.7.15  (/Users/lalleman/.pyenv/versions/2.7.15/bin/python)
+    Git SHA1 1ddfee04 committed on 2019-02-09
+    Written by Lowell Alleman <lowell@kintyre.co>.
+    Copyright (c) 2019 Kintyre Solutions, Inc, all rights reserved.
+    Licensed under Apache Public License v2
 
-   Commands:
-       check            (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       combine          (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       diff             (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       filter           (alpha, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       merge            (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       minimize         (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       promote          (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       rest-export      (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       snapshot         (alpha, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       sort             (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
-       unarchive        (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+      kintyre_splunk_conf  (0.5.5)
+
+        Commands:
+          check           (stable)
+          combine         (beta)
+          diff            (stable)
+          filter          (alpha)
+          merge           (stable)
+          minimize        (beta)
+          promote         (beta)
+          rest-export     (beta)
+          snapshot        (alpha)
+          sort            (stable)
+          unarchive       (beta)
 
 
 
