@@ -2,7 +2,7 @@ Command line reference
 ######################
 
 
-KSCONF supports the following CLI options
+KSCONF supports the following CLI options:
 
 .. _ksconf_cli:
 

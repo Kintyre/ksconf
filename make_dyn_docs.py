@@ -3,12 +3,17 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-import filecmp
 import os
 import re
 import sys
-from io import open
 from subprocess import Popen, PIPE
+
+# Prevent installed (likely older) version of ksconf from taking over
+project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
+sys.path.insert(0, project_dir)
+
+from ksconf.util.file import ReluctantWriter
+
 
 
 def cmd_output(*cmd):
@@ -28,7 +33,6 @@ def parse_subcommand(lines):
         return subcommands
     return []
 
-
 def prefix(iterable, indent=4):
     p = " " * indent
     for line in iterable:
@@ -38,6 +42,7 @@ def restructured_header(header, level):
     level_symbols= '#*=-^"~'
     char = level_symbols[level-1]
     return "{}\n{}\n".format(header, char * len(header))
+
 
 def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     subcmds = list(subcmds)
@@ -51,7 +56,6 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     ref = "_".join(["", cmd_name, "cli"] + subcmds)
     stream.write(".. {}:\n\n{}\n".format(ref, restructured_header(heading, level)))
     stream.write(" .. code-block:: none\n\n")
-    #stream.write("::\n\n") # This still has some weird keyword highlighting
     for line in prefix(out):
         stream.write(line + "\n")
     stream.write("\n\n\n")
@@ -61,31 +65,22 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
         write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
-readme_file = os.path.join("docs", "source", "dyn", "cli.rst")
-readme_file_tmp = readme_file + ".tmp"
-readme = open(readme_file_tmp, "w", newline="\n", encoding="utf-8")
-readme.write("""\
-{}
+readme_file = os.path.join(project_dir, "docs", "source", "dyn", "cli.rst")
+readme = ReluctantWriter(readme_file, "w", newline="\n", encoding="utf-8")
 
-KSCONF supports the following CLI options
+with readme as stream:
+    stream.write(restructured_header("Command line reference", 1))
+    stream.write("\n\nKSCONF supports the following CLI options:\n\n")
+    print("Building docs for ksconf")
+    write_doc_for(stream, ["-m", "ksconf"], cmd_name="ksconf", level=2, level_inc=0)
 
-""".format(restructured_header("Command line reference", 1)))
-
-print("Building docs for ksconf")
-write_doc_for(readme, ["-m", "ksconf"], cmd_name="ksconf", level=2, level_inc=0)
-
-readme.close()
-
-if not os.path.isfile(readme_file):
+if readme.result == "created":
     print("Make fresh {}".format(readme_file))
-    os.rename(readme_file_tmp, readme_file)
-    sys.exit(1)
-if filecmp.cmp(readme_file_tmp, readme_file):
+elif readme.result == "unchanged":
     print("No changes made to file.")
-    os.unlink(readme_file_tmp)
-    sys.exit(0)
-else:
+elif readme.result == "updated":
     print("{} updated".format(readme_file))
-    os.unlink(readme_file)
-    os.rename(readme_file_tmp, readme_file)
+
+# Return a non-0 exit code to tell pre-commit that changes were made (abort current commit session)
+if readme.change_needed:
     sys.exit(1)
