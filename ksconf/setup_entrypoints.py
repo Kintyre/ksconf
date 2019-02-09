@@ -2,7 +2,7 @@
 
 This is a silly hack that serves 2 purposes:
 
-  (1) It works around and apparent Python 3.4/3.5 bug on Windows where [options.entry_point] in
+  (1) It works around an apparent Python 3.4/3.5 bug on Windows where [options.entry_point] in
       setup.cfg is ignored hence 'ksconf' isn't installed as a console script and custom ksconf_*
       entry points are not available.  (So no CLI commands are available)
   (2) It allows for fallback mechanism when
@@ -44,35 +44,9 @@ def get_entrypoints_setup():
         setup[group] = [ "{0.name} = {0.module_name}:{0.object_name}".format(ep) for ep in entries ]
     return setup
 
-import csv
-from ksconf.commands import get_entrypoints
-
-
-def unwrap(s):
-    return s.replace("\n", " ")
-
-def build_csv(out_file):
-
-    with open(out_file, "w") as stream:
-        csvwriter = csv.writer(stream, dialect=csv.QUOTE_ALL)
-        # XXX: Should refactor?   Borrowed from ksconf/__main__.py
-
-        for (name, entry) in get_entrypoints("ksconf_cmd").items():
-            # Pros/conf links to the doc vs 'ref'?
-            #ref_template = ":doc:`cmd_{}`"
-            ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
-            cmd_cls = entry.load()
-            row = [ ref_template.format(name), cmd_cls.maturity, unwrap(cmd_cls.help) ]
-            csvwriter.writerow( row)
-
-
-
-if __name__ == '__main__':
-    build_csv("docs/source/dyn/ksconf_subcommands.csv")
-
 
 class LocalEntryPoint(object):
-    """ Bare minimum standin for entrypoints.EntryPoint """
+    """ Bare minimum stand-in for entrypoints.EntryPoint """
 
     def __init__(self, data):
         self._data = data

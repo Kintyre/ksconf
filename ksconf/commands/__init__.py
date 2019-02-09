@@ -7,9 +7,8 @@ import sys
 import textwrap
 
 from io import open
-
-# Used by ksconf.commands.* (not locally here)
 from textwrap import dedent
+from warnings import warn
 
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
                                detect_by_bom
@@ -22,6 +21,8 @@ __all__ = [
     "ConfFileProxy",
     "ConfFileType",
     "dedent",
+    "get_all_ksconf_cmds",
+    "get_entrypoints",
 ]
 
 class ConfDirProxy(object):
@@ -169,9 +170,9 @@ class ConfFileType(object):
     ========    =============
     Action      Description
     ========    =============
-    `none`      No preparation or testing is done on the filename.
-    `open`      Ensure the file exists an can be opened.
-    `load`      Ensure the file can be opened and parsed successfully.
+    ``none``    No preparation or testing is done on the filename.
+    ``open``    Ensure the file exists an can be opened.
+    ``load``    Ensure the file can be opened and parsed successfully.
     ========    =============
 
 
@@ -340,7 +341,6 @@ class KsconfCmd(object):
         pass
 
 
-
 def _get_entrypoints_lib(group, name=None):
     import entrypoints
 
@@ -357,6 +357,7 @@ def _get_entrypoints_lib(group, name=None):
             if ep.name not in result:
                 result[ep.name] = ep
         return result
+
 
 """ Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
 function is called outside of our control.   Going with 'entrypoints' module or local fallback,
@@ -408,3 +409,25 @@ def get_entrypoints(group, name=None):
         if results:
             return results
         # Otherwise try next technique ...
+
+
+def get_all_ksconf_cmds(ignore_errors=False):
+    for (name, entry) in get_entrypoints("ksconf_cmd").items():
+        try:
+            cmd_cls = entry.load()
+        except ImportError as e:
+            if ignore_errors:
+                warn("Unable to load entrypoint for {}.  Skipping."
+                     "Base exception {}.".format(name, e), ImportWarning)
+                continue
+            else:
+                raise
+        if issubclass(cmd_cls, KsconfCmd):
+            yield (name, entry, cmd_cls)
+        else:
+            msg = "Issue loading class for entrypoint:  " \
+                  "{!r} is not derived from KsconfCmd".format(entry)
+            if ignore_errors:
+                warn(msg, ImportWarning)
+            else:
+                raise RuntimeError(msg)

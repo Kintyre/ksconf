@@ -102,18 +102,17 @@ def make_cli_docs(readme_file):
 @show_changes
 def make_subcommands_table(csv_path):
     import csv
-    from ksconf.commands import get_entrypoints
+    from ksconf.commands import get_all_ksconf_cmds
     if PY2:
         table = ReluctantWriter(csv_path, "wb")
     else:
         table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
-        for (name, entry) in get_entrypoints("ksconf_cmd").items():
+        for (name, _, cmd_cls) in get_all_ksconf_cmds():
             # Pros/conf links to the doc vs 'ref'?
             #ref_template = ":doc:`cmd_{}`"
             ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
-            cmd_cls = entry.load()
             row = [
                 ref_template.format(name),
                 cmd_cls.maturity,
