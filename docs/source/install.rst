@@ -1,50 +1,68 @@
 Installation Guide
 ==================
 
-The following doc describes installation options for Kintyre's Splunk Configuration tool.  KSCONF is
-available as a normal Python package that *should* require very minimal effort to install and
-upgrade.  However, sometimes Python packaging gets ugly.
+KSCONF can be installed either as a Splunk app or a Python package.  Picking the option that's right
+for you is typically fairly easy.
 
-Because of the amount of the degree of complexity installing custom Python packages requires on many
-enterprise-class Linux distributions which tend to ship with old versions and run for many years, we
-decided to start shipping ``ksconf`` as a Splunk app.  While this isn't a traditional use-case for a
-Splunk app, (because ``ksconf`` typically runs outside of Splunk, not from within it), it is a very
-useful deployment mechanism.
+Unless you have experence with Python packaging or are planning on customizing or extending ksconf
+then :ref:`Splunk app <install_splunk_app>` is likely the best place for you to start.  If you go
+with the native Python option, then you have many additional decisions to make.
 
-For that reason, we suggest that most new users start with the `KSCONF app for Splunk`_ and only
-fallback to the traditional Python-package based approach as needed.
 
-If you do find that a python-level install is required or just preferable, then please take
-advantage of the vast amount of install scenarios I documented *before* we build the KSCONF Splunk
-app.  More notes and troubleshooting tips are located in the :doc:`install_advanced`.
+.. note::
+
+    The introduction of a Splunk app is a fairly new situation (as of the 0.6.x release.)
+    Originally we resisted this idea, since ``ksconf`` was designed to manage other apps, not live
+    within one.  But ultimately, the packaging decision was driven by the bombardment of complexity
+    encountered with nearly every install.  Python packaging is a mess and daunting for the
+    uninitiated.
 
 
 Overview
 --------
 
-.. tabularcolumns:: |l|l|L|
+.. tabularcolumns:: |l|L|L|
 
 +---------+-----------------------------------------------+------------------------------------------------+
 |Install  | Advantages                                    | Potential pitfalls                             |
 +=========+===============================================+================================================+
-|Python   | - Most 'pure' and flexible way to install.    | - Lots of potential variations and pitfalls    |
-|package  | - Many Linux distro's don't ship with ``pip`` | - Too many install options (complexity)        |
-|         | - One command install.  (ideally)             | - Must consider/coordinate install user.       |
-|         | - Easy upgrades                               | - Often requires some admin access.            |
+|Python   | - Most 'pure' and flexible install            | - Lots of potential variations and pitfalls    |
+|package  | - One command install.  (ideal)               | - Many Linux distro's don't ship with ``pip``  |
+|         | - Easy upgrades                               | - Must consider/coordinate installation user.  |
+|         | - More extendable (plugins)                   | - Often requires some admin access.            |
+|         | - :ref:`install_python`                       | - Too many install options (complexity)        |
 +---------+-----------------------------------------------+------------------------------------------------+
-|Splunk   | - Quick installation (single download)        | - No CLI completion (yet)                      |
+|Splunk   | - Quick installation (single download)        | - Crippled Python install (no ``pip``)         |
 |app      | - Requires one time bootstrap command         | - Can't add custom extensions (entrypoints)    |
-|         | - Self contained; no admin access require     | - Crippled Python install (no ``pip``)         |
-|         | - Great way to get started with minimal fuss. | - :ref:`Grandfather paradox`                   |
+|         | - Self contained; no admin access require     | - No CLI completion (yet)                      |
+|         | - Fast demo; fight with ``pip`` later         | - :ref:`Grandfather paradox`                   |
+|         | - :ref:`install_splunk_app`                   |                                                |
 +---------+-----------------------------------------------+------------------------------------------------+
 |Offline  | - Security: strict review and change control  | - Requires many steps.                         |
-|package  | - See :doc:`install_advanced`.                | - Inherits 'Python package' pitfalls.          |
+|package  | - :doc:`install_advanced`.                    | - Inherits 'Python package' pitfalls.          |
 +---------+-----------------------------------------------+------------------------------------------------+
 
 
+Requirements
+------------
 
-Quick install
--------------
+*Python package install:*
+
+ - `Python`_ Supports Python 2.7, 3.4+
+ - `PIP <https://pip.pypa.io/en/stable/installing/>`__ (strongly recommended)
+ - Tested on Mac, Linux, and Windows
+
+*Splunk app install:*
+
+ - Splunk 6.0 or greater is installed
+
+
+
+
+.. _install_splunk_app:
+
+Install Splunk App
+------------------
 
 Download and install the `KSCONF App for Splunk`_. Then open a shell, switch to the Splunk user
 account and run this one-time bootstrap command.
@@ -52,6 +70,26 @@ account and run this one-time bootstrap command.
 .. code-block:: sh
 
    splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py
+
+This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
+or worse case ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
+``ksconf`` should work too.)
+
+At some point we may add an option for you to do this setup step from the UI.
+
+.. note:: Alternate download
+
+   You can also download the latest (and pre-release) SPL from the `GitHub Releases`_ page.
+   Download the file named like  :file:`ksconf-app_for_splunk-{ver}.tgz`
+
+
+.. _install_python:
+
+Install Python package
+----------------------
+
+Quick install
+~~~~~~~~~~~~~
 
 **Using pip**:
 
@@ -68,7 +106,9 @@ account and run this one-time bootstrap command.
 .. note: PIP
    This will also install/update ``pip`` and work around some known TLS/SSL issues
 
-**Enable Bash completion:**
+
+Enable Bash completion
+~~~~~~~~~~~~~~~~~~~~~~
 
 If you're on a Mac or Linux, and would like to enable bash completion, run these commands:
 
@@ -80,50 +120,20 @@ If you're on a Mac or Linux, and would like to enable bash completion, run these
 (Currently for Splunk APP installs; not because it can't work, but because it's not documented or
 tested yet. Pull request welcome.)
 
-Requirements
-------------
+Ran into issues?
+~~~~~~~~~~~~~~~~
 
-*Python package install:*
+If you run into any issues, then please dive into the :doc:`install_advanced`.  Much time and effort
+was placed into compiling that information from all the scenarios we encounted, so please check it
+out.  You may want to start under the :ref:`python_troubleshooting`.
 
- - `Python`_ Supports Python 2.7, 3.4+
- - `PIP <https://pip.pypa.io/en/stable/installing/>`__ (strongly recommended)
- - Tested on Mac, Linux, and Windows
-
-*Splunk app install:*
-
- - Splunk 6.0 or greater is installed
-
-Check Python version
-~~~~~~~~~~~~~~~~~~~~
-
-Check your installed python version by running:
-
-.. code-block:: sh
-
-   python --version
-
-Note that Linux distributions and Mac OS X that ship with multiple version of Python may have
-renamed this to ``python2``, ``python2.7`` or similar.
-
-Check PIP Version
-~~~~~~~~~~~~~~~~~
-
-.. code-block:: sh
-
-   pip --version
-
-If you are running a different python interpreter version, you can instead run this as:
-
-.. code-block:: sh
-
-   python2.7 -m pip --version
 
 Install from GIT
 ----------------
 
 If you'd like to contribute to ksconf, or just build the latest and greatest, then install from the
-git repository is a good choice.  (Technically this is still installing with ``pip``, so it's easy to
-switch between a PyPI install, and a local install.)
+git repository is a good choice.  (Technically this is still installing with ``pip``, so it's easy
+to switch between a PyPI install, and a local install.)
 
 .. code-block:: sh
 
@@ -131,8 +141,58 @@ switch between a PyPI install, and a local install.)
    cd ksconf
    pip install .
 
-See `developer docs <devel.html>`__ for additional details about
-contributing to ksconf.
+See :doc:`devel` for additional details about contributing to ksconf.
+
+
+
+Validate the install
+--------------------
+
+No matter how you install ``ksconf``, you can confirm that it's working with the following command:
+
+.. code-block:: sh
+
+   ksconf --version
+
+The output should look something like this:
+
+::
+
+                                     #
+                                     ##
+    ###  ##     #### ###### #######  ###  ##  #######
+    ### ##     ###  ###           ## #### ##
+    #####      ###  ###      ##   ## #######  #######
+    ### ##     ###  ###      ##   ## ### ###  ##
+    ###  ## #####    ######   #####  ###  ##  ##
+                                           #
+
+   ksconf 0.6.1  (Build 252)
+   Python: 2.7.15  (/Applications/splunk/bin/python)
+   Git SHA1 dd218785 committed on 2019-02-07
+   Written by Lowell Alleman <lowell@kintyre.co>.
+   Copyright (c) 2019 Kintyre Solutions, Inc.
+   Licensed under Apache Public License v2
+
+   Commands:
+       check            (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       combine          (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       diff             (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       filter           (alpha, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       merge            (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       minimize         (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       promote          (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       rest-export      (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       snapshot         (alpha, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       sort             (stable, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+       unarchive        (beta, from Distribution('kintyre_splunk_conf', '0.6.1-py2.7'))
+
+
+
+
+If you run into any issues, check out the :ref:`adv_validate_install`
+
+
 
 Command line completion
 -----------------------
@@ -192,6 +252,5 @@ OS-specific notes:
 
 
 
-.. _ksconf app for splunk: https://github.com/Kintyre/ksconf/releases/latest
-.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
-.. _python: https://www.python.org/downloads/
+
+.. include:: common

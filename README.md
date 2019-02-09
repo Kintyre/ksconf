@@ -37,9 +37,9 @@ more than one layer of "default" (which splunk can't handle natively).
 Docs:
 
   * [Official docs](https://ksconf.readthedocs.io/en/latest/) hosted via ReadTheDocs.io
-  * [Command line reference](./docs/source/cli.md)
+  * [Command line reference](./docs/source/dyn/cli.rst)
   * [Installation docs](./docs/source/install.rst)
-  * [Change log](./docs/source/changelog.md)
+  * [Change log](./docs/source/changelog.rst)
 
 
 Need help?

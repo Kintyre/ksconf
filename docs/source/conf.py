@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
-#
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
@@ -15,14 +14,13 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
-from recommonmark.parser import CommonMarkParser
+#from recommonmark.parser import CommonMarkParser
 
 
 # -- Project information -----------------------------------------------------
 
 project = u'KSConf'
 copyright = u'2019, Kintyre Solutions, Inc.'
-#author = u'Lowell Alleman'
 
 from ksconf import __version__ as release, __author__ as author
 
@@ -43,22 +41,23 @@ version = ".".join(release.split(".")[:-1])
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxarg.ext',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 
-source_parsers = {
-    '.md' :  CommonMarkParser,
-}
+#source_parsers = {
+#    '.md' :  CommonMarkParser,
+#}
 
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = ['.rst', '.md']
+#source_suffix = ['.rst', '.md']
+source_suffix = ['.rst']
 
 # The master toctree document.
 master_doc = 'index'
@@ -100,6 +99,12 @@ print("Using theme:  {}".format(html_theme))
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css',  # override wide tables in RTD theme
+        ],
+}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

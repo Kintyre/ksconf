@@ -2,7 +2,7 @@
 
 This is a silly hack that serves 2 purposes:
 
-  (1) It works around and apparent Python 3.4/3.5 bug on Windows where [options.entry_point] in
+  (1) It works around an apparent Python 3.4/3.5 bug on Windows where [options.entry_point] in
       setup.cfg is ignored hence 'ksconf' isn't installed as a console script and custom ksconf_*
       entry points are not available.  (So no CLI commands are available)
   (2) It allows for fallback mechanism when
@@ -46,7 +46,7 @@ def get_entrypoints_setup():
 
 
 class LocalEntryPoint(object):
-    """ Bare minimum standin for entrypoints.EntryPoint """
+    """ Bare minimum stand-in for entrypoints.EntryPoint """
 
     def __init__(self, data):
         self._data = data

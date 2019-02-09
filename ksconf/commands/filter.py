@@ -20,6 +20,7 @@ import fnmatch
 import re
 import sys
 
+from textwrap import dedent
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
 from ksconf.consts import EXIT_CODE_SUCCESS
@@ -179,25 +180,25 @@ class FilterCmd(KsconfCmd):
         parser.add_argument("--match", "-m",  # metavar="MODE",
                             choices=["regex", "wildcard", "string"],
                             default="wildcard",
-                            help="""
+                            help=dedent("""\
             Specify pattern matching mode.
-            Defaults to 'wildcard' allowing for '*' and  '?' matching.
+            Defaults to 'wildcard' allowing for ``*`` and  ``?`` matching.
             Use 'regex' for more power but watch out for shell escaping.
-            Use 'string' enable literal matching.""")
+            Use 'string' enable literal matching."""))
         parser.add_argument("--ignore-case", "-i", action="store_true",
-                            help="""
+                            help=dedent("""\
             Ignore case when comparing or matching strings.
-            By default matches are case-sensitive.""")
+            By default matches are case-sensitive."""))
         parser.add_argument("--invert-match", "-v", action="store_true",
-                            help="""
+                            help=dedent("""\
             Invert match results.
             This can be used to show what content does NOT match,
-            or make a backup copy of excluded content.""")
+            or make a backup copy of excluded content."""))
 
-        pg_out = parser.add_argument_group("Output mode", """
+        pg_out = parser.add_argument_group("Output mode", dedent("""\
             Select an alternate output mode.
             If any of the following options are used, the stanza output is not shown.
-            """)
+            """))
         pg_out.add_argument("--files-with-matches", "-l", action="store_true",
                             help="List files that match the given search criteria")
         pg_om1 = pg_out.add_mutually_exclusive_group()
@@ -206,54 +207,54 @@ class FilterCmd(KsconfCmd):
         pg_om1.add_argument("--brief", "-b", action="store_true",
                             help="List name of matching stanzas")
 
-        pg_sel = parser.add_argument_group("Stanza selection", """
+        pg_sel = parser.add_argument_group("Stanza selection", dedent("""\
             Include or exclude entire stanzas using these filter options.
 
             All filter options can be provided multiple times.
             If you have a long list of filters, they can be saved in a file and referenced using
-            the special 'file://' prefix.""")
+            the special ``file://`` prefix."""))
 
         pg_sel.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
-                            help="""
+                            help=dedent("""
             Match any stanza who's name matches the given pattern.
-            PATTERN supports bulk patterns via the 'file://' prefix.""")
+            PATTERN supports bulk patterns via the ``file://`` prefix."""))
 
         pg_sel.add_argument("--attr-present", metavar="ATTR", action="append", default=[],
-                            help="""
+                            help=dedent("""\
             Match any stanza that includes the ATTR attribute.
-            ATTR supports bulk attribute patterns via the 'file://' prefix.""")
+            ATTR supports bulk attribute patterns via the ``file://`` prefix."""))
 
         '''# Add next
         pg_sel.add_argument("--attr-eq", metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special 'file://filename' syntax.""")
+            PATTERN supports the special ``file://filename`` syntax.""")
         '''
         ''' # This will be more difficult
         pg_sel.add_argument("--attr-ne",  metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special 'file://' syntax.""")
+            PATTERN supports the special ``file://`` syntax.""")
         '''
 
-        pg_con = parser.add_argument_group("Attribute selection", """
+        pg_con = parser.add_argument_group("Attribute selection", dedent("""\
             Include or exclude attributes passed through.
             By default all attributes are preserved.
-            Whitelist (keep) operations are preformed before blacklist (reject) operations.""")
+            Whitelist (keep) operations are preformed before blacklist (reject) operations."""))
 
         pg_con.add_argument("--keep-attrs", metavar="WC-ATTR", default=[], action="append",
-                            help="""
+                            help=dedent("""\
             Select which attribute(s) will be preserved.
             This space separated list of attributes indicates what to preserve.
-            Supports wildcards.""")
+            Supports wildcards."""))
 
         pg_con.add_argument("--reject-attrs", metavar="WC-ATTR", default=[], action="append",
-                            help="""
+                            help=dedent("""\
             Select which attribute(s) will be discarded.
             This space separated list of attributes indicates what to discard.
-            Supports wildcards.""")
+            Supports wildcards."""))
 
     def prep_filters(self, args):
         flags = 0

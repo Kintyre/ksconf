@@ -98,45 +98,45 @@ class PromoteCmd(KsconfCmd):
         parser.set_defaults(mode="ask")
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
-                            help="""The source configuration file to pull changes from.
-                                 (Typically the 'local' conf file)"""
+                            help="The source configuration file to pull changes from. "
+                                 "Typically the 'local' conf file)"
                             ).completer = conf_files_completer
         parser.add_argument("target", metavar="TARGET",
                             type=ConfFileType("r+", "none", accept_dir=True,
-                                              parse_profile=PARSECONF_STRICT), help="""
+                                              parse_profile=PARSECONF_STRICT), help=dedent("""\
             Configuration file or directory to push the changes into.
             (Typically the 'default' folder)
             As a shortcut, a directory is given, then it's assumed that the same basename is
             used for both SOURCE and TARGET.
-            In fact, if different basename as provided, a warning is issued."""
+            In fact, if different basename as provided, a warning is issued.""")
                             ).completer = conf_files_completer
         grp1 = parser.add_mutually_exclusive_group()
         grp1.add_argument("--batch", "-b", action="store_const",
-                          dest="mode", const="batch", help="""
+                          dest="mode", const="batch", help=dedent("""\
             Use batch mode where all configuration settings are automatically promoted.
             All changes are removed from source and applied to target.
             The source file will be removed, unless
-            '--keep-empty' is used.""")
+            '--keep-empty' is used."""))
         grp1.add_argument("--interactive", "-i",
                           action="store_const",
-                          dest="mode", const="interactive", help="""
+                          dest="mode", const="interactive", help=dedent("""\
             Enable interactive mode where the user will be prompted to approve
             the promotion of specific stanzas and keys.
             The user will be able to apply, skip, or edit the changes being promoted.
-            (This functionality was inspired by 'git add --patch').""")
+            (This functionality was inspired by 'git add --patch')."""))
         parser.add_argument("--force", "-f",
                             action="store_true", default=False,
                             help="Disable safety checks.")
         parser.add_argument("--keep", "-k",
-                            action="store_true", default=False, help="""
+                            action="store_true", default=False, help=dedent("""\
             Keep conf settings in the source file.
             All changes will be copied into the target file instead of being moved there.
-            This is typically a bad idea since local always overrides default.""")
+            This is typically a bad idea since local always overrides default."""))
         parser.add_argument("--keep-empty",
-                            action="store_true", default=False, help="""
+                            action="store_true", default=False, help=dedent("""\
             Keep the source file, even if after the settings promotions the file has no content.
             By default, SOURCE will be removed after all content has been moved into TARGET.
-            Splunk will re-create any necessary local files on the fly.""")
+            Splunk will re-create any necessary local files on the fly."""))
 
     def run(self, args):
         if isinstance(args.target, ConfDirProxy):

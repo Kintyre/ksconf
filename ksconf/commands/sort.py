@@ -27,14 +27,10 @@ class SortCmd(KsconfCmd):
     description = dedent("""\
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the '-i' option is used.
+    inplace when the -i' option is used.
 
     Manually managed conf files can be blacklisted by add a comment containing the
-    string 'KSCONF-NO-SORT' to the top of any .conf file.
-
-    To recursively sort all files:
-
-        find . -name '*.conf' | xargs ksconf sort -i
+    string ``KSCONF-NO-SORT`` to the top of any .conf file.
     """)
     format = "manual"
     maturity = "stable"
@@ -53,21 +49,22 @@ class SortCmd(KsconfCmd):
                           help="File to write results to.  Defaults to standard output."
                           ).completer = conf_files_completer
         mode.add_argument("--inplace", "-i",
-                          action="store_true", default=False, help="""
+                          action="store_true", default=False, help=dedent("""\
                           Replace the input file with a sorted version.
                           Warning this a potentially destructive operation that may
-                          move/remove comments.""")
+                          move/remove comments."""))
 
         # Inplace update arguments
         grp1 = parser.add_argument_group("In-place update arguments")
         grp1.add_argument("-F", "--force", action="store_true",
-                          help="""
+                          help=dedent("""\
                           Force file sorting for all files, even for files containing the special
-                          'KSCONF-NO-SORT' marker.""")
+                          'KSCONF-NO-SORT' marker."""))
         grp1.add_argument("-q", "--quiet", action="store_true",
-                          help="""Reduce the output.
+                          help=dedent("""\
+                          Reduce the output.
                           Reports only updated or invalid files.
-                          This is useful for pre-commit hooks, for example.""")
+                          This is useful for pre-commit hooks, for example."""))
 
         parser.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                             help="Lines between stanzas.")

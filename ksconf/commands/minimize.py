@@ -51,37 +51,6 @@ class MinimizeCmd(KsconfCmd):
     which entries you've edited.  Minimizing local conf files makes your local
     customizations easier to read and often results in cleaner add-on upgrades.
 
-    A typical scenario & why does this matter:
-
-    To customizing a Splunk app or add-on, start by copying the conf file from
-    default to local and then applying your changes to the local file.  That's good.
-    But stopping here may complicated future upgrades, because the local file
-    doesn't contain *just* your settings, it contains all the default settings too.
-    Fixes published by the app creator may be masked by your local settings.  A
-    better approach is to reduce the local conf file leaving only the stanzas and
-    settings that you indented to change.  This make your conf files easier to read
-    and makes upgrades easier, but it's tedious to do by hand.
-
-    For special cases, the '--explode-default' mode reduces duplication between
-    entries normal stanzas and global/default entries.  If 'disabled = 0' is a
-    global default, it's technically safe to remove that setting from individual
-    stanzas.  But sometimes it's preferable to be explicit, and this behavior may be
-    too heavy-handed for general use so it's off by default.  Use this mode if your
-    conf file that's been fully-expanded.  (i.e., conf entries downloaded via REST,
-    or the output of "btool list").  This isn't perfect, since many apps push their
-    settings into the global namespace, but it can help.
-
-
-    Example usage:
-
-        cd Splunk_TA_nix
-        cp default/inputs.conf local/inputs.conf
-
-        # Edit 'disabled' and 'interval' settings in-place
-        vi local/inputs.conf
-
-        # Remove all the extra (unmodified) bits
-        ksconf minimize --target=local/inputs.conf default/inputs.conf
     """)
     format = "manual"
     maturity = "beta"
@@ -93,40 +62,32 @@ class MinimizeCmd(KsconfCmd):
     '''
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE", nargs="+",
-                            type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE), help="""
-            The default configuration file(s) used to determine what base settings are "
-            unnecessary to keep in the target file."""
+        parser.add_argument("conf", metavar="CONF", nargs="+",
+                            type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),help=
+            "The default configuration file(s) used to determine what base settings are "
+            "unnecessary to keep in the target file."
                             ).completer = conf_files_completer
-        parser.add_argument("--target", "-t", metavar="FILE",
+        parser.add_argument("--target", "-t", metavar="TARGET",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT),
-                            help="""
-            This is the local file that you with to remove the duplicate settings from.
-            By default, this file will be read and the updated with a minimized version."""
+                            help=
+            "The local file that you wish to remove duplicate settings from.  "
+            "By default, this file will be read from and then updated with a minimized version."
                             ).completer = conf_files_completer
         grp1 = parser.add_mutually_exclusive_group()
-        grp1.add_argument("--dry-run", "-D", default=False, action="store_true", help="""
-            Enable dry-run mode.
-            Instead of writing the minimizing the TARGET file, preview what what be removed in
-            the form of a 'diff'.""")
+        grp1.add_argument("--dry-run", "-D", default=False, action="store_true", help=
+            "Enable dry-run mode.  "
+            "Instead of writing the minimizing the TARGET file, preview what would be removed"
+            "the form of a 'diff'.")
         grp1.add_argument("--output",
                           type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
-                          default=None, help="""
-            Write the minimized output to a separate file instead of updating TARGET.
-            This can be use to preview changes if dry-run produces a large diff.
-            This may also be helpful in other workflows."""
+                          default=None, help=
+            "Write the minimized output to a separate file instead of updating TARGET."
                           ).completer = conf_files_completer
-        parser.add_argument("--explode-default", "-E", default=False, action="store_true", help="""
-            Enable minimization across stanzas as well as files for special use-cases.
-            This mode will not only minimize the same stanza across multiple config files,
-            it will also attempt to minimize default any values stored in the [default] or global
-            stanza as well.
-            Example:  Trim out cruft in savedsearches.conf by pointing to
-            etc/system/default/savedsearches.conf""")
-        parser.add_argument("-k", "--preserve-key", action="append", default=[], help="""
-            Specify a key that should be allowed to be a duplication but should be preserved
-            within the minimized output.  For example, it may be desirable keep the
-            'disabled' settings in the local file, even if it's enabled by default.""")
+        parser.add_argument("--explode-default", "-E", default=False, action="store_true",
+                            help=
+            "Enable minimization across stanzas as well as files for special use-cases")
+        parser.add_argument("-k", "--preserve-key", action="append", default=[], help=
+            "Specify attributes that should always be kept.")
 
     def run(self, args):
         if args.explode_default:

@@ -7,7 +7,7 @@ Submodules
 ksconf.util.compare module
 --------------------------
 
-.. automodule:: ksconf.util.compare
+..  automodule:: ksconf.util.compare
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ ksconf.util.compare module
 ksconf.util.completers module
 -----------------------------
 
-.. automodule:: ksconf.util.completers
+..  automodule:: ksconf.util.completers
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,7 @@ ksconf.util.completers module
 ksconf.util.file module
 -----------------------
 
-.. automodule:: ksconf.util.file
+..  automodule:: ksconf.util.file
     :members:
     :undoc-members:
     :show-inheritance:
@@ -31,7 +31,7 @@ ksconf.util.file module
 ksconf.util.terminal module
 ---------------------------
 
-.. automodule:: ksconf.util.terminal
+..  automodule:: ksconf.util.terminal
     :members:
     :undoc-members:
     :show-inheritance:
@@ -40,7 +40,7 @@ ksconf.util.terminal module
 Module contents
 ---------------
 
-.. automodule:: ksconf.util
+..  automodule:: ksconf.util
     :members:
     :undoc-members:
     :show-inheritance:

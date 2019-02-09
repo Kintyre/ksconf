@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import filecmp
 import os
 import re
 import shutil
 import sys
 from glob import glob
+from io import open
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
@@ -131,3 +134,45 @@ def _samefile(file1, file2):
         file1 = os.path.normpath(os.path.normcase(file1))
         file2 = os.path.normpath(os.path.normcase(file2))
         return file1 == file2
+
+
+class ReluctantWriter(object):
+    """
+    Context manager to intelligently handle updates to an existing file.  New content is written
+    to a temp file, and then compared to the current file's content.  The file file will be
+    overwritten only if the contents changed.
+    """
+    def __init__(self, path, *args, **kwargs):
+        self.path = path
+        self._arg = (args, kwargs)
+        self._fp = None
+        self._tmpfile = path + ".tmp"
+        self.change_needed = None
+        self.result = None
+
+    def __enter__(self):
+        args, kwargs = self._arg
+        self._fp = open(self._tmpfile, *args, **kwargs)
+        return self._fp
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Don't do anything, other than try to close the file, if an error occurred.
+        try:
+            self._fp.close()
+        except:
+            raise
+        if exc_type:
+            return
+        if not os.path.isfile(self.path):
+            os.rename(self._tmpfile, self.path)
+            self.change_needed = True
+            self.result = "created"
+        elif filecmp.cmp(self._tmpfile, self.path):
+            os.unlink(self._tmpfile)
+            self.change_needed = False
+            self.result = "unchanged"
+        else:
+            os.unlink(self.path)
+            os.rename(self._tmpfile, self.path)
+            self.change_needed = True
+            self.result = "updated"

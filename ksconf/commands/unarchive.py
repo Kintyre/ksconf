@@ -34,8 +34,6 @@ class UnarchiveCmd(KsconfCmd):
 
     The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
     whatever which is helpful if you're using the ksconf 'combine' mode.)
-
-    Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)
     """)
     format = "manual"
     maturity = "beta"
@@ -44,69 +42,62 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("tarball", metavar="SPL",
                             help="The path to the archive to install."
                             ).completer = FilesCompleter(allowednames=allowed_extentions)
-        parser.add_argument("--dest", metavar="DIR", default=".", help="""
+        parser.add_argument("--dest", metavar="DIR", default=".", help=dedent("""\
             Set the destination path where the archive will be extracted.
             By default the current directory is used, but sane values include etc/apps,
-            etc/deployment-apps, and so on.
-            This could also be a git repository working tree where splunk apps are stored."""
+            etc/deployment-apps, and so on.""")
                             ).completer = DirectoriesCompleter()
-        parser.add_argument("--app-name", metavar="NAME", default=None, help="""
+        parser.add_argument("--app-name", metavar="NAME", default=None,help=dedent("""\
             The app name to use when expanding the archive.
             By default, the app name is taken from the archive as the top-level path included
             in the archive (by convention).
-            Expanding archives that contain multiple (ITSI) or nested apps (NIX, ES)
-            is not supported.)""")
-        parser.add_argument("--default-dir", default="default", metavar="DIR", help="""
+            """))
+        parser.add_argument("--default-dir", default="default", metavar="DIR", help=dedent("""\
             Name of the directory where the default contents will be stored.
             This is a useful feature for apps that use a dynamic default directory
             that's created and managed by the 'combine' mode."""
-                            ).completer = DirectoriesCompleter()
-        parser.add_argument("--exclude", "-e", action="append", default=[], help="""
+                            )).completer = DirectoriesCompleter()
+        parser.add_argument("--exclude", "-e", action="append", default=[], help=dedent("""\
             Add a file pattern to exclude.  Splunk's psudo-glob patterns are supported here.
-            '*' for any non-directory match,
-            '...' for ANY (including directories),
-            and '?' for a single character.""")
+            ``*`` for any non-directory match,
+            ``...`` for ANY (including directories),
+            and ``?`` for a single character."""))
         parser.add_argument("--keep", "-k", action="append", default=[],
-                            help="""
+                            help=dedent("""\
             Specify a pattern for files to preserve during an upgrade.
-            Repeat this argument to keep multiple patterns.""")
-        parser.add_argument("--allow-local", default=False, action="store_true", help="""
-            Allow local/ and local.meta files to be extracted from the archive.
-            Shipping local files is a Splunk app packaging violation so local files are blocked
-            to prevent content from being overridden.""")
+            Repeat this argument to keep multiple patterns."""))
+        parser.add_argument("--allow-local", default=False, action="store_true", help=dedent("""\
+            Allow local/* and local.meta files to be extracted from the archive.
+            """))
         parser.add_argument("--git-sanity-check",
                             choices=["off", "changed", "untracked", "ignored"],
-                            default="untracked", help="""
+                            default="untracked", help=dedent("""\
             By default 'git status' is run on the destination folder to detect working tree or
-            index modifications before the unarchive process starts, but this is configurable.
+            index modifications before the unarchive process start.
+
             Sanity check choices go from least restrictive to most thorough:
-            Use 'off' to prevent any 'git status' safely checks.
-            Use 'changed' to abort only upon local modifications to files tracked by git.
-            Use 'untracked' (the default) to look for changed and untracked files before
-            considering the tree clean.
-            Use 'ignored' to enable the most intense safety check which will abort if local
-            changes, untracked, or ignored files are found.
-            NOTE:  Sanity checks are automatically disabled if the app is not in a git working
-            tree, or git is not installed.""")
+
+            'off' prevents all safely checks.
+            'changed' aborts only upon local modifications to files tracked by git.
+            'untracked' (the default) looks for changed and untracked files.
+            'ignored' aborts is (any) local changes, untracked, or ignored files are found.
+            """))
         parser.add_argument("--git-mode", default="stage",
-                            choices=["nochange", "stage", "commit"], help="""
+                            choices=["nochange", "stage", "commit"], help=dedent("""\
             Set the desired level of git integration.
-            The default mode is 'stage', where new, updated, or removed files are automatically
+            The default mode is *stage', where new, updated, or removed files are automatically
             handled for you.
-            If 'commit' mode is selected, then files are committed with an auto-generated
-            commit message.
-            To prevent any 'git add' or 'git rm' commands from being run, pick the
+
+            To prevent any ``git add`` or ``git rm`` commands from being run, pick the
             'nochange' mode.
-            Notes:  (1) The git mode is irrelevant if the app is not in a git working tree.
-            (2) If a git commit is incorrect, simply roll it back with 'git reset' or fix
-            it with a 'git commit --amend' before the changes are pushed anywhere else.
-            (That's why you're using git in the first place, right?)""")
+            """))
         parser.add_argument("--no-edit",
-                            action="store_true", default=False, help="""
+                            action="store_true", default=False, help=dedent("""\
             Tell git to skip opening your editor.
             By default you will be prompted to review/edit the commit message.
-            (Git Tip:  Delete the content of the message to abort the commit.)""")
-        parser.add_argument("--git-commit-args", "-G", default=[], action="append")
+            (Git Tip:  Delete the content of the message to abort the commit.)"""))
+        parser.add_argument("--git-commit-args", "-G", default=[], action="append",
+                            help="Extra arguments to pass to 'git'")
 
     def run(self, args):
         """ Install / upgrade a Splunk app from an archive file """

@@ -7,9 +7,8 @@ import sys
 import textwrap
 
 from io import open
-
-# Used by ksconf.commands.* (not locally here)
 from textwrap import dedent
+from warnings import warn
 
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
                                detect_by_bom
@@ -22,6 +21,8 @@ __all__ = [
     "ConfFileProxy",
     "ConfFileType",
     "dedent",
+    "get_all_ksconf_cmds",
+    "get_entrypoints",
 ]
 
 class ConfDirProxy(object):
@@ -169,9 +170,9 @@ class ConfFileType(object):
     ========    =============
     Action      Description
     ========    =============
-    `none`      No preparation or testing is done on the filename.
-    `open`      Ensure the file exists an can be opened.
-    `load`      Ensure the file can be opened and parsed successfully.
+    ``none``    No preparation or testing is done on the filename.
+    ``open``    Ensure the file exists an can be opened.
+    ``load``    Ensure the file can be opened and parsed successfully.
     ========    =============
 
 
@@ -235,17 +236,38 @@ class ConfFileType(object):
 
 
 
-# For now, just effectively a copy of RawDescriptionHelpFormatter
-class MyDescriptionHelpFormatter(argparse.HelpFormatter):
+class DescriptionFormatterNoReST(argparse.HelpFormatter):
+    @staticmethod
+    def strip_simple_rest(s):
+        # No hanling of embedded backticks for now...  let's keep this simple
+        import re
+        # Replace literals ``X`` with single quote version:  'X'
+        s = re.sub(r'``([^`]*)``', r"'\1'", s)
+        # Handle simple references and other named inline markups
+        # Handle explicitly named entry first, Use "<title>"
+        s = re.sub(r':[a-z-]{3,10}:`[^`]*? <([^`>]*)>\s*`', r"\1", s)
+        # Just keep the content of the ref name as-is.  (no "<title>")
+        s = re.sub(r':[a-z-]{3,10}:`([^`])`', r"\1", s)
+        return s
+
     def _fill_text(self, text, width, indent):
-        # Looks like this one is ONLY used for the top-level description
-        return ''.join([indent + line for line in text.splitlines(True)])
+        text = self.strip_simple_rest(text)
+        text = self._whitespace_matcher.sub(' ', text).strip()
+        return textwrap.fill(text, width, initial_indent=indent,
+                                           subsequent_indent=indent)
 
     def _split_lines(self, text, width):
+        text = self.strip_simple_rest(text)
         text = self._whitespace_matcher.sub(' ', text).strip()
         return textwrap.wrap(text, width)
 
 
+class DescriptionHelpFormatterPreserveLayout(DescriptionFormatterNoReST):
+
+    def _fill_text(self, text, width, indent):
+        text = self.strip_simple_rest(text)
+        # Looks like this one is ONLY used for the top-level description
+        return ''.join([indent + line for line in text.splitlines(True)])
 
 
 class KsconfCmd(object):
@@ -285,7 +307,9 @@ class KsconfCmd(object):
             "description" : self.description,
         }
         if self.format == "manual":
-            kwargs["formatter_class"] = MyDescriptionHelpFormatter
+            kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
+        else:
+            kwargs["formatter_class"] = DescriptionFormatterNoReST
         self.parser = subparser.add_parser(self.name, **kwargs)
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
@@ -325,7 +349,6 @@ class KsconfCmd(object):
         pass
 
 
-
 def _get_entrypoints_lib(group, name=None):
     import entrypoints
 
@@ -342,6 +365,7 @@ def _get_entrypoints_lib(group, name=None):
             if ep.name not in result:
                 result[ep.name] = ep
         return result
+
 
 """ Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
 function is called outside of our control.   Going with 'entrypoints' module or local fallback,
@@ -393,3 +417,25 @@ def get_entrypoints(group, name=None):
         if results:
             return results
         # Otherwise try next technique ...
+
+
+def get_all_ksconf_cmds(ignore_errors=False):
+    for (name, entry) in get_entrypoints("ksconf_cmd").items():
+        try:
+            cmd_cls = entry.load()
+        except ImportError as e:
+            if ignore_errors:
+                warn("Unable to load entrypoint for {}.  Skipping."
+                     "Base exception {}.".format(name, e), ImportWarning)
+                continue
+            else:
+                raise
+        if issubclass(cmd_cls, KsconfCmd):
+            yield (name, entry, cmd_cls)
+        else:
+            msg = "Issue loading class for entrypoint:  " \
+                  "{!r} is not derived from KsconfCmd".format(entry)
+            if ignore_errors:
+                warn(msg, ImportWarning)
+            else:
+                raise RuntimeError(msg)

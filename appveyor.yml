@@ -29,6 +29,7 @@ install:
   - pip --version
   - pip install coverage
   - pip install codecov
+  - pip install six
   - pip install .
   # This will report setuptools and wheel
   - pip freeze --all

@@ -32,13 +32,10 @@ class CombineCmd(KsconfCmd):
     destination directory.  This allows for an arbitrary number of splunk
     configuration layers to coexist within a single app.  Useful in both ongoing
     merge and one-time ad-hoc use.
-
-    For example, combine can consolidate 'users' directory across several instances
-    after a phased server migration.
     """)
     description = dedent("""\
     Merge .conf settings from multiple source directories into a combined target
-    directory.   Configuration files can be stored in a '/etc/*.d' like directory
+    directory.   Configuration files can be stored in a ``/etc/*.d`` like directory
     structure and consolidated back into a single 'default' directory.
 
     This command supports both one-time operations and recurring merge jobs.  For
@@ -50,105 +47,33 @@ class CombineCmd(KsconfCmd):
 
     The 'combine' command takes your logical layers of configs (upstream, corporate,
     splunk admin fixes, and power user knowledge objects, ...) expressed as
-    individual folders and merges them all back into the single 'default' folder
+    individual folders and merges them all back into the single ``default`` folder
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
 
     No directory layout is mandatory, but but one simple approach is to model your
     layers using a prioritized 'default.d' directory structure. (This idea is
     borrowed from the Unix System V concept where many services natively read their
-    config files from '/etc/*.d' directories.)
-
-
-    THE PROBLEM:
-
-    In a typical enterprise deployment of Splunk, a single app can easily have
-    multiple logical sources of configuration:  (1) The upstream app developer, (2)
-    local developer app-developer adds organization-specific customizations or
-    fixes, (3) splunk admin tweaks the inappropriate 'indexes.conf' settings, and
-    (4) custom knowledge objects added by your subject matter experts.  Ideally we'd
-    like to version control these, but doing so is complicated because normally you
-    have to manage all 4 of these logical layers in one 'default' folder.  (Splunk
-    requires that app settings be located either in 'default' or 'local'; and
-    managing local files with version control leads to merge conflicts; so
-    effectively, all version controlled settings need to be in 'default', or risk
-    merge conflicts.)  So when a new upstream version is released, someone has to
-    manually upgrade the app being careful to preserve all custom configurations.
-    The solution provided by the 'combine' functionality is that all of these
-    logical sources can be stored separately in their own physical directories
-    allowing changes to be managed independently.  (This also allows for different
-    layers to be mixed-and-matched by selectively including which layers to
-    combine.)  While this doesn't completely remove the need for a human to review
-    app upgrades, it does lower the overhead enough that updates can be pulled in
-    more frequently, thus reducing the divergence potential.  (Merge frequently.)
-
-
-    NOTES:
-
-    The 'combine' command is similar to running the 'merge' subcommand recursively
-    against a set of directories.  One key difference is that this command will
-    gracefully handle non-conf files intelligently too.
-
-    EXAMPLE:
-
-        Splunk_CiscoSecuritySuite/
-        ├── README
-        ├── default.d
-        │   ├── 10-upstream
-        │   │   ├── app.conf
-        │   │   ├── data
-        │   │   │   └── ui
-        │   │   │       ├── nav
-        │   │   │       │   └── default.xml
-        │   │   │       └── views
-        │   │   │           ├── authentication_metrics.xml
-        │   │   │           ├── cisco_security_overview.xml
-        │   │   │           ├── getting_started.xml
-        │   │   │           ├── search_ip_profile.xml
-        │   │   │           ├── upgrading.xml
-        │   │   │           └── user_tracking.xml
-        │   │   ├── eventtypes.conf
-        │   │   ├── macros.conf
-        │   │   ├── savedsearches.conf
-        │   │   └── transforms.conf
-        │   ├── 20-my-org
-        │   │   └── savedsearches.conf
-        │   ├── 50-splunk-admin
-        │   │   ├── indexes.conf
-        │   │   ├── macros.conf
-        │   │   └── transforms.conf
-        │   └── 70-firewall-admins
-        │       ├── data
-        │       │   └── ui
-        │       │       └── views
-        │       │           ├── attacks_noc_bigscreen.xml
-        │       │           ├── device_health.xml
-        │       │           └── user_tracking.xml
-        │       └── eventtypes.conf
-
-    Commands:
-
-        cd Splunk_CiscoSecuritySuite
-        ksconf combine default.d/* --target=default
-        """)
+    config files from ``/etc/*.d`` directories.)
+    """)
     format = "manual"
     maturity = "beta"
 
     def register_args(self, parser):
-        parser.add_argument("source", nargs="+", help="""
+        parser.add_argument("source", nargs="+", help=dedent("""
             The source directory where configuration files will be merged from.
             When multiple sources directories are provided, start with the most general and end
             with the specific; later sources will override values from the earlier ones.
-            Supports wildcards so a typical Unix 'conf.d/##-NAME' directory structure works well."""
-                            ).completer = DirectoriesCompleter()
-        parser.add_argument("--target", "-t", help="""
+            Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well."""
+                            )).completer = DirectoriesCompleter()
+        parser.add_argument("--target", "-t", help=dedent("""
             Directory where the merged files will be stored.
             Typically either 'default' or 'local'"""
-                            ).completer = DirectoriesCompleter()
-        parser.add_argument("--dry-run", "-D", default=False, action="store_true", help="""
+                            )).completer = DirectoriesCompleter()
+        parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes as a 'diff'.
-            If TARGET doesn't exist, then show the merged file.""")
+            If TARGET doesn't exist, then show the merged file."""))
         parser.add_argument("--banner", "-b",
                             default=" **** WARNING: This file is managed by 'ksconf combine', do "
                                     "not edit hand-edit this file! ****",

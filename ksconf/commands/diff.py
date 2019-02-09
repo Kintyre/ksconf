@@ -18,7 +18,7 @@ from ksconf.util.completers import conf_files_completer
 
 class DiffCmd(KsconfCmd):
     help = "Compare settings differences between two .conf files ignoring spacing and sort order"
-    description = dedent("""
+    description = dedent("""\
     Compares the content differences of two .conf files
 
     This command ignores textual differences (like order, spacing, and comments) and

@@ -7,7 +7,7 @@ Submodules
 ksconf.conf.delta module
 ------------------------
 
-.. automodule:: ksconf.conf.delta
+..  automodule:: ksconf.conf.delta
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ ksconf.conf.delta module
 ksconf.conf.merge module
 ------------------------
 
-.. automodule:: ksconf.conf.merge
+..  automodule:: ksconf.conf.merge
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,7 @@ ksconf.conf.merge module
 ksconf.conf.parser module
 -------------------------
 
-.. automodule:: ksconf.conf.parser
+..  automodule:: ksconf.conf.parser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,7 +32,7 @@ ksconf.conf.parser module
 Module contents
 ---------------
 
-.. automodule:: ksconf.conf
+..  automodule:: ksconf.conf
     :members:
     :undoc-members:
     :show-inheritance:

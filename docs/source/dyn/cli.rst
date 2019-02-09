@@ -1,9 +1,16 @@
-# Command line reference
+Command line reference
+######################
 
 
-The following documents the CLI options
+KSCONF supports the following CLI options:
 
-## ksconf
+.. _ksconf_cli:
+
+ksconf
+******
+
+ .. code-block:: none
+
     usage: ksconf [-h] [--version] [--force-color]
                   {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
                   ...
@@ -24,9 +31,7 @@ The following documents the CLI options
                             directories into a single destination directory. This
                             allows for an arbitrary number of splunk configuration
                             layers to coexist within a single app. Useful in both
-                            ongoing merge and one-time ad-hoc use. For example,
-                            combine can consolidate 'users' directory across
-                            several instances after a phased server migration.
+                            ongoing merge and one-time ad-hoc use.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
         filter              A stanza-aware GREP tool for conf files
@@ -55,7 +60,14 @@ The following documents the CLI options
                             color-aware pager, like 'less -R'
 
 
-## ksconf check
+
+.. _ksconf_cli_check:
+
+ksconf check
+************
+
+ .. code-block:: none
+
     usage: ksconf check [-h] [--quiet] FILE [FILE ...]
     
     Provide basic syntax and sanity checking for Splunk's .conf files. Use
@@ -71,7 +83,14 @@ The following documents the CLI options
       --quiet, -q  Reduce the volume of output.
 
 
-## ksconf combine
+
+.. _ksconf_cli_combine:
+
+ksconf combine
+**************
+
+ .. code-block:: none
+
     usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
                           source [source ...]
     
@@ -97,76 +116,6 @@ The following documents the CLI options
     borrowed from the Unix System V concept where many services natively read their
     config files from '/etc/*.d' directories.)
     
-    THE PROBLEM:
-    
-    In a typical enterprise deployment of Splunk, a single app can easily have
-    multiple logical sources of configuration:  (1) The upstream app developer, (2)
-    local developer app-developer adds organization-specific customizations or
-    fixes, (3) splunk admin tweaks the inappropriate 'indexes.conf' settings, and
-    (4) custom knowledge objects added by your subject matter experts.  Ideally we'd
-    like to version control these, but doing so is complicated because normally you
-    have to manage all 4 of these logical layers in one 'default' folder.  (Splunk
-    requires that app settings be located either in 'default' or 'local'; and
-    managing local files with version control leads to merge conflicts; so
-    effectively, all version controlled settings need to be in 'default', or risk
-    merge conflicts.)  So when a new upstream version is released, someone has to
-    manually upgrade the app being careful to preserve all custom configurations.
-    The solution provided by the 'combine' functionality is that all of these
-    logical sources can be stored separately in their own physical directories
-    allowing changes to be managed independently.  (This also allows for different
-    layers to be mixed-and-matched by selectively including which layers to
-    combine.)  While this doesn't completely remove the need for a human to review
-    app upgrades, it does lower the overhead enough that updates can be pulled in
-    more frequently, thus reducing the divergence potential.  (Merge frequently.)
-    
-    NOTES:
-    
-    The 'combine' command is similar to running the 'merge' subcommand recursively
-    against a set of directories.  One key difference is that this command will
-    gracefully handle non-conf files intelligently too.
-    
-    EXAMPLE:
-    
-        Splunk_CiscoSecuritySuite/
-        ├── README
-        ├── default.d
-        │   ├── 10-upstream
-        │   │   ├── app.conf
-        │   │   ├── data
-        │   │   │   └── ui
-        │   │   │       ├── nav
-        │   │   │       │   └── default.xml
-        │   │   │       └── views
-        │   │   │           ├── authentication_metrics.xml
-        │   │   │           ├── cisco_security_overview.xml
-        │   │   │           ├── getting_started.xml
-        │   │   │           ├── search_ip_profile.xml
-        │   │   │           ├── upgrading.xml
-        │   │   │           └── user_tracking.xml
-        │   │   ├── eventtypes.conf
-        │   │   ├── macros.conf
-        │   │   ├── savedsearches.conf
-        │   │   └── transforms.conf
-        │   ├── 20-my-org
-        │   │   └── savedsearches.conf
-        │   ├── 50-splunk-admin
-        │   │   ├── indexes.conf
-        │   │   ├── macros.conf
-        │   │   └── transforms.conf
-        │   └── 70-firewall-admins
-        │       ├── data
-        │       │   └── ui
-        │       │       └── views
-        │       │           ├── attacks_noc_bigscreen.xml
-        │       │           ├── device_health.xml
-        │       │           └── user_tracking.xml
-        │       └── eventtypes.conf
-    
-    Commands:
-    
-        cd Splunk_CiscoSecuritySuite
-        ksconf combine default.d/* --target=default
-    
     positional arguments:
       source                The source directory where configuration files will be
                             merged from. When multiple sources directories are
@@ -188,7 +137,14 @@ The following documents the CLI options
                             files.
 
 
-## ksconf diff
+
+.. _ksconf_cli_diff:
+
+ksconf diff
+***********
+
+ .. code-block:: none
+
     usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
     
     Compares the content differences of two .conf files
@@ -212,7 +168,14 @@ The following documents the CLI options
                             consistently)
 
 
-## ksconf filter
+
+.. _ksconf_cli_filter:
+
+ksconf filter
+*************
+
+ .. code-block:: none
+
     usage: ksconf filter [-h] [-o FILE] [--comments] [--verbose]
                          [--match {regex,wildcard,string}] [--ignore-case]
                          [--invert-match] [--files-with-matches]
@@ -283,7 +246,14 @@ The following documents the CLI options
                             discard. Supports wildcards.
 
 
-## ksconf promote
+
+.. _ksconf_cli_promote:
+
+ksconf promote
+**************
+
+ .. code-block:: none
+
     usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
                           [--keep-empty]
                           SOURCE TARGET
@@ -309,7 +279,7 @@ The following documents the CLI options
     
     positional arguments:
       SOURCE             The source configuration file to pull changes from.
-                         (Typically the 'local' conf file)
+                         Typically the 'local' conf file)
       TARGET             Configuration file or directory to push the changes into.
                          (Typically the 'default' folder) As a shortcut, a
                          directory is given, then it's assumed that the same
@@ -339,7 +309,14 @@ The following documents the CLI options
                          on the fly.
 
 
-## ksconf merge
+
+.. _ksconf_cli_merge:
+
+ksconf merge
+************
+
+ .. code-block:: none
+
     usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
                         FILE [FILE ...]
     
@@ -366,10 +343,17 @@ The following documents the CLI options
                             from editing an auto-generated file.
 
 
-## ksconf minimize
-    usage: ksconf minimize [-h] [--target FILE] [--dry-run | --output OUTPUT]
+
+.. _ksconf_cli_minimize:
+
+ksconf minimize
+***************
+
+ .. code-block:: none
+
+    usage: ksconf minimize [-h] [--target TARGET] [--dry-run | --output OUTPUT]
                            [--explode-default] [-k PRESERVE_KEY]
-                           FILE [FILE ...]
+                           CONF [CONF ...]
     
     Minimize a conf file by removing the default settings
     
@@ -377,72 +361,37 @@ The following documents the CLI options
     which entries you've edited.  Minimizing local conf files makes your local
     customizations easier to read and often results in cleaner add-on upgrades.
     
-    A typical scenario & why does this matter:
-    
-    To customizing a Splunk app or add-on, start by copying the conf file from
-    default to local and then applying your changes to the local file.  That's good.
-    But stopping here may complicated future upgrades, because the local file
-    doesn't contain *just* your settings, it contains all the default settings too.
-    Fixes published by the app creator may be masked by your local settings.  A
-    better approach is to reduce the local conf file leaving only the stanzas and
-    settings that you indented to change.  This make your conf files easier to read
-    and makes upgrades easier, but it's tedious to do by hand.
-    
-    For special cases, the '--explode-default' mode reduces duplication between
-    entries normal stanzas and global/default entries.  If 'disabled = 0' is a
-    global default, it's technically safe to remove that setting from individual
-    stanzas.  But sometimes it's preferable to be explicit, and this behavior may be
-    too heavy-handed for general use so it's off by default.  Use this mode if your
-    conf file that's been fully-expanded.  (i.e., conf entries downloaded via REST,
-    or the output of "btool list").  This isn't perfect, since many apps push their
-    settings into the global namespace, but it can help.
-    
-    Example usage:
-    
-        cd Splunk_TA_nix
-        cp default/inputs.conf local/inputs.conf
-    
-        # Edit 'disabled' and 'interval' settings in-place
-        vi local/inputs.conf
-    
-        # Remove all the extra (unmodified) bits
-        ksconf minimize --target=local/inputs.conf default/inputs.conf
-    
     positional arguments:
-      FILE                  The default configuration file(s) used to determine
-                            what base settings are " unnecessary to keep in the
+      CONF                  The default configuration file(s) used to determine
+                            what base settings are unnecessary to keep in the
                             target file.
     
     optional arguments:
       -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            This is the local file that you with to remove the
-                            duplicate settings from. By default, this file will be
-                            read and the updated with a minimized version.
+      --target TARGET, -t TARGET
+                            The local file that you wish to remove duplicate
+                            settings from. By default, this file will be read from
+                            and then updated with a minimized version.
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimizing
-                            the TARGET file, preview what what be removed in the
-                            form of a 'diff'.
+                            the TARGET file, preview what would be removedthe form
+                            of a 'diff'.
       --output OUTPUT       Write the minimized output to a separate file instead
-                            of updating TARGET. This can be use to preview changes
-                            if dry-run produces a large diff. This may also be
-                            helpful in other workflows.
+                            of updating TARGET.
       --explode-default, -E
                             Enable minimization across stanzas as well as files
-                            for special use-cases. This mode will not only
-                            minimize the same stanza across multiple config files,
-                            it will also attempt to minimize default any values
-                            stored in the [default] or global stanza as well.
-                            Example: Trim out cruft in savedsearches.conf by
-                            pointing to etc/system/default/savedsearches.conf
+                            for special use-cases
       -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
-                            Specify a key that should be allowed to be a
-                            duplication but should be preserved within the
-                            minimized output. For example, it may be desirable
-                            keep the 'disabled' settings in the local file, even
-                            if it's enabled by default.
+                            Specify attributes that should always be kept.
 
 
-## ksconf snapshot
+
+.. _ksconf_cli_snapshot:
+
+ksconf snapshot
+***************
+
+ .. code-block:: none
+
     usage: ksconf snapshot [-h] [--output FILE] [--minimize] PATH [PATH ...]
     
     Build a static snapshot of various configuration files stored within a
@@ -464,20 +413,23 @@ The following documents the CLI options
                             whitespace. Reduces readability.
 
 
-## ksconf sort
+
+.. _ksconf_cli_sort:
+
+ksconf sort
+***********
+
+ .. code-block:: none
+
     usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
                        FILE [FILE ...]
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the '-i' option is used.
+    inplace when the -i' option is used.
     
     Manually managed conf files can be blacklisted by add a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
-    
-    To recursively sort all files:
-    
-        find . -name '*.conf' | xargs ksconf sort -i
     
     positional arguments:
       FILE                  Input file to sort, or standard input.
@@ -500,7 +452,14 @@ The following documents the CLI options
                             example.
 
 
-## ksconf rest-export
+
+.. _ksconf_cli_rest-export:
+
+ksconf rest-export
+******************
+
+ .. code-block:: none
+
     usage: ksconf rest-export [-h] [--output FILE] [--disable-auth-output]
                               [--pretty-print] [-u | -D] [--url URL] [--app APP]
                               [--user USER] [--conf TYPE]
@@ -512,15 +471,6 @@ The following documents the CLI options
     
     This can be helpful when pushing complex props & transforms to an instance where you only have
     UI access and can't directly publish an app.
-    
-    WARNING:  This command is indented for manual admin workflows.  It's quite possible that shell
-    escaping bugs exist that may allow full shell access if you put this into an automated workflow.
-    Evaluate the risks, review the code, and run as a least-privilege user, and be responsible.
-    
-    For now the assumption is that 'curl' command will be used.  (Patches to support the Power Shell
-    Invoke-WebRequest cmdlet would be greatly welcomed!)
-    
-    ksconf rest-export --output=apply_props.sh etc/app/Splunk_TA_aws/local/props.conf
     
     positional arguments:
       CONF                  Configuration file(s) to export settings from.
@@ -559,7 +509,14 @@ The following documents the CLI options
                             readable by splitting entries across lines.
 
 
-## ksconf unarchive
+
+.. _ksconf_cli_unarchive:
+
+ksconf unarchive
+****************
+
+ .. code-block:: none
+
     usage: ksconf unarchive [-h] [--dest DIR] [--app-name NAME]
                             [--default-dir DIR] [--exclude EXCLUDE] [--keep KEEP]
                             [--allow-local]
@@ -574,8 +531,6 @@ The following documents the CLI options
     The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
     whatever which is helpful if you're using the ksconf 'combine' mode.)
     
-    Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)
-    
     positional arguments:
       SPL                   The path to the archive to install.
     
@@ -584,13 +539,11 @@ The following documents the CLI options
       --dest DIR            Set the destination path where the archive will be
                             extracted. By default the current directory is used,
                             but sane values include etc/apps, etc/deployment-apps,
-                            and so on. This could also be a git repository working
-                            tree where splunk apps are stored.
+                            and so on.
       --app-name NAME       The app name to use when expanding the archive. By
                             default, the app name is taken from the archive as the
                             top-level path included in the archive (by
-                            convention). Expanding archives that contain multiple
-                            (ITSI) or nested apps (NIX, ES) is not supported.)
+                            convention).
       --default-dir DIR     Name of the directory where the default contents will
                             be stored. This is a useful feature for apps that use
                             a dynamic default directory that's created and managed
@@ -603,42 +556,30 @@ The following documents the CLI options
       --keep KEEP, -k KEEP  Specify a pattern for files to preserve during an
                             upgrade. Repeat this argument to keep multiple
                             patterns.
-      --allow-local         Allow local/ and local.meta files to be extracted from
-                            the archive. Shipping local files is a Splunk app
-                            packaging violation so local files are blocked to
-                            prevent content from being overridden.
+      --allow-local         Allow local/* and local.meta files to be extracted
+                            from the archive.
       --git-sanity-check {off,changed,untracked,ignored}
                             By default 'git status' is run on the destination
                             folder to detect working tree or index modifications
-                            before the unarchive process starts, but this is
-                            configurable. Sanity check choices go from least
-                            restrictive to most thorough: Use 'off' to prevent any
-                            'git status' safely checks. Use 'changed' to abort
+                            before the unarchive process start. Sanity check
+                            choices go from least restrictive to most thorough:
+                            'off' prevents all safely checks. 'changed' aborts
                             only upon local modifications to files tracked by git.
-                            Use 'untracked' (the default) to look for changed and
-                            untracked files before considering the tree clean. Use
-                            'ignored' to enable the most intense safety check
-                            which will abort if local changes, untracked, or
-                            ignored files are found. NOTE: Sanity checks are
-                            automatically disabled if the app is not in a git
-                            working tree, or git is not installed.
+                            'untracked' (the default) looks for changed and
+                            untracked files. 'ignored' aborts is (any) local
+                            changes, untracked, or ignored files are found.
       --git-mode {nochange,stage,commit}
                             Set the desired level of git integration. The default
-                            mode is 'stage', where new, updated, or removed files
-                            are automatically handled for you. If 'commit' mode is
-                            selected, then files are committed with an auto-
-                            generated commit message. To prevent any 'git add' or
-                            'git rm' commands from being run, pick the 'nochange'
-                            mode. Notes: (1) The git mode is irrelevant if the app
-                            is not in a git working tree. (2) If a git commit is
-                            incorrect, simply roll it back with 'git reset' or fix
-                            it with a 'git commit --amend' before the changes are
-                            pushed anywhere else. (That's why you're using git in
-                            the first place, right?)
+                            mode is *stage', where new, updated, or removed files
+                            are automatically handled for you. To prevent any 'git
+                            add' or 'git rm' commands from being run, pick the
+                            'nochange' mode.
       --no-edit             Tell git to skip opening your editor. By default you
                             will be prompted to review/edit the commit message.
                             (Git Tip: Delete the content of the message to abort
                             the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
+                            Extra arguments to pass to 'git'
+
 
 

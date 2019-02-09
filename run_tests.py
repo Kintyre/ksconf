@@ -8,7 +8,7 @@ import sys
 import unittest
 
 # Run tests from this working directory; not from a previous 'pip install' run.
-home = os.path.dirname(os.path.abspath(sys.argv[0] or __file__))
+home = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, home)
 
 import ksconf

@@ -18,9 +18,11 @@ from __future__ import unicode_literals
 import argparse
 import sys
 
+from collections import defaultdict
+
 import ksconf
 import ksconf.util
-from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_entrypoints
+from ksconf.commands import KsconfCmd, DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.util.completers import autocomplete
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 
@@ -41,12 +43,14 @@ version controlled (default) folder, and dealing with more than one layer of
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
-def cli(argv=None, _unittest=False):
-    parser = argparse.ArgumentParser(fromfile_prefix_chars="@",
-                                     formatter_class=MyDescriptionHelpFormatter,
-                                     description=_cli_description,
-                                     prog="ksconf")
-
+def build_cli_parser(do_formatter=False):
+    parser_kwargs = dict(
+        fromfile_prefix_chars="@",
+        description=_cli_description,
+        prog="ksconf")
+    if do_formatter:
+        parser_kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
+    parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 
     version_info = []
@@ -54,30 +58,43 @@ def cli(argv=None, _unittest=False):
     from random import choice
     # XXX:  Check terminal size before picking a signature
     version_info.append(choice(ksconf.__ascii_sigs__))
-    version_info.append("%(prog)s {}  (Build {})".format(ksconf.__version__, ksconf.__build__))
+    verbuild = "%(prog)s {}".format(ksconf.__version__)
+    if ksconf.__build__:
+        verbuild += "  (Build {})".format(ksconf.__build__)
+    version_info.append(verbuild)
     version_info.append("Python: {}  ({})".format(sys.version.split()[0], sys.executable))
     if ksconf.__vcs_info__:
         version_info.append(ksconf.__vcs_info__)
+    # XXX:  Grab splunk version and home, if running as a splunk app
     version_info.append("Written by {}.".format(ksconf.__author__))
-    version_info.append("Copyright {}.".format(ksconf.__copyright__))
+    version_info.append("Copyright {}, all rights reserved.".format(ksconf.__copyright__))
     version_info.append("Licensed under {}".format(ksconf.__license__))
 
-    version_info.append("\nCommands:")
     # Add entry-point subcommands
-    # XXX:  Eventually lazy load subcommands to save resources.   (Low priority)
-    for (name, entry) in get_entrypoints("ksconf_cmd").items():
-    # sys.stderr.write("Loading {} from entry point:  {!r}\n".format(name, entry))
-        cmd_cls = entry.load()
-        distro = entry.dist or "Unknown"
-        version_info.append("    {:15}  ({}, from {})".format(name, cmd_cls.maturity, distro))
-        if not issubclass(cmd_cls, KsconfCmd):
-            raise RuntimeError("Entry point {!r} not derived from KsconfCmd.".format(entry))
+    subcommands = defaultdict(list)
 
+    # XXX:  Eventually lazy load subcommands to save resources.   (Low priority)
+    for (name, entry, cmd_cls) in get_all_ksconf_cmds():
+        dist = entry.dist
+        distro = ""
+        if hasattr(dist, "version"):
+            if hasattr(dist, "name"):
+                # entrypoints (required by ksconf)
+                distro = "{}  ({})".format(dist.name, entry.dist.version)
+            elif hasattr(dist, "location") and hasattr(dist, "project_name"):   # pragma: no cover
+                # Attributes per pkg_resource  (currently disabled)
+                distro = "{}  ({})  @{}".format(dist.project_name, dist.version, dist.location)
+        subcommands[distro].append((name, cmd_cls))
         cmd = cmd_cls(entry.name)
         cmd.add_parser(subparsers)
-        del cmd_cls, distro
-    del name, entry
-    del subparsers
+
+    for distro_name, items in sorted(subcommands.items()):
+        if distro_name:
+            version_info.append("\n  {}\n\n    Commands:".format(distro_name))
+        else:
+            version_info.append("\n\n    Commands:".format(distro_name))
+        for (name, cmd_cls) in items:
+            version_info.append("      {:15} ({})".format(name, cmd_cls.maturity))
 
     # Common settings
     '''
@@ -105,8 +122,14 @@ def cli(argv=None, _unittest=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
+    return parser
 
-    autocomplete(parser)
+
+def cli(argv=None, _unittest=False):
+    parser = build_cli_parser(True)
+    if not _unittest:
+        autocomplete(parser)
+
     args = parser.parse_args(argv)
 
     ksconf.util.terminal.FORCE_TTY_COLOR = args.force_color
