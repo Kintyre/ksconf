@@ -25,45 +25,46 @@ KsconF          Thought about it.
 ============    ====================================
 
 
-   | I wrote this while laughing at my own lack of consistency.
-   | Really don't care.
-   | -- Lowell
+    | I wrote this while laughing at my own lack of consistency.
+    | -- Lowell
 
 
 .. _splunk conf updates:
 
 How Splunk writes to conf files
--------------------------------
+********************************
 
-Splunk does some somewhat counter intuative thing when it writes to local conf files.
+Splunk does some somewhat counter intuitive thing when it writes to local conf files.
 
 For example,
 
- 1. All conf file updates are automatically minimized.  (Splunk can get away with this because it *only* updates "local" files.)
+ 1. All conf file updates are automatically minimized.  (Splunk can get away with this because it
+    *only* updates "local" files.)
  2. Modified stanzas are removed from the current position in the .conf file and moved to the bottom.
- 3. Stanzas are typically re-written sorted in attribute order.  (Or is it the same as #2, updated attributes are written to the bottom.)
+ 3. Stanzas are typically re-written sorted in attribute order.  (Or is it the same as #2? updated
+    attributes are written to the bottom.  *Note to editor: check on this*)
  4. Sometimes boolean values persist in unexpected ways.  (Primarily this is because there's mor
     than one way to represent them textually, and that textual representation is different from
     what's stored in default)
 
-Essentially, splunk will allways "minimize" the conf file at each any every update.  This is because
+Essentially, splunk will always "minimize" the conf file at each any every update.  This is because
 Splunk internally keeps track of the final representation of the entire stanza (in memory), and only
 when it's written to disk does Splunk care about the the current contents of the local file.  In
-fact, Splunk re-reads the conf file immidately before updating it.  This is why, if you've made a
+fact, Splunk re-reads the conf file immediately before updating it.  This is why, if you've made a
 local changes, and forgot to reload, Splunk will typically not lose your change (unless you've
 update the same attribute both places... I mean, it's not magic.)
 
 
-.. tip::  Don't believe me? Try it yourself.
+..  tip:: Don't believe me? Try it yourself.
 
-   To prove that it works this way, simply find a savedsearch that you modified from any app that
-   you installed.  Look at the local conf file and observe your changes.  Now go edit the saved
-   search and restore some attribute to it's origional value (the most obvious one here would be the
-   ``search`` attribute), but that's tricky if it's mulilined.  Now go look at the local conf file
-   again.  If you updated it with *exactly* the same value, then that attribute will have been
-   compeetly removed from the local file.  This is infact a neat trick that can be used to revert
-   local changes to allow future updates to "pass-though" unimpedied.  In SHC scenarios, this may
-   be your only option to remove local settings.
+    To prove that it works this way, simply find a savedsearch that you modified from any app that
+    you installed.  Look at the local conf file and observe your changes.  Now go edit the saved
+    search and restore some attribute to it's original value (the most obvious one here would be the
+    ``search`` attribute), but that's tricky if it's multiple lines.  Now go look at the local conf
+    file again.  If you updated it with *exactly* the same value, then that attribute will have been
+    completely removed from the local file.  This is in fact a neat trick that can be used to revert
+    local changes to allow future updates to "pass-though" unimpeded.  In SHC scenarios, this may
+    be your only option to remove local settings.
 
 Okay, so what's the value in having a :ref:`minimize <ksconf_cmd_minimize>` command if Splunk does
 this automatically every time it's makes a change?  Well, simply put, because Splunk can't write to
@@ -79,21 +80,21 @@ This means that man ``disabled`` and bunches of other settings in ``savedsearche
 explicitly written.  How is that helpful?  Well, imagine what would happen if you accidentally
 changed ``disabled = 1`` in the global stanzas in savedsearches.conf.  Well, *nothing* if all
 savedsearches have that values explicitly written.  The point is this: there are times when
-repeating yourself isn't a bad thing.  (Incidently, this is the reason for the ``--preserve-key``
+repeating yourself isn't a bad thing.  (Incidentally, this is the reason for the ``--preserve-key``
 flag on the :ref:`minimize <ksconf_cmd_minimize>` command.)
 
 
 
-.. _Grandfather Paradox:
+..  _Grandfather Paradox:
 
 Grandfather Paradox
--------------------
+*******************
 
 The KSCONF Splunk app breaks it's designed paradigm (not in a good way).  Ksconf was designed to be
 the thing that manages all your other apps, so by deploying ksconf as an app itself, we open up the
-possiblity that ksconf could upgrade it self or deploy itself, or manage itself.   Basically it
+possibility that ksconf could upgrade it self or deploy itself, or manage itself.   Basically it
 could cut off the limb that it's standing on.   So practically this can get messy, especially if
 you're on Windows where file locking is also likely to cause issues for you.
 
-So sure, if you want to be picky, "Grandfather paradox" is probably the wrong annalogy.
+So sure, if you want to be picky, "Grandfather paradox" is probably the wrong analogy.
 Pull requests welcome.

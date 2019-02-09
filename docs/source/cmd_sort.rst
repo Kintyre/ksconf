@@ -1,9 +1,23 @@
+..  _ksconf_cmd_sort:
+
 ksconf sort
 ===========
 
-.. _ksconf_cmd_sort:
-.. argparse::
-   :module: ksconf.__main__
-   :func: build_cli_parser
-   :path: sort
-   :nodefault:
+..  argparse::
+    :module: ksconf.__main__
+    :func: build_cli_parser
+    :path: sort
+    :nodefault:
+
+
+
+Examples
+^^^^^^^^
+
+To recursively sort all files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+..  code-block:: sh
+
+    find . -name '*.conf' | xargs ksconf sort -i

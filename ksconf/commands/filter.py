@@ -182,7 +182,7 @@ class FilterCmd(KsconfCmd):
                             default="wildcard",
                             help=dedent("""\
             Specify pattern matching mode.
-            Defaults to 'wildcard' allowing for '*' and  '?' matching.
+            Defaults to 'wildcard' allowing for ``*`` and  ``?`` matching.
             Use 'regex' for more power but watch out for shell escaping.
             Use 'string' enable literal matching."""))
         parser.add_argument("--ignore-case", "-i", action="store_true",
@@ -212,31 +212,31 @@ class FilterCmd(KsconfCmd):
 
             All filter options can be provided multiple times.
             If you have a long list of filters, they can be saved in a file and referenced using
-            the special 'file://' prefix."""))
+            the special ``file://`` prefix."""))
 
         pg_sel.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
                             help=dedent("""
             Match any stanza who's name matches the given pattern.
-            PATTERN supports bulk patterns via the 'file://' prefix."""))
+            PATTERN supports bulk patterns via the ``file://`` prefix."""))
 
         pg_sel.add_argument("--attr-present", metavar="ATTR", action="append", default=[],
                             help=dedent("""\
             Match any stanza that includes the ATTR attribute.
-            ATTR supports bulk attribute patterns via the 'file://' prefix."""))
+            ATTR supports bulk attribute patterns via the ``file://`` prefix."""))
 
         '''# Add next
         pg_sel.add_argument("--attr-eq", metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special 'file://filename' syntax.""")
+            PATTERN supports the special ``file://filename`` syntax.""")
         '''
         ''' # This will be more difficult
         pg_sel.add_argument("--attr-ne",  metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
                             help="""
             Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special 'file://' syntax.""")
+            PATTERN supports the special ``file://`` syntax.""")
         '''
 
         pg_con = parser.add_argument_group("Attribute selection", dedent("""\

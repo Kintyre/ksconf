@@ -4,7 +4,7 @@ ksconf
 Subpackages
 -----------
 
-.. toctree::
+..  toctree::
 
     ksconf.commands
     ksconf.conf
@@ -17,7 +17,7 @@ Submodules
 ksconf.archive module
 ---------------------
 
-.. automodule:: ksconf.archive
+..  automodule:: ksconf.archive
     :members:
     :undoc-members:
     :show-inheritance:
@@ -25,7 +25,7 @@ ksconf.archive module
 ksconf.consts module
 --------------------
 
-.. automodule:: ksconf.consts
+..  automodule:: ksconf.consts
     :members:
     :undoc-members:
     :show-inheritance:
@@ -33,7 +33,7 @@ ksconf.consts module
 ksconf.setup\_entrypoints module
 --------------------------------
 
-.. automodule:: ksconf.setup_entrypoints
+..  automodule:: ksconf.setup_entrypoints
     :members:
     :undoc-members:
     :show-inheritance:
@@ -42,7 +42,7 @@ ksconf.setup\_entrypoints module
 Module contents
 ---------------
 
-.. automodule:: ksconf
+..  automodule:: ksconf
     :members:
     :undoc-members:
     :show-inheritance:

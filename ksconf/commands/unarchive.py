@@ -85,10 +85,10 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("--git-mode", default="stage",
                             choices=["nochange", "stage", "commit"], help=dedent("""\
             Set the desired level of git integration.
-            The default mode is 'stage', where new, updated, or removed files are automatically
+            The default mode is *stage', where new, updated, or removed files are automatically
             handled for you.
 
-            To prevent any 'git add' or 'git rm' commands from being run, pick the
+            To prevent any ``git add`` or ``git rm`` commands from being run, pick the
             'nochange' mode.
             """))
         parser.add_argument("--no-edit",

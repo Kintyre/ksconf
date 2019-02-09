@@ -22,7 +22,7 @@ Release v0.6.0 (2019-02-06)
    -  Credit to Sarah Larson for the ksconf logos.
    -  No ``ksconf`` functionality exposed to the Splunk UI at the moment.
 
--  Docs/Sphinx improvements (more comming)
+-  Docs/Sphinx improvements (more coming)
 
    -  Begin work on cleaning up API docs.
    -  Started converting various document pages into reStructuredText for greatly improved docs.
@@ -47,10 +47,10 @@ Release v0.5.6 (2019-02-04)
 Release v0.5.5 (2019-01-28)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  New ``filter`` command added for slicing up a conf file into smaller pieces. Think of this as
+-  New :ref:`ksconf_cmd_filter` command added for slicing up a conf file into smaller pieces. Think of this as
    GREP that’s stanza-aware. Can also whitelist or blacklist attributes, if desirable.
--  Expanded ``rest-export`` CLI capabilities to include a new ‘–delete’ option, pretty-printing,
-   and now supports stdin by allowing the user to explicitly set the file type using ‘–conf’.
+-  Expanded ``rest-export`` CLI capabilities to include a new ``–delete`` option, pretty-printing,
+   and now supports stdin by allowing the user to explicitly set the file type using ``–conf``.
 -  Refactored all CLI unittests for increased readability and long-term maintenance. Unit tests
    now can also be run individually as scripts from the command line.
 -  Minor tweaks to the ``snapshot`` output format, v0.2. This feature is still highly experimental.
@@ -60,9 +60,9 @@ Release v0.5.4 (2019-01-04)
 
 -  New commands added:
 
-   -  ``snapshot`` will dump a set of configuration files to a JSON formatted file. This can be used
-      used for incremental “snapshotting” of running Splunk apps to track changes overtime.
-   -  ``rest-export`` builds a series of custom ``curl`` commands that can be used to publish or update
+   -  :ref:`ksconf_cmd_snapshot` will dump a set of configuration files to a JSON formatted file. This can be used
+      used for incremental "snapshotting" of running Splunk apps to track changes overtime.
+   -  :ref:`ksconf_cmd_rest-export` builds a series of custom ``curl`` commands that can be used to publish or update
       stanzas on a remote instance without file system access. This can be helpful when pushing
       configs to Splunk Cloud when all you have is REST (splunkd) access. This command is indented
       for interactive admin not batch operations.
@@ -96,7 +96,7 @@ Release v0.5.2 (2018-08-13)
 Release v0.5.1 (2018-06-28)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Support external ksconf command plugins through custom ‘entry_points’, allowing for others to
+-  Support external ksconf command plugins through custom `entry_points`, allowing for others to
    develop their own custom extensions as needed.
 -  Many internal changes: Refactoring of all CLI commands to use new entry_points as well as pave
    the way for future CLI unittest improvements.

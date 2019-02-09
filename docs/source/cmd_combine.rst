@@ -1,19 +1,19 @@
-.. note:: Key concepts
+..  note:: Key concepts
 
-   Before diving into the ``combine`` command, it may be helpful to brush up on the concept of
-   :ref:`configuration layers <configuration-layers>`.
+    Before diving into the ``combine`` command, it may be helpful to brush up on the concept of
+    :ref:`configuration layers <configuration-layers>`.
 
+
+..  _ksconf_cmd_combine:
 
 ksconf combine
 ==============
 
-.. _ksconf_cmd_combine:
-
-.. argparse::
-   :module: ksconf.__main__
-   :func: build_cli_parser
-   :path: combine
-   :nodefault:
+..  argparse::
+    :module: ksconf.__main__
+    :func: build_cli_parser
+    :path: combine
+    :nodefault:
 
 
 You may have noticed similarities between the ``combine`` and :ref:`merge <ksconf_cmd_merge>`
@@ -22,17 +22,17 @@ operations essentially does a recursive merge between a set of directories.  One
 that ``combine`` command will gracefully handle non-conf files intelligently, not just conf files.
 
 
-.. note::  Mixing layers
+..  note::  Mixing layers
 
-   Just like all layers can be managed independently, they can also be combined in any way you'd
-   like.  While this workflow is out side the scope of the examples provided here, it's very doable.
-   This also allows for different layers to be mixed-and-matched by selectively including which
-   layers to combine.
+    Just like all layers can be managed independently, they can also be combined in any way you'd
+    like.  While this workflow is out side the scope of the examples provided here, it's very doable.
+    This also allows for different layers to be mixed-and-matched by selectively including which
+    layers to combine.
 
 Examples
 --------
 
-Merging a multilayed app
+Merging a multilayer app
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Let's assume you have a directory structure that looks like the following.
@@ -78,31 +78,31 @@ This example features the Cisco Security Suite.
 
 In this structure, you can see several layers of configurations at play:
 
-  1. The ``10-upstream`` layer appears to be the version of the default folder that shipped with
-     the Cisco app.
-  2. The ``20-my-org`` layer is small and only contains tweaks to a few savedsearch entires.
-  3. The ``50-splunk-admin`` layer represents local settings changes to specify index
-     configurations, and to augment the macros and transformations that ship with the default app.
-  4. And finally, ``70-firewall-admins`` contains some additional view (2 new, and 1 existing).
-     Note that since ``user_tracking.xml`` is not a ``.conf`` file it will fully replace the
-     upstream default version (that is, the file in ``10-upstream``)
+    1.  The ``10-upstream`` layer appears to be the version of the default folder that shipped with
+        the Cisco app.
+    2.  The ``20-my-org`` layer is small and only contains tweaks to a few savedsearch entires.
+    3.  The ``50-splunk-admin`` layer represents local settings changes to specify index
+        configurations, and to augment the macros and transformations that ship with the default app.
+    4.  And finally, ``70-firewall-admins`` contains some additional view (2 new, and 1 existing).
+        Note that since ``user_tracking.xml`` is not a ``.conf`` file it will fully replace the
+        upstream default version (that is, the file in ``10-upstream``)
 
 Here's are the commands that could be used to generate a new (merged) ``default`` folder from all
 these layers shown above.
 
-.. code-block:: sh
+..  code-block:: sh
 
     cd Splunk_CiscoSecuritySuite
     ksconf combine default.d/* --target=default
 
 
-.. seealso::
+..  seealso::
 
-   The :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade apps stored
-   in a version controlled system in a layer-aware manor.
+    The :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade apps stored
+    in a version controlled system in a layer-aware manor.
 
 
-Consolidaing the 'users' directories
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Consolidating 'users' directories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``combine`` can consolidate 'users' directory across several instances after a phased server migration.

@@ -7,7 +7,7 @@ Submodules
 ksconf.vc.git module
 --------------------
 
-.. automodule:: ksconf.vc.git
+..  automodule:: ksconf.vc.git
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ ksconf.vc.git module
 Module contents
 ---------------
 
-.. automodule:: ksconf.vc
+..  automodule:: ksconf.vc
     :members:
     :undoc-members:
     :show-inheritance:

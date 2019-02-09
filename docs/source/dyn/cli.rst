@@ -426,14 +426,10 @@ ksconf sort
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the '-i' option is used.
+    inplace when the -i' option is used.
     
     Manually managed conf files can be blacklisted by add a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
-    
-    To recursively sort all files:
-    
-        find . -name '*.conf' | xargs ksconf sort -i
     
     positional arguments:
       FILE                  Input file to sort, or standard input.
@@ -574,7 +570,7 @@ ksconf unarchive
                             changes, untracked, or ignored files are found.
       --git-mode {nochange,stage,commit}
                             Set the desired level of git integration. The default
-                            mode is 'stage', where new, updated, or removed files
+                            mode is *stage', where new, updated, or removed files
                             are automatically handled for you. To prevent any 'git
                             add' or 'git rm' commands from being run, pick the
                             'nochange' mode.

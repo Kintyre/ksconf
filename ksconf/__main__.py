@@ -22,7 +22,7 @@ from collections import defaultdict
 
 import ksconf
 import ksconf.util
-from ksconf.commands import KsconfCmd, MyDescriptionHelpFormatter, get_all_ksconf_cmds
+from ksconf.commands import KsconfCmd, DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.util.completers import autocomplete
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 
@@ -49,7 +49,7 @@ def build_cli_parser(do_formatter=False):
         description=_cli_description,
         prog="ksconf")
     if do_formatter:
-        parser_kwargs["formatter_class"]=MyDescriptionHelpFormatter
+        parser_kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
     parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 

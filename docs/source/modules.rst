@@ -1,7 +1,7 @@
 API Reference
 =============
 
-.. toctree::
-   :maxdepth: 4
+..  toctree::
+    :maxdepth: 4
 
-   ksconf
+    ksconf

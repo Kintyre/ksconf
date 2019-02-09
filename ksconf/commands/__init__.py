@@ -235,9 +235,8 @@ class ConfFileType(object):
         return '%s(%s)' % (type(self).__name__, args_str)
 
 
-class MyDescriptionHelpFormatter(argparse.HelpFormatter):
 
-
+class DescriptionFormatterNoReST(argparse.HelpFormatter):
     @staticmethod
     def strip_simple_rest(s):
         # No hanling of embedded backticks for now...  let's keep this simple
@@ -253,8 +252,9 @@ class MyDescriptionHelpFormatter(argparse.HelpFormatter):
 
     def _fill_text(self, text, width, indent):
         text = self.strip_simple_rest(text)
-        # Looks like this one is ONLY used for the top-level description
-        return ''.join([indent + line for line in text.splitlines(True)])
+        text = self._whitespace_matcher.sub(' ', text).strip()
+        return textwrap.fill(text, width, initial_indent=indent,
+                                           subsequent_indent=indent)
 
     def _split_lines(self, text, width):
         text = self.strip_simple_rest(text)
@@ -262,6 +262,12 @@ class MyDescriptionHelpFormatter(argparse.HelpFormatter):
         return textwrap.wrap(text, width)
 
 
+class DescriptionHelpFormatterPreserveLayout(DescriptionFormatterNoReST):
+
+    def _fill_text(self, text, width, indent):
+        text = self.strip_simple_rest(text)
+        # Looks like this one is ONLY used for the top-level description
+        return ''.join([indent + line for line in text.splitlines(True)])
 
 
 class KsconfCmd(object):
@@ -301,7 +307,9 @@ class KsconfCmd(object):
             "description" : self.description,
         }
         if self.format == "manual":
-            kwargs["formatter_class"] = MyDescriptionHelpFormatter
+            kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
+        else:
+            kwargs["formatter_class"] = DescriptionFormatterNoReST
         self.parser = subparser.add_parser(self.name, **kwargs)
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)

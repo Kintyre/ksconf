@@ -2,7 +2,7 @@ Installation Guide
 ==================
 
 KSCONF can be installed either as a Splunk app or a Python package.  Picking the option that's right
-for you is typically farily easy.
+for you is typically fairly easy.
 
 Unless you have experence with Python packaging or are planning on customizing or extending ksconf
 then :ref:`Splunk app <install_splunk_app>` is likely the best place for you to start.  If you go
@@ -11,11 +11,11 @@ with the native Python option, then you have many additional decisions to make.
 
 .. note::
 
-    The introduction of a Splunk app is a varily new situation (as of the 0.6.x release.)
-    Origionally we resited this idea, since ``ksconf`` was designed to manage other apps, not live
+    The introduction of a Splunk app is a fairly new situation (as of the 0.6.x release.)
+    Originally we resisted this idea, since ``ksconf`` was designed to manage other apps, not live
     within one.  But ultimately, the packaging decision was driven by the bombardment of complexity
-    encountered with nearly every install.  Python packaging is a mess and daughting for the
-    uninitated.
+    encountered with nearly every install.  Python packaging is a mess and daunting for the
+    uninitiated.
 
 
 Overview

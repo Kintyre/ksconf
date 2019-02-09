@@ -27,14 +27,10 @@ class SortCmd(KsconfCmd):
     description = dedent("""\
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the '-i' option is used.
+    inplace when the -i' option is used.
 
     Manually managed conf files can be blacklisted by add a comment containing the
-    string 'KSCONF-NO-SORT' to the top of any .conf file.
-
-    To recursively sort all files:
-
-        find . -name '*.conf' | xargs ksconf sort -i
+    string ``KSCONF-NO-SORT`` to the top of any .conf file.
     """)
     format = "manual"
     maturity = "stable"

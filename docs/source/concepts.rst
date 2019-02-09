@@ -1,7 +1,6 @@
 Concepts
 ========
 
-
 .. _configuration-layers:
 
 Configuration layers
