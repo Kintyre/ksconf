@@ -5,7 +5,7 @@ repos:
   sha: v2.0.0
   hooks:
     - id: trailing-whitespace
-      exclude: (cli\.rst|\.md)$
+      exclude: (cli\.rst|\.md|\.csv)$
     - id: end-of-file-fixer
       exclude: (cli\.rst|\.md|\.csv)$
     - id: check-ast
@@ -16,7 +16,7 @@ repos:
     - id: detect-aws-credentials
     - id: mixed-line-ending
       args: [ '--fix=lf' ]
-      exclude: \.bat$
+      exclude: (\.bat|\.csv)$
 
 - repo: local
   hooks:
