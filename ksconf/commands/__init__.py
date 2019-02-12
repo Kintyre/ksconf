@@ -40,17 +40,26 @@ class ConfDirProxy(object):
 class ConfFileProxy(object):
     def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
         self.name = name
+        self._mode = mode
         if is_file is not None:
             self._is_file = is_file
         elif stream:
             self._is_file = False
-        else:
+        elif self.is_writable() or os.path.isfile(name):
             self._is_file = True
+        else:
+            self._is_file = False
         self._stream = stream
-        self._mode = mode
+
         # Not sure if there's a good reason to keep a copy of the data locally?
         self._data = None
         self._parse_profile = parse_profile or {}
+
+    def is_readable(self):
+        return "r" in self._mode
+
+    def is_writable(self):
+        return "+" in self._mode or "w" in self._mode
 
     def is_file(self):
         return self._is_file
@@ -106,7 +115,7 @@ class ConfFileProxy(object):
         return self._data
 
     def load(self, profile=None):
-        if "r" not in self._mode:
+        if not self.is_readable():
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
             raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
                                                                               self._mode))
@@ -117,7 +126,7 @@ class ConfFileProxy(object):
         return data
 
     def dump(self, data):
-        if "+" not in self._mode and "w" not in self._mode:     # pragma: no cover
+        if not self.is_writable():      # pragma: no cover
             raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
                                                                             self._mode))
         # Feels like the right thing to do????  OR self._data = data
@@ -211,6 +220,7 @@ class ConfFileType(object):
             return ConfFileProxy(string, self._mode, parse_profile=self._parse_profile)
         else:
             try:
+                # Another possible option is using:  seekable()  but that only works ONCE the stream is open
                 if os.path.isfile(string):
                     encoding = detect_by_bom(string)
                     stream = open(string, self._mode, encoding=encoding)
