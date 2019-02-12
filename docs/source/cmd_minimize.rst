@@ -49,6 +49,10 @@ Example usage
     # Remove all the extra (unmodified) bits
     ksconf minimize --target=local/inputs.conf default/inputs.conf
 
+
+Additional capabilities
+^^^^^^^^^^^^^^^^^^^^^^^
+
 For special cases, the ``--explode-default`` mode reduces duplication between entries normal stanzas
 and global/default entries.  If ``disabled = 0`` is a global default, it's technically safe to
 remove that setting from individual stanzas.  But sometimes it's preferable to be explicit, and this

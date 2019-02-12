@@ -35,12 +35,11 @@ ksconf
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
         filter              A stanza-aware GREP tool for conf files
-        promote             Promote .conf settings from one file into another
-                            either in batch mode (all changes) or interactively
-                            allowing the user to pick which stanzas and keys to
-                            integrate. Changes made via the UI (stored in the
-                            local folder) can be promoted (moved) to a version-
-                            controlled directory.
+        promote             Promote .conf settings between layers using either
+                            either in batch mode (all changes) or interactive
+                            mode. Frequently this is used to promote conf changed
+                            made via the UI (stored in the 'local' folder) to a
+                            version-controlled directory, often 'default'.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s)
@@ -259,32 +258,23 @@ ksconf promote
                           SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is used
-    to take local changes made via the UI and push them into a default (or
-    default.d/) location.
+    to move 'local' changes (made via the UI) into another layer, such as the
+    'default' or a named 'default.d/50-xxxxx') folder.
     
-    NOTICE:  By default, changes are *MOVED*, not just copied.
+    Promote has two modes:  batch and interactive.  In batch mode all changes are
+    applied automatically and the (now empty) source file is removed.  In interactive
+    mode the user is prompted to select stanzas to promote.  This way local changes
+    can be held without being promoted.
     
-    Promote has two different modes:  batch and interactive.  In batch mode all
-    changes are applied automatically and the (now empty) source file is removed.
-    In interactive mode the user is prompted to pick which stanzas and keys to
-    integrate.  This can be used to push  changes made via the UI, which are stored
-    in a 'local' file, to the version-controlled 'default' file.  Note that the
-    normal operation moves changes from the SOURCE file to the TARGET, updating both
-    files in the process.  But it's also possible to preserve the local file, if
-    desired.
-    
-    If either the source file or target file is modified while a promotion is under
-    progress, changes will be aborted.  And any custom selections you made will be
-    lost.  (This needs improvement.)
+    NOTE: Changes are *MOVED* not copied, unless '--keep' is used.
     
     positional arguments:
       SOURCE             The source configuration file to pull changes from.
                          Typically the 'local' conf file)
       TARGET             Configuration file or directory to push the changes into.
-                         (Typically the 'default' folder) As a shortcut, a
-                         directory is given, then it's assumed that the same
-                         basename is used for both SOURCE and TARGET. In fact, if
-                         different basename as provided, a warning is issued.
+                         (Typically the 'default' folder) As a shortcut, if a
+                         directory is given, it's assumed that the same basename
+                         is used for both SOURCE and TARGET.
     
     optional arguments:
       -h, --help         show this help message and exit
@@ -293,11 +283,11 @@ ksconf promote
                          source and applied to target. The source file will be
                          removed, unless '--keep-empty' is used.
       --interactive, -i  Enable interactive mode where the user will be prompted
-                         to approve the promotion of specific stanzas and keys.
-                         The user will be able to apply, skip, or edit the changes
-                         being promoted. (This functionality was inspired by 'git
-                         add --patch').
-      --force, -f        Disable safety checks.
+                         to approve the promotion of specific stanzas and
+                         attributes. The user will be able to apply, skip, or edit
+                         the changes being promoted.
+      --force, -f        Disable safety checks. Don't check to see if SOURCE and
+                         TARGET share the same basename.
       --keep, -k         Keep conf settings in the source file. All changes will
                          be copied into the target file instead of being moved
                          there. This is typically a bad idea since local always

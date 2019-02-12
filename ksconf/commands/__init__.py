@@ -254,9 +254,9 @@ class DescriptionFormatterNoReST(argparse.HelpFormatter):
         s = re.sub(r'``([^`]*)``', r"'\1'", s)
         # Handle simple references and other named inline markups
         # Handle explicitly named entry first, Use "<title>"
-        s = re.sub(r':[a-z-]{3,10}:`[^`]*? <([^`>]*)>\s*`', r"\1", s)
+        s = re.sub(r':[a-z][a-z-]{1,10}[a-z]:`[^`]*? <([^`>]*)>\s*`', r"\1", s)
         # Just keep the content of the ref name as-is.  (no "<title>")
-        s = re.sub(r':[a-z-]{3,10}:`([^`])`', r"\1", s)
+        s = re.sub(r':[a-z][a-z-]{1,10}[a-z]:`([^`]*)`', r"'\1'", s)
         return s
 
     def _fill_text(self, text, width, indent):

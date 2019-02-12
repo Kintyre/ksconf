@@ -28,20 +28,20 @@ Comparing files
 
 Show the differences between two conf files using :ref:`ksconf_cmd_diff`.
 
+    .. code-block:: sh
 
-.. code-block:: sh
-
-    ksconf diff savedsearches.conf savedsearches-mine.conf
+        ksconf diff savedsearches.conf savedsearches-mine.conf
 
 
 Sorting content
 ~~~~~~~~~~~~~~~
 
-To create a normalized version of your configuration files, thus making less hassle when merging these files with :command:`git`, run an inplace sort like so:
+To create a normalized version a configuration file, to make it easier to merging with
+:command:`git`, run an inplace sort like so:
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf sort --inplace savedsearches.conf
+        ksconf sort --inplace savedsearches.conf
 
 ..  tip::  Use the :ref:`ksconf-sort<pchook_ksconf-sort>` pre-commit hook to do this for you.
 
@@ -49,32 +49,40 @@ Extract specific stanza
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Say you want to grep your conf file.
+Say you want to *grep* your conf file for a specific stanza pattern:
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf filter search/default/savedsearches.conf --stanza 'Errors occurred *'
+        ksconf filter search/default/savedsearches.conf --stanza 'Errors in the last *'
+
+
+Say you want to list stanzas containing ``cron_schedule``:
+
+    .. code-block:: sh
+
+        ksconf filter Splunk_TA_aws/default/savedsearches.conf --brief \
+            --attr-present 'cron_schedule'
 
 
 Remove unwanted settings
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Say you want to remove `vsid` from all your legacy savedsearches:
+Say you want to remove ``vsid`` from a legacy savedsearches file:
+
+    .. code-block:: sh
+
+        ksconf filter search/default/savedsearches.conf --reject-attrs "vsid"
 
 
-.. code-block:: sh
+To see just to the schedule and scheduler status of scheduled searches, run:
 
-    ksconf filter search/default/savedsearches.conf --reject-attrs "vsid"
+    .. code-block:: sh
 
-
-Say you want to list stanzas that have ``cron_schedule``:
-
-
-.. code-block:: sh
-
-    ksconf filter search/default/savedsearches.conf --attr-present 'cron_schedule'
-
-
+        ksconf filter Splunk_TA_aws/default/savedsearches.conf \
+            --attr-present cron_schedule \
+            --keep-attrs 'cron*' \
+            --keep-attrs enableSched
+            --keep-attrs disabled
 
 
 Cleaning up
@@ -84,22 +92,21 @@ Cleaning up
 Reduce junk in local
 ~~~~~~~~~~~~~~~~~~~~
 
+If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here a quick way to 'minimize' your files.  This will reduce the *local* file by removing all the *default* settings you copied but didn't change.  (The importance of this is outlined in  :ref:`minimizing_files`.)
 
-If you're in the habit of copying the default files to local in the TAs you deploy, here a quick way to 'minimize' your files.  This will reduce the local file by removing all the default settings you copied but didn't change.
+    .. code-block:: sh
 
-.. code-block:: sh
-
-    ksconf minimize  TA-nix/default/inputs.conf -T TA-nix/local/inputs.conf
+        ksconf minimize Splunk_TA_nix/default/inputs.conf --target Splunk_TA_nix/local/inputs.conf
 
 
 Pushing local changes to default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If your an app developer and you need to push changes from the :file:`local` folder over to the :file:`default` folder, then you could use something like this:
+App developers can push changes from the :file:`local` folder over to the :file:`default` folder:
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf --interactive promote myapp/local/props.conf myapp/default/props.conf
+        ksconf --interactive promote myapp/local/props.conf myapp/default/props.conf
 
 You will be prompted to pick which items you want to promote.  Or you could use the ``--batch``
 option to promote everything in one step, without reviewing the content first.
@@ -116,26 +123,25 @@ Migrating content between apps
 
 Say you want to move a bunch of savedsearch from ``search`` into a more appropriate app.  First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf filter --match string --stanza 'file:://corp_searches.txt' \
-        search/local/savedsearches.conf --output corp_app/default/savedsearches.conf
+        ksconf filter --match string --stanza 'file:://corp_searches.txt' \
+            search/local/savedsearches.conf --output corp_app/default/savedsearches.conf
 
 And now, to avoid duplication and confusion, you want to remove that exact same set of searches from the search app.
 
+    .. code-block:: sh
 
+        ksconf filter --match string --stanza 'file:://corp_searches.txt' \
+            --invert-match search/local/savedsearches.conf \
+            --output search/local/savedsearches.conf.NEW
 
-.. code-block:: sh
+        # Backup the original
+        mv search/local/savedsearches.conf \
+            /my/backup/location/search-savedsearches-$(date +%Y%M%D).conf
 
-    ksconf filter --match string --stanza 'file:://corp_searches.txt' \
-        --invert-match search/local/savedsearches.conf \
-        --output search/local/savedsearches.conf.NEW
-
-    # Backup the origional
-    mv search/local/savedsearches.conf /my/backup/location/search-savedsearches-$(date +%Y%M%D).conf
-
-    # Move the update file inplace
-    mv search/local/savedsearches.conf.NEW search/local/savedsearches.conf
+        # Move the update file inplace
+        mv search/local/savedsearches.conf.NEW search/local/savedsearches.conf
 
 
 ..  note::
@@ -143,44 +149,42 @@ And now, to avoid duplication and confusion, you want to remove that exact same 
     your search names from being interpreted as wildcards.
 
 
+.. _example_combine_user_folder:
+
 Migrating the 'users' folder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Say you stood up a new Splunk server and the migration took longer than expected.  Now you have to `users` folders and don't want to loose all the goodies stored in either one.  You've copied the users folder to :file:`user_old`.  You're working from the new serve and would generally prefer to keep whatever on the new server over what's on the old.  (This is because some of your users copied over some of their critical alerts manually while waiting for the migration to complete, and they've made updates they don't want to lose.)
+Say you stood up a new Splunk server and the migration took longer than expected.
+Now you have two :file:`users` folders and don't want to loose all the goodies stored in either one.
+You've copied the users folder to :file:`user_old`.
+You're working from the new server and would generally prefer to keep whatever on the new server over what's on the old.
+(This is because some of your users copied over some of their critical alerts manually while waiting for the migration to complete, and they've made updates they don't want to lose.)
 
 
 After stopping splunk on the new server, run the following commands.
 
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    mv /some/share/users_old  $SPLUNK_HOME/etc/users.old
-    mv $SPLUNK_HOME/etc/users $SPLUNK_HOME/etc/users.new
+        mv /some/share/users_old  $SPLUNK_HOME/etc/users.old
+        mv $SPLUNK_HOME/etc/users $SPLUNK_HOME/etc/users.new
 
-    ksconf combine $SPLUNK_HOME/etc/users.old $SPLUNK_HOME/etc/users.new --target $SPLUNK_HOME/etc/users --banner ''
+        ksconf combine $SPLUNK_HOME/etc/users.old $SPLUNK_HOME/etc/users.new \
+            --target $SPLUNK_HOME/etc/users --banner ''
 
 Now double check the results and start Splunk back up.
 
-
-.. note:: The use of ``--banner``
-
-    We use the ``--banner`` option here to essential disable an output banner.
-    For other on-going *combine* operations, it's helpful to inform any .conf file readers or
-    potential editors that the file is automatically generated and therefore could be overwritten
-    again.  However, in this case, the combine operation is a onetime job and therefore no warning is needed.
-
-
-
-
+We use the ``--banner`` option here to essential disable an output banner.
+However, in this case, the combine operation is a one-time job and therefore no warning is needed.
 
 
 Maintaining apps stored in a local git repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf unarchive
+        ksconf unarchive
 
 
 .. TODO - Finish this section
@@ -200,11 +204,14 @@ Pulling out a stanza defined in both default and local
 Say wanted to count the number of searches containing the word ``error``
 
 
-.. code-block:: sh
+    .. code-block:: sh
 
-    ksconf merge default/savedsearches.conf local/savedsearches.conf \
-        | ksconf filter - --stanza '*Error*' --ignore-case --count
+        ksconf merge default/savedsearches.conf local/savedsearches.conf \
+            | ksconf filter - --stanza '*Error*' --ignore-case --count
 
+This is a simple example of chaining two basic :program:`ksconf` commands together to perform a more complex operation.
+The first command handles the merge of default and local :file:`savedsearches.conf` into a single output stream.
+The second command takes that stream of  These is stream into the filter command where
 
 
 

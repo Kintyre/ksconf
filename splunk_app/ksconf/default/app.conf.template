@@ -5,7 +5,7 @@ build = {{BUILD}}
 [ui]
 is_visible = 1
 show_in_nav = 1
-label = Kintyre Splunk CONFiguration tool
+label = KSCONF
 attribution_link = https://ksconf.readthedocs.io/en/latest/license.html
 
 [package]
@@ -15,8 +15,8 @@ check_for_updates = true
 [launcher]
 author = Lowell Alleman
 version = {{VERSION}}
-description = A wrapper app around the 'ksconf' CLI tool. \
-    NOTE:  This is not a traditional Splunk app, no features are exposed directly via the UI.
+description = Kintyre Splunk CONFiguration tool.  \
+    Provides the ksconf CLI tool for managing your Splunk deployment.
 
 [author=lowell]
 email = lowell@kintyre.co
@@ -24,4 +24,5 @@ company = Kintyre
 
 [triggers]
 # Nothing to update no restart needed
+# However, icons don't show up until after a restart...
 reload.app = simple

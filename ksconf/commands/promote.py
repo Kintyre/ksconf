@@ -1,8 +1,8 @@
-""" SUBCOMMAND:  ksconf promote --target=<CONF> <CONF>
+""" SUBCOMMAND:  ksconf promote <SOURCE> <TARGET>
 
 Usage example:  Promote local props changes (made via the UI) to the 'default' folder
 
-    ksconf --target=default/props.conf local/props.conf
+    ksconf local/props.conf default/props.conf
 
 """
 
@@ -64,32 +64,23 @@ from ksconf.util.file import _samefile, file_fingerprint
 
 class PromoteCmd(KsconfCmd):
     help = dedent("""\
-    Promote .conf settings from one file into another either in batch mode (all
-    changes) or interactively allowing the user to pick which stanzas and keys to
-    integrate.
+    Promote .conf settings between layers using either either in batch mode (all
+    changes) or interactive mode.
 
-    Changes made via the UI (stored in the local folder) can be promoted (moved) to
-    a version-controlled directory.
+    Frequently this is used to promote conf changed made via the UI (stored in
+    the ``local`` folder) to a version-controlled directory, often ``default``.
     """)
     description = dedent("""\
     Propagate .conf settings applied in one file to another.  Typically this is used
-    to take local changes made via the UI and push them into a default (or
-    default.d/) location.
+    to move ``local`` changes (made via the UI) into another layer, such as the
+    ``default`` or a named ``default.d/50-xxxxx``) folder.
 
-    NOTICE:  By default, changes are *MOVED*, not just copied.
+    Promote has two modes:  batch and interactive.  In batch mode all changes are
+    applied automatically and the (now empty) source file is removed.  In interactive
+    mode the user is prompted to select stanzas to promote.  This way local changes
+    can be held without being promoted.
 
-    Promote has two different modes:  batch and interactive.  In batch mode all
-    changes are applied automatically and the (now empty) source file is removed.
-    In interactive mode the user is prompted to pick which stanzas and keys to
-    integrate.  This can be used to push  changes made via the UI, which are stored
-    in a 'local' file, to the version-controlled 'default' file.  Note that the
-    normal operation moves changes from the SOURCE file to the TARGET, updating both
-    files in the process.  But it's also possible to preserve the local file, if
-    desired.
-
-    If either the source file or target file is modified while a promotion is under
-    progress, changes will be aborted.  And any custom selections you made will be
-    lost.  (This needs improvement.)
+    NOTE: Changes are *MOVED* not copied, unless ``--keep`` is used.
     """)
     format = "manual"
     maturity = "beta"
@@ -99,16 +90,16 @@ class PromoteCmd(KsconfCmd):
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
                             help="The source configuration file to pull changes from. "
-                                 "Typically the 'local' conf file)"
+                                 "Typically the :file:`local` conf file)"
                             ).completer = conf_files_completer
         parser.add_argument("target", metavar="TARGET",
                             type=ConfFileType("r+", "none", accept_dir=True,
                                               parse_profile=PARSECONF_STRICT), help=dedent("""\
             Configuration file or directory to push the changes into.
-            (Typically the 'default' folder)
-            As a shortcut, a directory is given, then it's assumed that the same basename is
+            (Typically the :file:`default` folder)
+            As a shortcut, if a directory is given, it's assumed that the same basename is
             used for both SOURCE and TARGET.
-            In fact, if different basename as provided, a warning is issued.""")
+            """)
                             ).completer = conf_files_completer
         grp1 = parser.add_mutually_exclusive_group()
         grp1.add_argument("--batch", "-b", action="store_const",
@@ -116,17 +107,18 @@ class PromoteCmd(KsconfCmd):
             Use batch mode where all configuration settings are automatically promoted.
             All changes are removed from source and applied to target.
             The source file will be removed, unless
-            '--keep-empty' is used."""))
+            ``--keep-empty`` is used."""))
         grp1.add_argument("--interactive", "-i",
                           action="store_const",
                           dest="mode", const="interactive", help=dedent("""\
             Enable interactive mode where the user will be prompted to approve
-            the promotion of specific stanzas and keys.
-            The user will be able to apply, skip, or edit the changes being promoted.
-            (This functionality was inspired by 'git add --patch')."""))
+            the promotion of specific stanzas and attributes.
+            The user will be able to apply, skip, or edit the changes being promoted."""))
         parser.add_argument("--force", "-f",
                             action="store_true", default=False,
-                            help="Disable safety checks.")
+                            help=
+            "Disable safety checks. "
+            "Don't check to see if SOURCE and TARGET share the same basename.")
         parser.add_argument("--keep", "-k",
                             action="store_true", default=False, help=dedent("""\
             Keep conf settings in the source file.
@@ -142,7 +134,13 @@ class PromoteCmd(KsconfCmd):
         if isinstance(args.target, ConfDirProxy):
             # If a directory is given instead of a target file, then assume the source filename
             # and target filename are the same.
-            args.target = args.target.get_file(os.path.basename(args.source.name))
+            # Also handle local/default meta:     e.g.:   ksconf promote local.meta .
+            source_basename = os.path.basename(args.source.name)
+            if source_basename == "local.meta":
+                args.target = args.target.get_file("default.meta")
+            else:
+                args.target = args.target.get_file(source_basename)
+            del source_basename
 
         if not os.path.isfile(args.target.name):
             self.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
@@ -294,16 +292,16 @@ class PromoteCmd(KsconfCmd):
            --- -   -----------
            [1] y - stage this section or key
            [1] n - do not stage this section or key
-           [1] q - quit; do not stage this or any of the remaining sections or keys
+           [1] q - quit; do not stage this or any of the remaining sections or attributes
            [2] a - stage this section or key and all later sections in the file
            [2] d - do not stage this section or key or any of the later section or key in the file
-           [1] s - split the section into individual keys
+           [1] s - split the section into individual attributes
            [3] e - edit the current section or key
            [2] ? - print help
 
         Q:  Is it less confusing to the user to adopt the 'local' and 'default' paradigm here?
         Even though we know that change promotions will not *always* be between default and local.
-        (We can and should assume some familiarity with Splunk conf, less so than familiarity
+        (We can and should assume some familiarity with Splunk conf terms, less so than familiarity
         with git lingo.)
         '''
 

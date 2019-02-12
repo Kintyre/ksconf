@@ -47,11 +47,12 @@ Flowchart
  -  Are you dealing with some vendor-specific solution?
 
     -   Example: RedHat Software Collections – where they realize there software is way too old, so
-        they try to make it possible to install newever version of things like Python, but since they
+        they try to make it possible to install newer version of things like Python, but since they
         aren't native or the default, you still end up jumping through a bunch of wonky hoops)
 
 -   Do you have Internet connectivity? (air gap or blocked outbound traffic, or proxy)
--   Do you want to build/deploy your own ksconf extensions? If so, the python package is a better option. (But at that point, you can probably already handle any packaging issues yourself.)
+-   Do you want to build/deploy your own ksconf extensions? If so, the python package is a better option.
+    (But at that point, you can probably already handle any packaging issues yourself.)
 
 Installation
 ------------

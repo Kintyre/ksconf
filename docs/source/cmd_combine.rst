@@ -15,6 +15,10 @@ ksconf combine
     :path: combine
     :nodefault:
 
+    --banner -b : @after
+        For other on-going *combine* operations, it's helpful to inform any .conf file readers or potential editors that the file is automatically generated and therefore could be overwritten again.
+        For one-time *combine* operations, the default banner can be suppresed by passing in an empty string (``''``)
+
 
 You may have noticed similarities between the ``combine`` and :ref:`merge <ksconf_cmd_merge>`
 subcommands.  That's because under the covers they are using much of the same code.  The combine
@@ -105,4 +109,5 @@ these layers shown above.
 Consolidating 'users' directories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``combine`` can consolidate 'users' directory across several instances after a phased server migration.
+The ``combine`` can consolidate 'users' directory across several instances after a phased server migration.
+See  :ref:`example_combine_user_folder`.
