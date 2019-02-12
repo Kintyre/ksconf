@@ -3,7 +3,6 @@ pre-commit
 gitlint
 sphinx
 sphinx-argparse
-recommonmark
 sphinx_rtd_theme
 
 twine

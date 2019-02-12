@@ -25,6 +25,7 @@ __all__ = [
     "get_entrypoints",
 ]
 
+
 class ConfDirProxy(object):
     def __init__(self, name, mode, parse_profile=None):
         self.name = name
@@ -145,6 +146,7 @@ class ConfFileProxy(object):
         raise NotImplementedError
     '''
 
+
 class ConfFileType(object):
     """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
 
@@ -209,10 +211,17 @@ class ConfFileType(object):
             return ConfFileProxy(string, self._mode, parse_profile=self._parse_profile)
         else:
             try:
-                encoding = detect_by_bom(string)
-                stream = open(string, self._mode, encoding=encoding)
-                cfp = ConfFileProxy(string, self._mode, stream=stream,
-                                    parse_profile=self._parse_profile, is_file=True)
+                if os.path.isfile(string):
+                    encoding = detect_by_bom(string)
+                    stream = open(string, self._mode, encoding=encoding)
+                    cfp = ConfFileProxy(string, self._mode, stream=stream,
+                                        parse_profile=self._parse_profile, is_file=True)
+                else:
+                    # Could be an explicit link to /dev/stdin; or /dev/fd/63; a bash <(cmd) input
+                    # Assume UTF-8 here because that's the default encoding expected by Splunk
+                    stream = open(string, self._mode, encoding="utf-8")
+                    cfp = ConfFileProxy(string, self._mode, stream=stream,
+                                        parse_profile=self._parse_profile, is_file=False)
                 if self._action == "load":
                     # Force file to be parsed by accessing the 'data' property
                     d = cfp.data

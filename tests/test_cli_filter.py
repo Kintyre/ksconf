@@ -6,6 +6,14 @@ import sys
 import unittest
 import re
 
+
+try:
+    # Python 3.3+
+    from unittest import mock
+except ImportError:
+    # Add on for earlier versions
+    import mock
+
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -310,6 +318,76 @@ class CliKsconfFilter(unittest.TestCase):
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
                 out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
                 self.assertIn("Errors in the last hour", out)
+
+
+    """ # This fails because it grabs the REAL STDIN and bypasses our FakeStdin context manager...
+    @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
+    def test_conf_via_dev_stdin(self):
+        "Stream in an input file over explicit device name (/dev/stdin)"
+        # This also works for anon  files using bash's '<(CMD)' format (/dev/fd/nn)
+        with FakeStdin(self._sample01):
+            with ksconf_cli:
+                ko = ksconf_cli("filter", "/dev/stdin", "--stanza", "Errors in the last hour")
+                self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+                out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
+                self.assertIn("Errors in the last hour", out)
+    """
+
+    @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
+    def test_conf_via_dev_fd_mock(self):
+        "Stream in an input file over explicit FD:   /dev/fd/xx to simulate a bash '<(cmd)' input."
+        # We must tell the OS that "/dev/fd/xxx" is NOT a file, which technically it is for the
+        # moment since we're testing with an actual file; unlike '<(cmd)' where it would be a PIPE
+
+        # Approach (failed); replace isfile() with my custom version:  (which looks for /dev/fd*)
+        '''  # Causes unicode/str error ... weird
+        def my_isfile(path):
+            if path.startswith("/dev/fd"):
+                return False
+            return os.path.isfile(path)
+        '''
+        f = open(self.sample01)
+        fd_dev = "/dev/fd/{}".format(f.fileno())
+        try:
+            with mock.patch("ksconf.commands.os.path.isfile") as m, ksconf_cli:
+                m.return_value = False
+                #m.wraps = my_isfile
+                ko = ksconf_cli("filter", fd_dev, "--stanza", "Errors in the last hour")
+                self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+                out = ko.get_conf(PARSECONF_STRICT)
+                self.assertIn("Errors in the last hour", out)
+        finally:
+            if not f.closed:
+                f.close()
+            del f
+
+    @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
+    def test_conf_via_dev_fd_ext_cat(self):
+        "Stream in an input file over pipe /dev/fd/xx.  Simulates a bash '<(cmd)' input"
+        ### XXX:  EXACT SAME TEST as test_conf_via_dev_fd_mock; long-term there's no need to keep both.  For now just testing if we see any issues on different OS-es
+
+        # We're launching a subprocess "cat" to create a pipe for ksconf to read from.  If we just
+        # do a plain file-open and try to use that descriptor, os.path.isfile() still detects that
+        # it's a regular file.
+
+        # Another possible implementation is to use mock objects.  I started down that path and it
+        # failed too.  (Also adding mock would require some new dependencies for py <3.3
+        from subprocess import Popen, PIPE
+        p = Popen(["cat", self.sample01], stdout=PIPE)
+        fd = p.stdout.fileno()
+        fd_dev = "/dev/fd/{}".format(fd)
+        try:
+            with ksconf_cli:
+                ko = ksconf_cli("filter", fd_dev, "--stanza", "Errors in the last hour")
+                self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+                out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
+                self.assertIn("Errors in the last hour", out)
+        finally:
+            # Do we need this?
+            # idk.  Calling p.communicate() seems weird here, but it causes all fd to  be closed, vs p.wait() gives causes unittest to give unclosed file warnings.
+            #p.wait()
+            p.communicate()
+
 
     def test_has_attr(self):
         "Keep all stanzas with given attribute"

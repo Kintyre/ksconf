@@ -57,9 +57,7 @@ install:
         # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
         if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
     fi
-  - pip install coverage $EXTRA_PKGS
-  - pip install coveralls
-  - pip install codecov
+  - pip install $EXTRA_PKGS -r requirements-ci.txt
   - pip install .
   - echo "Build $TRAVIS_BUILD_NUMBER BRANCH=$TRAVIS_BRANCH TAG=$TRAVIS_TAG"
   - pip list --format=columns
