@@ -43,13 +43,13 @@ For example,
  2. Modified stanzas are removed from the current position in the .conf file and moved to the bottom.
  3. Stanzas are typically re-written sorted in attribute order.  (Or is it the same as #2? updated
     attributes are written to the bottom.  *Note to editor: check on this*)
- 4. Sometimes boolean values persist in unexpected ways.  (Primarily this is because there's mor
+ 4. Sometimes boolean values persist in unexpected ways.  (Primarily this is because there's more
     than one way to represent them textually, and that textual representation is different from
     what's stored in default)
 
 Essentially, splunk will always "minimize" the conf file at each any every update.  This is because
 Splunk internally keeps track of the final representation of the entire stanza (in memory), and only
-when it's written to disk does Splunk care about the the current contents of the local file.  In
+when it's written to disk does Splunk care about the current contents of the local file.  In
 fact, Splunk re-reads the conf file immediately before updating it.  This is why, if you've made a
 local changes, and forgot to reload, Splunk will typically not lose your change (unless you've
 update the same attribute both places... I mean, it's not magic.)
@@ -57,7 +57,7 @@ update the same attribute both places... I mean, it's not magic.)
 
 ..  tip:: Don't believe me? Try it yourself.
 
-    To prove that it works this way, simply find a savedsearch that you modified from any app that
+    To prove that it works this way, simply find a saved search that you modified from any app that
     you installed.  Look at the local conf file and observe your changes.  Now go edit the saved
     search and restore some attribute to it's original value (the most obvious one here would be the
     ``search`` attribute), but that's tricky if it's multiple lines.  Now go look at the local conf

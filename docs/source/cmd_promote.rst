@@ -64,8 +64,8 @@ Here are some of the safety mechanisms that exist, because ksconf tries hard not
         Any attempts to promote content from a file to itself are prevented.
         While logically no one would want to do this, in practice having a clear error message saves time and confusion.
 
-    Basename check
-        The *SOURCE* and *TARGET* should share the same basename.
+    Base name check
+        The *SOURCE* and *TARGET* should share the same base name.
         In other words, trying to promote from :file:`inputs.conf` into :file:`props.conf` (due to a typo) will be prevented.
         This matters more in batch mode.
         In interactive mode, it should be pretty obvious that the type of entries don't make sense and therefore the user can simply exit without saving.
@@ -77,7 +77,7 @@ Here are some of the safety mechanisms that exist, because ksconf tries hard not
 .. note::
 
     Unfortunately the unit testing coverage for the ``promote`` command is quite low.
-    This is primarily because I haven't yet figured out how to handle unitteesting for interactive CLI tools (as this is the only interactive command to date.)
+    This is primarily because I haven't yet figured out how to handle unit testing for interactive CLI tools (as this is the only interactive command to date.)
     I'm also not sure how much the UI may change;
     Any assistance in this area would be greatly appreciated.
 

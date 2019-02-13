@@ -45,7 +45,7 @@ Can I do the same thing with standard unix tools?
 
 Sure, go for it!
 
-Yes, there's significan't overlap with the filter command and what you can do with :command:`grep`,
+Yes, there's significant overlap with the filter command and what you can do with :command:`grep`,
 :command:`awk`, or :command:`sed`.  Much of that is on purpose, and in fact some command line
 arguments were borrowed.
 

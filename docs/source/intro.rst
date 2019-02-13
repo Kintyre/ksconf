@@ -17,7 +17,7 @@ natively).
 .. note:: **What KSCONF is not**
 
     Ksconf does *not* replace your existing Splunk deployment mechanisms or version control tools.
-    The goal is to complement and extend, not replace, the workflow that work for you.
+    The goal is to complement and extend, not replace, the workflow that works for you.
 
 
 Design principles
@@ -39,7 +39,7 @@ Design principles
 
 **Embrace automated testing.**
     It's impractical to check every scenarios between each release, but significant work has gone
-    into unittesting the CLI to avoid breaks between releases.
+    into unit testing the CLI to avoid breakage.
 
 
 Common uses for ksconf

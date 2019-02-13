@@ -4,7 +4,7 @@ Installation Guide
 KSCONF can be installed either as a Splunk app or a Python package.  Picking the option that's right
 for you is typically fairly easy.
 
-Unless you have experence with Python packaging or are planning on customizing or extending ksconf
+Unless you have experience with Python packaging or are planning on customizing or extending ksconf
 then :ref:`Splunk app <install_splunk_app>` is likely the best place for you to start.  If you go
 with the native Python option, then you have many additional decisions to make.
 
@@ -117,14 +117,14 @@ If you're on a Mac or Linux, and would like to enable bash completion, run these
    pip install argcomplete
    echo 'eval "$(register-python-argcomplete ksconf)"' >> ~/.bashrc
 
-(Currently for Splunk APP installs; not because it can't work, but because it's not documented or
+(Currently not available for Splunk APP installs; not because it can't work, but because it's not documented or
 tested yet. Pull request welcome.)
 
 Ran into issues?
 ~~~~~~~~~~~~~~~~
 
 If you run into any issues, then please dive into the :doc:`install_advanced`.  Much time and effort
-was placed into compiling that information from all the scenarios we encounted, so please check it
+was placed into compiling that information from all the scenarios we encountered, so please check it
 out.  You may want to start under the :ref:`python_troubleshooting`.
 
 
@@ -174,7 +174,7 @@ The output should look something like this:
     Copyright (c) 2019 Kintyre Solutions, Inc, all rights reserved.
     Licensed under Apache Public License v2
 
-      kintyre_splunk_conf  (0.5.5)
+      kintyre_splunk_conf  (0.6.2)
 
         Commands:
           check           (stable)

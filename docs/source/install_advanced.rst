@@ -26,7 +26,7 @@ use Splunk's embedded Python. For everyone else, please start with the one-liner
         - ``LD_LIBARY``
         - RedHat Software Collections
 
-    If this list seems daungting, head over to :ref:`install_splunk_app`.  There's no shame in it.
+    If this list seems daunting, head over to :ref:`install_splunk_app`.  There's no shame in it.
 
 
 ..  contents::
@@ -197,7 +197,7 @@ Typical embedded Splunk install example:
 
 Reasons why this is a non-ideal install approach:
 
--   Lower performance since all python files live in a zip file, and precompiled version's can be
+-   Lower performance since all python files live in a zip file, and pre-compiled version's can be
     cached.
 -   No standard install pathway (doesn't use pip); user must manually copy the executable into place.
 -   Uses a non-standard build process. (May not be a big deal, but could cause things to break in

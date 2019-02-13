@@ -1,4 +1,3 @@
 []
-read = *
-write = [ admins ]
+access = read : [ * ], write : [ admins ]
 export = none

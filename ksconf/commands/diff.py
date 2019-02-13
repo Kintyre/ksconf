@@ -23,7 +23,7 @@ class DiffCmd(KsconfCmd):
 
     This command ignores textual differences (like order, spacing, and comments) and
     focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-    within any given value will be compared.  Multiline fields are compared in are
+    within any given value will be compared.  Multi-line fields are compared in are
     compared in a more traditional 'diff' output so that long savedsearches and
     macros can be compared more easily.
     """)

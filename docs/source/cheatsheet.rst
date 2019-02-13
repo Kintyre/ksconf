@@ -4,7 +4,7 @@ Cheat Sheet
 .. I guess technically this is somewhere between a cheatsheet and tutorial???  but it works for now
 
 
-Here's a quick rundown of a bunch of frequently used ``ksconf`` comamnds that often come in handy.
+Here's a quick rundown of handy ``ksconf`` commands:
 
 
 ..  note::
@@ -37,7 +37,7 @@ Sorting content
 ~~~~~~~~~~~~~~~
 
 To create a normalized version a configuration file, to make it easier to merging with
-:command:`git`, run an inplace sort like so:
+:command:`git`, run an in-place sort like so:
 
     .. code-block:: sh
 
@@ -121,7 +121,7 @@ Migrating content between apps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Say you want to move a bunch of savedsearch from ``search`` into a more appropriate app.  First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`
+Say you want to move a bunch of savedsearches from ``search`` into a more appropriate app.  First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`
 
     .. code-block:: sh
 
@@ -140,7 +140,7 @@ And now, to avoid duplication and confusion, you want to remove that exact same 
         mv search/local/savedsearches.conf \
             /my/backup/location/search-savedsearches-$(date +%Y%M%D).conf
 
-        # Move the update file inplace
+        # Move the update file in place
         mv search/local/savedsearches.conf.NEW search/local/savedsearches.conf
 
 
@@ -161,7 +161,7 @@ You're working from the new server and would generally prefer to keep whatever o
 (This is because some of your users copied over some of their critical alerts manually while waiting for the migration to complete, and they've made updates they don't want to lose.)
 
 
-After stopping splunk on the new server, run the following commands.
+After stopping Splunk on the new server, run the following commands.
 
 
     .. code-block:: sh

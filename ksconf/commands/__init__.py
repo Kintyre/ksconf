@@ -258,7 +258,7 @@ class ConfFileType(object):
 class DescriptionFormatterNoReST(argparse.HelpFormatter):
     @staticmethod
     def strip_simple_rest(s):
-        # No hanling of embedded backticks for now...  let's keep this simple
+        # No handling of embedded backticks for now...  let's keep this simple
         import re
         # Replace literals ``X`` with single quote version:  'X'
         s = re.sub(r'``([^`]*)``', r"'\1'", s)

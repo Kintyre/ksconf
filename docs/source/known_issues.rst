@@ -7,7 +7,7 @@ General
 
 -   File encoding issues:
 -   Byte order markers and specific encodings are NOT preserved. All file
-    will be writen out as UTF-8, by default.
+    will be written out as UTF-8, by default.
 
 
 Splunk app

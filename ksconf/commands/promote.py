@@ -196,7 +196,7 @@ class PromoteCmd(KsconfCmd):
 
         if args.mode == "ask":
             # Show a summary of how many new stanzas would be copied across; how many key changes.
-            # ANd either accept all (batch) or pick selectively (batch)
+            # And either accept all (batch) or pick selectively (batch)
             delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
             delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
             summarize_cfg_diffs(delta, self.stderr)

@@ -7,7 +7,7 @@ Usage example:
 Example workflow:
    1. cp default/props.conf local/props.conf
    2. vi local/props.conf (edit JUST the lines you want to change)
-   3. splconf minimize --target=local/props.conf default/props.conf
+   3. ksconf minimize --target=local/props.conf default/props.conf
       (You could take this a step further by appending "$SPLUNK_HOME/system/default/props.conf"
       and removing any SHOULD_LINEMERGE = true entries (for example)
 
@@ -114,8 +114,8 @@ class MinimizeCmd(KsconfCmd):
 
         minz_cfg = dict(local_cfg)
 
-        # This may be a bit too simplistic.  Weird interplay may exit between if [default] stanza
-        # and ocal [Upstream] stanza line up, but [Upstream] in our default file does not.
+        # This may be a bit too simplistic.  Weird interplay may exists between a [default] stanza
+        # and local [Upstream] stanza line up, but [Upstream] in our default file does not.
         # XXX:  Add a unit test!
 
         diffs = compare_cfgs(default_cfg, local_cfg, allow_level0=False)

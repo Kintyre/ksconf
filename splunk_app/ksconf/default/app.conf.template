@@ -5,7 +5,7 @@ build = {{BUILD}}
 [ui]
 is_visible = 1
 show_in_nav = 1
-label = KSCONF
+label = KSCONF app for Splunk
 attribution_link = https://ksconf.readthedocs.io/en/latest/license.html
 
 [package]
@@ -13,12 +13,12 @@ id = ksconf
 check_for_updates = true
 
 [launcher]
-author = Lowell Alleman
+author = lalleman
 version = {{VERSION}}
 description = Kintyre Splunk CONFiguration tool.  \
     Provides the ksconf CLI tool for managing your Splunk deployment.
 
-[author=lowell]
+[author=lalleman]
 email = lowell@kintyre.co
 company = Kintyre
 

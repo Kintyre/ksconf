@@ -40,7 +40,7 @@ ksconf unarchive
         If a git commit is incorrect, simply roll it back with ``git reset`` or fix it with a
         ``git commit --amend`` before the changes are pushed anywhere else.  There's no native
         ``--dry-run`` or undo for unarchive mode because that's why you're using git in the first
-        place, right? (And such features would require significant overhead and unittesting)
+        place, right? (And such features would require significant overhead and unit testing)
 
     SPL
         Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)

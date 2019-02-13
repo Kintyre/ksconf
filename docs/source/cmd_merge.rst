@@ -8,3 +8,5 @@ ksconf merge
     :func: build_cli_parser
     :path: merge
     :nodefault:
+
+..  TODO:  Add an examples or two here.

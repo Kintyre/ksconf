@@ -150,7 +150,7 @@ ksconf diff
     
     This command ignores textual differences (like order, spacing, and comments) and
     focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-    within any given value will be compared.  Multiline fields are compared in are
+    within any given value will be compared.  Multi-line fields are compared in are
     compared in a more traditional 'diff' output so that long savedsearches and
     macros can be compared more easily.
     
@@ -322,8 +322,8 @@ ksconf merge
       -h, --help            show this help message and exit
       --target FILE, -t FILE
                             Save the merged configuration files to this target
-                            file. If not provided. the the merged conf is written
-                            to standard output.
+                            file. If not provided. the merged conf is written to
+                            standard output.
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes in 'diff' format. If TARGET doesn't
                             exist, then show the merged file.
@@ -416,7 +416,7 @@ ksconf sort
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    inplace when the -i' option is used.
+    in-place when the -i' option is used.
     
     Manually managed conf files can be blacklisted by add a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
@@ -486,10 +486,10 @@ ksconf rest-export
                             this is derived from CONF, but sometime it's helpful
                             set this explicitly. Can be any valid Splunk conf file
                             type, example include 'app', 'props', 'tags',
-                            'savesdearches', and so on.
+                            'savedsearches', and so on.
       --extra-args EXTRA_ARGS
                             Extra arguments to pass to all CURL commands. Quote
-                            arguments on the commandline to prevent confusion
+                            arguments on the command line to prevent confusion
                             between arguments to ksconf vs curl.
     
     Output Control:
@@ -539,7 +539,7 @@ ksconf unarchive
                             a dynamic default directory that's created and managed
                             by the 'combine' mode.
       --exclude EXCLUDE, -e EXCLUDE
-                            Add a file pattern to exclude. Splunk's psudo-glob
+                            Add a file pattern to exclude. Splunk's pseudo-glob
                             patterns are supported here. '*' for any non-directory
                             match, '...' for ANY (including directories), and '?'
                             for a single character.

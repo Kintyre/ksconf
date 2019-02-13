@@ -58,7 +58,7 @@ class UnarchiveCmd(KsconfCmd):
             that's created and managed by the 'combine' mode."""
                             )).completer = DirectoriesCompleter()
         parser.add_argument("--exclude", "-e", action="append", default=[], help=dedent("""\
-            Add a file pattern to exclude.  Splunk's psudo-glob patterns are supported here.
+            Add a file pattern to exclude.  Splunk's pseudo-glob patterns are supported here.
             ``*`` for any non-directory match,
             ``...`` for ANY (including directories),
             and ``?`` for a single character."""))
@@ -255,7 +255,7 @@ class UnarchiveCmd(KsconfCmd):
                     else:
                         pattern = pattern[2:]
                     modified.append(pattern)
-                # If a pattern like 'tags.conf' or '*.bak' is provided, ues basename match (any dir)
+                # If a pattern like 'tags.conf' or '*.bak' is provided, use basename match (any dir)
                 elif "/" not in pattern:
                     modified.append("(^|.../)" + pattern)
                 else:

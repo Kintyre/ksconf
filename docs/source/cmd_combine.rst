@@ -17,7 +17,7 @@ ksconf combine
 
     --banner -b : @after
         For other on-going *combine* operations, it's helpful to inform any .conf file readers or potential editors that the file is automatically generated and therefore could be overwritten again.
-        For one-time *combine* operations, the default banner can be suppresed by passing in an empty string (``''``)
+        For one-time *combine* operations, the default banner can be suppressed by passing in an empty string (``''``)
 
 
 You may have noticed similarities between the ``combine`` and :ref:`merge <ksconf_cmd_merge>`
@@ -84,7 +84,7 @@ In this structure, you can see several layers of configurations at play:
 
     1.  The ``10-upstream`` layer appears to be the version of the default folder that shipped with
         the Cisco app.
-    2.  The ``20-my-org`` layer is small and only contains tweaks to a few savedsearch entires.
+    2.  The ``20-my-org`` layer is small and only contains tweaks to a few saved search entires.
     3.  The ``50-splunk-admin`` layer represents local settings changes to specify index
         configurations, and to augment the macros and transformations that ship with the default app.
     4.  And finally, ``70-firewall-admins`` contains some additional view (2 new, and 1 existing).

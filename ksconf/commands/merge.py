@@ -36,7 +36,7 @@ class MergeCmd(KsconfCmd):
                             type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
                             default=ConfFileProxy("<stdout>", "w", self.stdout), help=dedent("""\
             Save the merged configuration files to this target file.
-            If not provided. the the merged conf is written to standard output.""")
+            If not provided. the merged conf is written to standard output.""")
                             ).completer = conf_files_completer
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.

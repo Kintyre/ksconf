@@ -15,7 +15,7 @@ ksconf minimize
     --output : @after
            This option can be used to *preview* the actual changes.
            Sometimes if ``--dry-run`` mode produces too much output, it's helpful to look at the
-           acutal minimized version of the file in concrete form (rather than a relative format, like
+           actual minimized version of the file in concrete form (rather than a relative format, like
            a diff.  This may also be helpful in other workflows.
 
     --explode-default -E
@@ -31,9 +31,9 @@ ksconf minimize
            technically redundant.  This is often true of boolean flags like ``disabled`` or input
            intervals.
 
-           Note that if Splunk updates the stanzas itself, then your value may not longer be preseved.
+           Note that if Splunk updates the stanzas itself, then your value may not longer be preserved.
            This is simply the way Splunk updates conf files.
-           See :ref:`How Splunk write to conf files <splunk conf updates>` for more backgound.
+           See :ref:`How Splunk write to conf files <splunk conf updates>` for more background.
 
 Example usage
 ^^^^^^^^^^^^^

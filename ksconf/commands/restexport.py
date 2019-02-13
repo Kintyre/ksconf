@@ -161,12 +161,12 @@ class RestExportCmd(KsconfCmd):
                             help=dedent("""\
             Explicitly set the configuration file type.  By default this is derived from CONF, but
             sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
-            example include 'app', 'props', 'tags', 'savesdearches', and so on."""))
+            example include 'app', 'props', 'tags', 'savedsearches', and so on."""))
 
         parser.add_argument("--extra-args", action="append",
                             help=dedent("""\
             Extra arguments to pass to all CURL commands.
-            Quote arguments on the commandline to prevent confusion between arguments to ksconf vs
+            Quote arguments on the command line to prevent confusion between arguments to ksconf vs
             curl."""))
 
     @staticmethod
@@ -239,7 +239,7 @@ class RestExportCmd(KsconfCmd):
                         cc.extend_args(extra_arg)
 
                 if stanza_name is GLOBAL_STANZA:
-                    # XXX:  Research proper handling of default/global stanazas..
+                    # XXX:  Research proper handling of default/global stanzas..
                     # As-is, curl returns an HTTP error, but yet the new entry is added to the
                     # conf file.  So I suppose we could ignore the exit code?!    ¯\_(ツ)_/¯
                     stream.write("### WARN:  Writing to the default stanza may not work as "
