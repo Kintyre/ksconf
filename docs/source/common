@@ -7,6 +7,7 @@
 ..  _gitlint: https://jorisroovers.github.io/gitlint/
 ..  _kintyre-splunk-conf-wheel:  https://pypi.org/project/kintyre-splunk-conf/#files
 ..  _kintyre-splunk-conf:  https://pypi.org/project/kintyre-splunk-conf
+..  _ksconf repo: https://github.com/Kintyre/ksconf
 ..  _ksconf app for splunk: https://splunkbase.splunk.com/app/4383/
 ..  _pre-commit: https://pre-commit.com/
 ..  _python: https://www.python.org/downloads/

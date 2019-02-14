@@ -56,6 +56,7 @@ User Guide
     install
     cmd
     cheatsheet
+    contrib
     devel
     git
     random

@@ -10,10 +10,10 @@ Briefly describe the issue you are experiencing.  Tell us what you were trying t
 
 ## Environment
 
-* Ksconf version:  (Grab the first 2 text lines of output after running `ksconf --version`) 
-* OS & version used:  
+* Ksconf version:  (Grab the first 2 text lines of output after running `ksconf --version`)
+* OS & version used:
 * Python version:
-* Installed via:  (pip, git, standalone zip, Splunk's embedded python)
+* Installed via:  (pip, git, Splunk app, or so on)
 
 ## Details
 
