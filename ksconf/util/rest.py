@@ -101,3 +101,72 @@ class SplunkRestHelper(object):
                 r = self._put_new(entity, settings, owner, app)
             return r
         raise AssertionError("Unknown values for assume!")
+
+
+
+class SplunkRestSession(object):
+    def __init__(self, url):
+        from requests import Session
+        self.url = url
+        self._session = Session()
+        self._session_key = None
+
+    def set_verify(self, verify):
+        if not verify:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+            #import warnings
+            #warnings.filterwarnings("drop", category="InsecureRequestWarning")
+        self._session.verify = verify
+
+    def login(self, username, password):
+        url = build_rest_url(self.url, "auth/login")
+        data = {
+            "username": username,
+            "password": password,
+            "output_mode": "json"
+        }
+        resp = self._session.request("POST", url, data=data)
+        if resp.status_code > 400:
+            raise SplunkRestLoginException("Login failure for {}\n".format(username))
+        self._session_key = resp.json()["sessionKey"]
+
+    def set_sessionkey(self, key):
+        self._session_key = key
+
+    def get_entity(self):
+        return SplunkRestEntity()
+
+
+class SplunkRestEntity(object):
+
+    def __init__(self, endpoint, title, owner=None, app=None, sharing=None):
+        self._state = None
+        self.url = build_rest_url
+
+    def get(self):
+
+        pass
+
+    def post(self):
+        pass
+
+    def delete(self):
+        pass
+
+    @property
+    def content(self):
+        return dict
+
+    def enable(self):
+        pass
+
+    def disable(self):
+        pass
+
+    def name(self):
+        pass
+
+    def update(self):
+        pass
