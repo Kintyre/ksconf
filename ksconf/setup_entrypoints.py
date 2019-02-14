@@ -33,6 +33,7 @@ _entry_points = {
         Ep("snapshot",  "ksconf.commands.snapshot", "SnapshotCmd"),
         Ep("sort",      "ksconf.commands.sort",     "SortCmd"),
         Ep("rest-export", "ksconf.commands.restexport", "RestExportCmd"),
+        Ep("rest-publish", "ksconf.commands.restpublish", "RestPublishCmd"),
         Ep("unarchive", "ksconf.commands.unarchive","UnarchiveCmd"),
     ],
 }

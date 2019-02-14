@@ -23,6 +23,7 @@ from collections import OrderedDict
 
 from six.moves.urllib.parse import quote
 
+from ksconf.util.rest import build_rest_url
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
 from ksconf.consts import EXIT_CODE_SUCCESS
@@ -154,8 +155,10 @@ class RestExportCmd(KsconfCmd):
                             help="URL of Splunkd.  Default:  %(default)s")
         parser.add_argument("--app", default="$SPLUNK_APP",
                             help="Set the namespace (app name) for the endpoint")
-        parser.add_argument("--user", default="nobody",
-                            help="Set the user associated.  Typically the default of 'nobody' is "
+
+        parser.add_argument("--user", help="Deprecated.  Use --owner instead.")
+        parser.add_argument("--owner", default="nobody",
+                            help="Set the object owner.  Typically the default of 'nobody' is "
                                  "ideal if you want to share the configurations at the app-level.")
         parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
                             help=dedent("""\
@@ -170,15 +173,14 @@ class RestExportCmd(KsconfCmd):
             curl."""))
 
     @staticmethod
-    def build_rest_url(base, user, app, conf):
-        # XXX: Quote user & app; however for now we're still allowing the user to pass though an
+    def build_rest_url(base, owner, app, conf):
+        # XXX: Quote owner & app; however for now we're still allowing the user to pass though an
         #  environmental variable as-is and quoting would break that.   Need to make a decision,
         # for now this is not likely to be a big issue given app and user name restrictions.
-        url = "{}/servicesNS/{}/{}/configs/conf-{}".format(base, user, app, conf)
-        return url
+        return build_rest_url(base, "configs/conf-{}".format(conf), owner, app)
 
     def run(self, args):
-        ''' Snapshot multiple configuration files into a single json snapshot. '''
+        ''' Convert a conf file into a bunch of CURL commands'''
         """
 
         Some inspiration in the form of CURL commands...
@@ -205,6 +207,13 @@ class RestExportCmd(KsconfCmd):
          -d MV_ADD=0
         """
         stream = args.output
+
+        if args.user:       # pragma: no cover
+            from warnings import warn
+            warn("Use '--owner' instead of '--user'", DeprecationWarning)
+            if args.owner != "nobody":
+                raise ValueError("Can't use both --user and --owner at the same time!")
+            args.owner = args.user
 
         if args.pretty_print:
             line_breaks = 2
@@ -233,7 +242,7 @@ class RestExportCmd(KsconfCmd):
             for stanza_name, stanza_data in conf.items():
                 cc = CurlCommand()
                 cc.pretty_format = args.pretty_print
-                cc.url = self.build_rest_url(args.url, args.user, args.app, conf_type)
+                cc.url = self.build_rest_url(args.url, args.owner, args.app, conf_type)
                 if args.extra_args:
                     for extra_arg in args.extra_args:
                         cc.extend_args(extra_arg)

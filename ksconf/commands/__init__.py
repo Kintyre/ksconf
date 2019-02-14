@@ -23,6 +23,8 @@ __all__ = [
     "dedent",
     "get_all_ksconf_cmds",
     "get_entrypoints",
+    "add_splunkd_access_args",
+    "add_splunkd_namespace",
 ]
 
 
@@ -366,6 +368,31 @@ class KsconfCmd(object):
         """ Any custom clean up work that needs done.  Always called if run() was.  Presence of
         exc_info indicates failure. """
         pass
+
+
+def add_splunkd_access_args(parser):
+    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+    parser.add_argument("--url", default="https://localhost:8089",
+                        help="URL of Splunkd.  Default:  %(default)s")
+    parser.add_argument("--user", default="admin",
+                        help="Login username Splunkd.  Default:  %(default)s")
+    parser.add_argument("--pass", dest="password", default="changeme",
+                        help="Login password Splunkd.  Default:  %(default)s")
+    parser.add_argument("-k", "--insecure", action="store_true", default=False,
+                        help="Disable SSL cert validation.")
+    return parser
+
+
+def add_splunkd_namespace(parser):
+    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+    parser.add_argument("--app", default="$SPLUNK_APP",
+                        help="Set the namespace (app name) for the endpoint")
+    parser.add_argument("--owner", default="nobody",
+                        help="Set the user who owns the content.  "
+                             "The default of 'nobody' works well for app-level sharing.")
+    parser.add_argument("--sharing", default="global", choices=["user", "app", "global"],
+                        help="Set the sharing mode.")
+    return parser
 
 
 def _get_entrypoints_lib(group, name=None):
