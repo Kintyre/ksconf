@@ -452,7 +452,7 @@ ksconf rest-export
 
     usage: ksconf rest-export [-h] [--output FILE] [--disable-auth-output]
                               [--pretty-print] [-u | -D] [--url URL] [--app APP]
-                              [--user USER] [--conf TYPE]
+                              [--user USER] [--owner OWNER] [--conf TYPE]
                               [--extra-args EXTRA_ARGS]
                               CONF [CONF ...]
     
@@ -479,7 +479,8 @@ ksconf rest-export
                             entities only; the default folder cannot be updated.
       --url URL             URL of Splunkd. Default: https://localhost:8089
       --app APP             Set the namespace (app name) for the endpoint
-      --user USER           Set the user associated. Typically the default of
+      --user USER           Deprecated. Use --owner instead.
+      --owner OWNER         Set the object owner. Typically the default of
                             'nobody' is ideal if you want to share the
                             configurations at the app-level.
       --conf TYPE           Explicitly set the configuration file type. By default
