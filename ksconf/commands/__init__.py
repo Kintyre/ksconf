@@ -47,7 +47,7 @@ class ConfFileProxy(object):
             self._is_file = is_file
         elif stream:
             self._is_file = False
-        elif self.is_writable() or os.path.isfile(name):
+        elif self.writable() or os.path.isfile(name):
             self._is_file = True
         else:
             self._is_file = False
@@ -57,13 +57,14 @@ class ConfFileProxy(object):
         self._data = None
         self._parse_profile = parse_profile or {}
 
-    def is_readable(self):
+    def readable(self):
         return "r" in self._mode
 
-    def is_writable(self):
+    def writable(self):
         return "+" in self._mode or "w" in self._mode
 
     def is_file(self):
+        # Is "seekable" a more appropriate distinction?  (match IOBase)
         return self._is_file
 
     def _type(self):    # pragma: no cover  (only used in exceptions)
@@ -117,7 +118,7 @@ class ConfFileProxy(object):
         return self._data
 
     def load(self, profile=None):
-        if not self.is_readable():
+        if not self.readable():
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
             raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
                                                                               self._mode))
@@ -128,7 +129,7 @@ class ConfFileProxy(object):
         return data
 
     def dump(self, data):
-        if not self.is_writable():      # pragma: no cover
+        if not self.writable():      # pragma: no cover
             raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
                                                                             self._mode))
         # Feels like the right thing to do????  OR self._data = data
@@ -306,6 +307,14 @@ class KsconfCmd(object):
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
+    @classmethod
+    def _handle_imports(cls):
+        """ Child classes can override this to provide a save place to import 3rd party modules.
+
+        Any ImportErrors thrown here are handled as a special case.  Allow the user of external
+        module without killing the entire suite due to one missing library. """
+        pass
+
     '''
     def redirect_io(self, stdin=None, stdout=None, stderr=None):
         if stdin is not None:
@@ -469,6 +478,13 @@ def get_all_ksconf_cmds(ignore_errors=False):
     for (name, entry) in get_entrypoints("ksconf_cmd").items():
         try:
             cmd_cls = entry.load()
+
+            try:
+                cmd_cls._handle_imports()
+            except ImportError as e:
+                warn("Unable to load external modules for {}.  Skipping."
+                     "{}.".format(name, e), ImportWarning)
+                continue
         except ImportError as e:
             if ignore_errors:
                 warn("Unable to load entrypoint for {}.  Skipping."

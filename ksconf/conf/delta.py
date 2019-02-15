@@ -27,6 +27,31 @@ DiffStanza = namedtuple("DiffStanza", ("type", "stanza"))
 DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
 
 
+def compare_stanzas(a, b, stanza_name):
+    # Note: make sure that '==' operator continues work with custom conf parsing classes.
+    if a == b:
+        yield DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)
+        return
+    kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+    if not kv_common:
+        # No keys in common, just swap
+        yield DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza_name), a, b)
+        return
+
+    # Level 2 - Key comparisons
+    for key in kv_a:
+        yield DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza_name, key), None, a[key])
+    for key in kv_b:
+        yield DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza_name, key), b[key], None)
+    for key in kv_common:
+        a_ = a[key]
+        b_ = b[key]
+        if a_ == b_:
+            yield DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza_name, key), a_, b_)
+        else:
+            yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
+
+
 def compare_cfgs(a, b, allow_level0=True):
     '''
     Return list of 5-tuples describing how to turn a into b.
@@ -92,30 +117,7 @@ def compare_cfgs(a, b, allow_level0=True):
 
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
-            a_ = a[stanza]
-            b_ = b[stanza]
-            # Note: make sure that '==' operator continues work with custom conf parsing classes.
-            if a_ == b_:
-                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza), a_, b_))
-                continue
-            kv_a, kv_common, kv_b = _cmp_sets(list(a_.keys()), list(b_.keys()))
-            if not kv_common:
-                # No keys in common, just swap
-                delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza), a_, b_))
-                continue
-
-            # Level 2 - Key comparisons
-            for key in kv_a:
-                delta.append(DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza, key), None, a_[key]))
-            for key in kv_b:
-                delta.append(DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza, key), b_[key], None))
-            for key in kv_common:
-                a__ = a_[key]
-                b__ = b_[key]
-                if a__ == b__:
-                    delta.append(DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza, key), a__, b__))
-                else:
-                    delta.append(DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza, key), a__, b__))
+            delta.extend(compare_stanzas(a[stanza], b[stanza], stanza))
         elif stanza in a:
             # A only
             delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))

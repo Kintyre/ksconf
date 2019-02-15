@@ -14,34 +14,18 @@ import os
 import sys
 from argparse import ArgumentParser
 
-from six.moves.urllib.parse import quote
+from six.moves.urllib.parse import urlparse
 
-from ksconf.util.rest import SplunkRestHelper
-from ksconf.commands import KsconfCmd, dedent, ConfFileType, add_splunkd_access_args, add_splunkd_namespace
-from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
+from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
+    add_splunkd_access_args, add_splunkd_namespace
+from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA, conf_attr_boolean
+from ksconf.conf.delta import compare_stanzas, show_diff, DIFF_OP_EQUAL
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 
 
-#import splunklib.client
-#c = splunklib.client.Configurations
-
-
-
-
-
-
-
-def enable_requests_debug():
-    # https://stackoverflow.com/questions/10588644/how-can-i-see-the-entire-http-request-thats-being-sent-by-my-python-application
-    # Seems to work without the logging stuff (at least with Python 2.7); needs more testing
-    try:
-        import http.client as http_client
-    except ImportError:
-        # Python 2
-        import httplib as http_client
-    http_client.HTTPConnection.debuglevel = 1
-
+# Lazy loaded by _handle_imports()
+splunklib = None
 
 
 class RestPublishCmd(KsconfCmd):
@@ -62,6 +46,17 @@ class RestPublishCmd(KsconfCmd):
 
     maturity = "alpha"
 
+    def __init__(self, *args, **kwargs):
+        super(RestPublishCmd, self).__init__(*args, **kwargs)
+        self._service = None
+
+    @classmethod
+    def _handle_imports(cls):
+        g = globals()
+        if globals()["splunklib"] is None:
+            import splunklib.client
+            g["splunklib"] = splunklib
+
     def register_args(self, parser):
         # type: (ArgumentParser) -> None
         parser.add_argument("conf", metavar="CONF", nargs="+",
@@ -71,9 +66,9 @@ class RestPublishCmd(KsconfCmd):
 
         parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
                             help=dedent("""\
-                    Explicitly set the configuration file type.  By default this is derived from CONF, but
-                    sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
-                    example include 'app', 'props', 'tags', 'savedsearches', and so on."""))
+            Explicitly set the configuration file type.  By default this is derived from CONF, but
+            sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
+            example include 'app', 'props', 'tags', 'savedsearches', and so on."""))
 
         #add_splunkd_namespace(
         #    add_splunkd_access_args(parser.add_argument("Splunkd endpoint")))
@@ -94,80 +89,76 @@ class RestPublishCmd(KsconfCmd):
             NOTE:  This works for 'local' entities only; the default folder cannot be updated.
             """))
 
-    def run(self, args):
-        """
-        curl -k https://SPLUNK:8089/servicesNS/nobody/my_app/configs/conf-transforms \
-         -H "Authorization: Splunk $SPLUNKDAUTH" -X POST \
-         -d name=single_quote_kv \
-         -d REGEX="(%5B%5E%3D%5Cs%5D%2B)%3D%27(%5B%5E%27%5D%2B)%27" \
-         -d FORMAT='$1::$2'
 
-        UPDATE EXISTING:  (note the change in URL/name attribute)
+    @staticmethod
+    def make_boolean(stanza, attr="disabled"):
+        if attr in stanza:
+            stanza[attr] = "1" if conf_attr_boolean(stanza[attr]) else "0"
 
-        curl -k https://SPLUNK:8089/servicesNS/nobody/my_app/configs/conf-transforms/single_quote_kv \
-         -H "Authorization: Splunk $SPLUNKDAUTH" -X POST \
-         -d REGEX="(%5B%5E%3D%5Cs%5D%2B)%3D%27(%5B%5E%27%5D%2B)%27" \
-         -d FORMAT='$1::$2' \
-         -d MV_ADD=0
-        """
-        rest = SplunkRestHelper(args.url)
-        if args.insecure:
-            rest.set_verify(False)
-        rest.login(args.user, args.password)
+    def connect_splunkd(self, args):
+        # Take username/password form URL, if encoded there; otherwise use defaults from argparse
+        up = urlparse(args.url)
+        username = up.username or args.user
+        password = up.password or args.password
+        self._service = splunklib.client.connect(
+            hostname=up.hostname, port=up.port, username=username, password=password,
+            owner=args.owner, app=args.app, sharing=args.sharing)
 
-        enable_requests_debug()
-        #rest._session.debug = True
+    def handle_conf_file(self, args, conf_proxy):
+        if args.conf_type:
+            conf_type = args.conf_type
+        else:
+            conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-        for conf_proxy in args.conf:
-            conf = conf_proxy.data
+        config_file = self._service.confs[conf_type]
+        conf = conf_proxy.data
 
-            if args.conf_type:
-                conf_type = args.conf_type
+        for stanza_name, stanza_data in conf.items():
+
+            if stanza_name is GLOBAL_STANZA:
+                # XXX:  Research proper handling of default/global stanzas..
+                # As-is, curl returns an HTTP error, but yet the new entry is added to the
+                # conf file.  So I suppose we could ignore the exit code?!    ¯\_(ツ)_/¯
+                sys.stderr.write("Refusing to update the [default] entity.\n")
+                continue
+
+            if args.delete:
+                raise NotImplementedError
             else:
-                conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
+                action, delta = self.publish_conf(stanza_name, stanza_data, config_file)
 
-            for stanza_name, stanza_data in conf.items():
+            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name), action, len(delta)))
+            show_diff(self.stdout, delta)
 
-                #url = self.build_rest_url(args.url, args.user, args.app, conf_type)
+    def publish_conf(self, stanza_name, stanza_data, config_file):
+        # XXX:  Optimize for round trips to the server
+        self.make_boolean(stanza_data)
+        if stanza_name in config_file:
+            ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
+            stz = config_file[stanza_name]
+            stz_data = stz.content
+            self.make_boolean(stz_data)
+            ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
+            data = {key: value for (key, value) in stz_data.items() if key in stanza_data}
+            ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
+            delta = list(compare_stanzas(data, stanza_data, stanza_name))
 
-                data = dict(stanza_data)
+            if len(delta) == 1 and delta[0][0] == DIFF_OP_EQUAL:
+                ## print("NO CHANGE NEEDED.")
+                return ("nochange", [])
+            stz.update(**stanza_data)
+            return ("update", delta)
+        else:
+            ## print("Stanza {} new -- publishing!".format(stanza_name))
+            config_file.create(stanza_name, **stanza_data)
+            return ("new", list(compare_stanzas({}, stanza_data, stanza_name)))
 
+    def run(self, args):
+        if args.insecure:
+            raise NotImplementedError("Need to implement -k feature")
 
-                entity = "configs/conf-{}".format(conf_type)
-
-                method = "post"
-
-                if stanza_name is GLOBAL_STANZA:
-                    # XXX:  Research proper handling of default/global stanzas..
-                    # As-is, curl returns an HTTP error, but yet the new entry is added to the
-                    # conf file.  So I suppose we could ignore the exit code?!    ¯\_(ツ)_/¯
-                    sys.stderr.write("Refusing to update the [default] entity.\n")
-                    # entity += "/default"
-                '''
-                elif args.update or args.delete:
-                    entity += "/" + quote(stanza_name, "")  # Must quote '/'s too.
-                else:
-                    data["name"] = stanza_name
-                '''
-
-                entity += "/" + quote(stanza_name, "")
-
-                if args.delete:
-                    method = "delete"
-                else:
-                    # Add individual keys
-                    for (key, value) in stanza_data.items():
-                        data[key] = value
-
-                r = rest.get_entity(entity, args.owner, args.app)
-                import json
-                j = r.json()
-                print(json.dumps(j, indent=2, sort_keys=True))
-                if method == "post":
-                    r = rest.put_entity(entity, data, args.owner, args.app)
-                elif method == "delete":
-                    r = rest.put_entity(entity, data, args.owner, args.app)
-
-                print("Published [{}]    response: {}  {}".format(entity, r.status_code, r.json()))
+        self.connect_splunkd(args)
+        for conf_proxy in args.conf:    # type: ConfFileProxy
+            self.handle_conf_file(args, conf_proxy)
 
         return EXIT_CODE_SUCCESS

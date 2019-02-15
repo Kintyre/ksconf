@@ -20,6 +20,9 @@ for k in list(os.environ):
     if k.startswith("GIT_"):
         del os.environ[k]
 
+# Tell KSCONF cmd loaders to use the locally defined list, and ignore external
+os.environ["KSCONF_DISABLE_PLUGINS"] = "ksconf_cmd"
+
 
 def run_all():
     loader = unittest.TestLoader()
