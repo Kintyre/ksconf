@@ -19,7 +19,7 @@ from six.moves.urllib.parse import urlparse
 from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
     add_splunkd_access_args, add_splunkd_namespace
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA, conf_attr_boolean
-from ksconf.conf.delta import compare_stanzas, show_diff, DIFF_OP_EQUAL
+from ksconf.conf.delta import compare_stanzas, show_diff, DIFF_OP_EQUAL, DiffHeader
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 
@@ -77,11 +77,13 @@ class RestPublishCmd(KsconfCmd):
             add_splunkd_access_args(parser))
 
         parsg1 = parser.add_mutually_exclusive_group(required=False)
+        '''
         parsg1.add_argument("-u", "--update", action="store_true", default=False,
                             help="Assume that the REST entities already exist.")
         parsg1.add_argument("--update-only", action="store_true", default=False,
                             help="Only update existing entities.  "
                                  "Non-existent entries will be skipped.")
+        '''
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
                             help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.
@@ -119,39 +121,72 @@ class RestPublishCmd(KsconfCmd):
                 # XXX:  Research proper handling of default/global stanzas..
                 # As-is, curl returns an HTTP error, but yet the new entry is added to the
                 # conf file.  So I suppose we could ignore the exit code?!    ¯\_(ツ)_/¯
-                sys.stderr.write("Refusing to update the [default] entity.\n")
+                sys.stderr.write("Refusing to touch the [default] stanza.  Too much could go wrong.\n")
                 continue
 
             if args.delete:
-                raise NotImplementedError
+                action, info = self.delete_conf(stanza_name, stanza_data, config_file)
             else:
-                action, delta = self.publish_conf(stanza_name, stanza_data, config_file)
+                action, info = self.publish_conf(stanza_name, stanza_data, config_file)
 
-            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name), action, len(delta)))
-            show_diff(self.stdout, delta)
+            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name), action, len(info.get("delta",[]))))
+
+            update_time = info.get("updated", 0)
+            rest_header = DiffHeader(info.get("path", config_file.path), update_time)
+            if action != "nochange" and "delta" in info:
+                show_diff(self.stdout, info["delta"], headers=(conf_proxy.name, rest_header))
 
     def publish_conf(self, stanza_name, stanza_data, config_file):
         # XXX:  Optimize for round trips to the server
+        res = {}
         self.make_boolean(stanza_data)
         if stanza_name in config_file:
             ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
             stz = config_file[stanza_name]
             stz_data = stz.content
             self.make_boolean(stz_data)
+            res["path"] = stz.path
+            try:
+                res["updated"] = stz.state["updated"]
+            except:
+                # debug
+                raise
             ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = {key: value for (key, value) in stz_data.items() if key in stanza_data}
             ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
-            delta = list(compare_stanzas(data, stanza_data, stanza_name))
-
+            delta = res["delta"] = list(compare_stanzas(data, stanza_data, stanza_name))
             if len(delta) == 1 and delta[0][0] == DIFF_OP_EQUAL:
                 ## print("NO CHANGE NEEDED.")
-                return ("nochange", [])
+                res["delta"] = []
+                return ("nochange", res)
             stz.update(**stanza_data)
-            return ("update", delta)
+            return ("update", res)
         else:
             ## print("Stanza {} new -- publishing!".format(stanza_name))
             config_file.create(stanza_name, **stanza_data)
-            return ("new", list(compare_stanzas({}, stanza_data, stanza_name)))
+            res["delta"] = list(compare_stanzas(stanza_data, {}, stanza_name))
+            return ("new", res)
+
+    def delete_conf(self, stanza_name, stanza_data, config_file):
+        res = {}
+        if stanza_name in config_file:
+            stz = config_file[stanza_name]
+            stz_data = stz.content
+            res["path"] = stz.path
+            try:
+                res["updated"] = stz.state["updated"]
+            except:
+                # debug
+                raise
+            self.make_boolean(stz_data)
+            ## print("Found {}".format(stz_data))
+            data = {key: value for (key, value) in stz_data.items() if key in stanza_data}
+            config_file.delete(stanza_name)
+            res["delta"] = list(compare_stanzas({}, data, stanza_name))
+            return ("deleted", res)
+        else:
+            res["delta"] = []
+            return ("nochange", res)
 
     def run(self, args):
         if args.insecure:

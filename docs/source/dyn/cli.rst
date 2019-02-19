@@ -512,8 +512,7 @@ ksconf rest-publish
 
     usage: ksconf rest-publish [-h] [--conf TYPE] [--url URL] [--user USER]
                                [--pass PASSWORD] [-k] [--app APP] [--owner OWNER]
-                               [--sharing {user,app,global}]
-                               [-u | --update-only | -D]
+                               [--sharing {user,app,global}] [-D]
                                CONF [CONF ...]
     
     Publish stanzas in a .conf file to a running Splunk instance via REST. This
@@ -544,9 +543,6 @@ ksconf rest-publish
                             'nobody' works well for app-level sharing.
       --sharing {user,app,global}
                             Set the sharing mode.
-      -u, --update          Assume that the REST entities already exist.
-      --update-only         Only update existing entities. Non-existent entries
-                            will be skipped.
       -D, --delete          Remove existing REST entities. This is a destructive
                             operation. In this mode, stanzas attributes are
                             unnecessary and therefore ignored. NOTE: This works
