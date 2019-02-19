@@ -9,7 +9,9 @@ import textwrap
 from io import open
 from textwrap import dedent
 from warnings import warn
+from collections import namedtuple
 
+from ksconf import KsconfPluginWarning
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
                                detect_by_bom
 from ksconf.consts import SMART_CREATE
@@ -474,30 +476,47 @@ def get_entrypoints(group, name=None):
         # Otherwise try next technique ...
 
 
-def get_all_ksconf_cmds(ignore_errors=False):
+KsconfCmdEntryPoint = namedtuple("KsconfCmdEntryPoint", ["name", "entry", "cmd_cls", "error"])
+
+
+def get_all_ksconf_cmds(on_error="warn"):
     for (name, entry) in get_entrypoints("ksconf_cmd").items():
         try:
             cmd_cls = entry.load()
-
-            try:
-                cmd_cls._handle_imports()
-            except ImportError as e:
-                warn("Unable to load external modules for {}.  Skipping."
-                     "{}.".format(name, e), ImportWarning)
-                continue
-        except ImportError as e:
-            if ignore_errors:
-                warn("Unable to load entrypoint for {}.  Skipping."
-                     "Base exception {}.".format(name, e), ImportWarning)
-                continue
+        except (ImportError, NameError, SyntaxError) as e:
+            if on_error == "warn":
+                warn("Unable to load entrypoint for {}.  Disabling."
+                     "Base exception {}.".format(name, e), KsconfPluginWarning)
+            elif on_error == "return":
+                error = "Internal error:  {}".format(e)
+                yield KsconfCmdEntryPoint(name, entry, None, error)
             else:
-                raise
-        if issubclass(cmd_cls, KsconfCmd):
-            yield (name, entry, cmd_cls)
-        else:
-            msg = "Issue loading class for entrypoint:  " \
-                  "{!r} is not derived from KsconfCmd".format(entry)
-            if ignore_errors:
-                warn(msg, ImportWarning)
+                raise e
+            continue
+        if not issubclass(cmd_cls, KsconfCmd):
+            msg = "Issue loading class for entrypoint:  Disabling." \
+                  "{!r} is not derived from KsconfCmd.  ".format(entry)
+            if on_error == "warn":
+                warn(msg, KsconfPluginWarning)
+            elif on_error == "return":
+                yield KsconfCmdEntryPoint(name, entry, cmd_cls, msg)
             else:
                 raise RuntimeError(msg)
+            continue
+        try:
+            cmd_cls._handle_imports()
+        except ImportError as e:
+            if hasattr(e, "name"):         # PY3
+                module = e.name
+            else:
+                module = e
+            if on_error == "warn":
+                warn("Unable to load external modules for {}.  Disabling.  "
+                     "{}.".format(name, module), KsconfPluginWarning)
+            elif on_error == "return":
+                error = "Missing 3rd party module:  {}".format(module)
+                yield KsconfCmdEntryPoint(name, entry, cmd_cls, error)
+            else:
+                raise e
+            continue
+        yield KsconfCmdEntryPoint(name, entry, cmd_cls, None)

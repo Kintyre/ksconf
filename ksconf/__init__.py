@@ -29,6 +29,10 @@ except ImportError:     # pragma: no cover
 
 
 
+class KsconfPluginWarning(Warning):
+    pass
+
+
 
 # Because how do you pick just just ONE?!!
 __ascii_sigs__ = (
