@@ -27,6 +27,28 @@ DiffStanza = namedtuple("DiffStanza", ("type", "stanza"))
 DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
 
 
+class DiffHeader(object):
+    def __init__(self, name, mtime=None):
+        self.name = name
+        if mtime:
+            self.mtime = mtime
+        else:
+            self.detect_mtime()
+
+    def detect_mtime(self):
+        try:
+            self.mtime = os.stat(self.name).st_mtime
+        except OSError:
+            self.mtime = 0
+
+    def __str__(self):
+        if isinstance(self.mtime, (int, float)):
+            ts = datetime.datetime.fromtimestamp(self.mtime)
+        else:
+            ts = self.mtime
+        return "{0:50} {1}".format(self.name, ts)
+
+
 def compare_stanzas(a, b, stanza_name):
     # Note: make sure that '==' operator continues work with custom conf parsing classes.
     if a == b:
@@ -160,21 +182,23 @@ _diff_color_mapping = {
 
 
 def _show_diff_header(stream, files, diff_line=None):
-    def header(sign, filename):
-        try:
-            mtime = os.stat(filename).st_mtime
-            ts = datetime.datetime.fromtimestamp(mtime)
-        except OSError:
-            ts = "1970-01-01 00:00:00"
-        stream.write("{0} {1:50} {2}\n".format(sign * 3, filename, ts))
-        tty_color(stream, ANSI_RESET)
+    headers = []
+
+    for f in files:
+        if isinstance(f, DiffHeader):
+            headers.append(f)
+        else:
+            headers.append(DiffHeader(f))
 
     tty_color(stream, ANSI_YELLOW, ANSI_BOLD)
     if diff_line:
-        stream.write("diff {} {} {}\n".format(diff_line, files[0], files[1]))
+        stream.write("diff {} {} {}\n".format(diff_line, headers[0].name, headers[1].name))
     tty_color(stream, ANSI_RESET)
-    header("-", files[0])
-    header("+", files[1])
+
+    stream.write("--- {0}\n".format(headers[0]))
+    stream.write("+++ {0}\n".format(headers[1]))
+    tty_color(stream, ANSI_RESET)
+
 
 
 def show_diff(stream, diffs, headers=None):
