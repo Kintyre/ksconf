@@ -12,7 +12,15 @@ Add deployment as a Splunk app for simplicity and significant docs cleanup.
 Release v0.6.3 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+..  notice:: We recommend a fresh install of the Splunk app due to packaging changes.
+
 -   Added :doc:`cheatsheet` to the docs.
+
+*Splunk app changes:*
+
+-   Modified installation of python package installation.  In previous releases, various ``.dist-info`` folders were created with version-specific names leading to a mismatch of package versions after upgrade.
+-   Changed Splunk app install script to ``install.py`` (it was ``bootstrap_bin.py``).  Hopefully this is more intuitive.
+-   Add windows support in ``install.py``.
 
 
 Release v0.6.2 (2019-02-09)

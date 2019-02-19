@@ -22,7 +22,7 @@
         Right now EVERYTHING about this app is read-only.  The <tt>ksconf</tt> command line tool can make changes to your filesystem, but only after you've opened a shell session, at which point you already have full access anywayss.
 
         <h3>Why we made this app</h3>
-        So, if this app doesn't really do much from the UI, why bother making it?  Well, simply put, it's an easier distribution model than dealing with all the python enviromental variations that currently exists across various flavors of OSes.  So once you've install this app, you can easily make the <tt>ksconf</tt> CLI tool available from the console.  There's a script to help you do this in the <tt>bin</tt> folder of this app.
+        So, if this app doesn't really do much from the UI, why bother making it?  Well, simply put, it's an easier distribution model than dealing with all the python enviromental variations that currently exists across various flavors of OSes.  So once you've install this app, you can easily make the <tt>ksconf</tt> CLI tool available from the console.  Run the <tt>install.py</tt> script to help you do this in the <tt>bin</tt> folder of this app.  More details are in the docs below.
 
         <h2>Learn more</h2>
         To stay up-to-date or help guide future developments, check us out on <a href="https://github.com/Kintyre/ksconf">GitHub</a>.

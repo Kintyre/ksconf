@@ -39,7 +39,7 @@ one-time registration command is need to make ``ksconf`` executable:
 
 ..  code-block:: shell
 
-    splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py
+    splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py
 
 
 

@@ -50,9 +50,12 @@ $PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}"
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
 rm -rf "${PIP_TARGET:?}/bin"
 
-echo "Building splunk package manifest file"
-# I'd like to remove the dist-info folders too, but not sure that's a good idea since we'd like to have entrypoints work.  Just not sure how that will work with app installs where things are never cleaned up.  May need to implement my own manifest and cleanup mechanism....?!?!
-( cd "$PIP_TARGET" || exit 9; B=$(basename "$PIP_TARGET"); cd ..; find "$B" ! -name '*.py[co]' > manifest.txt; )
+# Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other approaches considered (like manifest \w custom REST cleanup script) would likely be flagged as self-deleting files may be problematic for AppInspect.  Using an REST handler upgrade for this kind of thing also means that (1) the app isn't a simple as untarring the archive, and may not work correctly on SHCs.  Sticking with the "always-overwrite-all-your-old-files" appraoch.
+for di in "${PIP_TARGET}/"*.dist-info
+do
+    di_nover=$(echo "$di" | sed -E 's~^(.*/[a-zA-Z][a-zA-Z_-]+)-[0-9devrcitya-f+.]+\.dist-info~\1.dist-info~')
+    mv -v "$di" "$di_nover"
+done
 
 
 echo "KSCONF v$KSCONF_VERSION"

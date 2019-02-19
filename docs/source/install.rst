@@ -69,7 +69,7 @@ account and run this one-time bootstrap command.
 
 .. code-block:: sh
 
-   splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py
+   splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py
 
 This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
 or worse case ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
