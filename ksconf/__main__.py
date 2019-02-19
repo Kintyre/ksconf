@@ -17,12 +17,13 @@ from __future__ import unicode_literals
 
 import argparse
 import sys
+import os
 
 from collections import defaultdict
 
 import ksconf
 import ksconf.util
-from ksconf.commands import KsconfCmd, DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
+from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.util.completers import autocomplete
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
 
@@ -65,6 +66,7 @@ def build_cli_parser(do_formatter=False):
     version_info.append("Python: {}  ({})".format(sys.version.split()[0], sys.executable))
     if ksconf.__vcs_info__:
         version_info.append(ksconf.__vcs_info__)
+    version_info.append("Installed at: {}".format(os.path.dirname(os.path.abspath(ksconf.__file__))))
     # XXX:  Grab splunk version and home, if running as a splunk app
     version_info.append("Written by {}.".format(ksconf.__author__))
     version_info.append("Copyright {}, all rights reserved.".format(ksconf.__copyright__))
@@ -74,27 +76,37 @@ def build_cli_parser(do_formatter=False):
     subcommands = defaultdict(list)
 
     # XXX:  Eventually lazy load subcommands to save resources.   (Low priority)
-    for (name, entry, cmd_cls) in get_all_ksconf_cmds():
-        dist = entry.dist
+    for ep in get_all_ksconf_cmds(on_error="return"):
+        # (name, entry, cmd_cls, error)
+        dist = ep.entry.dist
         distro = ""
         if hasattr(dist, "version"):
             if hasattr(dist, "name"):
                 # entrypoints (required by ksconf)
-                distro = "{}  ({})".format(dist.name, entry.dist.version)
+                distro = "{}  ({})".format(dist.name, ep.entry.dist.version)
             elif hasattr(dist, "location") and hasattr(dist, "project_name"):   # pragma: no cover
                 # Attributes per pkg_resource  (currently disabled)
                 distro = "{}  ({})  @{}".format(dist.project_name, dist.version, dist.location)
-        subcommands[distro].append((name, cmd_cls))
-        cmd = cmd_cls(entry.name)
-        cmd.add_parser(subparsers)
+
+        subcommands[distro].append((ep.name, ep.cmd_cls, ep.error))
+        if ep.cmd_cls:
+            cmd = ep.cmd_cls(ep.entry.name)
+            cmd.add_parser(subparsers)
 
     for distro_name, items in sorted(subcommands.items()):
         if distro_name:
             version_info.append("\n  {}\n\n    Commands:".format(distro_name))
         else:
             version_info.append("\n\n    Commands:".format(distro_name))
-        for (name, cmd_cls) in items:
-            version_info.append("      {:15} ({})".format(name, cmd_cls.maturity))
+        for (name, cmd_cls, error) in items:
+            if cmd_cls is None:
+                m = "(?)"
+            else:
+                m = "({})".format(cmd_cls.maturity)
+            if error:
+                version_info.append("      {:15} {:10}  {}".format(name, m, error))
+            else:
+                version_info.append("      {:15} {:10}  OK".format(name, m))
 
     # Common settings
     '''

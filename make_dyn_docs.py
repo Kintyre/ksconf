@@ -109,14 +109,14 @@ def make_subcommands_table(csv_path):
         table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
-        for (name, _, cmd_cls) in get_all_ksconf_cmds():
+        for ep in get_all_ksconf_cmds():
             # Pros/conf links to the doc vs 'ref'?
             #ref_template = ":doc:`cmd_{}`"
             ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
             row = [
-                ref_template.format(name),
-                cmd_cls.maturity,
-                cmd_cls.help.replace("\n", " "),
+                ref_template.format(ep.name),
+                ep.cmd_cls.maturity,
+                ep.cmd_cls.help.replace("\n", " "),
             ]
             # Workaround csv module not supporting unicode in PY2
             if PY2:

@@ -65,3 +65,14 @@ def get_entrypoints_fallback(group):
     for ep in _entry_points[group]:
         entry_points[ep.name] = LocalEntryPoint(ep)
     return entry_points
+def debug():
+    # For debugging internally defined entrypoints
+    print("Builtin entrypoints:")
+    for (group, entries) in _entry_points.items():
+        print("[group]")
+        for ep in entries:
+            print("{0.name:15} = {0.module_name:30} : {0.object_name}".format(ep))
+        print("")
+
+if __name__ == '__main__':
+    debug()
