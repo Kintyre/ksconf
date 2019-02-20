@@ -8,6 +8,8 @@ LEVELS:
     3 - attribute
 """
 
+from __future__ import absolute_import, unicode_literals
+
 
 """
 
@@ -20,12 +22,14 @@ d = dict(zip(("conf", "stanza", "attribute"), (unquote(p) for p in stanza_name.s
 
 """
 
+
 import re
 
-from urllib import unquote
+import six
+
+from urllib import quote, unquote
 
 from ksconf.conf.parser import parse_conf
-from ksconf.conf.merge import merge_conf_dicts
 
 
 
@@ -50,6 +54,26 @@ class MetaLayer(object):
     def data(self):
         return self._data
 
+    def walk(self, _prefix=()):
+        if self._data:
+            yield _prefix
+        if self._children:
+            for child_name, child in six.iteritems(self._children):
+                # PY3: yield from
+                for r in child.walk(_prefix=_prefix+(child_name,)):
+                    yield r
+
+    def items(self, prefix=None):
+        """ Helpful when rebuilding the input file. """
+        if prefix is None:
+            prefix = ()
+        if self._data:
+            yield prefix, self._data
+        if self._children:
+            for child_name, child in six.iteritems(self._children):
+                # yield from  (PY3)
+                for r in child.items(prefix=prefix+(child_name,)):
+                    yield r
 
 
 
@@ -99,7 +123,7 @@ class MetaData(object):
             node = node.resolve(name)
         return node
 
-    def get_combined(self, *names):
+    def get(self, *names):
         node = self._meta
         layers = [ node.data ]
         for name in names:
@@ -110,8 +134,11 @@ class MetaData(object):
         #d["acesss"]
         return self.parse_meta(d)
 
-    def feed(self, stream):
+    def feed_file(self, stream):
         conf = parse_conf(stream)
+        self.feed_conf(conf)
+
+    def feed_conf(self, conf):
         for stanza_name, stanza_data in conf.items():
             parts = [ unquote(p) for p in stanza_name.split("/") ]
             if len(parts) == 1 and parts[0] in ("", "default", "global"):
@@ -119,5 +146,32 @@ class MetaData(object):
             meta_layer = self.get_layer(*parts)
             meta_layer.update(stanza_data)
 
-#    def iter_all(self):
-#        for
+    def iter_raw(self):
+        """ RAW """
+        return self._meta.items()
+
+    def walk(self):
+        for path in self._meta.walk():
+            yield (path, self.get(*path))
+
+    def write_stream(self, stream, sort=True):
+        if sort:
+            # Prefix level # to list for sorting purposes
+            data = [ (len(parts), parts, payload) for parts, payload in self.iter_raw() ]
+            data.sort()
+            raw = [ (i[1], i[2]) for i in data ]
+            del data
+        else:
+            raw = self.iter_raw()
+
+        for parts, payload in raw:
+            stanza = "/".join(quote(p, "") for p in parts)
+            stream.write("[{}]\n".format(stanza))
+            for attr in sorted(payload):
+                value = payload[attr]
+                if attr.startswith("#"):
+                    stream.write("{0}\n".format(value))
+                else:
+                    stream.write("{} = {}\n".format(attr, value))
+            # Trailing EOL, oh well...  fix that later
+            stream.write("\n")
