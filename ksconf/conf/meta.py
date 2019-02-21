@@ -1,5 +1,12 @@
 """
 
+Incomplete documentation available here:
+
+https://docs.splunk.com/Documentation/Splunk/latest/Admin/Defaultmetaconf
+
+Specifically, attribute-level ACls aren't discussed nor is the magic "import" directive.
+
+
 LEVELS:
 
     0 - global  (or 1 stanza="default")
@@ -27,7 +34,7 @@ import re
 
 import six
 
-from urllib import quote, unquote
+from six.moves.urllib.parse import quote, unquote
 
 from ksconf.conf.parser import parse_conf
 
