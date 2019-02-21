@@ -510,9 +510,9 @@ ksconf rest-publish
 
  .. code-block:: none
 
-    usage: ksconf rest-publish [-h] [--conf TYPE] [--url URL] [--user USER]
-                               [--pass PASSWORD] [-k] [--app APP] [--owner OWNER]
-                               [--sharing {user,app,global}] [-D]
+    usage: ksconf rest-publish [-h] [--conf TYPE] [-m META] [--url URL]
+                               [--user USER] [--pass PASSWORD] [-k] [--app APP]
+                               [--owner OWNER] [--sharing {user,app,global}] [-D]
                                CONF [CONF ...]
     
     Publish stanzas in a .conf file to a running Splunk instance via REST. This
@@ -521,8 +521,13 @@ ksconf rest-publish
     without user interaction. This can be used to push full configuration stanzas
     where you only have REST access and can't directly publish an app. In dry-run
     mode, the output of what would be pushed is shown. Keep in mind that ONLY the
-    attributes present in the conf file will be pushed. Setting permissions is
-    currently not supported.
+    attributes present in the conf file are pushed. Therefore it's possible for
+    the source .conf file to ultimately differ from what ends up on the server's
+    .conf file. To avoid this, you could remove the object using '--delete' mode
+    and then insert a new copy of the object. This will make the object
+    unavailable for a short period of time. Be aware that, for consistency, the
+    configs/conf-TYPE endpoint is used for this command. Therefore, a reload may
+    be required for the server to use the published config settings.
     
     positional arguments:
       CONF                  Configuration file(s) to export settings from.
@@ -534,6 +539,9 @@ ksconf rest-publish
                             set this explicitly. Can be any valid Splunk conf file
                             type, example include 'app', 'props', 'tags',
                             'savedsearches', and so on.
+      -m META, --meta META  Specify one or more '.meta' files to determine the
+                            desired read & write ACLs, owner, and sharing for
+                            objects in the CONF file.
       --url URL             URL of Splunkd. Default: https://localhost:8089
       --user USER           Login username Splunkd. Default: admin
       --pass PASSWORD       Login password Splunkd. Default: changeme
