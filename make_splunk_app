@@ -45,7 +45,7 @@ if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"
 mkdir -p "$PIP_TARGET"
 
 
-$PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}"
+$PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}" splunk-sdk
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
 rm -rf "${PIP_TARGET:?}/bin"
