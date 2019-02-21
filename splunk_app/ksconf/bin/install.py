@@ -1,3 +1,5 @@
+## No shebang here.  Why?  Ask AppInspect  ;-(
+import sys
 import os
 
 import _bootstrap
