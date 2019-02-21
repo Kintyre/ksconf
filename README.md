@@ -22,7 +22,7 @@ more than one layer of "default" (which splunk can't handle natively).
 **Splunk:**
 
  1. Download and install [KSCONF App for Splunk](https://splunkbase.splunk.com/app/4383/)
- 2. Run the command:  `splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/bootstrap_bin.py`
+ 2. Run the command:  `splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py`
 
 **Python:**
 
