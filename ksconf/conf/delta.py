@@ -11,7 +11,7 @@ import six
 from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
-from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
+from ksconf.util.terminal import TermColor, ANSI_RESET, ANSI_GREEN, ANSI_RED, ANSI_YELLOW, ANSI_BOLD
 
 ####################################################################################################
 ## Diff logic
@@ -192,18 +192,17 @@ def _show_diff_header(stream, files, diff_line=None):
         else:
             headers.append(DiffHeader(f))
 
-    tty_color(stream, ANSI_YELLOW, ANSI_BOLD)
-    if diff_line:
-        stream.write("diff {} {} {}\n".format(diff_line, headers[0].name, headers[1].name))
-    tty_color(stream, ANSI_RESET)
-
-    stream.write("--- {0}\n".format(headers[0]))
-    stream.write("+++ {0}\n".format(headers[1]))
-    tty_color(stream, ANSI_RESET)
-
+    with TermColor(stream) as tc:
+        tc.color(ANSI_YELLOW, ANSI_BOLD)
+        if diff_line:
+            stream.write("diff {} {} {}\n".format(diff_line, headers[0].name, headers[1].name))
+        tc.reset()
+        stream.write("--- {0}\n".format(headers[0]))
+        stream.write("+++ {0}\n".format(headers[1]))
 
 
 def show_diff(stream, diffs, headers=None):
+    tc = TermColor(stream)
     def write_key(key, value, prefix_=" "):
         if "\n" in value:
             write_multiline_key(key, value, prefix_)
@@ -215,24 +214,25 @@ def show_diff(stream, diffs, headers=None):
             stream.write(template.format(prefix_, key, value))
 
     def write_multiline_key(key, value, prefix_=" "):
-        lines = value.replace("\n", "\\\n").split("\n")
-        tty_color(stream, _diff_color_mapping.get(prefix_))
-        stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
-        for line in lines:
-            stream.write("{0}{1}\n".format(prefix_, line))
-        tty_color(stream, ANSI_RESET)
+        with tc:
+            lines = value.replace("\n", "\\\n").split("\n")
+            tc.color(_diff_color_mapping.get(prefix_))
+            stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
+            for line in lines:
+                stream.write("{0}{1}\n".format(prefix_, line))
 
     def show_value(value, stanza_, key, prefix_=""):
-        tty_color(stream, _diff_color_mapping.get(prefix_))
-        if isinstance(value, dict):
-            if stanza_ is not GLOBAL_STANZA:
-                stream.write("{0}[{1}]\n".format(prefix_, stanza_))
-            for x, y in sorted(six.iteritems(value)):
-                write_key(x, y, prefix_)
-            stream.write("\n")
-        else:
-            write_key(key, value, prefix_)
-        tty_color(stream, ANSI_RESET)
+        with tc:
+            tc.color(_diff_color_mapping.get(prefix_))
+            if isinstance(value, dict):
+                if stanza_ is not GLOBAL_STANZA:
+                    stream.write("{0}[{1}]\n".format(prefix_, stanza_))
+                for x, y in sorted(six.iteritems(value)):
+                    write_key(x, y, prefix_)
+                stream.write("\n")
+            else:
+                write_key(key, value, prefix_)
+
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
@@ -243,17 +243,18 @@ def show_diff(stream, diffs, headers=None):
         a = f(value_a)
         b = f(value_b)
         differ = difflib.Differ()
-        for d in differ.compare(a, b):
-            # Someday add "?" highlighting.  Trick is this should change color mid-line on the
-            # previous (one or two) lines.  (Google and see if somebody else solved this one already)
-            # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
-            tty_color(stream, _diff_color_mapping.get(d[0], 0))
-            # Differences in how difflib returns bytes/unicode?
-            if not isinstance(d, six.text_type):
-                d = d.decode(default_encoding)
-            stream.write(d)
-            tty_color(stream, ANSI_RESET)
-            stream.write("\n")
+        with tc:
+            for d in differ.compare(a, b):
+                # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+                # previous (one or two) lines.  (Google and see if somebody else solved this one already)
+                # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+                tc.color(_diff_color_mapping.get(d[0], 0))
+                # Differences in how difflib returns bytes/unicode?
+                if not isinstance(d, six.text_type):
+                    d = d.decode(default_encoding)
+                stream.write(d)
+                tc.reset()
+                stream.write("\n")
 
     # Global result:  no changes between files or no commonality between files
     if len(diffs) == 1 and isinstance(diffs[0].location, DiffGlobal):
@@ -312,10 +313,11 @@ def show_text_diff(stream, a, b):
     differ = difflib.Differ()
     lines_a = open(a, "r", encoding=default_encoding).readlines()
     lines_b = open(b, "r", encoding=default_encoding).readlines()
-    for d in differ.compare(lines_a, lines_b):
-        # Someday add "?" highlighting.  Trick is this should change color mid-line on the
-        # previous (one or two) lines.  (Google and see if somebody else solved this one already)
-        # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
-        tty_color(stream, _diff_color_mapping.get(d[0], 0))
-        stream.write(d)
-        tty_color(stream, ANSI_RESET)
+    with TermColor(stream) as tc:
+        for d in differ.compare(lines_a, lines_b):
+            # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+            # previous (one or two) lines.  (Google and see if somebody else solved this one already)
+            # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+            tc.color(_diff_color_mapping.get(d[0], 0))
+            stream.write(d)
+            tc.reset()
