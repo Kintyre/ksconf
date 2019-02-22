@@ -50,11 +50,20 @@ class DiffHeader(object):
 
 
 def compare_stanzas(a, b, stanza_name):
-    # Note: make sure that '==' operator continues work with custom conf parsing classes.
     if a == b:
         yield DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)
         return
-    kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+    elif not b:
+        # A only
+        yield DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a)
+        return
+    elif not b:
+        # B only
+        yield DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None)
+        return
+    else:
+        kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+
     if not kv_common:
         # No keys in common, just swap
         yield DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza_name), a, b)
@@ -136,16 +145,9 @@ def compare_cfgs(a, b, allow_level0=True):
     else:
         all_stanzas = list(all_stanzas)
     all_stanzas = sorted(all_stanzas)
-
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
             delta.extend(compare_stanzas(a[stanza], b[stanza], stanza))
-        elif stanza in a:
-            # A only
-            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
-        else:
-            # B only
-            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), b[stanza], None))
     return delta
 
 
