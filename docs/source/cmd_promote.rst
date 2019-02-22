@@ -46,8 +46,8 @@ Here are some of the safety mechanisms that exist, because ksconf tries hard not
 
 ..  tip::
 
-    Pairing ksconf with a version control tool like :command:`git`, while note required, is helpful here because it minimizes the scope of risk.
-    If you promote files frequently, and keep up with committing changes, then the surface area of potential loss is reduced.
+    Pairing ksconf with a version control tool like :command:`git`, while not required, does provide another layer of protection against loss or corruption.
+    If you promote and commit changes frequently then the surface area of potential loss is reduced.
 
 ..
 

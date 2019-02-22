@@ -365,7 +365,7 @@ def _format_stanza(stanza):
 
 
 def _extract_comments(section):
-    "Return a sequental list of comments REMOVED from a section dictionary"
+    "Return a sequential list of comments REMOVED from a section dictionary"
     comments = []
     for key, value in sorted(section.items()):
         if key.startswith("#-"):

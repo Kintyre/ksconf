@@ -67,7 +67,7 @@ class PromoteCmd(KsconfCmd):
     Promote .conf settings between layers using either either in batch mode (all
     changes) or interactive mode.
 
-    Frequently this is used to promote conf changed made via the UI (stored in
+    Frequently this is used to promote conf changes made via the UI (stored in
     the ``local`` folder) to a version-controlled directory, often ``default``.
     """)
     description = dedent("""\

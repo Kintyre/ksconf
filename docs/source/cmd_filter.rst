@@ -38,6 +38,25 @@ installed yet, then you'll understand that value of this.
 In many other cases, the usages of both ``ksconf filter`` and ``btool`` differ significantly.
 But there is some overlap.
 
+Examples
+--------
+
+Lift and shift
+~~~~~~~~~~~~~~
+
+Copy all indexes defined within a specific app.
+
+..  code-block:: sh
+
+    cd $SPLUNK_DB
+    for idx in $(ksconf filter $SPLUNK_HOME/etc/app/MyApp/default/indexes.conf --breif)
+    do
+        echo "Copy index ${idx}"
+        tar -czf "/migrate/export-${idx}" "${idx}"
+    done
+
+Now you'll have a copy all of the necessary indexes in one the the :file:`/migrate` folder to make *MyApp* work on another Splunk instance.  Of course there's likely other migration tasks to consider, like copying the actual app, this is just an exmaple of a step that ksconf can be used to help.
+
 
 
 Can I do the same thing with standard unix tools?

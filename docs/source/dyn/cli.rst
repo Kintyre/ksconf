@@ -37,7 +37,7 @@ ksconf
         filter              A stanza-aware GREP tool for conf files
         promote             Promote .conf settings between layers using either
                             either in batch mode (all changes) or interactive
-                            mode. Frequently this is used to promote conf changed
+                            mode. Frequently this is used to promote conf changes
                             made via the UI (stored in the 'local' folder) to a
                             version-controlled directory, often 'default'.
         merge               Merge two or more .conf files
@@ -70,7 +70,7 @@ ksconf check
     usage: ksconf check [-h] [--quiet] FILE [FILE ...]
     
     Provide basic syntax and sanity checking for Splunk's .conf files. Use
-    Splunk's builtin 'btool check' for a more robust validation of keys and
+    Splunk's builtin 'btool check' for a more robust validation of attributes and
     values. Consider using this utility as part of a pre-commit hook.
     
     positional arguments:
