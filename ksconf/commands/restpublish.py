@@ -34,16 +34,18 @@ class RestPublishCmd(KsconfCmd):
     description = dedent("""\
     Publish stanzas in a .conf file to a running Splunk instance via REST.  This requires access to
     the HTTPS endpoint of splunk.  By default, ksconf will handle both the creation of new stanzas
-    and the update of exists stanzas without user interaction.
+    and the update of exists stanzas.
 
     This can be used to push full configuration stanzas where you only have REST access and can't
     directly publish an app.
 
-    In dry-run mode, the output of what would be pushed is shown.  Keep in mind that ONLY the
-    attributes present in the conf file are pushed.  Therefore it's possible for the source .conf
-    file to ultimately differ from what ends up on the server's .conf file.  To avoid this, you
-    could remove the object using ``--delete`` mode and then insert a new copy of the object.
-    This will make the object unavailable for a short period of time.
+    Only attributes present in the conf file are pushed.  While this may seem obvious, this fact can
+    have profound implications in certain situations, like when using this command for continuous
+    updates.  This means that it's possible for the source .conf to ultimately differ from what ends
+    up on the server's .conf file.  One way to avoid this is to explicitly remove object using
+    ``--delete`` mode first, and then insert a new copy of the object.  Of course this means that
+    the object will be unavailable.  The other impact is that diffs only compares and shows a subset
+    of attribute.
 
     Be aware that, for consistency, the configs/conf-TYPE endpoint is used for this command.
     Therefore, a reload may be required for the server to use the published config settings.
@@ -98,7 +100,7 @@ class RestPublishCmd(KsconfCmd):
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
                             help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.
-            In this mode, stanzas attributes are unnecessary and therefore ignored.
+            In this mode, stanzas attributes are unnecessary.
             NOTE:  This works for 'local' entities only; the default folder cannot be updated.
             """))
 
@@ -125,7 +127,10 @@ class RestPublishCmd(KsconfCmd):
         config_file = self._service.confs[conf_type]
         conf = conf_proxy.data
 
-        for stanza_name, stanza_data in conf.items():
+        # Sorting stanza for consistent processing of large files.  No CLI option for now.
+        # XXX:  Support stanza order preservation after new parser is created (long-term)
+        for stanza_name in sorted(conf):
+            stanza_data = conf[stanza_name]
 
             if stanza_name is GLOBAL_STANZA:
                 # XXX:  Research proper handling of default/global stanzas..
@@ -170,9 +175,11 @@ class RestPublishCmd(KsconfCmd):
 
         # XXX:  Optimize for round trips to the server
         res = {}
+        # XXX:  Move boolean comparison stuff to the core delta detection library....
         self.make_boolean(stanza_data)
         if stanza_name in config_file:
             ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
+            # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);  If meta is given and where these are different than the defaults on the CLI?...
             stz = config_file[stanza_name]
             stz_data = stz.content
             self.make_boolean(stz_data)
@@ -191,11 +198,14 @@ class RestPublishCmd(KsconfCmd):
                 res["delta"] = []
                 action = "nochange"
             stz.update(**stanza_data)
+
+            # Any need to call .refresh() here to grab the state from the server?
             action = "update"
         else:
             ## print("Stanza {} new -- publishing!".format(stanza_name))
             stz = config_file.create(stanza_name, owner=owner, app=app, sharing=sharing, **stanza_data)
             res["delta"] = list(compare_stanzas(stanza_data, {}, stanza_name))
+            res["path"] = stz.path
             action = "new"
 
         # METADATA PUSH
@@ -207,10 +217,7 @@ class RestPublishCmd(KsconfCmd):
             res["meta"] = "Can't change meta according to 'can_change_perms'"
             return (action, res)
 
-        # ACL_FIELDS = ["access.read", "access.write", "owner", "sharing" ]
-
         # NOTE:  We don't support attribute-level metadata here (Need it?  2 words:  pull request)
-
         if not metadata:
             res["meta"] = "No metadata found for [{}/{}]".format(config_file.name, stanza_name)
             return (action, res)
@@ -254,8 +261,7 @@ class RestPublishCmd(KsconfCmd):
 
             res["meta_response"] = response
         except Exception:
-            #raise
-            # Don't die on exceptions for ACLs...  print the error and move on
+            # Don't die on exceptions for ACLs...  print the error and move on (too many things to go wrong here)
             import traceback
             traceback.print_exc()
             try:

@@ -517,17 +517,19 @@ ksconf rest-publish
     
     Publish stanzas in a .conf file to a running Splunk instance via REST. This
     requires access to the HTTPS endpoint of splunk. By default, ksconf will
-    handle both the creation of new stanzas and the update of exists stanzas
-    without user interaction. This can be used to push full configuration stanzas
-    where you only have REST access and can't directly publish an app. In dry-run
-    mode, the output of what would be pushed is shown. Keep in mind that ONLY the
-    attributes present in the conf file are pushed. Therefore it's possible for
-    the source .conf file to ultimately differ from what ends up on the server's
-    .conf file. To avoid this, you could remove the object using '--delete' mode
-    and then insert a new copy of the object. This will make the object
-    unavailable for a short period of time. Be aware that, for consistency, the
-    configs/conf-TYPE endpoint is used for this command. Therefore, a reload may
-    be required for the server to use the published config settings.
+    handle both the creation of new stanzas and the update of exists stanzas. This
+    can be used to push full configuration stanzas where you only have REST access
+    and can't directly publish an app. Only attributes present in the conf file
+    are pushed. While this may seem obvious, this fact can have profound
+    implications in certain situations, like when using this command for
+    continuous updates. This means that it's possible for the source .conf to
+    ultimately differ from what ends up on the server's .conf file. One way to
+    avoid this is to explicitly remove object using '--delete' mode first, and
+    then insert a new copy of the object. Of course this means that the object
+    will be unavailable. The other impact is that diffs only compares and shows a
+    subset of attribute. Be aware that, for consistency, the configs/conf-TYPE
+    endpoint is used for this command. Therefore, a reload may be required for the
+    server to use the published config settings.
     
     positional arguments:
       CONF                  Configuration file(s) to export settings from.
@@ -553,9 +555,8 @@ ksconf rest-publish
                             Set the sharing mode.
       -D, --delete          Remove existing REST entities. This is a destructive
                             operation. In this mode, stanzas attributes are
-                            unnecessary and therefore ignored. NOTE: This works
-                            for 'local' entities only; the default folder cannot
-                            be updated.
+                            unnecessary. NOTE: This works for 'local' entities
+                            only; the default folder cannot be updated.
 
 
 
