@@ -14,6 +14,8 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import six
+
 from six.moves.urllib.parse import urlparse
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
@@ -123,6 +125,9 @@ class RestPublishCmd(KsconfCmd):
             conf_type = args.conf_type
         else:
             conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
+
+        if isinstance(conf_type, six.text_type):
+            conf_type = conf_type.encode("utf-8")
 
         config_file = self._service.confs[conf_type]
         conf = conf_proxy.data
@@ -251,8 +256,8 @@ class RestPublishCmd(KsconfCmd):
         for x in ("read", "write"):
             try:
                 access["perms." + x] = ",".join(stz.access["perms"][x])
-            except KeyError:
-                pass
+            except (KeyError, TypeError):
+                access["perms." + x] = ""
         # print("[{}] fm={} access:  {}".format(stanza_name, final_meta, access))
 
         acl_delta = compare_stanzas(reduce_stanza(access, final_meta), final_meta,
