@@ -153,6 +153,9 @@ class RestPublishCmd(KsconfCmd):
             if action != "nochange" and "delta" in info:
                 show_diff(self.stdout, info["delta"], headers=(conf_proxy.name, rest_header))
 
+            if "meta" in info:
+                print(info["meta"])
+
             if "acl_delta" in info:
                 show_diff(self.stdout, info["acl_delta"])
 
@@ -173,22 +176,25 @@ class RestPublishCmd(KsconfCmd):
             sharing = None
             app = None
 
-        # XXX:  Optimize for round trips to the server
         res = {}
         # XXX:  Move boolean comparison stuff to the core delta detection library....
         self.make_boolean(stanza_data)
-        if stanza_name in config_file:
+
+        try:
+            stz = config_file[stanza_name]
+        except KeyError:
+            stz = None
+
+        if stz is not None:
             ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
             # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);  If meta is given and where these are different than the defaults on the CLI?...
-            stz = config_file[stanza_name]
             stz_data = stz.content
             self.make_boolean(stz_data)
             res["path"] = stz.path
             try:
                 res["updated"] = stz.state["updated"]
             except:
-                # debug
-                raise
+                pass
             ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
             ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
@@ -197,10 +203,10 @@ class RestPublishCmd(KsconfCmd):
                 ## print("NO CHANGE NEEDED.")
                 res["delta"] = []
                 action = "nochange"
-            stz.update(**stanza_data)
-
-            # Any need to call .refresh() here to grab the state from the server?
-            action = "update"
+            else:
+                stz.update(**stanza_data)
+                # Any need to call .refresh() here to grab the state from the server?
+                action = "update"
         else:
             ## print("Stanza {} new -- publishing!".format(stanza_name))
             stz = config_file.create(stanza_name, owner=owner, app=app, sharing=sharing, **stanza_data)
@@ -238,12 +244,24 @@ class RestPublishCmd(KsconfCmd):
             # in that case.  Still, there's possible room for improvement.
             final_meta["sharing"] = "app"
 
-        acl_delta = compare_stanzas(reduce_stanza(stz.access, final_meta), final_meta,
+        # Build access dict for comparison purpose
+        access = {}
+        for x in ("owner", "app", "sharing"):
+            access[x] = stz.access[x]
+        for x in ("read", "write"):
+            try:
+                access["perms." + x] = ",".join(stz.access["perms"][x])
+            except KeyError:
+                pass
+        # print("[{}] fm={} access:  {}".format(stanza_name, final_meta, access))
+
+        acl_delta = compare_stanzas(reduce_stanza(access, final_meta), final_meta,
                                     stanza_name + "/acl")
         if is_equal(acl_delta):
-            ## print("NO CHANGE NEEDED.")
             res["acl_delta"] = []
-        res["acl_delta"] = acl_delta
+            return (action, res)
+        else:
+            res["acl_delta"] = acl_delta
 
         resource = None
         try:
@@ -257,17 +275,17 @@ class RestPublishCmd(KsconfCmd):
                        svc._abspath(stz.path + "acl",
                                     owner=svc.namespace.owner, app=svc.namespace.app,
                                     sharing=svc.namespace.sharing)
+            #logger.debug("request to do the ACL THING!  (Round trip debugging)")
             response = svc.http.post(resource, all_headers, **final_meta)
 
             res["meta_response"] = response
         except Exception:
             # Don't die on exceptions for ACLs...  print the error and move on (too many things to go wrong here)
+            print("Failed hitting:  {}  ARGS={}".format(resource, final_meta))
             import traceback
             traceback.print_exc()
-            try:
-                print("Failed hitting:  {}  ARGS={}".format(resource, final_meta))
-            except:
-                pass
+            # XXX:  Do better
+
         return (action, res)
 
     def delete_conf(self, stanza_name, stanza_data, config_file):
@@ -310,12 +328,11 @@ class RestPublishCmd(KsconfCmd):
 
 
 '''
-For really crapy debug messages from splunksdk:
+# For really crapy debug messages from splunksdk  (optimize server round trips)
 
 import logging
 
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
 '''
