@@ -8,7 +8,9 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import unittest
+
 from io import StringIO
+from functools import partial
 
 import six
 
@@ -415,6 +417,81 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertEqual(op.tag, DIFF_OP_INSERT)
         self.assertIsNotNone(op.a)
         self.assertIsNone(op.b)
+
+    def test_imballanced_stanas(self):
+        """ Imbalanced stanzas """
+        a = parse_string("""
+        [s0]
+        _ = same
+        [s1]
+        a = 1
+        b = 2
+        [s3]
+        y = 75
+        [s4]
+        z = 99
+        """)
+        b = parse_string("""
+        [s0]
+        _ = same
+        [s1]
+        a = 1
+        c = 3
+        [s2]
+        x = 50
+        [s4]
+        zelda =
+        """)
+        delta = compare_cfgs(a, b)
+        delta_search = partial(self.find_op_by_location, delta)
+
+        op = delta_search("stanza", stanza="s0")
+        self.assertEqual(op.tag, DIFF_OP_EQUAL)
+        self.assertEqual(op.a, op.b)
+
+        self.assertEqual(delta_search("key", stanza="s1", key="a").tag, DIFF_OP_EQUAL)
+        self.assertEqual(delta_search("key", stanza="s1", key="b").tag, DIFF_OP_DELETE)
+        self.assertEqual(delta_search("key", stanza="s1", key="c").tag, DIFF_OP_INSERT)
+
+        self.assertEqual(delta_search("stanza", stanza="s2").tag, DIFF_OP_INSERT)
+        self.assertEqual(delta_search("stanza", stanza="s3").tag, DIFF_OP_DELETE)
+        self.assertEqual(delta_search("stanza", stanza="s4").tag, DIFF_OP_REPLACE)
+
+    def test_empty_stanzas(self):
+        """ Comparison should detect the different between empty and missing stanzas."""
+        a = parse_string("""
+        [common]
+        a = 1
+        b = 2
+
+        [in_a1]
+        live_in = a
+
+        [in_a_only]
+        """)
+        b = parse_string("""
+        [common]
+        b = 2
+        a = 1
+
+        [in_b1]
+        live_in = b
+
+        [in_b_only]
+        """)
+        delta = compare_cfgs(a, b)
+        delta_search = partial(self.find_op_by_location, delta)
+        self.assertEqual(delta_search("stanza", stanza="common").tag, DIFF_OP_EQUAL)
+        self.assertEqual(delta_search("stanza", stanza="in_a_only").tag, DIFF_OP_DELETE)
+        self.assertEqual(delta_search("stanza", stanza="in_b_only").tag, DIFF_OP_INSERT)
+
+        op = delta_search("stanza", stanza="in_b1")
+        self.assertEqual(op.tag, DIFF_OP_INSERT)
+        self.assertEqual(op.a["live_in"], "b")
+
+        op = delta_search("stanza", stanza="in_a1")
+        self.assertEqual(op.tag, DIFF_OP_DELETE)
+        self.assertEqual(op.b["live_in"], "a")
 
     def test_summarize_compare_results(self):
         c1 = parse_string(self.cfg_props_imapsync_1)

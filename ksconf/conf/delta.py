@@ -57,11 +57,12 @@ def compare_stanzas(a, b, stanza_name):
         # A only
         yield DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a)
         return
-    elif not b:
+    elif not a:
         # B only
         yield DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None)
         return
     else:
+        # Both stanzas exist and further analysis is needed
         kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
 
     if not kv_common:
@@ -148,6 +149,12 @@ def compare_cfgs(a, b, allow_level0=True):
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
             delta.extend(compare_stanzas(a[stanza], b[stanza], stanza))
+        elif stanza in a:
+            # A only
+            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
+        else:
+            # B only
+            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), b[stanza], None))
     return delta
 
 
