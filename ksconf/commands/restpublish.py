@@ -19,7 +19,7 @@ from six.moves.urllib.parse import urlparse
 from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
     add_splunkd_access_args, add_splunkd_namespace
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA, conf_attr_boolean
-from ksconf.conf.delta import compare_stanzas, show_diff, DIFF_OP_EQUAL, DiffHeader
+from ksconf.conf.delta import compare_stanzas, show_diff, DiffHeader, reduce_stanza, is_equal
 from ksconf.conf.meta import MetaData
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
@@ -183,10 +183,10 @@ class RestPublishCmd(KsconfCmd):
                 # debug
                 raise
             ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
-            data = {key: value for (key, value) in stz_data.items() if key in stanza_data}
+            data = reduce_stanza(stz_data, stanza_data)
             ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
-            delta = res["delta"] = list(compare_stanzas(data, stanza_data, stanza_name))
-            if len(delta) == 1 and delta[0][0] == DIFF_OP_EQUAL:
+            delta = res["delta"] = list(compare_stanzas(stanza_data, data, stanza_name))
+            if is_equal(delta):
                 ## print("NO CHANGE NEEDED.")
                 res["delta"] = []
                 action = "nochange"
@@ -231,9 +231,9 @@ class RestPublishCmd(KsconfCmd):
             # in that case.  Still, there's possible room for improvement.
             final_meta["sharing"] = "app"
 
-        current_meta = {k: v for k, v in stz.access.items() if k in final_meta}
-        acl_delta = list(compare_stanzas(current_meta, final_meta, stanza_name + "/acl"))
-        if len(acl_delta) == 1 and acl_delta[0][0] == DIFF_OP_EQUAL:
+        acl_delta = list(compare_stanzas(final_meta, reduce_stanza(stz.access, final_meta),
+                                         stanza_name + "/acl"))
+        if is_equal(acl_delta):
             ## print("NO CHANGE NEEDED.")
             res["acl_delta"] = []
         res["acl_delta"] = acl_delta
@@ -278,7 +278,7 @@ class RestPublishCmd(KsconfCmd):
 
             self.make_boolean(stz_data)
             ## print("Found {}".format(stz_data))
-            data = {key: value for (key, value) in stz_data.items() if key in stanza_data}
+            data = reduce_stanza(stz_data, stanza_data)
             config_file.delete(stanza_name)
             res["delta"] = list(compare_stanzas({}, data, stanza_name))
             return ("deleted", res)

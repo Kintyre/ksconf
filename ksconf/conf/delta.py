@@ -175,6 +175,12 @@ def summarize_cfg_diffs(delta, stream):
         stream.write("\n")
 
 
+def is_equal(delta):
+    """ Is the delta output show that the compared objects are identical """
+    # type: (list(DiffOp)) -> bool
+    return len(delta) == 1 and delta[0].tag == DIFF_OP_EQUAL
+
+
 # Color mapping
 _diff_color_mapping = {
     " ": ANSI_RESET,
@@ -321,3 +327,14 @@ def show_text_diff(stream, a, b):
             tc.color(_diff_color_mapping.get(d[0], 0))
             stream.write(d)
             tc.reset()
+
+
+def reduce_stanza(stanza, keep_attrs):
+    """ Pre-process a stanzas so that only a common set of keys will be compared.
+    :param stanza: Stanzas containing attributes and values
+    :type stanza: dict
+    :param keep_attrs: Listing of
+    :type keep_attrs: (list, set, tuple, dict)
+    :return: a reduced copy of ``stanza``.
+    """
+    return {attr: value for attr, value in six.items(stanza) if attr in keep_attrs}
