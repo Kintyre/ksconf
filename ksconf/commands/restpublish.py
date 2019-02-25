@@ -192,7 +192,7 @@ class RestPublishCmd(KsconfCmd):
             ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
             ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
-            delta = res["delta"] = list(compare_stanzas(stanza_data, data, stanza_name))
+            delta = res["delta"] = compare_stanzas(stanza_data, data, stanza_name)
             if is_equal(delta):
                 ## print("NO CHANGE NEEDED.")
                 res["delta"] = []
@@ -204,7 +204,7 @@ class RestPublishCmd(KsconfCmd):
         else:
             ## print("Stanza {} new -- publishing!".format(stanza_name))
             stz = config_file.create(stanza_name, owner=owner, app=app, sharing=sharing, **stanza_data)
-            res["delta"] = list(compare_stanzas(stanza_data, {}, stanza_name))
+            res["delta"] = compare_stanzas({}, stanza_data, stanza_name)
             res["path"] = stz.path
             action = "new"
 
@@ -238,8 +238,8 @@ class RestPublishCmd(KsconfCmd):
             # in that case.  Still, there's possible room for improvement.
             final_meta["sharing"] = "app"
 
-        acl_delta = list(compare_stanzas(final_meta, reduce_stanza(stz.access, final_meta),
-                                         stanza_name + "/acl"))
+        acl_delta = compare_stanzas(reduce_stanza(stz.access, final_meta), final_meta,
+                                    stanza_name + "/acl")
         if is_equal(acl_delta):
             ## print("NO CHANGE NEEDED.")
             res["acl_delta"] = []
@@ -286,7 +286,7 @@ class RestPublishCmd(KsconfCmd):
             ## print("Found {}".format(stz_data))
             data = reduce_stanza(stz_data, stanza_data)
             config_file.delete(stanza_name)
-            res["delta"] = list(compare_stanzas({}, data, stanza_name))
+            res["delta"] = compare_stanzas(data, {}, stanza_name)
             return ("deleted", res)
         else:
             res["delta"] = []

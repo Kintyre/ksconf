@@ -51,19 +51,19 @@ class DiffHeader(object):
 
 def compare_stanzas(a, b, stanza_name):
     if a == b:
-        yield DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)
-        return
+        return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b) ]
     elif not b:
         # A only
-        yield DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a)
-        return
+        return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a) ]
     elif not a:
         # B only
-        yield DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None)
-        return
+        return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None) ]
     else:
-        # Both stanzas exist and further analysis is needed
-        kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+        return list(_compare_stanzas(a, b, stanza_name))
+
+
+def _compare_stanzas(a, b, stanza_name):
+    kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
 
     if not kv_common:
         # No keys in common, just swap
@@ -148,7 +148,11 @@ def compare_cfgs(a, b, allow_level0=True):
     all_stanzas = sorted(all_stanzas)
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
-            delta.extend(compare_stanzas(a[stanza], b[stanza], stanza))
+            if a[stanza] == b[stanza]:
+                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza),
+                                    a[stanza], b[stanza]))
+            else:
+                delta.extend(_compare_stanzas(a[stanza], b[stanza], stanza))
         elif stanza in a:
             # A only
             delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
@@ -245,7 +249,6 @@ def show_diff(stream, diffs, headers=None):
                 stream.write("\n")
             else:
                 write_key(key, value, prefix_)
-
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
@@ -344,4 +347,4 @@ def reduce_stanza(stanza, keep_attrs):
     :type keep_attrs: (list, set, tuple, dict)
     :return: a reduced copy of ``stanza``.
     """
-    return {attr: value for attr, value in six.items(stanza) if attr in keep_attrs}
+    return {attr: value for attr, value in six.iteritems(stanza) if attr in keep_attrs}
