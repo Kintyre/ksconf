@@ -28,6 +28,14 @@ ksconf.util.file module
     :undoc-members:
     :show-inheritance:
 
+ksconf.util.rest module
+-----------------------
+
+..  automodule:: ksconf.util.rest
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 ksconf.util.terminal module
 ---------------------------
 
