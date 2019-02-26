@@ -402,3 +402,23 @@ def _drop_stanza_comments(stanza):
             continue
         n[key] = value
     return n
+
+
+def conf_attr_boolean(value):
+    if isinstance(value, bool):
+        return value
+    elif isinstance(value, six.string_types):
+        value = value.lower()
+        if value in ("1", "t", "y", "true", "yes"):
+            return True
+        elif value in ("0", "f", "n", "false", "no"):
+            return False
+        else:
+            raise ValueError("Can't convert {!r} to a boolean.".format(value))
+    elif isinstance(value, int):
+        if value == 0:
+            return False
+        else:
+            return True
+    else:
+        raise ValueError("Can't convert type {} to a boolean.".format(type(value)))

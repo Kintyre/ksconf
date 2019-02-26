@@ -11,7 +11,7 @@ import six
 from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
-from ksconf.util.terminal import ANSI_RESET, ANSI_GREEN, ANSI_RED, tty_color, ANSI_YELLOW, ANSI_BOLD
+from ksconf.util.terminal import TermColor, ANSI_RESET, ANSI_GREEN, ANSI_RED, ANSI_YELLOW, ANSI_BOLD
 
 ####################################################################################################
 ## Diff logic
@@ -25,6 +25,63 @@ DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
 DiffGlobal = namedtuple("DiffGlobal", ("type",))
 DiffStanza = namedtuple("DiffStanza", ("type", "stanza"))
 DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
+
+
+class DiffHeader(object):
+    def __init__(self, name, mtime=None):
+        self.name = name
+        if mtime:
+            self.mtime = mtime
+        else:
+            self.detect_mtime()
+
+    def detect_mtime(self):
+        try:
+            self.mtime = os.stat(self.name).st_mtime
+        except OSError:
+            self.mtime = 0
+
+    def __str__(self):
+        if isinstance(self.mtime, (int, float)):
+            ts = datetime.datetime.fromtimestamp(self.mtime)
+        else:
+            ts = self.mtime
+        return "{0:50} {1}".format(self.name, ts)
+
+
+def compare_stanzas(a, b, stanza_name):
+    if a == b:
+        return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b) ]
+    elif not b:
+        # A only
+        return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a) ]
+    elif not a:
+        # B only
+        return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None) ]
+    else:
+        return list(_compare_stanzas(a, b, stanza_name))
+
+
+def _compare_stanzas(a, b, stanza_name):
+    kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+
+    if not kv_common:
+        # No keys in common, just swap
+        yield DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza_name), a, b)
+        return
+
+    # Level 2 - Key comparisons
+    for key in kv_a:
+        yield DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza_name, key), None, a[key])
+    for key in kv_b:
+        yield DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza_name, key), b[key], None)
+    for key in kv_common:
+        a_ = a[key]
+        b_ = b[key]
+        if a_ == b_:
+            yield DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza_name, key), a_, b_)
+        else:
+            yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
 
 
 def compare_cfgs(a, b, allow_level0=True):
@@ -89,33 +146,13 @@ def compare_cfgs(a, b, allow_level0=True):
     else:
         all_stanzas = list(all_stanzas)
     all_stanzas = sorted(all_stanzas)
-
     for stanza in all_stanzas:
         if stanza in a and stanza in b:
-            a_ = a[stanza]
-            b_ = b[stanza]
-            # Note: make sure that '==' operator continues work with custom conf parsing classes.
-            if a_ == b_:
-                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza), a_, b_))
-                continue
-            kv_a, kv_common, kv_b = _cmp_sets(list(a_.keys()), list(b_.keys()))
-            if not kv_common:
-                # No keys in common, just swap
-                delta.append(DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza), a_, b_))
-                continue
-
-            # Level 2 - Key comparisons
-            for key in kv_a:
-                delta.append(DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza, key), None, a_[key]))
-            for key in kv_b:
-                delta.append(DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza, key), b_[key], None))
-            for key in kv_common:
-                a__ = a_[key]
-                b__ = b_[key]
-                if a__ == b__:
-                    delta.append(DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza, key), a__, b__))
-                else:
-                    delta.append(DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza, key), a__, b__))
+            if a[stanza] == b[stanza]:
+                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza),
+                                    a[stanza], b[stanza]))
+            else:
+                delta.extend(_compare_stanzas(a[stanza], b[stanza], stanza))
         elif stanza in a:
             # A only
             delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
@@ -149,6 +186,12 @@ def summarize_cfg_diffs(delta, stream):
         stream.write("\n")
 
 
+def is_equal(delta):
+    """ Is the delta output show that the compared objects are identical """
+    # type: (list(DiffOp)) -> bool
+    return len(delta) == 1 and delta[0].tag == DIFF_OP_EQUAL
+
+
 # Color mapping
 _diff_color_mapping = {
     " ": ANSI_RESET,
@@ -158,24 +201,25 @@ _diff_color_mapping = {
 
 
 def _show_diff_header(stream, files, diff_line=None):
-    def header(sign, filename):
-        try:
-            mtime = os.stat(filename).st_mtime
-            ts = datetime.datetime.fromtimestamp(mtime)
-        except OSError:
-            ts = "1970-01-01 00:00:00"
-        stream.write("{0} {1:50} {2}\n".format(sign * 3, filename, ts))
-        tty_color(stream, ANSI_RESET)
+    headers = []
 
-    tty_color(stream, ANSI_YELLOW, ANSI_BOLD)
-    if diff_line:
-        stream.write("diff {} {} {}\n".format(diff_line, files[0], files[1]))
-    tty_color(stream, ANSI_RESET)
-    header("-", files[0])
-    header("+", files[1])
+    for f in files:
+        if isinstance(f, DiffHeader):
+            headers.append(f)
+        else:
+            headers.append(DiffHeader(f))
+
+    with TermColor(stream) as tc:
+        tc.color(ANSI_YELLOW, ANSI_BOLD)
+        if diff_line:
+            stream.write("diff {} {} {}\n".format(diff_line, headers[0].name, headers[1].name))
+        tc.reset()
+        stream.write("--- {0}\n".format(headers[0]))
+        stream.write("+++ {0}\n".format(headers[1]))
 
 
 def show_diff(stream, diffs, headers=None):
+    tc = TermColor(stream)
     def write_key(key, value, prefix_=" "):
         if "\n" in value:
             write_multiline_key(key, value, prefix_)
@@ -187,24 +231,24 @@ def show_diff(stream, diffs, headers=None):
             stream.write(template.format(prefix_, key, value))
 
     def write_multiline_key(key, value, prefix_=" "):
-        lines = value.replace("\n", "\\\n").split("\n")
-        tty_color(stream, _diff_color_mapping.get(prefix_))
-        stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
-        for line in lines:
-            stream.write("{0}{1}\n".format(prefix_, line))
-        tty_color(stream, ANSI_RESET)
+        with tc:
+            lines = value.replace("\n", "\\\n").split("\n")
+            tc.color(_diff_color_mapping.get(prefix_))
+            stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
+            for line in lines:
+                stream.write("{0}{1}\n".format(prefix_, line))
 
     def show_value(value, stanza_, key, prefix_=""):
-        tty_color(stream, _diff_color_mapping.get(prefix_))
-        if isinstance(value, dict):
-            if stanza_ is not GLOBAL_STANZA:
-                stream.write("{0}[{1}]\n".format(prefix_, stanza_))
-            for x, y in sorted(six.iteritems(value)):
-                write_key(x, y, prefix_)
-            stream.write("\n")
-        else:
-            write_key(key, value, prefix_)
-        tty_color(stream, ANSI_RESET)
+        with tc:
+            tc.color(_diff_color_mapping.get(prefix_))
+            if isinstance(value, dict):
+                if stanza_ is not GLOBAL_STANZA:
+                    stream.write("{0}[{1}]\n".format(prefix_, stanza_))
+                for x, y in sorted(six.iteritems(value)):
+                    write_key(x, y, prefix_)
+                stream.write("\n")
+            else:
+                write_key(key, value, prefix_)
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
@@ -215,17 +259,18 @@ def show_diff(stream, diffs, headers=None):
         a = f(value_a)
         b = f(value_b)
         differ = difflib.Differ()
-        for d in differ.compare(a, b):
-            # Someday add "?" highlighting.  Trick is this should change color mid-line on the
-            # previous (one or two) lines.  (Google and see if somebody else solved this one already)
-            # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
-            tty_color(stream, _diff_color_mapping.get(d[0], 0))
-            # Differences in how difflib returns bytes/unicode?
-            if not isinstance(d, six.text_type):
-                d = d.decode(default_encoding)
-            stream.write(d)
-            tty_color(stream, ANSI_RESET)
-            stream.write("\n")
+        with tc:
+            for d in differ.compare(a, b):
+                # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+                # previous (one or two) lines.  (Google and see if somebody else solved this one already)
+                # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+                tc.color(_diff_color_mapping.get(d[0], 0))
+                # Differences in how difflib returns bytes/unicode?
+                if not isinstance(d, six.text_type):
+                    d = d.decode(default_encoding)
+                stream.write(d)
+                tc.reset()
+                stream.write("\n")
 
     # Global result:  no changes between files or no commonality between files
     if len(diffs) == 1 and isinstance(diffs[0].location, DiffGlobal):
@@ -284,10 +329,21 @@ def show_text_diff(stream, a, b):
     differ = difflib.Differ()
     lines_a = open(a, "r", encoding=default_encoding).readlines()
     lines_b = open(b, "r", encoding=default_encoding).readlines()
-    for d in differ.compare(lines_a, lines_b):
-        # Someday add "?" highlighting.  Trick is this should change color mid-line on the
-        # previous (one or two) lines.  (Google and see if somebody else solved this one already)
-        # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
-        tty_color(stream, _diff_color_mapping.get(d[0], 0))
-        stream.write(d)
-        tty_color(stream, ANSI_RESET)
+    with TermColor(stream) as tc:
+        for d in differ.compare(lines_a, lines_b):
+            # Someday add "?" highlighting.  Trick is this should change color mid-line on the
+            # previous (one or two) lines.  (Google and see if somebody else solved this one already)
+            # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
+            tc.color(_diff_color_mapping.get(d[0], 0))
+            stream.write(d)
+            tc.reset()
+
+def reduce_stanza(stanza, keep_attrs):
+    """ Pre-process a stanzas so that only a common set of keys will be compared.
+    :param stanza: Stanzas containing attributes and values
+    :type stanza: dict
+    :param keep_attrs: Listing of
+    :type keep_attrs: (list, set, tuple, dict)
+    :return: a reduced copy of ``stanza``.
+    """
+    return {attr: value for attr, value in six.iteritems(stanza) if attr in keep_attrs}
