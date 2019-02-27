@@ -14,13 +14,15 @@ Release v0.6.3 (DRAFT)
 
 ..  notice:: We recommend a fresh install of the Splunk app due to packaging changes.
 
+-   Added new :ref:`ksconf_cmd_rest-publish` command that for nearly every use case supersedes the use of ``rest-export``.
 -   Added :doc:`cheatsheet` to the docs.
 
 *Splunk app changes:*
 
 -   Modified installation of python package installation.  In previous releases, various ``.dist-info`` folders were created with version-specific names leading to a mismatch of package versions after upgrade.
 -   Changed Splunk app install script to ``install.py`` (it was ``bootstrap_bin.py``).  Hopefully this is more intuitive.
--   Add windows support in ``install.py``.
+-   Added windows support in ``install.py``.
+-   Now includes the Splunk Python SDK.  Currently used for ``rest-publish`` but will eventually be used for additional functionally unique to the Splunk app.
 
 
 Release v0.6.2 (2019-02-09)
