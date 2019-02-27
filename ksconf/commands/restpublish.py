@@ -194,6 +194,9 @@ class RestPublishCmd(KsconfCmd):
             ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
             # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);  If meta is given and where these are different than the defaults on the CLI?...
             stz_data = stz.content
+
+            # Diff printing really doesn't like 'None's...
+            stz_data = { k:v or "" for k,v in six.iteritems(stz_data) }
             self.make_boolean(stz_data)
             res["path"] = stz.path
             try:
