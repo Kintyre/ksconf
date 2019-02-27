@@ -23,6 +23,7 @@ from collections import OrderedDict
 
 from six.moves.urllib.parse import quote
 
+from ksconf.util.rest import build_rest_url
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
 from ksconf.consts import EXIT_CODE_SUCCESS
@@ -173,11 +174,10 @@ class RestExportCmd(KsconfCmd):
 
     @staticmethod
     def build_rest_url(base, owner, app, conf):
-        # XXX: Quote user & app; however for now we're still allowing the user to pass though an
+        # XXX: Quote owner & app; however for now we're still allowing the user to pass though an
         #  environmental variable as-is and quoting would break that.   Need to make a decision,
         # for now this is not likely to be a big issue given app and user name restrictions.
-        url = "{}/servicesNS/{}/{}/configs/conf-{}".format(base, owner, app, conf)
-        return url
+        return build_rest_url(base, "configs/conf-{}".format(conf), owner, app)
 
     def run(self, args):
         ''' Convert a conf file into a bunch of CURL commands'''

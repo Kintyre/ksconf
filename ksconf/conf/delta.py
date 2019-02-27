@@ -220,8 +220,15 @@ def _show_diff_header(stream, files, diff_line=None):
 
 def show_diff(stream, diffs, headers=None):
     tc = TermColor(stream)
+
+    def is_multiline(v):
+        if v and "\n" in v:
+            return True
+        else:
+            return False
+
     def write_key(key, value, prefix_=" "):
-        if "\n" in value:
+        if is_multiline(value):
             write_multiline_key(key, value, prefix_)
         else:
             if key.startswith("#-"):
@@ -313,7 +320,7 @@ def show_diff(stream, diffs, headers=None):
         elif op.tag == DIFF_OP_DELETE:
             show_value(op.b, op.location.stanza, op.location.key, "-")
         elif op.tag == DIFF_OP_REPLACE:
-            if "\n" in op.a or "\n" in op.b:
+            if is_multiline(op.a) or is_multiline(op.b):
                 show_multiline_diff(op.a, op.b, op.location.key)
             else:
                 show_value(op.b, op.location.stanza, op.location.key, "-")

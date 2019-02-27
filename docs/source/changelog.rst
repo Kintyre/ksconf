@@ -16,6 +16,7 @@ Release v0.6.3 (DRAFT)
 
 *General changes*
 
+-   Added new :ref:`ksconf_cmd_rest-publish` command that for nearly every use case supersedes the use of ``rest-export``.
 -   Added :doc:`cheatsheet` to the docs.
 -   Significant improvement to entrypoint handling and support for conditional inclusion of 3rd party libraries with sane behavior on import errors, and improved warnings.  This information is conveniently viewable to the user via ``ksconf --version``.
 -   Refactored internal diff logic and added additional safeties and unit tests.  This includes improvements to TTY colorization which should avoid previous color leaks scenarios that were likely if unhandled exceptions occur.
@@ -26,7 +27,8 @@ Release v0.6.3 (DRAFT)
 
 -   Modified installation of python package installation.  In previous releases, various ``.dist-info`` folders were created with version-specific names leading to a mismatch of package versions after upgrade.
 -   Changed Splunk app install script to ``install.py`` (it was ``bootstrap_bin.py``).  Hopefully this is more intuitive.
--   Add windows support in ``install.py``.
+-   Added windows support in ``install.py``.
+-   Now includes the Splunk Python SDK.  Currently used for ``rest-publish`` but will eventually be used for additional functionally unique to the Splunk app.
 
 
 Release v0.6.2 (2019-02-09)

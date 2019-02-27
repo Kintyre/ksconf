@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
+                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive}
                   ...
     
     Ksconf: Kintyre Splunk CONFig tool
@@ -25,7 +25,7 @@ ksconf
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,unarchive}
+      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -49,6 +49,8 @@ ksconf
                             appropriate for version control
         rest-export         Export .conf settings as a curl script to apply to a
                             Splunk instance later (via REST)
+        rest-publish        Publish .conf settings to a live Splunk instance via
+                            REST
         unarchive           Install or upgrade an existing app in a git-friendly
                             and safe way
     
@@ -498,6 +500,63 @@ ksconf rest-export
                             Turn off sample login curl commands from the output.
       --pretty-print, -p    Enable pretty-printing. Make shell output a bit more
                             readable by splitting entries across lines.
+
+
+
+.. _ksconf_cli_rest-publish:
+
+ksconf rest-publish
+*******************
+
+ .. code-block:: none
+
+    usage: ksconf rest-publish [-h] [--conf TYPE] [-m META] [--url URL]
+                               [--user USER] [--pass PASSWORD] [-k] [--app APP]
+                               [--owner OWNER] [--sharing {user,app,global}] [-D]
+                               CONF [CONF ...]
+    
+    Publish stanzas in a .conf file to a running Splunk instance via REST. This
+    requires access to the HTTPS endpoint of splunk. By default, ksconf will
+    handle both the creation of new stanzas and the update of exists stanzas. This
+    can be used to push full configuration stanzas where you only have REST access
+    and can't directly publish an app. Only attributes present in the conf file
+    are pushed. While this may seem obvious, this fact can have profound
+    implications in certain situations, like when using this command for
+    continuous updates. This means that it's possible for the source .conf to
+    ultimately differ from what ends up on the server's .conf file. One way to
+    avoid this is to explicitly remove object using '--delete' mode first, and
+    then insert a new copy of the object. Of course this means that the object
+    will be unavailable. The other impact is that diffs only compares and shows a
+    subset of attribute. Be aware that, for consistency, the configs/conf-TYPE
+    endpoint is used for this command. Therefore, a reload may be required for the
+    server to use the published config settings.
+    
+    positional arguments:
+      CONF                  Configuration file(s) to export settings from.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --conf TYPE           Explicitly set the configuration file type. By default
+                            this is derived from CONF, but sometime it's helpful
+                            set this explicitly. Can be any valid Splunk conf file
+                            type, example include 'app', 'props', 'tags',
+                            'savedsearches', and so on.
+      -m META, --meta META  Specify one or more '.meta' files to determine the
+                            desired read & write ACLs, owner, and sharing for
+                            objects in the CONF file.
+      --url URL             URL of Splunkd. Default: https://localhost:8089
+      --user USER           Login username Splunkd. Default: admin
+      --pass PASSWORD       Login password Splunkd. Default: changeme
+      -k, --insecure        Disable SSL cert validation.
+      --app APP             Set the namespace (app name) for the endpoint
+      --owner OWNER         Set the user who owns the content. The default of
+                            'nobody' works well for app-level sharing.
+      --sharing {user,app,global}
+                            Set the sharing mode.
+      -D, --delete          Remove existing REST entities. This is a destructive
+                            operation. In this mode, stanzas attributes are
+                            unnecessary. NOTE: This works for 'local' entities
+                            only; the default folder cannot be updated.
 
 
 
