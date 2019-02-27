@@ -9,4 +9,14 @@ ksconf merge
     :path: merge
     :nodefault:
 
-..  TODO:  Add an examples or two here.
+
+Examples
+---------
+
+Here's a simple, possibly silly, example that merges all ``props.conf`` file from *all* of your technology addons into a single output file:
+
+..  code-block:: sh
+
+    ksconf merge --target=all-ta-props.conf etc/apps/*TA*/{default,local}/props.conf
+
+See an expanded version of this example here: :ref:`example_ta_idx_tier`

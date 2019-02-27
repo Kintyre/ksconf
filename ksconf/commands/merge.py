@@ -18,25 +18,22 @@ from ksconf.util.completers import conf_files_completer
 class MergeCmd(KsconfCmd):
     help = "Merge two or more .conf files"
     description = dedent("""\
-    Merge two or more .conf files into a single combined .conf file.  This could be
-    used to merge the props.conf file from ALL technology addons into a single file:
-
-    ksconf merge --target=all-ta-props.conf etc/apps/*TA*/{default,local}/props.conf
-
+    Merge two or more .conf files into a single combined .conf file.
+    This is similar to the way that Splunk logically combines the ``default`` and ``local``
+    folders at runtime.
     """)
-    format = "manual"
     maturity = "stable"
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="FILE", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_MID),
-                            help="The source configuration file to pull changes from."
+                            help="The source configuration file(s) to collect settings from."
                             ).completer = conf_files_completer
         parser.add_argument("--target", "-t", metavar="FILE",
                             type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
                             default=ConfFileProxy("<stdout>", "w", self.stdout), help=dedent("""\
             Save the merged configuration files to this target file.
-            If not provided. the merged conf is written to standard output.""")
+            If not provided, the merged conf is written to standard output.""")
                             ).completer = conf_files_completer
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.
@@ -44,7 +41,7 @@ class MergeCmd(KsconfCmd):
             If TARGET doesn't exist, then show the merged file."""))
         parser.add_argument("--banner", "-b", default="", help=dedent("""\
             A banner or warning comment added to the top of the TARGET file.
-            This is often used to warn Splunk admins from editing an auto-generated file."""))
+            Used to discourage Splunk admins from editing an auto-generated file."""))
 
     def run(self, args):
         ''' Merge multiple configuration files into one '''

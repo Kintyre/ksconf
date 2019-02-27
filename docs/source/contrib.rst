@@ -13,7 +13,7 @@ The ksconf project uses the pre-commit_ hook to enable the following checks:
 -   Fixes trailing whitespace, EOF, and EOLs
 -   Confirms python code compiles (AST)
 -   Blocks the committing of large files and keys
--   Rebuilds the CLI docs. (Eventually to be replaced with an argparse Sphinx extension)
+-   Rebuilds the dynamic portions of the docs related to the CLI.
 -   Confirms that all Unit test pass. (Currently this is the same tests also run by Travis CI, but
     since test complete in under 5 seconds, the run-everywhere approach seems appropriate for now.
     Eventually, the local testing will likely become a subset of the full test suite.)
@@ -28,8 +28,7 @@ The ksconf project uses the pre-commit_ hook to enable the following checks:
 Installing the pre-commit hook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run ensure you changes comply with the ksconf coding standards, please install and activate
-pre-commit_.
+To ensure your changes comply with the ksconf coding standards, please install and activate pre-commit_.
 
 Install:
 
@@ -86,7 +85,7 @@ Checklist:
 #.  Create documentation in ``docs/source/cmd_<CMD>.rst.``
     You'll want to build the docs locally to make sure everything looks correct.
     Part of the documentation is automatically generated from the argparse arguments defined in the ``register_args()`` method,
-    but other other bits need to be spelled out explicitly.
+    but other bits need to be spelled out explicitly.
 
 When in doubt, it may be helpful to look back over history in git for other recently added commands and use that as an example.
 

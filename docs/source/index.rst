@@ -60,6 +60,7 @@ User Guide
     devel
     git
     random
+    contact_us
 
 ..  toctree::
     :maxdepth: 1

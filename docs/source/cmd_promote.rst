@@ -58,10 +58,10 @@ Here are some of the safety mechanisms that exist, because ksconf tries hard not
         Various attributes of the *SOURCE* and *TARGET* files are captured at startup and compared again before any changes are written to disk.
         This reduces the possibility of a race-condition on a live Splunk system.
         This mostly impacts interactive mode because the session lasts longer.
-        If this a concern, only run promote commands when Splunk is offline.
+        If this a concern, run promote only when Splunk is offline.
 
     Same file check
-        Any attempts to promote content from a file to itself are prevented.
+        Attempts to promote content from a file to itself are prevented.
         While logically no one would want to do this, in practice having a clear error message saves time and confusion.
 
     Base name check
@@ -99,7 +99,7 @@ This is equivalent to this minor shortcut.
 
 In this case, ksconf determines that ``default`` is a directory and therefore assumes that you want the same filename, ``props.conf`` in this case.
 
-..  tip::  Using a directory as TARGET may seem like a trivial improvement, but in practice it greatly reduces accidental cross-promotion of content.  Therefore we suggest it's use.
+..  tip::  Using a directory as TARGET may seem like a trivial improvement, but in practice it greatly reduces accidental cross-promotion of content.  Therefore we suggest its use.
 
 
 Similarly, a shortcut for pushing between metadata files exists:
@@ -136,8 +136,7 @@ Limitations
 -   Currently comments in the *SOURCE* file will not be preserved.
 -   If *SOURCE* or *TARGET* is modified externally while promote is running, the entire operation will be aborted, thus loosing any custom selections you made in interactive mode.
     This needs improvement.
--   There's currently no way to specify certain settings with some kind of "never-promote" flag.
-    In the future I think this would be a nice feature.
+-   There's currently no way to preserve certain local settings with some kind of "never-promote" flag.
     It's not uncommon to have some settings in  ``inputs.conf``, for example, that you never want to promote.
 -   There is no *dry-run* mode supported.  Primarily, this is because it would only work for batch mode, and in interactive mode you explicitly see exactly what will be changed before anything is applied.
     (If you really need a dry-run for batch mode, use :ref:`ksconf_cmd_merge` to show the result of *TARGET* *SOURCE* combined.)

@@ -31,7 +31,7 @@ Keep in mind that ksconf idea of *valid* is different than Splunk's.  Specifical
 
 .. _why_check:
 
-Why is this important
+Why is this important?
 ----------------------
 
 Can you spot the error in this :file:`props.conf`?

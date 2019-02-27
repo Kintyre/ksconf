@@ -95,7 +95,7 @@ Please change ``venv`` to a suitable path for your environment.
 
 ..  note:: Windows users
 
-    The above virtual environment activation should be run as :file:`venv\Scripts\activate.bat`.
+    The above virtual environment activation should be run as :file:`venv\\Scripts\\activate.bat`.
 
 Install ksconf system-wide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

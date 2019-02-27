@@ -132,8 +132,9 @@ ksconf combine
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
       --banner BANNER, -b BANNER
-                            A warning banner to discourage manual editing of conf
-                            files.
+                            A banner or warning comment added to the top of the
+                            TARGET file. Used to discourage Splunk admins from
+                            editing an auto-generated file.
 
 
 
@@ -222,7 +223,7 @@ ksconf filter
       Include or exclude entire stanzas using these filter options. All filter
       options can be provided multiple times. If you have a long list of
       filters, they can be saved in a file and referenced using the special
-      'file://' prefix.
+      'file://' prefix. One entry per line.
     
       --stanza PATTERN      Match any stanza who's name matches the given pattern.
                             PATTERN supports bulk patterns via the 'file://'
@@ -272,9 +273,7 @@ ksconf promote
       SOURCE             The source configuration file to pull changes from.
                          Typically the 'local' conf file)
       TARGET             Configuration file or directory to push the changes into.
-                         (Typically the 'default' folder) As a shortcut, if a
-                         directory is given, it's assumed that the same basename
-                         is used for both SOURCE and TARGET.
+                         (Typically the 'default' folder)
     
     optional arguments:
       -h, --help         show this help message and exit
@@ -310,27 +309,27 @@ ksconf merge
     usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
                         FILE [FILE ...]
     
-    Merge two or more .conf files into a single combined .conf file.  This could be
-    used to merge the props.conf file from ALL technology addons into a single file:
-    
-    ksconf merge --target=all-ta-props.conf etc/apps/*TA*/{default,local}/props.conf
+    Merge two or more .conf files into a single combined .conf file. This is
+    similar to the way that Splunk logically combines the 'default' and 'local'
+    folders at runtime.
     
     positional arguments:
-      FILE                  The source configuration file to pull changes from.
+      FILE                  The source configuration file(s) to collect settings
+                            from.
     
     optional arguments:
       -h, --help            show this help message and exit
       --target FILE, -t FILE
                             Save the merged configuration files to this target
-                            file. If not provided. the merged conf is written to
+                            file. If not provided, the merged conf is written to
                             standard output.
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes in 'diff' format. If TARGET doesn't
                             exist, then show the merged file.
       --banner BANNER, -b BANNER
                             A banner or warning comment added to the top of the
-                            TARGET file. This is often used to warn Splunk admins
-                            from editing an auto-generated file.
+                            TARGET file. Used to discourage Splunk admins from
+                            editing an auto-generated file.
 
 
 
@@ -345,31 +344,31 @@ ksconf minimize
                            [--explode-default] [-k PRESERVE_KEY]
                            CONF [CONF ...]
     
-    Minimize a conf file by removing the default settings
-    
-    Reduce local conf file to only your indented changes without manually tracking
-    which entries you've edited.  Minimizing local conf files makes your local
-    customizations easier to read and often results in cleaner add-on upgrades.
+    Minimize a conf file by removing any duplicated default settings. Reduce a
+    local conf file to only your intended changes without manually tracking which
+    entries you've edited. Minimizing local conf files makes your local
+    customizations easier to read and often results in cleaner upgrades.
     
     positional arguments:
       CONF                  The default configuration file(s) used to determine
-                            what base settings are unnecessary to keep in the
-                            target file.
+                            what base or settings are. The base settings determine
+                            what is unnecessary to repeat in target file.
     
     optional arguments:
       -h, --help            show this help message and exit
       --target TARGET, -t TARGET
                             The local file that you wish to remove duplicate
-                            settings from. By default, this file will be read from
-                            and then updated with a minimized version.
+                            settings from. This file will be read from and then
+                            replaced with a minimized version.
       --dry-run, -D         Enable dry-run mode. Instead of writing the minimizing
-                            the TARGET file, preview what would be removedthe form
-                            of a 'diff'.
+                            the TARGET file, preview what would be removed the
+                            form of a 'diff'.
       --output OUTPUT       Write the minimized output to a separate file instead
                             of updating TARGET.
       --explode-default, -E
-                            Enable minimization across stanzas as well as files
-                            for special use-cases
+                            Enable minimization across stanzas for special use-
+                            cases. Helpful when dealing with stanzas downloaded
+                            from a REST endpoint or 'btool list' output.
       -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
                             Specify attributes that should always be kept.
 
@@ -386,9 +385,9 @@ ksconf snapshot
     
     Build a static snapshot of various configuration files stored within a
     structured json export format. If the .conf files being captured are within a
-    standard Splunk directory structure, then certain metadata is assumed based on
-    path locations. Otherwise, less metadata is recorded. ksconf snapshot
-    --output=daily.json /opt/splunk/etc/app/
+    standard Splunk directory structure, then certain metadata and namespace
+    information is assumed based on typical path locations. Individual apps or
+    conf files can be collected as well, but less metadata may be extracted.
     
     positional arguments:
       PATH                  Directory from which to load configuration files. All
@@ -416,9 +415,9 @@ ksconf sort
     
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    in-place when the -i' option is used.
+    in-place when the '-i' option is used.
     
-    Manually managed conf files can be blacklisted by add a comment containing the
+    Manually managed conf files can be blacklisted by adding a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
     
     positional arguments:
@@ -432,7 +431,7 @@ ksconf sort
                             this a potentially destructive operation that may
                             move/remove comments.
       -n LINES, --newlines LINES
-                            Lines between stanzas.
+                            Number of lines between stanzas.
     
     In-place update arguments:
       -F, --force           Force file sorting for all files, even for files
@@ -472,7 +471,6 @@ ksconf rest-export
                             provided, the output is written to standard output.
       -u, --update          Assume that the REST entities already exist. By
                             default output assumes stanzas are being created.
-                            (This is an unfortunate quark of the configs REST API)
       -D, --delete          Remove existing REST entities. This is a destructive
                             operation. In this mode, stanzas attributes are
                             unnecessary and ignored. NOTE: This works for 'local'
@@ -520,7 +518,7 @@ ksconf unarchive
     If the app already exist, steps will be taken to upgrade it safely.
     
     The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
-    whatever which is helpful if you're using the ksconf 'combine' mode.)
+    other desirable path if you're using the 'ksconf combine' tool to manage extra layers.)
     
     positional arguments:
       SPL                   The path to the archive to install.
@@ -540,10 +538,10 @@ ksconf unarchive
                             a dynamic default directory that's created and managed
                             by the 'combine' mode.
       --exclude EXCLUDE, -e EXCLUDE
-                            Add a file pattern to exclude. Splunk's pseudo-glob
-                            patterns are supported here. '*' for any non-directory
-                            match, '...' for ANY (including directories), and '?'
-                            for a single character.
+                            Add a file pattern to exclude from extraction.
+                            Splunk's pseudo-glob patterns are supported here. '*'
+                            for any non-directory match, '...' for ANY (including
+                            directories), and '?' for a single character.
       --keep KEEP, -k KEEP  Specify a pattern for files to preserve during an
                             upgrade. Repeat this argument to keep multiple
                             patterns.
@@ -561,14 +559,14 @@ ksconf unarchive
                             changes, untracked, or ignored files are found.
       --git-mode {nochange,stage,commit}
                             Set the desired level of git integration. The default
-                            mode is *stage', where new, updated, or removed files
+                            mode is *stage*, where new, updated, or removed files
                             are automatically handled for you. To prevent any 'git
                             add' or 'git rm' commands from being run, pick the
                             'nochange' mode.
-      --no-edit             Tell git to skip opening your editor. By default you
-                            will be prompted to review/edit the commit message.
-                            (Git Tip: Delete the content of the message to abort
-                            the commit.)
+      --no-edit             Tell git to skip opening your editor on commit. By
+                            default you will be prompted to review/edit the commit
+                            message. (Git Tip: Delete the content of the default
+                            message to abort the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
                             Extra arguments to pass to 'git'
 

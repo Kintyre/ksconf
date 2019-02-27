@@ -13,5 +13,13 @@ ksconf snapshot
 ..  warning:: **Output NOT stable!**
 
     The output from this command hasn't really been tested in any kind of serious way for usability.
-    Consider this a proof-of-concept.  Anyone interested in this type of functionality should reach
-    out and we can discuss uses cases.
+    Consider this a proof-of-concept.
+    Anyone interested in this type of functionality should ref:`reach out <contact-us>` to discuss uses cases.
+
+
+Example
+--------
+
+..  code-block:: sh
+
+    ksconf snapshot --output=daily-$(date +%Y-%m-%d).json $SPLUNK_HOME/etc/app/

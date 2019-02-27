@@ -32,8 +32,8 @@ class UnarchiveCmd(KsconfCmd):
     Install or overwrite an existing app in a git-friendly way.
     If the app already exist, steps will be taken to upgrade it safely.
 
-    The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
-    whatever which is helpful if you're using the ksconf 'combine' mode.)
+    The ``default`` folder can be redirected to another path (i.e., ``default.d/10-upstream`` or
+    other desirable path if you're using the ``ksconf combine`` tool to manage extra layers.)
     """)
     format = "manual"
     maturity = "beta"
@@ -58,7 +58,8 @@ class UnarchiveCmd(KsconfCmd):
             that's created and managed by the 'combine' mode."""
                             )).completer = DirectoriesCompleter()
         parser.add_argument("--exclude", "-e", action="append", default=[], help=dedent("""\
-            Add a file pattern to exclude.  Splunk's pseudo-glob patterns are supported here.
+            Add a file pattern to exclude from extraction.
+            Splunk's pseudo-glob patterns are supported here.
             ``*`` for any non-directory match,
             ``...`` for ANY (including directories),
             and ``?`` for a single character."""))
@@ -85,7 +86,7 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("--git-mode", default="stage",
                             choices=["nochange", "stage", "commit"], help=dedent("""\
             Set the desired level of git integration.
-            The default mode is *stage', where new, updated, or removed files are automatically
+            The default mode is *stage*, where new, updated, or removed files are automatically
             handled for you.
 
             To prevent any ``git add`` or ``git rm`` commands from being run, pick the
@@ -93,9 +94,9 @@ class UnarchiveCmd(KsconfCmd):
             """))
         parser.add_argument("--no-edit",
                             action="store_true", default=False, help=dedent("""\
-            Tell git to skip opening your editor.
+            Tell git to skip opening your editor on commit.
             By default you will be prompted to review/edit the commit message.
-            (Git Tip:  Delete the content of the message to abort the commit.)"""))
+            (Git Tip:  Delete the content of the default message to abort the commit.)"""))
         parser.add_argument("--git-commit-args", "-G", default=[], action="append",
                             help="Extra arguments to pass to 'git'")
 

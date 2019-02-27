@@ -76,8 +76,8 @@ Release v0.5.5 (2019-01-28)
 
 -  New :ref:`ksconf_cmd_filter` command added for slicing up a conf file into smaller pieces. Think of this as
    GREP that’s stanza-aware. Can also whitelist or blacklist attributes, if desirable.
--  Expanded ``rest-export`` CLI capabilities to include a new ``–delete`` option, pretty-printing,
-   and now supports stdin by allowing the user to explicitly set the file type using ``–conf``.
+-  Expanded ``rest-export`` CLI capabilities to include a new ``--delete`` option, pretty-printing,
+   and now supports stdin by allowing the user to explicitly set the file type using ``--conf``.
 -  Refactored all CLI unittests for increased readability and long-term maintenance. Unit tests
    now can also be run individually as scripts from the command line.
 -  Minor tweaks to the ``snapshot`` output format, v0.2. This feature is still highly experimental.
