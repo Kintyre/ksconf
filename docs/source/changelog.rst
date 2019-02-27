@@ -14,7 +14,13 @@ Release v0.6.3 (DRAFT)
 
 ..  notice:: We recommend a fresh install of the Splunk app due to packaging changes.
 
+*General changes*
+
 -   Added :doc:`cheatsheet` to the docs.
+-   Significant improvement to entrypoint handling and support for conditional inclusion of 3rd party libraries with sane behavior on import errors, and improved warnings.  This information is conveniently viewable to the user via ``ksconf --version``.
+-   Refactored internal diff logic and added additional safeties and unit tests.  This includes improvements to TTY colorization which should avoid previous color leaks scenarios that were likely if unhandled exceptions occur.
+-   New support for metadata handling.
+-   CLI change for ``rest-export``:  The ``--user`` argument has been replaced with ``--owner`` to keep clean separation between the login account and object owners.  (The old argument is still accept for now.)
 
 *Splunk app changes:*
 
