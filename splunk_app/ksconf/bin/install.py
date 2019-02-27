@@ -22,8 +22,8 @@ if __name__ == '__main__':
 
 template_win = """\
 @echo off
-set PYTHONPATH=%PYTHONPATH%;{0[ksconf_home}
-call python -m ksconf "$*"
+set PYTHONPATH=%PYTHONPATH%;{0[ksconf_home]}
+call python -m ksconf "%*"
 """
 
 

@@ -70,6 +70,14 @@ account and run this one-time bootstrap command.
 
    splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py
 
+On Windows, open a terminal as Administrator and type:
+
+.. code-block:: batch
+
+    cd "C:\Program Files\Splunk"
+    bin\splunk.exe cmd python etc\apps\ksconf\bin\install.py
+
+
 This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
 or worse case ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
 ``ksconf`` should work too.)

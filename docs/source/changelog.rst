@@ -11,7 +11,7 @@ Massive documentation improvements, Splunk app install fixes, and new functional
 Release v0.7.0 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-..  notice:: We recommend a fresh install of the Splunk app due to packaging changes.
+..  attention:: We recommend a fresh install of the Splunk app due to packaging changes.
 
 *General changes*
 
