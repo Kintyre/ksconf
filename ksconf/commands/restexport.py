@@ -142,8 +142,7 @@ class RestExportCmd(KsconfCmd):
         parsg1 = parser.add_mutually_exclusive_group(required=False)
         parsg1.add_argument("-u", "--update", action="store_true", default=False,
                             help="Assume that the REST entities already exist.  "
-                                 "By default output assumes stanzas are being created.  "
-                                 "(This is an unfortunate quark of the configs REST API)")
+                                 "By default output assumes stanzas are being created.")
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
                             help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.

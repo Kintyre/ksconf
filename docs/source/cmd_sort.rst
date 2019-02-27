@@ -10,6 +10,10 @@ ksconf sort
     :nodefault:
 
 
+..  seealso:: Pre-commit hooks
+
+    See :ref:`ksconf_pre_commit` for more information about how the ``sort`` command can be easily integrated in your git workflow.
+
 
 Examples
 ^^^^^^^^

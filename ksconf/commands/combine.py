@@ -77,7 +77,9 @@ class CombineCmd(KsconfCmd):
         parser.add_argument("--banner", "-b",
                             default=" **** WARNING: This file is managed by 'ksconf combine', do "
                                     "not edit hand-edit this file! ****",
-                            help="A warning banner to discourage manual editing of conf files.")
+                            help="A banner or warning comment added to the top of the TARGET file. "
+                                 "Used to discourage Splunk admins from editing an auto-generated "
+                                 "file.")
 
     def run(self, args):
         # Ignores case sensitivity.  If you're on Windows, name your files right.

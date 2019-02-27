@@ -67,7 +67,7 @@ class PromoteCmd(KsconfCmd):
     Promote .conf settings between layers using either either in batch mode (all
     changes) or interactive mode.
 
-    Frequently this is used to promote conf changed made via the UI (stored in
+    Frequently this is used to promote conf changes made via the UI (stored in
     the ``local`` folder) to a version-controlled directory, often ``default``.
     """)
     description = dedent("""\
@@ -97,8 +97,6 @@ class PromoteCmd(KsconfCmd):
                                               parse_profile=PARSECONF_STRICT), help=dedent("""\
             Configuration file or directory to push the changes into.
             (Typically the :file:`default` folder)
-            As a shortcut, if a directory is given, it's assumed that the same basename is
-            used for both SOURCE and TARGET.
             """)
                             ).completer = conf_files_completer
         grp1 = parser.add_mutually_exclusive_group()

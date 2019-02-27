@@ -22,7 +22,7 @@ How 'check' differs from btool's validation
 
 Keep in mind that ksconf idea of *valid* is different than Splunk's.  Specifically,
 
- -  **Ksconf is more picky syntactically.**  So dangling stanzas and junk lines are picked up by
+ -  **Ksconf is more picky syntactically.**  Dangling stanzas and junk lines are picked up by
     ksconf in general (the 'check' command or others), but silently ignored Splunk.
  -  **Btool handles content validation.** The :command:`btool check` mode does a great job of check
     stanza names, attribute names, and values.  Btool does this well and ksconf tries to not repeat
@@ -31,12 +31,13 @@ Keep in mind that ksconf idea of *valid* is different than Splunk's.  Specifical
 
 .. _why_check:
 
-Why is this important
+Why is this important?
 ----------------------
 
 Can you spot the error in this :file:`props.conf`?
 
-::
+..  code-block:: text
+    :linenos:
 
     [myapp:web:access]
     TIME_PREFIX = \[
@@ -48,8 +49,8 @@ Can you spot the error in this :file:`props.conf`?
     TRANSFORMS-drop = drop-all
 
 
-That's right, the stanza name ``myapp:total:junk`` doesn't have a closing ``]``.  How Splunk handle
-this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
+That's right, line 7 contains the stanza ``myapp:total:junk`` that doesn't have a closing ``]``.
+How Splunk handle this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
 to the ``myapp:web:access`` sourcetype and very likely going to start loosing data.
 
 

@@ -4,10 +4,9 @@ Installation Guide
 KSCONF can be installed either as a Splunk app or a Python package.  Picking the option that's right
 for you is typically fairly easy.
 
-Unless you have experience with Python packaging or are planning on customizing or extending ksconf
-then :ref:`Splunk app <install_splunk_app>` is likely the best place for you to start.  If you go
-with the native Python option, then you have many additional decisions to make.
-
+Unless you have experience with Python packaging or are planning on customizing or extending ksconf then the :ref:`Splunk app <install_splunk_app>` is likely the best place for you to start.
+The native Python package works well for many developer-centric scenarios, but installation ends up being complicated for the more typical admin-centric use-case.
+Therefore, most users will find it easier to start with the Splunk app.
 
 .. note::
 
@@ -214,11 +213,10 @@ Install via pip:
 
    pip install argcomplete
 
-Enable command line completion for ksconf can be done in two ways.  The easiest option is to enable
+Enabling command line completion for ksconf can be done in two ways.  The easiest option is to enable
 it for ksconf only.  (However, it only works for the current user, it can break if the ksconf
 command is referenced in a non-standard way.)  The alternate option is to enable global command line
-completion for all python scripts at once, which is preferable if you use this module with many
-python tool.
+completion for all python scripts at once, which is preferable if you use *argparse* for many python tools.
 
 Enable argcomplete for ksconf only:
 
@@ -239,12 +237,12 @@ To enable argcomplete globally, run the command:
 
    activate-global-python-argcomplete
 
-This adds new script to your the ``bash_completion.d`` folder, which can be use for all scripts and
+This adds a new script to your the ``bash_completion.d`` folder, which can be used for all scripts and
 all users, but it does add some minor overhead to each completion command request.
 
 OS-specific notes:
 
--  **Mac OS X**: The global registration option has issue due the old version of Bash shipped by
+-  **Mac OS X**: The global registration option man not work due the old version of Bash shipped by
    default. So either use the one-shot registration or install a later version of bash with
    homebrew:  ``brew install bash`` then. Switch to the newer bash by default with
    ``chsh /usr/local/bin/bash``.

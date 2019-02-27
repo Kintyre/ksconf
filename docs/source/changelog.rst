@@ -18,6 +18,7 @@ Release v0.6.3 (DRAFT)
 
 -   Added new :ref:`ksconf_cmd_rest-publish` command that for nearly every use case supersedes the use of ``rest-export``.
 -   Added :doc:`cheatsheet` to the docs.
+-   Massive doc cleanup of hundreds of typos and many expanded/clarified sections.
 -   Significant improvement to entrypoint handling and support for conditional inclusion of 3rd party libraries with sane behavior on import errors, and improved warnings.  This information is conveniently viewable to the user via ``ksconf --version``.
 -   Refactored internal diff logic and added additional safeties and unit tests.  This includes improvements to TTY colorization which should avoid previous color leaks scenarios that were likely if unhandled exceptions occur.
 -   New support for metadata handling.
@@ -92,8 +93,8 @@ Release v0.5.5 (2019-01-28)
 
 -  New :ref:`ksconf_cmd_filter` command added for slicing up a conf file into smaller pieces. Think of this as
    GREP that’s stanza-aware. Can also whitelist or blacklist attributes, if desirable.
--  Expanded ``rest-export`` CLI capabilities to include a new ``–delete`` option, pretty-printing,
-   and now supports stdin by allowing the user to explicitly set the file type using ``–conf``.
+-  Expanded ``rest-export`` CLI capabilities to include a new ``--delete`` option, pretty-printing,
+   and now supports stdin by allowing the user to explicitly set the file type using ``--conf``.
 -  Refactored all CLI unittests for increased readability and long-term maintenance. Unit tests
    now can also be run individually as scripts from the command line.
 -  Minor tweaks to the ``snapshot`` output format, v0.2. This feature is still highly experimental.

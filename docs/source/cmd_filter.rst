@@ -13,11 +13,11 @@ ksconf filter
 How is this different that btool?
 ---------------------------------
 
-Some of the things filter can do does in fact overlap with :command:`btool list`.  Take for example:
+Some of the things filter can do functionally overlaps with :command:`btool list`.  Take for example:
 
 ..  code-block:: sh
 
-    ksconf filter search/default/savedsearches.conf --stanza" Messages by minute last 3 hours"
+    ksconf filter search/default/savedsearches.conf --stanza "Messages by minute last 3 hours"
 
 Is essentially the same as:
 
@@ -26,17 +26,36 @@ Is essentially the same as:
     splunk btool --app=search savedsearches list "Messages by minute last 3 hours"
 
 The output is the same, assuming that you didn't overwrite any part of that search in ``local``.
-But if you take of the `--app` argument, you'll quickly see that ``btool`` is merging all the layers
+But if you take off the ``--app`` argument, you'll quickly see that ``btool`` is merging all the layers
 together to show the final value of all attributes.  That is certainly a helpful thing to do,
 but not always what you want.
 
-Ksconf is always *only* looking at the file you explicitly pointed it to.  It's doesn't traverse the
+Ksconf is always *only* looking at the file you explicitly pointed it to.  It doesn't traverse the
 tree on it's own.  This means that it works on app directory structure that live inside or outside
 of your Splunk instance.  If you've ever tried to run ``btool check`` on an app that you haven't
 installed yet, then you'll understand that value of this.
 
 In many other cases, the usages of both ``ksconf filter`` and ``btool`` differ significantly.
-But there is some overlap.
+
+Examples
+--------
+
+Lift and shift
+~~~~~~~~~~~~~~
+
+Copy all indexes defined within a specific app.
+
+..  code-block:: sh
+
+    cd $SPLUNK_DB
+    for idx in $(ksconf filter $SPLUNK_HOME/etc/app/MyApp/default/indexes.conf --brief)
+    do
+        echo "Copy index ${idx}"
+        tar -czf "/migrate/export-${idx}" "${idx}"
+    done
+
+Now you'll have a copy all of the necessary indexes in the :file:`/migrate` folder to make *MyApp* work on another Splunk instance.
+Of course there's likely other migration tasks to consider, like copying the actual app, this is just one way ksconf can help.
 
 
 

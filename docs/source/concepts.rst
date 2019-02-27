@@ -6,7 +6,7 @@ Concepts
 Configuration layers
 --------------------
 
-The idea of configuration layers are used is shared across multiple actions in ksconf.
+The idea of configuration layers is shared across multiple actions in ksconf.
 Specifically, :ref:`combine <ksconf_cmd_combine>` is used to merge multiple layers, and the
 :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade an app in a
 layer-aware way.
@@ -36,31 +36,31 @@ manage all 4 of these logical layers in one 'default' folder.
 Let's suppose a new upstream version is released.
 If you aren't managing layers independently, then you have to manually upgrade the app being careful to preserve all custom configurations.
 Compare this to the solution provided by the :ref:`combine <ksconf_cmd_combine>` functionality.
-Because logical sources can be stored separately in their own directories changes can managed independently.
-The changes in the "upstream" layer will only ever be from official release;
-there's no combing through the commit log to see what default was changed to figure out what custom changes need to be preserved and reapplied.
-+
-While this doesn't completely remove the need for a human to review app upgrades, it does lower the
-overhead enough that updates can be pulled in more frequently, thus reducing the divergence
-potential.  (Merge frequently.)
+The layered approach provide an advantage because logical sources can be stored separately in their own directories thus allowing them to be modified independently.
+Using this approach, changes in the "upstream" layer will only ever be from an official release, and the organizational layer will only ever contain customizations made by your organization.
+Practically, this means it's no longer necessary to comb through commit logs identifying which custom changes need to be preserved and reapplied.
 
+While this doesn't completely remove the need for a human to review app upgrades, it does lower the
+overhead enough that updates can be pulled in more frequently, thus minimizing divergence.
 
 .. _minimizing_files:
 
 Minimizing files
 ----------------
 
-**Q: What's the importance of minimizing files?**
+**A typical scenario:**
 
-A typical scenario & why does this matter:
+To customize a Splunk app or add-on, many admins simply copy the conf file from default to local and then apply changes to the local one.
+That's a common practice, but stopping there complicates future upgrades.
+The next step should be to clean up the local file, deleting all the unmodified entries that were copied from default.
 
-To customize a Splunk app or add-on, many admins simply copy the conf file from default to local and then applying changes to the local one.
-That's fine, but if you stop there you have just complicated future upgrade path.
-This is because the local file doesn't contain *just* your settings, it contains all copy of *all* of default settings too.
+**Why does this matter?**
+
+If you've copied a default file into the local folder, this means that local file doesn't contain *just* your settings, it contains all copy of *all* of default settings too.
 So in the future, fixes published by the app creator are likely to be masked by your local settings.
 A better approach is to reduce the local conf file leaving only the stanzas and settings that you intended to change.
-While this is a pain to do by hand, it's quite easily accomplished by :ref:`ksconf_cmd_minimize`
-This make your conf files easier to read and makes upgrades easier, but it's tedious to do by hand.
+While this is a pain to do by hand, it's quite easily accomplished by :ref:`ksconf_cmd_minimize`.
+This make your conf files easier to read and makes upgrades easier, and it's now easy to do.
 
 
 What does Splunk have to say about this?   (From the docs)
@@ -75,18 +75,18 @@ What does Splunk have to say about this?   (From the docs)
 ..  tip::
 
     It's a good practice to minimize your files right away.
-    The problem with waiting is that it may not be obvious later what version of default that local was copied from.
+    If you wait, it may not be obvious what specific version of default that local was copied from.
     In other words, if you run the :command:`minimize` command *after* you've upgraded the default folder, you may need to do extra work to manually reconcile upgrade differences.
     Because any changes made between the initial version of the default file and the most recently release of the conf file cannot be automatically addressed in this fashion.
 
-    If your files are all in git, and you know a REF of the previous version of your default file, you can use some commands like this to help you out.
+    If your files are all in git, and you know a REF of the previous version of your default file, you can use some commands like this:
 
     ..  code-block:: sh
 
         # Review the output of the log, and find the revision of the last change
         git log --oneline -- default/inputs.conf
 
-        # Assuming ref of "e633e6"
+        # Assuming "e633e6" was identified as the desired baseline ref, based on the 'log' output
 
         # Compare what's changed in the 'inputs.conf' file between releases (FYI only)
         ksconf diff <(git show e633e6:./default/inputs.conf) default/inputs.conf
@@ -94,7 +94,7 @@ What does Splunk have to say about this?   (From the docs)
         # Now apply the 'minimization' based on the original version of inputs.conf
         ksconf minimize --target=local/inputs.conf <(git show e633e6:./default/inputs.conf)
 
-   In any scenario, it's a good idea to double check the results.
+   As always, be sure to double check the results.
 
 
 

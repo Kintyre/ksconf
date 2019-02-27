@@ -22,8 +22,8 @@ class CheckCmd(KsconfCmd):
     help = "Perform basic syntax and sanity checks on .conf files"
     description = dedent("""
     Provide basic syntax and sanity checking for Splunk's .conf
-    files.  Use Splunk's builtin 'btool check' for a more robust
-    validation of keys and values.
+    files.  Use Splunk's builtin ``btool check`` for a more robust
+    validation of attributes and values.
 
     Consider using this utility as part of a pre-commit hook.""")
     maturity = "stable"

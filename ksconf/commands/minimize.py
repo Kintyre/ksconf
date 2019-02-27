@@ -45,38 +45,30 @@ def explode_default_stanza(conf, default_stanza=None):
 class MinimizeCmd(KsconfCmd):
     help = "Minimize the target file by removing entries duplicated in the default conf(s)"
     description = dedent("""\
-    Minimize a conf file by removing the default settings
+    Minimize a conf file by removing any duplicated default settings.
 
-    Reduce local conf file to only your indented changes without manually tracking
+    Reduce a local conf file to only your intended changes without manually tracking
     which entries you've edited.  Minimizing local conf files makes your local
-    customizations easier to read and often results in cleaner add-on upgrades.
-
+    customizations easier to read and often results in cleaner upgrades.
     """)
-    format = "manual"
     maturity = "beta"
-
-
-    ''' Make sure this works before advertising (same file as target and source????)
-    # Note:  Use the 'merge' command to "undo"
-    ksconf merge --target=local/inputs.conf default/inputs local/inputs.conf
-    '''
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),help=
-            "The default configuration file(s) used to determine what base settings are "
-            "unnecessary to keep in the target file."
+            "The default configuration file(s) used to determine what base or settings are. "
+            "The base settings determine what is unnecessary to repeat in target file."
                             ).completer = conf_files_completer
         parser.add_argument("--target", "-t", metavar="TARGET",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT),
                             help=
             "The local file that you wish to remove duplicate settings from.  "
-            "By default, this file will be read from and then updated with a minimized version."
+            "This file will be read from and then replaced with a minimized version."
                             ).completer = conf_files_completer
         grp1 = parser.add_mutually_exclusive_group()
         grp1.add_argument("--dry-run", "-D", default=False, action="store_true", help=
             "Enable dry-run mode.  "
-            "Instead of writing the minimizing the TARGET file, preview what would be removed"
+            "Instead of writing the minimizing the TARGET file, preview what would be removed "
             "the form of a 'diff'.")
         grp1.add_argument("--output",
                           type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
@@ -85,7 +77,9 @@ class MinimizeCmd(KsconfCmd):
                           ).completer = conf_files_completer
         parser.add_argument("--explode-default", "-E", default=False, action="store_true",
                             help=
-            "Enable minimization across stanzas as well as files for special use-cases")
+            "Enable minimization across stanzas for special use-cases.  "
+            "Helpful when dealing with stanzas downloaded from a REST endpoint or "
+            "``btool list`` output.")
         parser.add_argument("-k", "--preserve-key", action="append", default=[], help=
             "Specify attributes that should always be kept.")
 

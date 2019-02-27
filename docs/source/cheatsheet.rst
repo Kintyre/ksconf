@@ -9,14 +9,19 @@ Here's a quick rundown of handy ``ksconf`` commands:
 
 ..  note::
 
-    Note that for clarity purpose, most of the command line arguments are given in their long form.
-    Most options also have a short form too, which shortens the commands bit.
+    Note that for clarity, most of the command line arguments are given in their long form.
+    Many options also have a short form too.
 
     Long commands may be broken across line for readability.   When this happens, a trailing
     backslash (``\``) is added so the command could still be copied verbatim into most shells.
 
-..  contents::
+    ..  only:: builder_epub
 
+        Sorry ebook users.
+        Trailing (``\``) probably will not look right on your screen.
+        But then again, you probably won't be copy-n-pasting from your Kindle.
+
+..  contents::
 
 
 General purpose
@@ -36,8 +41,8 @@ Show the differences between two conf files using :ref:`ksconf_cmd_diff`.
 Sorting content
 ~~~~~~~~~~~~~~~
 
-To create a normalized version a configuration file, to make it easier to merging with
-:command:`git`, run an in-place sort like so:
+Create a normalized version a configuration file, making conf files easier to merge with :command:`git`.
+Run an in-place sort like so:
 
     .. code-block:: sh
 
@@ -89,8 +94,8 @@ Cleaning up
 -----------
 
 
-Reduce junk in local
-~~~~~~~~~~~~~~~~~~~~
+Reduce cruft in local
+~~~~~~~~~~~~~~~~~~~~~~~
 
 If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here a quick way to 'minimize' your files.  This will reduce the *local* file by removing all the *default* settings you copied but didn't change.  (The importance of this is outlined in  :ref:`minimizing_files`.)
 
@@ -106,10 +111,10 @@ App developers can push changes from the :file:`local` folder over to the :file:
 
     .. code-block:: sh
 
-        ksconf --interactive promote myapp/local/props.conf myapp/default/props.conf
+        ksconf promote --interactive myapp/local/props.conf myapp/default/props.conf
 
-You will be prompted to pick which items you want to promote.  Or you could use the ``--batch``
-option to promote everything in one step, without reviewing the content first.
+You will be prompted to pick which items you want to promote.
+Or use the ``--batch`` option to promote everything in one step, without reviewing the changes first.
 
 
 
@@ -125,14 +130,14 @@ Say you want to move a bunch of savedsearches from ``search`` into a more approp
 
     .. code-block:: sh
 
-        ksconf filter --match string --stanza 'file:://corp_searches.txt' \
+        ksconf filter --match string --stanza 'file://corp_searches.txt' \
             search/local/savedsearches.conf --output corp_app/default/savedsearches.conf
 
 And now, to avoid duplication and confusion, you want to remove that exact same set of searches from the search app.
 
     .. code-block:: sh
 
-        ksconf filter --match string --stanza 'file:://corp_searches.txt' \
+        ksconf filter --match string --stanza 'file://corp_searches.txt' \
             --invert-match search/local/savedsearches.conf \
             --output search/local/savedsearches.conf.NEW
 
@@ -140,7 +145,7 @@ And now, to avoid duplication and confusion, you want to remove that exact same 
         mv search/local/savedsearches.conf \
             /my/backup/location/search-savedsearches-$(date +%Y%M%D).conf
 
-        # Move the update file in place
+        # Move the updated file in place
         mv search/local/savedsearches.conf.NEW search/local/savedsearches.conf
 
 
@@ -175,7 +180,7 @@ After stopping Splunk on the new server, run the following commands.
 Now double check the results and start Splunk back up.
 
 We use the ``--banner`` option here to essential disable an output banner.
-However, in this case, the combine operation is a one-time job and therefore no warning is needed.
+Because, in this case, the combine operation is a one-time job and therefore no warning is needed.
 
 
 Maintaining apps stored in a local git repository
@@ -211,7 +216,30 @@ Say wanted to count the number of searches containing the word ``error``
 
 This is a simple example of chaining two basic :program:`ksconf` commands together to perform a more complex operation.
 The first command handles the merge of default and local :file:`savedsearches.conf` into a single output stream.
-The second command takes that stream of  These is stream into the filter command where
+The second command filters the resulting stream finding stanzas containing the word 'Error'.
+
+
+
+..  _example_ta_idx_tier:
+
+Building an all-in one TA for your indexing tier
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Say you need to build a single TA containing all the index-time settings for your indexing tier.
+(Note:  Enterprise Security does something similar this whenever they generate the indexer app.)
+
+    .. code-block:: sh
+
+        ksconf merge etc/apps/*TA*/{default,local}/props.conf \
+            | ksconf filter --output=TA-for-indexers/default/props.conf \
+              --include-attr 'TRANSFORMS*' \
+              --include-attr 'TIME_*' \
+              --include-attr 'MUST_BREAK*' \
+              --include-attr 'SHOULD_LINEMERGE' \
+              --include-attr 'EVENT_BREAKER*' \
+              --include-attr 'LINE_BREAKER*'
+
+This example is incomplete because it doesn't list *every* index-time :file:`props.conf` attribute, and leaves out file:`transforms.conf` and :file:`fields.conf`, but hopefully you get the idea.
 
 
 

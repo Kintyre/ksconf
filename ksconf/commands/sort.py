@@ -27,9 +27,9 @@ class SortCmd(KsconfCmd):
     description = dedent("""\
     Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
     config file will be echoed to the screen.  (2) the config files are updated
-    in-place when the -i' option is used.
+    in-place when the ``-i`` option is used.
 
-    Manually managed conf files can be blacklisted by add a comment containing the
+    Manually managed conf files can be blacklisted by adding a comment containing the
     string ``KSCONF-NO-SORT`` to the top of any .conf file.
     """)
     format = "manual"
@@ -67,7 +67,7 @@ class SortCmd(KsconfCmd):
                           This is useful for pre-commit hooks, for example."""))
 
         parser.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
-                            help="Lines between stanzas.")
+                            help="Number of lines between stanzas.")
 
 
     def run(self, args):

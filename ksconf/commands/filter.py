@@ -212,7 +212,7 @@ class FilterCmd(KsconfCmd):
 
             All filter options can be provided multiple times.
             If you have a long list of filters, they can be saved in a file and referenced using
-            the special ``file://`` prefix."""))
+            the special ``file://`` prefix.  One entry per line."""))
 
         pg_sel.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
                             help=dedent("""

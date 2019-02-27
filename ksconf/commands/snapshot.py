@@ -128,9 +128,8 @@ class SnapshotCmd(KsconfCmd):
     description = dedent("""\
     Build a static snapshot of various configuration files stored within a structured json export
     format.  If the .conf files being captured are within a standard Splunk directory structure,
-    then certain metadata is assumed based on path locations.  Otherwise, less metadata is recorded.
-
-    ksconf snapshot --output=daily.json /opt/splunk/etc/app/
+    then certain metadata and namespace information is assumed based on typical path locations.
+    Individual apps or conf files can be collected as well, but less metadata may be extracted.
     """)
 
     def register_args(self, parser):

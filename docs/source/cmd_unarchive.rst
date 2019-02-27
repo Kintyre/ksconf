@@ -4,10 +4,6 @@
 ksconf unarchive
 ================
 
-..  topic:: summary
-
-    Unarchive (or install) some splunk apps.
-
 ..  argparse::
     :module: ksconf.__main__
     :func: build_cli_parser
@@ -22,7 +18,7 @@ ksconf unarchive
 
     --allow-local : @after
         Shipping local files is a Splunk app packaging violation so local files are blocked
-        to prevent content from being overridden.
+        to prevent customizations from being overridden.
 
     --git-sanity-check : @replace
         By default ``git status`` is run on the destination folder to detect working tree or
@@ -48,6 +44,8 @@ ksconf unarchive
 
 ..  note:: Git features are automatically disabled
 
-    Sanity checks and commit modes are automatically disabled if the app is being installed into a
-    directory that is *not* a git working tree.  And this check is only done after first confirming that
-    git is present and functional.
+    Sanity checks and commit modes are automatically disabled if the app is being installed into a directory that is *not* contained within a git working tree.
+    And this check is only done after first confirming that git is present and functional.
+
+
+.. TODO:  Add some example stuff here...
