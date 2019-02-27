@@ -44,12 +44,19 @@ echo "Installing python package into splunk app"
 if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"; fi
 mkdir -p "$PIP_TARGET"
 
+# Upgrade pip, see if that keeps .egg-info files from being created.  If not we can try locating the package name in a different way (not using ".")
+$PY2 -m pip install -m pip -U || true
 
 $PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}" splunk-sdk
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
 rm -rf "${PIP_TARGET:?}/bin"
 
+if [[ $(find "${PIP_TARGET}" -name '*.egg-info' | wc -l) -gt 0 ]]
+then
+    echo "Found an .egg-info file.  Old version of pip?"
+    exit 1
+fi
 # Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other approaches considered (like manifest \w custom REST cleanup script) would likely be flagged as self-deleting files may be problematic for AppInspect.  Using an REST handler upgrade for this kind of thing also means that (1) the app isn't a simple as untarring the archive, and may not work correctly on SHCs.  Sticking with the "always-overwrite-all-your-old-files" appraoch.
 for di in "${PIP_TARGET}/"*.dist-info
 do

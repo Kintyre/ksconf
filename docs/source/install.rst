@@ -166,30 +166,64 @@ The output should look something like this:
      ###  ## #####    ######   #####  ###  ##  ##
                                             #
 
-    ksconf 0.6.2  (Build 270)
-    Python: 2.7.15  (/Users/lalleman/.pyenv/versions/2.7.15/bin/python)
-    Git SHA1 1ddfee04 committed on 2019-02-09
+    ksconf 0.7.0rc1  (Build 313)
+    Python: 2.7.15  (/Applications/splunk/bin/python)
+    Git SHA1 9b43d302 committed on 2019-02-26
+    Installed at: /Applications/splunk/etc/apps/ksconf/bin/lib/ksconf
     Written by Lowell Alleman <lowell@kintyre.co>.
     Copyright (c) 2019 Kintyre Solutions, Inc, all rights reserved.
     Licensed under Apache Public License v2
 
-      kintyre_splunk_conf  (0.6.2)
+      kintyre_splunk_conf  (0.6.3rc2-py2.7)
 
         Commands:
-          check           (stable)
-          combine         (beta)
-          diff            (stable)
-          filter          (alpha)
-          merge           (stable)
-          minimize        (beta)
-          promote         (beta)
-          rest-export     (beta)
-          snapshot        (alpha)
-          sort            (stable)
-          unarchive       (beta)
+          check           (stable)    OK
+          combine         (beta)      OK
+          diff            (stable)    OK
+          filter          (alpha)     OK
+          merge           (stable)    OK
+          minimize        (beta)      OK
+          promote         (beta)      OK
+          rest-export     (beta)      OK
+          rest-publish    (alpha)     OK
+          snapshot        (alpha)     OK
+          sort            (stable)    OK
+          unarchive       (beta)      OK
+
+
+Missing 3rd party libraries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+..  note::  *Splunk app for KSCONF* users don't need to worry about this.
+
+As of version 0.7.0, ksconf now includes commands that require external libraries.
+But to keep the main package slim, these libraries aren't strictly required unless you want the specific commands.
+As part of this change, :command:`ksconf --version` now reports any issues with individual commands in the 3rd column.
+Any value other than 'OK' indicates a problem.
+Here's an example of the output if you're missing the ``splunk-sdk`` package.
+
+::
+          ...
+          promote         (beta)      OK
+          rest-export     (beta)      OK
+          rest-publish    (alpha)     Missing 3rd party module:  No module named splunklib.client
+          snapshot        (alpha)     OK
+          ...
+
+Note that the while the ``rest-publish`` command will not work example above, all of the other commands will continue to work fine.
+If you don't need ``rest-publish`` then there's no need to do anything about it.
+If you want the packages, install the "thirdparty" extras using following command:
+
+..  code-block:: sh
+
+    pip install kintyre-splunk-conf[thirdparty]
 
 
 
+
+
+Other issues
+~~~~~~~~~~~~
 
 If you run into any issues, check out the :ref:`adv_validate_install`
 

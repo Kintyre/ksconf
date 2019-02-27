@@ -3,13 +3,12 @@ Changelog
 
 .. note:: Changes in master, but not released yet are marked as *DRAFT*.
 
-Ksconf 0.6.x
+Ksconf 0.7.x
 ------------
 
-Add deployment as a Splunk app for simplicity and significant docs cleanup.
+Massive documentation improvements, Splunk app install fixes, and new functionality.
 
-
-Release v0.6.3 (DRAFT)
+Release v0.7.0 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ..  notice:: We recommend a fresh install of the Splunk app due to packaging changes.
@@ -30,6 +29,11 @@ Release v0.6.3 (DRAFT)
 -   Changed Splunk app install script to ``install.py`` (it was ``bootstrap_bin.py``).  Hopefully this is more intuitive.
 -   Added windows support in ``install.py``.
 -   Now includes the Splunk Python SDK.  Currently used for ``rest-publish`` but will eventually be used for additional functionally unique to the Splunk app.
+
+Ksconf 0.6.x
+------------
+
+Add deployment as a Splunk app for simplicity and significant docs cleanup.
 
 
 Release v0.6.2 (2019-02-09)

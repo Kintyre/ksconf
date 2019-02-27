@@ -109,6 +109,9 @@ setup(name="kintyre-splunk-conf",
       # Not required, but useful.
       extras_require = {
         "bash" : [ "argcomplete" ],
+        "thirdparty" : [
+            "splunk-sdk"
+        ],
       },
       include_package_data=True,
       zip_safe=True
