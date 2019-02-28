@@ -6,16 +6,16 @@ Changelog
 Ksconf 0.7.x
 ------------
 
-Massive documentation improvements, Splunk app install fixes, and new functionality.
+New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
-Release v0.7.0 (DRAFT)
+Release v0.7.0 (2019-02-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-..  attention:: We recommend a fresh install of the Splunk app due to packaging changes.
+..  attention:: For anyone who installed 0.6.x, we recommend a fresh install of the Splunk app due to packaging changes.  This shouldn't be an issue in the future.
 
-*General changes*
+*General changes:*
 
--   Added new :ref:`ksconf_cmd_rest-publish` command that for nearly every use case supersedes the use of ``rest-export``.
+-   Added new :ref:`ksconf_cmd_rest-publish` command that supersedes the use of ``rest-export`` for nearly every use case.  Warning:  No unit-testing has been created for this command yet, due to technical hurdles.
 -   Added :doc:`cheatsheet` to the docs.
 -   Massive doc cleanup of hundreds of typos and many expanded/clarified sections.
 -   Significant improvement to entrypoint handling and support for conditional inclusion of 3rd party libraries with sane behavior on import errors, and improved warnings.  This information is conveniently viewable to the user via ``ksconf --version``.
@@ -26,8 +26,9 @@ Release v0.7.0 (DRAFT)
 *Splunk app changes:*
 
 -   Modified installation of python package installation.  In previous releases, various ``.dist-info`` folders were created with version-specific names leading to a mismatch of package versions after upgrade.
+    For this reason, we suggest that anyone who previously installed 0.6.x should do a fresh install.
 -   Changed Splunk app install script to ``install.py`` (it was ``bootstrap_bin.py``).  Hopefully this is more intuitive.
--   Added windows support in ``install.py``.
+-   Added Windows support to ``install.py``.
 -   Now includes the Splunk Python SDK.  Currently used for ``rest-publish`` but will eventually be used for additional functionally unique to the Splunk app.
 
 Ksconf 0.6.x
