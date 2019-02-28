@@ -174,15 +174,13 @@ The output should look something like this:
      ###  ## #####    ######   #####  ###  ##  ##
                                             #
 
-    ksconf 0.7.0rc1  (Build 313)
+    ksconf 0.7.0  (Build 320)
     Python: 2.7.15  (/Applications/splunk/bin/python)
-    Git SHA1 9b43d302 committed on 2019-02-26
+    Git SHA1 fbf699e3 committed on 2019-02-27
     Installed at: /Applications/splunk/etc/apps/ksconf/bin/lib/ksconf
     Written by Lowell Alleman <lowell@kintyre.co>.
     Copyright (c) 2019 Kintyre Solutions, Inc, all rights reserved.
     Licensed under Apache Public License v2
-
-      kintyre_splunk_conf  (0.6.3rc2-py2.7)
 
         Commands:
           check           (stable)    OK
@@ -198,7 +196,6 @@ The output should look something like this:
           sort            (stable)    OK
           unarchive       (beta)      OK
 
-
 Missing 3rd party libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -211,6 +208,7 @@ Any value other than 'OK' indicates a problem.
 Here's an example of the output if you're missing the ``splunk-sdk`` package.
 
 ::
+
           ...
           promote         (beta)      OK
           rest-export     (beta)      OK

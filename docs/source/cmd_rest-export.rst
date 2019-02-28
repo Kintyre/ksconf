@@ -7,7 +7,7 @@ ksconf rest-export
 
     You should consider using :ref:`ksconf_cmd_rest-publish` instead of this one.
     The only remaining valid use case for ``rest-export`` (this command) is for disconnected scenarios.
-    In other words, if you need to push stanzas to a splunkd instance where you don't (an can't) install ``ksconf``,
+    In other words, if you need to push stanzas to a splunkd instance where you don't (and can't) install ``ksconf``,
     then this command may still be useful to you.
     In this case, ``ksconf rest-export`` can create a shell script that you can transfer to the correct network,
     and then run the shell script.
