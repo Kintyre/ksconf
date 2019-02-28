@@ -39,16 +39,22 @@ echo "VERSION:     $KSCONF_VERSION"
 echo "BUILD:       $KSCONF_BUILD"
 
 echo
+echo "Build wheel"
+# Make a temporary wheel just to install it with pip.  This is a work around around for Travis CI,
+# where for some reasons the package get's installed as an EGG (creating .egg-info, not .dist-info)
+# which causes Splunk app upgrade issues over time.
+wheel_dir=$(mktemp -d)
+python setup.py bdist_wheel -d "$wheel_dir"
+
+echo
 echo "Installing python package into splunk app"
 
 if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"; fi
 mkdir -p "$PIP_TARGET"
 
-# Upgrade pip, see if that keeps .egg-info files from being created.  If not we can try locating the package name in a different way (not using ".")
-$PY2 -m pip install --upgrade pip || true
-
 echo "Installing packages...."
-$PY2 -m pip install --target="$PIP_TARGET" "${PROJECT_DIR}" splunk-sdk
+$PY2 -m pip install --target="$PIP_TARGET" "$wheel_dir"/*.whl splunk-sdk
+
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
 rm -rf "${PIP_TARGET:?}/bin"
@@ -56,15 +62,14 @@ rm -rf "${PIP_TARGET:?}/bin"
 
 egg_info_dirs=$(mktemp)
 find "${PIP_TARGET}" -type d -name '*.egg-info' > "$egg_info_dirs"
-if [[ $(cat "$egg_info_dirs" | wc -l) -gt 0 ]]
+if [[ $(wc -l < "$egg_info_dirs") -gt 0 ]]
 then
     echo "Found an .egg-info file.  Old version of pip?"
     cat "$egg_info_dirs"
     exit 1
 fi
-rm -f "$egg_info_dirs"
 
-# Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other approaches considered (like manifest \w custom REST cleanup script) would likely be flagged as self-deleting files may be problematic for AppInspect.  Using an REST handler upgrade for this kind of thing also means that (1) the app isn't a simple as untarring the archive, and may not work correctly on SHCs.  Sticking with the "always-overwrite-all-your-old-files" appraoch.
+# Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other approaches considered (like manifest \w custom REST cleanup script) would likely be flagged as self-deleting files may be problematic for AppInspect.  Using an REST handler upgrade for this kind of thing also means that (1) the app isn't a simple as untarring the archive, and may not work correctly on SHCs.  Sticking with the "always-overwrite-all-your-old-files" approach.
 for di in "${PIP_TARGET}/"*.dist-info
 do
     di_nover=$(echo "$di" | sed -E 's~^(.*/[a-zA-Z][a-zA-Z_-]+)-[0-9devrcitya-f+.]+\.dist-info~\1.dist-info~')
@@ -82,7 +87,7 @@ echo "KSCONF v$KSCONF_VERSION"
         $PY3 -m pip install virtualenv
         $PY3 -m virtualenv venv
         . venv/bin/activate
-        $PY3 -m pip install -r $PROJECT_DIR/requirements-doc.txt
+        $PY3 -m pip install -r "$PROJECT_DIR"/requirements-doc.txt
   else
         echo "Using existing virtualenv"
         . venv/bin/activate
@@ -92,10 +97,11 @@ echo "KSCONF v$KSCONF_VERSION"
   echo "Making HTML docs"
   make html || { echo "Failed to make docs."; exit 2; }
   rm -rf "$APP_DOCS" || echo "No previous app docs dir"
-  mkdir -p "$(dirname $APP_DOCS)"
+  mkdir -p "$(dirname "$APP_DOCS")"
   echo "Copying docs into the KSCONF Splunk app"
   cp -a "$DOCS/build/html" "$APP_DOCS"
-  rm -f $APP_DOCS/.buildinfo
+  # Splunk doesn't like any dot files.  Period.
+  rm -f "$APP_DOCS/.buildinfo"
 )
 
 # Build the app.conf file.
@@ -120,3 +126,9 @@ echo "Building Splunk app tarball"
 APP_FILE=$DIST/ksconf-app_for_splunk-$KSCONF_VERSION.tgz
 tar -czvf "$APP_FILE" -C "$(dirname "$APP")" "ksconf"
 echo "Wrote Splunk app to $APP_FILE"
+
+
+echo Cleanup
+rm -rf "${wheel_dir:?}"
+rm -f "$egg_info_dirs"
+echo "done"
