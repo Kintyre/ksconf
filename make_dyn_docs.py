@@ -126,7 +126,10 @@ def make_subcommands_table(csv_path):
 
 
 if __name__ == '__main__':
-    docs_dir = lambda filename: os.path.join(project_dir, "docs", "source", "dyn", filename)
+    dyn  = os.path.join(project_dir, "docs", "source", "dyn")
+    if not os.path.isdir(dyn):
+        os.makedirs(dyn)
+    docs_dir = lambda filename: os.path.join(dyn, filename)
     changes = 0
 
     changes += make_cli_docs(docs_dir("cli.rst"))
