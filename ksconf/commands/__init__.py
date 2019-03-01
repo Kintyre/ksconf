@@ -59,6 +59,9 @@ class ConfFileProxy(object):
         self._data = None
         self._parse_profile = parse_profile or {}
 
+    def exists(self):
+        return os.path.isfile(self.name)
+
     def readable(self):
         return "r" in self._mode
 

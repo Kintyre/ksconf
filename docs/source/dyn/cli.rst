@@ -308,7 +308,8 @@ ksconf merge
 
  .. code-block:: none
 
-    usage: ksconf merge [-h] [--target FILE] [--dry-run] [--banner BANNER]
+    usage: ksconf merge [-h] [--target FILE] [--ignore-missing] [--dry-run]
+                        [--banner BANNER]
                         FILE [FILE ...]
     
     Merge two or more .conf files into a single combined .conf file. This is
@@ -325,6 +326,7 @@ ksconf merge
                             Save the merged configuration files to this target
                             file. If not provided, the merged conf is written to
                             standard output.
+      --ignore-missing, -s  Silently ignore any missing CONF files.
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes in 'diff' format. If TARGET doesn't
                             exist, then show the merged file.

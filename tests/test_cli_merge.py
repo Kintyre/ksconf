@@ -66,6 +66,36 @@ class CliMergeTest(unittest.TestCase):
             conf = ko.get_conf()
             self.assertNotIn("script://./bin/ps.sh", conf)
 
+    def test_missing_file(self):
+        twd = TestWorkDir()
+        with ksconf_cli:
+            # Missing files should be reported as an error, by default
+            ko = ksconf_cli("merge", twd.get_path("a_non_existent_file.conf"))
+            self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
+            self.assertRegex(ko.stderr, r".*\b(can't open '[^']+\.conf'|invalid ConfFileType).*")
+
+            # Make sure that with --ignore-missing missing files are silently ignored
+            ko = ksconf_cli("merge", "--ignore-missing", twd.get_path("a_non_existent_file.conf"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertEqual(ko.stdout.strip(), "")
+
+    def test_invalid_conf(self):
+        bad_conf = """
+        [dangling stanza
+        attr = 1
+        bad file =  very true"""
+        twd = TestWorkDir()
+        badfile = twd.write_file("bad_conf.conf", bad_conf)
+        with ksconf_cli:
+            ko = ksconf_cli("merge", badfile)
+            self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_BAD_CONF_FILE))
+            self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+
+            with FakeStdin(bad_conf):
+                ko = ksconf_cli("merge", "-")
+                self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_BAD_CONF_FILE))
+                self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

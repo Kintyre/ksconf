@@ -10,8 +10,8 @@ from __future__ import absolute_import, unicode_literals
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileProxy, ConfFileType
 from ksconf.conf.merge import merge_conf_files
-from ksconf.conf.parser import PARSECONF_STRICT, PARSECONF_MID
-from ksconf.consts import EXIT_CODE_SUCCESS
+from ksconf.conf.parser import PARSECONF_STRICT, PARSECONF_MID, ConfParserException
+from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_BAD_CONF_FILE
 from ksconf.util.completers import conf_files_completer
 
 
@@ -26,7 +26,7 @@ class MergeCmd(KsconfCmd):
 
     def register_args(self, parser):
         parser.add_argument("conf", metavar="FILE", nargs="+",
-                            type=ConfFileType("r", "load", parse_profile=PARSECONF_MID),
+                            type=ConfFileType("r", "none", parse_profile=PARSECONF_MID),
                             help="The source configuration file(s) to collect settings from."
                             ).completer = conf_files_completer
         parser.add_argument("--target", "-t", metavar="FILE",
@@ -35,6 +35,12 @@ class MergeCmd(KsconfCmd):
             Save the merged configuration files to this target file.
             If not provided, the merged conf is written to standard output.""")
                             ).completer = conf_files_completer
+
+        # This is helpful when writing bash expressions like MyApp/{default,local}/props.conf;
+        # when either default or local may not be present.
+        parser.add_argument("--ignore-missing", "-s", default=False, action="store_true",
+                            help="Silently ignore any missing CONF files.")
+
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes in 'diff' format.
@@ -45,5 +51,22 @@ class MergeCmd(KsconfCmd):
 
     def run(self, args):
         ''' Merge multiple configuration files into one '''
-        merge_conf_files(args.target, args.conf, dry_run=args.dry_run, banner_comment=args.banner)
+        try:
+            merge_conf_files(args.target, args.conf, dry_run=args.dry_run,
+                             banner_comment=args.banner, skip_missing=args.ignore_missing)
+        except ConfParserException as e:
+            # TODO:  We should really show *which* file had the parse error.
+            # self.stderr.write("Error: failed to parse '{}': {}\n".format(e)
+            self.stderr.write("Error: failed to parse: {}\n".format(e))
+            return EXIT_CODE_BAD_CONF_FILE
+        except IOError as e:
+            if e.errno == 2:
+                self.stderr.write("Error: can't open '{}'\n"
+                                  "If you'd like to silently ignore missing input files, "
+                                  "use '--ignore-missing'.\n".format(e.filename))
+                return EXIT_CODE_NO_SUCH_FILE
+            else:
+                self.stderr.write(e)
+                # Is there a better exit code for this?
+                return EXIT_CODE_NO_SUCH_FILE
         return EXIT_CODE_SUCCESS

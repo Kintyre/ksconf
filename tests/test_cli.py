@@ -30,16 +30,20 @@ class CliSimpleTestCase(unittest.TestCase):
         twd = TestWorkDir()
         badfile = twd.write_file("bad_conf.conf", bad_conf)
         with ksconf_cli:
-            ko = ksconf_cli("merge", twd.get_path("a_non_existant_file.conf"))
+
+            # A command that uses ConfFileType() with mode="load"
+            base_cmd = [ "rest-export" ]
+
+            ko = ksconf_cli(*base_cmd + [twd.get_path("a_non_existent_file.conf")])
             self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
             self.assertRegex(ko.stderr, r".*\b(can't open '[^']+\.conf'|invalid ConfFileType).*")
 
-            ko = ksconf_cli("merge", badfile)
+            ko = ksconf_cli(*base_cmd + [badfile])
             self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
             self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
 
             with FakeStdin(bad_conf):
-                ko = ksconf_cli("merge", "-")
+                ko = ksconf_cli(*base_cmd + ["-"])
                 self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
                 self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
 

@@ -10,6 +10,7 @@ import six
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments
 from ksconf.consts import SMART_UPDATE
+from ksconf.commands import ConfFileProxy
 
 ####################################################################################################
 ## Merging logic
@@ -56,9 +57,13 @@ def merge_conf_dicts(*dicts):
     return result
 
 
-def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
+def merge_conf_files(dest, configs, dry_run=False, banner_comment=None, skip_missing=False):
+    # type: (str, ConfFileProxy, bool, str, bool) -> dict
     # Parse all config files
-    cfgs = [conf.data for conf in configs]
+    if skip_missing:
+        cfgs = [conf.data for conf in configs if conf.exists()]
+    else:
+        cfgs = [conf.data for conf in configs]
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
     if banner_comment:
