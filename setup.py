@@ -100,6 +100,9 @@ setup(name="kintyre-splunk-conf",
           "ksconf.util",
           "ksconf.vc",
       ],
+      setup_requires=[
+          "wheel",
+      ],
       install_requires=[
         "six",
         "entrypoints",
