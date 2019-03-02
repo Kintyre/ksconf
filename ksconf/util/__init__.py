@@ -42,7 +42,12 @@ except ImportError:
 def debug_traceback():  # pragma: no cover
     """ If the 'KSCONF_DEBUG' environmental variable is set, then show a stack trace. """
     from os import environ
-    if b"KSCONF_DEBUG" in environ:
+    from six import PY2
+    if PY2:
+        KSCONF_DEBUG = b"KSCONF_DEBUG"
+    else:
+        KSCONF_DEBUG = "KSCONF_DEBUG"
+    if KSCONF_DEBUG in environ:
         # TODO:  Pop one off the top of the stack to hide THIS function
         import traceback
         traceback.print_exc()
