@@ -91,6 +91,7 @@ def build_cli_parser(do_formatter=False):
         subcommands[distro].append((ep.name, ep.cmd_cls, ep.error))
         if ep.cmd_cls:
             cmd = ep.cmd_cls(ep.entry.name)
+            # XXX: Find a better way to handle argparse errors: (TypeError) ex: invalid arguments
             cmd.add_parser(subparsers)
 
     for distro_name, items in sorted(subcommands.items()):

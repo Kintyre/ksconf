@@ -214,7 +214,8 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
             # ToDo:  There should be a 'loose' mode that allows this to be ignored...
             raise ConfParserException("Dangling stanza header:  {0}".format(entry))
         elif strict and entry.strip():
-            raise ConfParserException("Unexpected entry:  {0}".format(entry))
+            #  if entry == "\ufeff": continue # UTF-8 BOM read as UTF-8;  But this ONLY works for PY3
+            raise ConfParserException("Unexpected entry:  {0!r}".format(entry))
 
 
 def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
@@ -229,15 +230,19 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
     :return: a mapping of the stanza and attributes.  The resulting output is accessible as [stanaza][attribute] -> value
     :rtype: dict
     """
-    # Placeholder stub for an eventual migration to proper class-oriented parser
-    if hasattr(stream, "read"):
-        return parse_conf_stream(stream, **profile)
-    else:
-        if not encoding:
-            encoding = detect_by_bom(stream)
-        # Assume it's a filename
-        with open(stream, "r", encoding=encoding) as stream:
+    try:
+        # Placeholder stub for an eventual migration to proper class-oriented parser
+        if hasattr(stream, "read"):
             return parse_conf_stream(stream, **profile)
+        else:
+            if not encoding:
+                encoding = detect_by_bom(stream)
+            # Assume it's a filename
+            with open(stream, "r", encoding=encoding) as stream:
+                return parse_conf_stream(stream, **profile)
+    except UnicodeDecodeError as e:
+        raise ConfParserException("Encoding error encountered: {}".format(e))
+
 
 
 def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments=False,

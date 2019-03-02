@@ -12,6 +12,7 @@ from warnings import warn
 from collections import namedtuple
 
 from ksconf import KsconfPluginWarning
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE
 from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
                                detect_by_bom
 from ksconf.consts import SMART_CREATE
@@ -133,7 +134,7 @@ class ConfFileProxy(object):
         data = parse_conf(self.stream, profile=parse_profile)
         return data
 
-    def dump(self, data):
+    def dump(self, data, **kwargs):
         if not self.writable():      # pragma: no cover
             raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
                                                                             self._mode))
@@ -142,9 +143,9 @@ class ConfFileProxy(object):
         # write vs smart write here ----
         if self._is_file:
             self.close()
-            return smart_write_conf(self.name, data)
+            return smart_write_conf(self.name, data, **kwargs)
         else:
-            write_conf(self._stream, data)
+            write_conf(self._stream, data, **kwargs)
             return SMART_CREATE
 
     def unlink(self):
@@ -297,6 +298,12 @@ class DescriptionHelpFormatterPreserveLayout(DescriptionFormatterNoReST):
         return ''.join([indent + line for line in text.splitlines(True)])
 
 
+
+class KsconfCmdReadConfException(Exception):
+    def __init__(self, rc):
+        self.returncode = rc
+
+
 class KsconfCmd(object):
     """ Ksconf command specification base class. """
     help = None
@@ -311,6 +318,7 @@ class KsconfCmd(object):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
+        self.parse_profile = {}
 
     @classmethod
     def _handle_imports(cls):
@@ -362,6 +370,8 @@ class KsconfCmd(object):
         exc = None
         try:
             return_code = self.run(args)
+        except KsconfCmdReadConfException as e:
+            return_code = e.returncode
         except:     # pragma: no cover
             exc = sys.exc_info()
             raise
@@ -382,6 +392,44 @@ class KsconfCmd(object):
         """ Any custom clean up work that needs done.  Always called if run() was.  Presence of
         exc_info indicates failure. """
         pass
+
+    ### Helper functions
+
+    def _parse_conf(self, path, mode, profile):
+        p = dict(self.parse_profile)
+        if profile:
+            p.update(profile)
+        if path == "-":
+            cfp = ConfFileProxy("<stdin>", "r", stream=sys.stdin, is_file=False)
+        else:
+            encoding = detect_by_bom(path)
+            stream = open(path, mode, encoding=encoding)
+            cfp = ConfFileProxy(path, mode, stream=stream,
+                                parse_profile=p, is_file=True)
+        d = cfp.data
+        del d
+        return cfp
+
+    def parse_conf(self, path, mode="r", profile=None, raw_exec=False):
+        # type: (str, str, dict) -> ConfFileProxy
+        if raw_exec:
+            return self._parse_conf(path, mode, profile)
+        try:
+            return self._parse_conf(path, mode, profile)
+        except IOError as e:
+            # debug_traceback()
+            self.stderr.write("can't open '{}': {}\n".format(path, e))
+            raise KsconfCmdReadConfException(EXIT_CODE_NO_SUCH_FILE)
+        except ConfParserException as e:
+            # debug_traceback()
+            self.stderr.write("Failed to parse '{}':  {}\n".format(path, e))
+            raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
+        except TypeError as e:
+            # debug_traceback()
+            self.stderr.write("Parser config error '{}': {}\n" % (path, e))
+            # I guess bad conf file.... can't remember what this one is for.
+            raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
+
 
 
 def add_splunkd_access_args(parser):

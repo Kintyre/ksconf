@@ -57,13 +57,10 @@ def merge_conf_dicts(*dicts):
     return result
 
 
-def merge_conf_files(dest, configs, dry_run=False, banner_comment=None, skip_missing=False):
+def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
     # type: (str, ConfFileProxy, bool, str, bool) -> dict
     # Parse all config files
-    if skip_missing:
-        cfgs = [conf.data for conf in configs if conf.exists()]
-    else:
-        cfgs = [conf.data for conf in configs]
+    cfgs = [conf.data for conf in configs]
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
     if banner_comment:

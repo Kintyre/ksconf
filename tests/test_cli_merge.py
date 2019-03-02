@@ -89,12 +89,21 @@ class CliMergeTest(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("merge", badfile)
             self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_BAD_CONF_FILE))
-            self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+            self.assertRegex(ko.stderr, "([Ff]ailed to parse|invalid ConfFileType)")
 
             with FakeStdin(bad_conf):
                 ko = ksconf_cli("merge", "-")
                 self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_BAD_CONF_FILE))
-                self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+                self.assertRegex(ko.stderr, "([Ff]ailed to parse|invalid ConfFileType)")
+
+    def test_utf8bom(self):
+        twd = TestWorkDir()
+        conf = twd.write_file("test.conf",
+                b'\xef\xbb\xbf\n[ui]\n\n[launcher]\n\n[package]\ncheck_for_updates = 0\n')
+        with ksconf_cli:
+            ko = ksconf_cli("merge", conf)
+            self.assertEqual(ko.returncode, 0)
+
 
 
 if __name__ == '__main__':  # pragma: no cover
