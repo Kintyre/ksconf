@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
+from __future__ import print_function, unicode_literals
+
 import os
 import sys
 
 from glob import glob
 from collections import defaultdict
-from urllib import unquote
+
+from six.moves.urllib.parse import unquote
 
 from ksconf.conf.parser import parse_conf
 from ksconf.conf.merge import merge_conf_dicts as merge_conf
@@ -25,19 +28,19 @@ def get_app_conf(app_path, cfg_name, dirs=["default", "local"]):
 
 def check_references(metadata):
     app_dir = os.path.abspath(os.path.dirname(os.path.dirname(metadata.name)))
-    print "Looking at metadata file for app %s" % app_dir
+    print("Looking at metadata file for app %s" % app_dir)
     db = collect_info(app_dir)
 
     show_app_inventory(db)
 
     md = parse_conf(metadata)
-    for (meta_entry, meta_facts) in md.iteritems():
+    for (meta_entry, meta_facts) in md.items():
         cfg_path = [unquote(p) for p in meta_entry.split("/") ]
         #(cfg_file, stanza) = meta_entry.split("/",1)
 
         if len(cfg_path) == 1:
-            print "Skipping global stanza"
-            print meta_facts
+            print("Skipping global stanza")
+            print(meta_facts)
             continue
 
         cfg_file = cfg_path[0]
@@ -53,15 +56,15 @@ def check_references(metadata):
             db[cfg_file][stanza]
             if key:
                 db[cfg_file][stanza][key]
-                print "Key match for    %s/%s [%s]" % (cfg_file, stanza, key)
+                print("Key match for    %s/%s [%s]" % (cfg_file, stanza, key))
             else:
-                print "Stanza match for %s/%s" % (cfg_file, stanza)
+                print("Stanza match for %s/%s" % (cfg_file, stanza))
         except KeyError:
             if key:
-                print "Missing         %s/%s [%s]" % (cfg_file, stanza, key)
+                print("Missing         %s/%s [%s]" % (cfg_file, stanza, key))
 
             else:
-                print "Missing         %s/%s" % (cfg_file, stanza)
+                print("Missing         %s/%s" % (cfg_file, stanza))
 
 
 
@@ -71,7 +74,7 @@ def collect_info_confs(app_dir, dir_, db):
     for cf in conf_files:
         cfg_name = os.path.splitext(os.path.basename(cf))[0]
         cfg_data = parse_conf(cf)
-        print "Import %s (Found %d entries)" % (cf, len(cfg_data))
+        print("Import %s (Found %d entries)" % (cf, len(cfg_data)))
         db[cfg_name] = merge_conf(db[cfg_name], cfg_data)
 
 
@@ -79,7 +82,7 @@ def collect_info_lookups(app_dir, db, read_files=True):
     obj_type = "lookups"
     data = {}
     pattern = os.path.join(os.path.join(app_dir, "lookups", "*.csv"))
-    print "Looking for %s based on files matching %s" % (obj_type, pattern)
+    print("Looking for %s based on files matching %s" % (obj_type, pattern))
     for fn in glob(pattern):
         obj_name = os.path.basename(fn)
         if read_files:
@@ -95,7 +98,7 @@ def collect_info_data(app_dir, dir_, path_parts, db, obj_type=None, read_files=T
         obj_type = path_parts[-2]
     data = {}
     pattern = os.path.join(os.path.join(app_dir, dir_, "data", *path_parts))
-    print "Looking for %s based on files matching %s" % (obj_type, pattern)
+    print("Looking for %s based on files matching %s" % (obj_type, pattern))
     for fn in glob(pattern):
         obj_name = os.path.splitext(os.path.basename(fn))[0]
         if read_files:
@@ -118,12 +121,12 @@ def collect_info(app_dir):
 
 
 def show_app_inventory(db):
-    print "=" * 80
-    for (obj_type, obj_data) in db.iteritems():
-        print " --- %s ---"  % (obj_type,)
-        for (stanza_name, stanza_data) in obj_data.iteritems():
-            print "\t%s / %-50s \t\t(size=%d)" % (obj_type, stanza_name, len(stanza_data))
-    print "=" * 80
+    print("=" * 80)
+    for (obj_type, obj_data) in db.items():
+        print(" --- %s ---"  % (obj_type,))
+        for (stanza_name, stanza_data) in obj_data.items():
+            print("\t%s / %-50s \t\t(size=%d)" % (obj_type, stanza_name, len(stanza_data)))
+    print("=" * 80)
 
 
 

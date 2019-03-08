@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, unicode_literals
 import csv
 import sys
 import os
@@ -50,7 +51,7 @@ def files_differ(f1, f2, cmp_size=16*1024):
 
 def sort_csv_file(src, dst, delimiter, quoting, trim_spaces=False, pad_columns=0, sort_numeric=False):
     reader = iter(csv.reader(open(src), delimiter=delimiter))
-    header = reader.next()
+    header = next(reader)
     columns = len(header)
     rows = []
     for i,row in enumerate(reader):
@@ -82,7 +83,7 @@ def sort_csv_file(src, dst, delimiter, quoting, trim_spaces=False, pad_columns=0
                         break
                     row_len = len(row)
         elif row_len != columns:
-            print "Found incorrect number of rows on line %d:  row=%r" % (i+2, row)
+            print("Found incorrect number of rows on line {}:  row={!r}".format(i+2, row))
         rows.append(row)
     rows.sort()
 
@@ -103,9 +104,9 @@ if __name__ == '__main__':
                           options.trim_spaces, options.pad_columns,
                           options.numeric)
             if files_differ(fn, temp_file):
-                print "Updating file:  %s" % (fn,)
+                print("Updating file:  {}".format(fn))
             else:
-                print "No changes to file:  %s" % (fn,)
+                print("No changes to file:  {}".format(fn))
                 os.unlink(temp_file)
                 continue
             if os.path.isfile(backup):
@@ -119,7 +120,7 @@ if __name__ == '__main__':
                           options.trim_spaces, options.pad_columns,
                           options.numeric)
             if files_differ(fn, new_file):
-                print "Sorted file saved as:  %s" % (new_file)
+                print("Sorted file saved as:  {}".format(new_file))
             else:
-                print "No changes made."
+                print("No changes made.")
                 os.unlink(new_file)
