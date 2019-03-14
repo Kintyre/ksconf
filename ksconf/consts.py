@@ -10,6 +10,7 @@ SMART_NOCHANGE = "unchanged"
 #   20-49  Error conditions (user caused)
 #   50-59  Externally caused (should retry)
 #   100+   Internal error (developer required)
+#   120+   Environmental error
 
 EXIT_CODE_SUCCESS = 0
 EXIT_CODE_NOTHING_TO_DO = 1
@@ -36,7 +37,18 @@ EXIT_CODE_EXTERNAL_FILE_EDIT = 50
 # Unresolvable issues (developer required)
 EXIT_CODE_INTERNAL_ERROR = 100
 
+# Environmental error
+EXIT_CODE_ENV_BUSTED = 120
+
+
 # This gets properly supported in Python 3.6, but until then....
 import re
 RegexType = type(re.compile(r'.'))
 del re
+
+from six import PY2
+if PY2:
+    KSCONF_DEBUG = b"KSCONF_DEBUG"
+else:
+    KSCONF_DEBUG = "KSCONF_DEBUG"
+del PY2

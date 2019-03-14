@@ -30,7 +30,7 @@ call python -m ksconf "%*"
 splunk_home = os.environ.get("SPLUNK_HOME")
 
 if not splunk_home:
-    print("SPLUNK_HOME not set.\nPlease run as:\n\tsplunk cmd python {}".format(this_script))
+    print("SPLUNK_HOME not set.\nPlease run as:\n\tsplunk cmd python {}".format(__file__))
     sys.exit(1)
 
 

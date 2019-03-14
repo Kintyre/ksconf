@@ -8,6 +8,18 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+
+Release v0.7.1 (2019-03-13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Additional fixes for UTF-8 BOM files which appear to happen more frequently with ``local`` files on Windows.
+    This time some additional unit tests were added so hopefully there are few regressions in the future.
+-   Add the ``ignore-missing`` argument to :ref:`ksconf_cmd_merge` to prevent errors when input files are absent.
+    This allows bashisms ``Some_App/{{default,local}}/savedsearches.conf`` to work without errors if the local or default file is missing.
+-   Check for incorrect environment setup and suggest running sourcing :file:`setSplunkEnv` to get a working environment.
+    See _`#48 <https://github.com/Kintyre/ksconf/issues/48>` for more info.
+-   Minor improvements to some internal error handling, packaging, docs, and troubleshooting code.
+
 Release v0.7.0 (2019-02-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

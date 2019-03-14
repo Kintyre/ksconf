@@ -103,13 +103,19 @@ def make_cli_docs(readme_file):
 def make_subcommands_table(csv_path):
     import csv
     from ksconf.commands import get_all_ksconf_cmds
+
+    # Explicitly sort commands by name (no more random git diffs!)
+    commands = [ (ep.name, ep) for ep in get_all_ksconf_cmds() ]
+    commands.sort()
+    commands = [ ep for (name, ep) in commands ]
+
     if PY2:
         table = ReluctantWriter(csv_path, "wb")
     else:
         table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
-        for ep in get_all_ksconf_cmds():
+        for ep in commands:
             # Pros/conf links to the doc vs 'ref'?
             #ref_template = ":doc:`cmd_{}`"
             ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"

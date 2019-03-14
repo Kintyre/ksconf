@@ -44,6 +44,19 @@ version controlled (default) folder, and dealing with more than one layer of
 # ------------------------------------------ wrap to 80 chars ----------------^
 
 
+def check_py_sane():
+    """ Run a simple python environment sanity check.   Here's the scenario, if Splunk's
+    python is called but not all the correct environment variables have been set, then ksconf can
+    fail in unclear ways.
+    """
+    try:
+        # There must be a more 'sane' way to check this.  But for now, this test works...
+        from hashlib import md5
+    except ImportError:
+        return False
+    return True
+
+
 def build_cli_parser(do_formatter=False):
     parser_kwargs = dict(
         fromfile_prefix_chars="@",
@@ -155,7 +168,7 @@ def cli(argv=None, _unittest=False):
     try:
         return_code = args.funct(args)
     except Exception as e:  # pragma: no cover
-        # Todo:  Make a CLI arg or ENV var to enable stacktrace for debugging
+        # Set KSCONF_DEBUG=1 to enable a traceback
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         ksconf.util.debug_traceback()
         return_code = EXIT_CODE_INTERNAL_ERROR
@@ -167,4 +180,12 @@ def cli(argv=None, _unittest=False):
 
 
 if __name__ == '__main__':  # pragma: no cover
+    if not check_py_sane():
+        # TODO: This should ALSO check to make sure this is a Splunk-based install, or this 'help' will be misguided.
+        sys.stderr.write("Doh!  Environmental configuration issue found preventing 'ksconf' from running.\n")
+        # TODO:  We should show the Windows equivalent, but primarily this is an issue on Linux.
+        sys.stderr.write("Try running this command first:  source $SPLUNK_HOME/bin/setSplunkEnv\n")
+        # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist
+        if "KSCONF_DEBUG" not in os.debug:
+            sys.exit(EXIT_CODE_ENV_BUSTED)
     cli()
