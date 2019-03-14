@@ -25,7 +25,7 @@ import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.util.completers import autocomplete
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_ENV_BUSTED, KSCONF_DEBUG
 
 ###################################################################################################
 ## CLI definition
@@ -152,6 +152,9 @@ def build_cli_parser(do_formatter=False):
 
 
 def cli(argv=None, _unittest=False):
+    if check_py is not None:
+        check_py()
+
     parser = build_cli_parser(True)
     if not _unittest:
         autocomplete(parser)
@@ -179,13 +182,18 @@ def cli(argv=None, _unittest=False):
         sys.exit(return_code or 0)
 
 
-if __name__ == '__main__':  # pragma: no cover
+def check_py():
     if not check_py_sane():
         # TODO: This should ALSO check to make sure this is a Splunk-based install, or this 'help' will be misguided.
         sys.stderr.write("Doh!  Environmental configuration issue found preventing 'ksconf' from running.\n")
         # TODO:  We should show the Windows equivalent, but primarily this is an issue on Linux.
+        # TODO:  If we're install as a splunk app, we should be able to give the real path to SPLUNK_HOME, which quite likely is ALSO not set.
         sys.stderr.write("Try running this command first:  source $SPLUNK_HOME/bin/setSplunkEnv\n")
         # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist
-        if "KSCONF_DEBUG" not in os.debug:
+        if KSCONF_DEBUG not in os.environ:
             sys.exit(EXIT_CODE_ENV_BUSTED)
+    # Okay, now NEVER call this code again....   (helpful for unit-testing)
+    globals()["check_py"] = None
+
+if __name__ == '__main__':  # pragma: no cover
     cli()
