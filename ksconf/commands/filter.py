@@ -22,7 +22,7 @@ import sys
 
 from textwrap import dedent
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
-from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
+from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream, GLOBAL_STANZA
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 
@@ -74,6 +74,11 @@ class FilteredList(object):
             if self._prep is False:
                 self._pre_match()
                 self._prep = True
+
+            # Q:  Is this the best way to handle global entries?
+            if item is GLOBAL_STANZA:
+                item = "default"
+
             result = self._match(item)
         else:
             #  No patterns defined.  No filter rule(s) => allow all through

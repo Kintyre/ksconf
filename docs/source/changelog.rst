@@ -9,6 +9,13 @@ Ksconf 0.7.x
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
 
+Release v0.7.2 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Fixed bug where ``filter`` would crash when doing stanza matching if global entries were present.  Global stanas can be matched by searching for a stana named ``default``.
+
+
+
 Release v0.7.1 (2019-03-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
