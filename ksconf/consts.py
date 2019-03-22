@@ -46,7 +46,15 @@ import re
 RegexType = type(re.compile(r'.'))
 del re
 
-from six import PY2
+# Environmental vars are treated as bytes in PY2, and unicode in PY3.  (This wouldn't be needed,
+# except that we import unicode_literals, which we need for other constant strings.)  UGH!
+# Oh the joys of supporting 2 + 3 at the same time!
+
+# PY2 - Six may be missing when 'setup.py' is first called.  (Breaks pre-commit)
+import sys
+PY2 = sys.version_info[0] == 2
+del sys
+
 if PY2:
     KSCONF_DEBUG = b"KSCONF_DEBUG"
 else:
