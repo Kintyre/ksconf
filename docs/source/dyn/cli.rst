@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive}
+                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
     Ksconf: Kintyre Splunk CONFig tool
@@ -25,7 +25,7 @@ ksconf
     "default" (which splunk can't handle natively) are all supported tasks.
     
     positional arguments:
-      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive}
+      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -53,6 +53,7 @@ ksconf
                             REST
         unarchive           Install or upgrade an existing app in a git-friendly
                             and safe way
+        xml-format          Normalize XML view and nav files
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -630,6 +631,35 @@ ksconf unarchive
                             message to abort the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
                             Extra arguments to pass to 'git'
+
+
+
+.. _ksconf_cli_xml-format:
+
+ksconf xml-format
+*****************
+
+ .. code-block:: none
+
+    usage: ksconf xml-format [-h] [--indent INDENT] [--quiet] FILE [FILE ...]
+    
+    Normalize and apply consistent XML indentation and CDATA usage for XML
+    dashboards and navigation files. Technically this could be used on *any* XML
+    file, but certain element names specific to Splunk simple XML dashboards are
+    handled specially, and therefore could result in unusable results. Certainly
+    this hasn't been tested. The expected indentation level is guessed based on
+    the first element indentation, but can be explicitly set if not detectable.
+    This utility as part of a pre-commit hook.
+    
+    positional arguments:
+      FILE             One or more XML files to check. If '-' is given, then a
+                       list of files is read from standard input
+    
+    optional arguments:
+      -h, --help       show this help message and exit
+      --indent INDENT  Number of spaces. This is only used if indentation cannot
+                       be guessed from the existing file.
+      --quiet, -q      Reduce the volume of output.
 
 
 

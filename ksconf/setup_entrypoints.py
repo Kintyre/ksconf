@@ -35,6 +35,7 @@ _entry_points = {
         Ep("rest-export", "ksconf.commands.restexport", "RestExportCmd"),
         Ep("rest-publish", "ksconf.commands.restpublish", "RestPublishCmd"),
         Ep("unarchive", "ksconf.commands.unarchive","UnarchiveCmd"),
+        Ep("xml-format","ksconf.commands.xmlformat","XmlFormatCmd"),
     ],
 }
 
