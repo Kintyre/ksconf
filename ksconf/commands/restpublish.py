@@ -67,6 +67,8 @@ class RestPublishCmd(KsconfCmd):
             return
         import splunklib.client
         g["splunklib"] = splunklib
+        import splunklib
+        cls.version_extra = "splunk-sdk {}".format(splunklib.__version__)
 
     def register_args(self, parser):
         # type: (ArgumentParser) -> None

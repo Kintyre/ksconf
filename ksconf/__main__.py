@@ -120,7 +120,10 @@ def build_cli_parser(do_formatter=False):
             if error:
                 version_info.append("      {:15} {:10}  {}".format(name, m, error))
             else:
-                version_info.append("      {:15} {:10}  OK".format(name, m))
+                info = "      {:15} {:10}  OK".format(name, m)
+                if cmd_cls.version_extra:
+                    info = "{}   ({})".format(info, cmd_cls.version_extra)
+                version_info.append(info)
 
     # Common settings
     '''

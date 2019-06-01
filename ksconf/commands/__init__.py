@@ -310,6 +310,7 @@ class KsconfCmd(object):
     description = None
     format = "default"
     maturity = "alpha"
+    version_extra = None
 
     def __init__(self, name):
         self.name = name.lower()
