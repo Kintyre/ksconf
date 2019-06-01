@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import unittest
 import os
 import sys
+import platform
 
 from io import StringIO
 
@@ -13,6 +14,12 @@ if __package__ is None:
 
 from ksconf.consts import *
 from tests.cli_helper import *
+
+
+# Something weird with LXML and PYPY:
+#   bBaseException.__new__(XMLSyntaxError) is not safe, use XMLSyntaxError.__new__()
+# PyPy support is low priority, just skipping on PYPY for now
+PYPY = platform.python_implementation() == "PyPy"
 
 
 class CliXmlFormatTest(unittest.TestCase):
@@ -86,6 +93,7 @@ class CliXmlFormatTest(unittest.TestCase):
     def setUp(self):
         self.twd = TestWorkDir()
 
+    @unittest.skipIf(PYPY, "Skipping PyPy for XML exceptions")
     def test_broken_xml(self):
         f = self.twd.write_file("bad_view.xml", """
         <view>
@@ -111,6 +119,7 @@ class CliXmlFormatTest(unittest.TestCase):
             #self.assertRegex(ko.stderr, r"1 file[^\r\n]+\salready formatted")
         '''
 
+    @unittest.skipIf(PYPY, "Skipping PyPy for XML exceptions")
     def test_mixed_stdin(self):
         """ Make sure that if even a single file fails the exit code is correct. """
         sample1 = self.twd.write_file("sample1.xml", self.sample1)
