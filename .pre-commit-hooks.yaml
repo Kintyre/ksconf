@@ -21,4 +21,4 @@
   description: Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and navigation files.
   entry: ksconf xml-format -q
   language: python
-  files: data/(views|nav)/[^/]+\.xml$
+  files: data/ui/(views|nav)/[^/]+\.xml$
