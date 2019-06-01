@@ -436,7 +436,7 @@ class OutputDebugDump(OutputInMemory):
         for (path, data_content) in sorted(self._data.items()):
             stream.write(">----- {} --->>>\n".format(path))
             if PY2:
-                data_content = data.content.decode("utf-8", errors="replace")
+                data_content = data_content.decode("utf-8", errors="replace")
             if len(data_content) > max_data_size:
                 stream.write(data_content[:max_data_size] + "... (TRUNCATED)\n")
             else:

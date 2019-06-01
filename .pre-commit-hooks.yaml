@@ -4,9 +4,21 @@
   entry: ksconf check -q
   language: python
   files: (\.conf|(local|default)\.meta)$
+
 - id: ksconf-sort
   name: Kintyre Splunk CONF - Sort conf files
   description: Sort all stanzas and keys in .conf files.  Files can be skipped by adding a comment with KSCONF-NO-SORT
   entry: ksconf sort -i -q
   language: python
   files: (\.conf|(local|default)\.meta)$
+
+- id: ksconf-xml-format
+  ### WORST CASE:  Move this into it's own ksconf-precommit repo, that intalls 'kintyre-splunk-conf' and 'lxml'....   ;-(  Probably easier than making pre-commit specific tags/branches or some junk like that...
+  # Apparently additional_dependencies only works on pre-commit-config not in hooks?!
+  #additional_dependencies: lxml  (unclear if this is supported for all languages)
+  # I wonder what would happen if I set lxml as a build requirement instead of an install requirement.   Since 'pip install .' would likely install both?!?!
+  name: Kintyre Splunk CONF - Normalize XML
+  description: Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and navigation files.
+  entry: ksconf xml-format -q
+  language: python
+  files: data/(views|nav)/[^/]+\.xml$

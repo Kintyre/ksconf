@@ -53,7 +53,15 @@ if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"
 mkdir -p "$PIP_TARGET"
 
 echo "Installing packages...."
-$PY2 -m pip install --target="$PIP_TARGET" "$wheel_dir"/*.whl splunk-sdk
+# Note:  We disable dependencies checking and list them explicitly.  Specifically 'lxml' gets us
+#        into trouble because (1) it's OS-specific, and (2) it already ships with Splunk's python
+#        so there's no need to bundle it, and (3) we DO need it for pre-commit hooks, so it has to
+#        be listed as a 'install_requires' for that to work correctly.  (Although if it's missing
+#        at runtime, only one command will be impacted)
+#
+# There is no way to simply "blacklist" a single package:  https://github.com/pypa/pip/issues/3090
+$PY2 -m pip install --isolated --disable-pip-version-check --no-deps --target="$PIP_TARGET" \
+    "$wheel_dir"/*.whl six entrypoints splunk-sdk
 
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system

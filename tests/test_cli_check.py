@@ -56,7 +56,6 @@ class CliCheckTest(unittest.TestCase):
             with ksconf_cli:
                 ko = ksconf_cli("check", "-")
                 self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-                self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
     def test_mixed_quiet(self):
         """ Make sure that if even a single file fails the exit code should be "BAD CONF" """
