@@ -141,7 +141,8 @@ class PromoteCmd(KsconfCmd):
             del source_basename
 
         if not os.path.isfile(args.target.name):
-            self.stdout.write("Target file {} does not exist.  Moving source file {} to the target."
+            self.stdout.write("Target file {} does not exist.  "
+                              "Moving source file {} to the target.\n"
                               .format(args.target.name, args.source.name))
             # For windows:  Close out any open file descriptors first
             args.target.close()
@@ -179,7 +180,7 @@ class PromoteCmd(KsconfCmd):
             else:
                 self.stderr.write(
                     "Refusing to promote content between different types of configuration "
-                    "files.  {0} --> {1}  If this is intentional, override this safety"
+                    "files.  {0} --> {1}  If this is intentional, override this safety "
                     "check with '--force'\n".format(bn_source, bn_target))
                 return EXIT_CODE_FAILED_SAFETY_CHECK
 
@@ -200,7 +201,7 @@ class PromoteCmd(KsconfCmd):
             summarize_cfg_diffs(delta, self.stderr)
 
             while True:
-                resp = input("Would you like to apply ALL changes?  (y/n/d/q)")
+                resp = input("Would you like to apply ALL changes?  (y/n/d/q) ")
                 resp = resp[:1].lower()
                 if resp == 'q':
                     return EXIT_CODE_USER_QUIT
@@ -304,8 +305,9 @@ class PromoteCmd(KsconfCmd):
         '''
 
         def prompt_yes_no(prompt):
+            print("")
             while True:
-                r = input(prompt + " (y/n)")
+                r = input(prompt + " (y/n) ")
                 if r.lower().startswith("y"):
                     return True
                 elif r.lower().startswith("n"):
@@ -337,7 +339,7 @@ class PromoteCmd(KsconfCmd):
                 if isinstance(op.location, DiffStanza):
                     # Move entire stanza
                     show_diff(self.stdout, [op])
-                    if prompt_yes_no("Apply  [{0}]".format(op.location.stanza)):
+                    if prompt_yes_no("Apply [{0}]".format(op.location.stanza)):
                         out_cfg[op.location.stanza] = op.a
                         del out_src[op.location.stanza]
                 else:
