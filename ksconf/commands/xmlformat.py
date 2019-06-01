@@ -201,7 +201,7 @@ class XmlFormatCmd(KsconfCmd):
                         self.stderr.write("Already formatted {0}\n".format(fn))
                     c["no-action"] += 1
                 self.stderr.flush()
-            except etree.Error as e:
+            except etree.ParseError as e:
                 self.stderr.write("Error parsing file {0}:  {1}\n".format(fn, e))
                 self.stderr.flush()
                 c["error"] += 1
