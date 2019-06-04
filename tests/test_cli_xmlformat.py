@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import unittest
 import os
 import sys
+import re
 import platform
 
 from io import StringIO
@@ -24,10 +25,10 @@ PYPY = platform.python_implementation() == "PyPy"
 
 class CliXmlFormatTest(unittest.TestCase):
 
-    sample1 = """
+    sample1 = """\
     <?xml version="1.0" encoding="utf8"?>
     <form>
-      <label>eDelivery Transfer Details</label>
+      <label>File Transfer Details</label>
       <init>
         <set token="form.drilldown">*</set>
       </init>
@@ -66,18 +67,19 @@ class CliXmlFormatTest(unittest.TestCase):
     </form>
     """
 
-    sample2 = """<form><label>eDelivery Transfer Details</label><init><set
+    sample2 = """<form><label>Transfer Details</label><init><set
     token="form.drilldown">*</set></init><search id="ftp"><query><![CDATA[
     index=main sourcetype=ftp
     | table _time host user action directory filename size
     | eval size=size/1024
+    | where size>100
     ]]></query><earliest>$tp.earliest$</earliest><latest>$tp.latest$</latest>
     <sampleRatio>1</sampleRatio></search></form>
     """
 
     sample3 = """\
     <form>
-       <label>eDelivery Transfer Details</label>
+       <label>Delivery Transfer Details</label>
        <init>
           <set token="form.drilldown">*</set>
        </init>
@@ -93,6 +95,13 @@ class CliXmlFormatTest(unittest.TestCase):
     def setUp(self):
         self.twd = TestWorkDir()
 
+    def cdata_regex(self, content=".*?", escape_content=False):
+        prefix = re.escape("<![CDATA[")
+        suffix = re.escape("]]>")
+        if escape_content:
+            content = re.escape(content)
+        return r"(?ms){prefix}.*?{content}.*?{suffix}".format(**vars())
+
     @unittest.skipIf(PYPY, "Skipping PyPy for XML exceptions")
     def test_broken_xml(self):
         f = self.twd.write_file("bad_view.xml", """
@@ -104,17 +113,17 @@ class CliXmlFormatTest(unittest.TestCase):
             self.assertRegex(ko.stdout, r"\b1 files failed")
 
     def test_no_indent(self):
-        sample2 = self.twd.write_file("sample2.xml", self.sample2)
+        sample = self.twd.write_file("sample.xml", self.sample2)
         with ksconf_cli:
-            ko = ksconf_cli("xml-format", sample2)
+            ko = ksconf_cli("xml-format", sample)
             self.assertEqual(ko.returncode, EXIT_CODE_FORMAT_APPLIED)
-            self.assertRegex(ko.stderr, r"Replaced file [^\r\n]+sample2.xml")
+            self.assertRegex(ko.stderr, r"Replaced file [^\r\n]+sample.xml")
 
         '''   unicode vs str issue occurring here -->
 
         # Format again. Make sure there's no new changes
         with ksconf_cli:
-            ko = ksconf_cli("xml-format", sample2)
+            ko = ksconf_cli("xml-format", sample)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             #self.assertRegex(ko.stderr, r"1 file[^\r\n]+\salready formatted")
         '''
@@ -122,8 +131,8 @@ class CliXmlFormatTest(unittest.TestCase):
     @unittest.skipIf(PYPY, "Skipping PyPy for XML exceptions")
     def test_mixed_stdin(self):
         """ Make sure that if even a single file fails the exit code is correct. """
-        sample1 = self.twd.write_file("sample1.xml", self.sample1)
-        bad1 = self.twd.write_file("sample1.xml", "<view>truncated ...")
+        sample1 = self.twd.write_file("sample.xml", self.sample1)
+        bad1 = self.twd.write_file("sample.xml", "<view>truncated ...")
         instream = StringIO("\n".join([bad1, sample1]))
         with FakeStdin(instream):
             with ksconf_cli:
@@ -140,11 +149,39 @@ class CliXmlFormatTest(unittest.TestCase):
             self.assertRegex(ko.stderr, r"Skipping missing file: [^\r\n]+[/\\]not-a-real-file.xml")
 
     def test_already_sorted(self):
-        sample3 = self.twd.write_file("sample3.xml", self.sample3)
+        sample = self.twd.write_file("sample.xml", self.sample3)
         with ksconf_cli:
-            ko = ksconf_cli("xml-format", sample3)
+            ko = ksconf_cli("xml-format", sample)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegex(ko.stderr, r"Already formatted [^\r\n]+[/\\]sample3\.xml")
+            self.assertRegex(ko.stderr, r"Already formatted [^\r\n]+[/\\]sample\.xml")
+
+    def test_promote_to_CDATA(self):
+        sample = self.twd.write_file("sample.xml", """
+        <form>
+           <search id="ftp">
+              <query>index=main sourcetype=ftp | rex "^\S+ \S+ (?&lt;user&gt;\S+)"
+              | stats count by user</query>
+              <earliest>$tp.earliest$</earliest>
+              <latest></latest>
+              <sampleRatio>1</sampleRatio>
+           </search>
+        </form>
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("xml-format", sample)
+            self.assertEqual(ko.returncode, EXIT_CODE_FORMAT_APPLIED)
+            sample_out = self.twd.read_file("sample.xml")
+            self.assertRegex(sample_out, self.cdata_regex("(?<user>\S+)", True))
+
+    def test_preserve_CDATA(self):
+        """ <![CDATA[]]> blocks should be preserved, even if there's no special characters. """
+        sample = self.twd.write_file("sample.xml", self.sample1)
+        with ksconf_cli:
+            ko = ksconf_cli("xml-format", sample)
+            self.assertEqual(ko.returncode, EXIT_CODE_FORMAT_APPLIED)
+            sample_out = self.twd.read_file("sample.xml")
+            # Must STILL contain CDATA after the run
+            self.assertRegex(sample_out, self.cdata_regex())
 
 
 if __name__ == '__main__':  # pragma: no cover

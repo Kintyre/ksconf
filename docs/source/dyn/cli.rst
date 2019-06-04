@@ -645,11 +645,10 @@ ksconf xml-format
     
     Normalize and apply consistent XML indentation and CDATA usage for XML
     dashboards and navigation files. Technically this could be used on *any* XML
-    file, but certain element names specific to Splunk simple XML dashboards are
-    handled specially, and therefore could result in unusable results. Certainly
-    this hasn't been tested. The expected indentation level is guessed based on
-    the first element indentation, but can be explicitly set if not detectable.
-    This utility as part of a pre-commit hook.
+    file, but certain element names specific to Splunk's simple XML dashboards are
+    handled specially, and therefore could result in unusable results. The
+    expected indentation level is guessed based on the first element indentation,
+    but can be explicitly set if not detectable.
     
     positional arguments:
       FILE             One or more XML files to check. If '-' is given, then a

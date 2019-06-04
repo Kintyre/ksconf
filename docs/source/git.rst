@@ -36,6 +36,15 @@ Two hooks are currently defined by the ksconf repository:
         For example, to manually organize :file:`props.conf` files, simply add the ``exclude`` setting.
         Example below.
 
+    .. _pchook_ksconf-xml-format:
+
+    ksconf-xml-format:
+        Runs :ref:`ksconf_cmd_xml-format` to apply consistency to your XML representations of Simple XML dashboards and navigation files.
+        Formatting includes appropriate indention and the automatic addition of ``<![CDATA[ ... ]]>`` blocks, as needed,
+        to reduce the need for XML escaping, resulting in more readable source file.
+        By default, this hook looks at standard locations where xml views and navigation typically live.
+        So if you use Advanced XML, proceed with caution (as they share the same path and haven't been tested.)
+
 
 Configuring pre-commit hooks in you repo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,10 +58,11 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
 
     repos:
     - repo: https://github.com/Kintyre/ksconf
-      sha: v0.6.1
+      sha: v0.7.3
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
+        - id: ksconf-xml-format
 
 
 For general reference, here's a copy of what I frequently use for my own repos.
@@ -76,11 +86,12 @@ For general reference, here's a copy of what I frequently use for my own repos.
         - id: mixed-line-ending
           args: [ '--fix=lf' ]
     - repo: https://github.com/Kintyre/ksconf
-      sha: v0.6.1
+      sha: v0.7.3
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
           exclude: (props|logging)\.conf
+        - id: ksconf-xml-format
 
 ..  tip::
 

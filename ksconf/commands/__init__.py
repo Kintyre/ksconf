@@ -60,6 +60,10 @@ class ConfFileProxy(object):
         self._data = None
         self._parse_profile = parse_profile or {}
 
+    def __del__(self):
+        if self.is_file():
+            self.close()
+
     def exists(self):
         return os.path.isfile(self.name)
 
