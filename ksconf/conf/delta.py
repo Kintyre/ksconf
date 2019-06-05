@@ -231,11 +231,13 @@ def show_diff(stream, diffs, headers=None):
         if is_multiline(value):
             write_multiline_key(key, value, prefix_)
         else:
-            if key.startswith("#-"):
-                template = "{0}{2}\n"
-            else:
-                template = "{0}{1} = {2}\n"
-            stream.write(template.format(prefix_, key, value))
+            with tc:
+                tc.color(_diff_color_mapping.get(prefix_))
+                if key.startswith("#-"):
+                    template = "{0}{2}\n"
+                else:
+                    template = "{0}{1} = {2}\n"
+                stream.write(template.format(prefix_, key, value))
 
     def write_multiline_key(key, value, prefix_=" "):
         with tc:
