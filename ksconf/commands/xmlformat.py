@@ -31,12 +31,23 @@ class FileReadlinesCache(object):
     def __init__(self):
         self.cache = {}
 
+    @staticmethod
+    def convert_filename(filename):
+        if filename.startswith("file:"):
+            filename = filename[5:]
+            if filename[0] == "/" and filename[2] == ":":
+                # Example:   file:/c:/temp/.....
+                filename = filename[1:]
+            filename = os.path.normpath(filename)
+        return filename
+
     def readlines(self, filename):
         if filename not in self.cache:
             self.cache[filename] = self._readlines(filename)
         return self.cache[filename]
 
     def _readlines(self, filename):
+        filename = self.convert_filename(filename)
         with open(filename) as stream:
             return stream.readlines()
 
