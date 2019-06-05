@@ -15,12 +15,12 @@ Release v0.7.3 (DRAFT)
 -   Added the new ``ref:ksconf_cmd_xmlformat`` command.
 
     -   The ``ksconf xml-format`` command brings format consistency to your XML representations of Simple XML dashboards and navigation files by fixing indention and automatically adding ``<![CDATA[ ... ]]>`` blocks, as needed, to reduce the need for XML escaping, resulting in more readable source.
-    -   Additionally, a new pre-commit hook named ``pchook_ksconf_xml-format` was added to leverage this new functionality.  It looks specifically for xml views and navigation files based on path.  This may also include Advanced XML, which hasn't been tested;  So if you use Advanced XML, proceed with caution.
+    -   Additionally, a new pre-commit hook named `pchook_ksconf_xml-format` was added to leverage this new functionality.  It looks specifically for xml views and navigation files based on path.  This may also include Advanced XML, which hasn't been tested;  So if you use Advanced XML, proceed with caution.
     -   Note that this adds ``lxml`` as a packaging dependency which is needed for pre-commit hooks, but not strictly required at run time for other ksconf commands.  This is NOT ideal, and may change in the future in attempts to keep ksconf as light-weight and standalone as possible.  One possible alternative is setting up a different repo for pre-commit hooks.  Python packaging and distribution tips welcome.
 
+-   Fixed data loss bug in ``promote`` (inteactive mode only) and improved some UI text and prompts.
 -   Fixed colorization of ``ksconf diff`` output where certain lines failed to showup in the correct color.
 -   Extended the output of ``ksconf --version`` to show the names and version of external modules, when present.
--   Minor improvements to ``promote`` prompts in interactive mode.  (NOTE that some bugs were found but not yet fixed in the promote command.)
 -   Improved some resource allocation in corner cases.
 
 

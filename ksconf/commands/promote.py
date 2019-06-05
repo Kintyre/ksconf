@@ -17,7 +17,7 @@ from six.moves import input
 from ksconf.commands import ConfDirProxy
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs, show_diff, \
-    DIFF_OP_EQUAL, DiffStanza
+    DIFF_OP_EQUAL, DiffStanza, DiffStzKey
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import PARSECONF_STRICT_NC, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
@@ -321,12 +321,16 @@ class PromoteCmd(KsconfCmd):
         diff = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
         for op in diff:
             if op.tag == DIFF_OP_DELETE:
-                # This is normal.   Not all default entries will be updated in local.
+                # This is normal.   Only changed attributes are copied & updated in local.
                 continue
             elif op.tag == DIFF_OP_EQUAL:
                 # Q:  Should we simply remove everything from the source file that already lines
-                #     up with the target?  (Probably?)  For now just skip...
-                if prompt_yes_no("Remove matching entry {0}  ".format(op.location)):
+                #     up with the target?  Just ask
+                if isinstance(op.location, DiffStzKey):
+                    msg = "[{0.stanza}]  {0.key}".format(op.location)
+                elif isinstance(op.location, DiffStanza):
+                    msg = "[{0.stanza}]".format(op.location)
+                if prompt_yes_no("Remove matching entry {0}  ".format(msg)):
                     if isinstance(op.location, DiffStanza):
                         del out_src[op.location.stanza]
                     else:
@@ -344,6 +348,7 @@ class PromoteCmd(KsconfCmd):
                         del out_src[op.location.stanza]
                 else:
                     show_diff(self.stdout, [op])
+                    # Logically, this must be either an INSERT or REPLACE
                     if prompt_yes_no("Apply [{0}] {1}".format(op.location.stanza, op.location.key)):
                         # Move key
                         out_cfg[op.location.stanza][op.location.key] = op.b
