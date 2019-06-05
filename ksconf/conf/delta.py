@@ -54,10 +54,10 @@ def compare_stanzas(a, b, stanza_name):
         return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b) ]
     elif not b:
         # A only
-        return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), None, a) ]
+        return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None) ]
     elif not a:
         # B only
-        return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), b, None) ]
+        return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b) ]
     else:
         return list(_compare_stanzas(a, b, stanza_name))
 
@@ -72,9 +72,9 @@ def _compare_stanzas(a, b, stanza_name):
 
     # Level 2 - Key comparisons
     for key in kv_a:
-        yield DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza_name, key), None, a[key])
+        yield DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza_name, key), a[key], None)
     for key in kv_b:
-        yield DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza_name, key), b[key], None)
+        yield DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza_name, key), None, b[key])
     for key in kv_common:
         a_ = a[key]
         b_ = b[key]
@@ -155,10 +155,10 @@ def compare_cfgs(a, b, allow_level0=True):
                 delta.extend(_compare_stanzas(a[stanza], b[stanza], stanza))
         elif stanza in a:
             # A only
-            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), None, a[stanza]))
+            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), a[stanza], None))
         else:
             # B only
-            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), b[stanza], None))
+            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), None, b[stanza]))
     return delta
 
 
@@ -303,9 +303,9 @@ def show_diff(stream, diffs, headers=None):
     for op in diffs:
         if isinstance(op.location, DiffStanza):
             if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
-                show_value(op.b, op.location.stanza, None, "-")
+                show_value(op.a, op.location.stanza, None, "-")
             if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
-                show_value(op.a, op.location.stanza, None, "+")
+                show_value(op.b, op.location.stanza, None, "+")
             continue  # pragma: no cover  (peephole optimization)
 
         if op.location.stanza != last_stanza:
@@ -318,9 +318,9 @@ def show_diff(stream, diffs, headers=None):
             last_stanza = op.location.stanza
 
         if op.tag == DIFF_OP_INSERT:
-            show_value(op.a, op.location.stanza, op.location.key, "+")
+            show_value(op.b, op.location.stanza, op.location.key, "+")
         elif op.tag == DIFF_OP_DELETE:
-            show_value(op.b, op.location.stanza, op.location.key, "-")
+            show_value(op.a, op.location.stanza, op.location.key, "-")
         elif op.tag == DIFF_OP_REPLACE:
             if is_multiline(op.a) or is_multiline(op.b):
                 show_multiline_diff(op.a, op.b, op.location.key)

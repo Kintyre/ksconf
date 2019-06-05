@@ -24,6 +24,12 @@ Release v0.7.3 (DRAFT)
 -   Improved some resource allocation in corner cases.
 
 
+..  attention:: **API BREAKAGE**
+
+    The ``DiffOp`` output values for ``DIFF_OP_INSERT`` and ``DIFF_OP_DELETE`` have been changed in a backwards-compatible breaking way.
+    The values of ``a`` and ``b`` were previously reversed for these two operations, leading to some code confusion.
+
+
 Release v0.7.2 (2019-03-22)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

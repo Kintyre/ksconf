@@ -410,13 +410,14 @@ class ConfigDiffTestCase(unittest.TestCase):
 
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="DATETIME_CONFIG")
         self.assertEqual(op.tag, DIFF_OP_DELETE)
-        self.assertIsNone(op.a)
-        self.assertIsNotNone(op.b)
+        self.assertIsNotNone(op.a)
+        self.assertIsNone(op.b)
 
         op = self.find_op_by_location(diffs, "key", stanza="imapsync", key="description")
         self.assertEqual(op.tag, DIFF_OP_INSERT)
-        self.assertIsNotNone(op.a)
-        self.assertIsNone(op.b)
+        self.assertIsNone(op.a)
+        self.assertIsNotNone(op.b)
+
 
     def test_imballanced_stanas(self):
         """ Imbalanced stanzas """
@@ -487,11 +488,11 @@ class ConfigDiffTestCase(unittest.TestCase):
 
         op = delta_search("stanza", stanza="in_b1")
         self.assertEqual(op.tag, DIFF_OP_INSERT)
-        self.assertEqual(op.a["live_in"], "b")
+        self.assertEqual(op.b["live_in"], "b")
 
         op = delta_search("stanza", stanza="in_a1")
         self.assertEqual(op.tag, DIFF_OP_DELETE)
-        self.assertEqual(op.b["live_in"], "a")
+        self.assertEqual(op.a["live_in"], "a")
 
     def test_summarize_compare_results(self):
         c1 = parse_string(self.cfg_props_imapsync_1)

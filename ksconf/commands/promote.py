@@ -340,13 +340,13 @@ class PromoteCmd(KsconfCmd):
                     # Move entire stanza
                     show_diff(self.stdout, [op])
                     if prompt_yes_no("Apply [{0}]".format(op.location.stanza)):
-                        out_cfg[op.location.stanza] = op.a
+                        out_cfg[op.location.stanza] = op.b
                         del out_src[op.location.stanza]
                 else:
                     show_diff(self.stdout, [op])
                     if prompt_yes_no("Apply [{0}] {1}".format(op.location.stanza, op.location.key)):
                         # Move key
-                        out_cfg[op.location.stanza][op.location.key] = op.a
+                        out_cfg[op.location.stanza][op.location.key] = op.b
                         del out_src[op.location.stanza][op.location.key]
                         # If last remaining key in the src stanza?  Then delete the entire stanza
                         if not out_src[op.location.stanza]:
