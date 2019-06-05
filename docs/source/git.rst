@@ -18,8 +18,6 @@ Hooks provided by ksconf
 Two hooks are currently defined by the ksconf repository:
 
 
-    .. _pchook_ksconf-check:
-
     ksconf-check
         Runs :ref:`ksconf_cmd_check` to perform basic validation tests against all files
         in your repo that end with ``.conf`` or ``.meta``.
@@ -27,16 +25,12 @@ Two hooks are currently defined by the ksconf repository:
         you'll be able to correct mistakes before bogus files are committed into your repo.
         If you're not sure why you'd need this, check out :ref:`Why validate my conf files? <why_check>`
 
-    .. _pchook_ksconf-sort:
-
     ksconf-sort
         Runs :ref:`ksconf_cmd_sort` to normalize any of your ``.conf`` or ``.meta`` files
         which will make diffs more readable and merging more predictable.
         As with any hook, you can customize the filename pattern of which files this applies to.
         For example, to manually organize :file:`props.conf` files, simply add the ``exclude`` setting.
         Example below.
-
-    .. _pchook_ksconf-xml-format:
 
     ksconf-xml-format:
         Runs :ref:`ksconf_cmd_xml-format` to apply consistency to your XML representations of Simple XML dashboards and navigation files.

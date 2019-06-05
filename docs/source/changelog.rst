@@ -12,10 +12,10 @@ New functionality, massive documentation improvements, metadata support, and Spl
 Release v0.7.3 (2019-06-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--   Added the new ``ref:ksconf_cmd_xmlformat`` command.
+-   Added the new :ref:`ksconf_cmd_xml-format` command.
 
-    -   The ``ksconf xml-format`` command brings format consistency to your XML representations of Simple XML dashboards and navigation files by fixing indention and automatically adding ``<![CDATA[ ... ]]>`` blocks, as needed, to reduce the need for XML escaping, resulting in more readable source.
-    -   Additionally, a new pre-commit hook named `pchook_ksconf_xml-format` was added to leverage this new functionality.  It looks specifically for xml views and navigation files based on path.  This may also include Advanced XML, which hasn't been tested;  So if you use Advanced XML, proceed with caution.
+    -   The ``ksconf xml-format`` command brings format consistency to your XML representations of Simple XML dashboards and navigation files by fixing indentation automatically adding ``<![CDATA[ ... ]]>`` blocks, as needed, to reduce the need for XML escaping, resulting in more readable source.
+    -   Additionally, a new pre-commit hook named :ref:`ksconf-xml-format <ksconf_pre_commit>` was added to leverage this new functionality.  It looks specifically for xml views and navigation files based on path.  This may also include Advanced XML, which hasn't been tested;  So if you use Advanced XML, proceed with caution.
     -   Note that this adds ``lxml`` as a packaging dependency which is needed for pre-commit hooks, but not strictly required at run time for other ksconf commands.  This is NOT ideal, and may change in the future in attempts to keep ksconf as light-weight and standalone as possible.  One possible alternative is setting up a different repo for pre-commit hooks.  Python packaging and distribution tips welcome.
 
 -   Fixed data loss bug in ``promote`` (interactive mode only) and improved some UI text and prompts.
@@ -41,12 +41,14 @@ Release v0.7.2 (2019-03-22)
 Release v0.7.1 (2019-03-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
 -   Additional fixes for UTF-8 BOM files which appear to happen more frequently with ``local`` files on Windows.
     This time some additional unit tests were added so hopefully there are few regressions in the future.
 -   Add the ``ignore-missing`` argument to :ref:`ksconf_cmd_merge` to prevent errors when input files are absent.
     This allows bashisms ``Some_App/{{default,local}}/savedsearches.conf`` to work without errors if the local or default file is missing.
 -   Check for incorrect environment setup and suggest running sourcing :file:`setSplunkEnv` to get a working environment.
-    See _`#48 <https://github.com/Kintyre/ksconf/issues/48>` for more info.
+    See `#48 <https://github.com/Kintyre/ksconf/issues/48>`__ for more info.
 -   Minor improvements to some internal error handling, packaging, docs, and troubleshooting code.
 
 Release v0.7.0 (2019-02-27)
