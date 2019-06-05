@@ -9,7 +9,7 @@ Ksconf 0.7.x
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
 
-Release v0.7.3 (DRAFT)
+Release v0.7.3 (2019-06-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Added the new ``ref:ksconf_cmd_xmlformat`` command.
@@ -18,11 +18,12 @@ Release v0.7.3 (DRAFT)
     -   Additionally, a new pre-commit hook named `pchook_ksconf_xml-format` was added to leverage this new functionality.  It looks specifically for xml views and navigation files based on path.  This may also include Advanced XML, which hasn't been tested;  So if you use Advanced XML, proceed with caution.
     -   Note that this adds ``lxml`` as a packaging dependency which is needed for pre-commit hooks, but not strictly required at run time for other ksconf commands.  This is NOT ideal, and may change in the future in attempts to keep ksconf as light-weight and standalone as possible.  One possible alternative is setting up a different repo for pre-commit hooks.  Python packaging and distribution tips welcome.
 
--   Fixed data loss bug in ``promote`` (inteactive mode only) and improved some UI text and prompts.
--   Fixed colorization of ``ksconf diff`` output where certain lines failed to showup in the correct color.
+-   Fixed data loss bug in ``promote`` (interactive mode only) and improved some UI text and prompts.
+-   Fixed colorization of ``ksconf diff`` output where certain lines failed to show up in the correct color.
+-   Fixed bug where debug tracebacks didn't work correctly on Python 2.7.  (Enable using ``KSCONF_DEBUG=1``.)
 -   Extended the output of ``ksconf --version`` to show the names and version of external modules, when present.
 -   Improved some resource allocation in corner cases.
-
+-   Tested with Splunk 7.3 (numeric similarity in version numbers is purely coincidental)
 
 ..  attention:: **API BREAKAGE**
 
