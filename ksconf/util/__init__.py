@@ -1,5 +1,10 @@
 from __future__ import unicode_literals
 
+import sys
+import io
+
+from six import PY2, binary_type
+
 from ksconf.consts import KSCONF_DEBUG
 
 def _xargs(iterable, cmd_len=1024):
@@ -43,8 +48,15 @@ except ImportError:
 
 def debug_traceback():  # pragma: no cover
     """ If the 'KSCONF_DEBUG' environmental variable is set, then show a stack trace. """
+    level = 10
     from os import environ
     if KSCONF_DEBUG in environ:
         # TODO:  Pop one off the top of the stack to hide THIS function
         import traceback
-        traceback.print_exc()
+        if PY2:
+            exc_str = traceback.format_exc(level)
+            if isinstance(exc_str, binary_type):
+                exc_str = exc_str.decode('utf-8')
+            sys.stderr.write(exc_str)
+        else:
+            traceback.print_exc(level)
