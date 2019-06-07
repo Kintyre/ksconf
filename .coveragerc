@@ -4,6 +4,7 @@ omit =
     /Library/*
     */virtualenv/*
     */venv*/*
+    */ksconf/ext/*
 
 [report]
 exclude_lines =

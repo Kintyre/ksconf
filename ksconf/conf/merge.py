@@ -5,7 +5,7 @@ import os
 import sys
 from copy import deepcopy
 
-import six
+import ksconf.ext.six as six
 
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments

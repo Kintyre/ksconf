@@ -20,7 +20,7 @@ import os
 import re
 from io import open, StringIO
 
-import six
+import ksconf.ext.six as six
 
 from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
 from ..util.compare import fileobj_compare

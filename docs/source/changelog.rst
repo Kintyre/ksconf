@@ -8,6 +8,12 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+Release v0.7.4 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Inline the ``six`` module to avoid elusive bootstrapping cases where the module couldn't be found.
+    The ``ksconf.ext.*`` prefix is being used for this, and any other inlined third party modules we may need in the future.
+
 
 Release v0.7.3 (2019-06-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

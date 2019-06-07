@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import sys
 import io
 
-from six import PY2, binary_type
+from ksconf.ext.six import PY2, binary_type
 
 from ksconf.consts import KSCONF_DEBUG
 

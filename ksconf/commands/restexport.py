@@ -21,7 +21,7 @@ import sys
 from argparse import ArgumentParser, FileType
 from collections import OrderedDict
 
-from six.moves.urllib.parse import quote
+from ksconf.ext.six.moves.urllib.parse import quote
 
 from ksconf.util.rest import build_rest_url
 from ksconf.commands import KsconfCmd, dedent, ConfFileType

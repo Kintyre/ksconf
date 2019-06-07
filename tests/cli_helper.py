@@ -9,7 +9,7 @@ from io import open, StringIO
 from subprocess import list2cmdline
 from textwrap import dedent
 
-import six
+import ksconf.ext.six as six
 
 # Some unittest fixup for various python versions
 import tests.compat as _

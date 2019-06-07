@@ -12,7 +12,7 @@ import os
 from io import BytesIO, StringIO
 from collections import Counter
 
-from six import PY2
+from ksconf.ext.six import PY2
 
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_FORMAT_APPLIED, EXIT_CODE_BAD_CONF_FILE,\

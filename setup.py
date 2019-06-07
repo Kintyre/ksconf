@@ -99,12 +99,12 @@ setup(name="kintyre-splunk-conf",
           "ksconf.conf",
           "ksconf.util",
           "ksconf.vc",
+          "ksconf.ext",    # Third-party modules shipping with ksconf
       ],
       setup_requires=[
           "wheel",
       ],
       install_requires=[
-        "six",
         "entrypoints",
         "lxml",         # Added as a hard requirement to allow pre-commit to work out of the box
       ],

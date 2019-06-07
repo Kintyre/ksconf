@@ -11,7 +11,7 @@ from io import open
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
-from six.moves import range
+from ksconf.ext.six.moves import range
 
 
 def _is_binary_file(filename, peek=2048):

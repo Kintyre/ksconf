@@ -6,7 +6,7 @@ import os
 from collections import namedtuple, defaultdict, Counter
 from io import open
 
-import six
+import ksconf.ext.six as six
 
 from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_NO_COMMON

@@ -12,7 +12,7 @@ import os
 import shutil
 from copy import deepcopy
 
-from six.moves import input
+from ksconf.ext.six.moves import input
 
 from ksconf.commands import ConfDirProxy
 from ksconf.commands import KsconfCmd, dedent, ConfFileType

@@ -12,7 +12,7 @@ import unittest
 from io import StringIO
 from functools import partial
 
-import six
+import ksconf.ext.six as six
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:

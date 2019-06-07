@@ -14,9 +14,9 @@ import os
 import sys
 from argparse import ArgumentParser
 
-import six
+import ksconf.ext.six as six
 
-from six.moves.urllib.parse import urlparse
+from ksconf.ext.six.moves.urllib.parse import urlparse
 
 from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
     add_splunkd_access_args, add_splunkd_namespace

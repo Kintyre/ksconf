@@ -32,9 +32,9 @@ d = dict(zip(("conf", "stanza", "attribute"), (unquote(p) for p in stanza_name.s
 
 import re
 
-import six
+import ksconf.ext.six as six
 
-from six.moves.urllib.parse import quote, unquote
+from ksconf.ext.six.moves.urllib.parse import quote, unquote
 
 from ksconf.conf.parser import parse_conf
 

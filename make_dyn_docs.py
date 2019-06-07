@@ -9,7 +9,7 @@ import sys
 from subprocess import Popen, PIPE
 from functools import wraps
 
-from six import PY2
+from ksconf.ext.six import PY2
 
 # Prevent installed (likely older) version of ksconf from taking over
 project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
