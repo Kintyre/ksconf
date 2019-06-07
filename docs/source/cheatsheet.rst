@@ -48,7 +48,7 @@ Run an in-place sort like so:
 
         ksconf sort --inplace savedsearches.conf
 
-..  tip::  Use the :ref:`ksconf-sort<pchook_ksconf-sort>` pre-commit hook to do this for you.
+..  tip::  Use the ``ksconf-sort`` :ref:`pre-commit<ksconf_pre_commit>` hook to do this for you.
 
 Extract specific stanza
 ~~~~~~~~~~~~~~~~~~~~~~~

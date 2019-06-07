@@ -61,7 +61,7 @@ echo "Installing packages...."
 #
 # There is no way to simply "blacklist" a single package:  https://github.com/pypa/pip/issues/3090
 $PY2 -m pip install --isolated --disable-pip-version-check --no-deps --target="$PIP_TARGET" \
-    "$wheel_dir"/*.whl six entrypoints splunk-sdk
+    "$wheel_dir"/*.whl entrypoints splunk-sdk
 
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system

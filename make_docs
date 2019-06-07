@@ -3,7 +3,6 @@ set -e
 VENV=venv_docs
 
 python setup.py >/dev/null 2>&1 || true
-python make_dyn_docs.py || true
 
 if [[ ! -d "$VENV" ]]
 then
@@ -11,6 +10,8 @@ then
     "$VENV/bin/pip" install -r requirements-doc.txt sphinx_rtd_theme
 fi
 . "$VENV"/bin/activate
+
+python make_dyn_docs.py || true
 
 
 # Or, something like:   make html
