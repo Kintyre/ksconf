@@ -4,6 +4,15 @@ Kintyre's Splunk CONFiguration tool
 ..  image:: ../images/logo.png
     :alt: Ksconf logo
 
+..  only:: builder_html
+
+    ..  raw:: html
+
+        <div style="display:inline-block; float:right; margin-top:25px">
+        <a class="github-button" href="https://github.com/Kintyre/ksconf" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star Kintyre/ksconf on GitHub">Star</a>
+        </div>
+        <script async defer src="https://buttons.github.io/buttons.js"></script>
+
 :Author: Lowell Alleman (Kintyre)
 :Version: |version|
 
