@@ -12,7 +12,7 @@ Welcome to KSCONF!
 
 KSCONF in a modular command line tool for Splunk admins and app developers.
 It's quick and easy to get started with basic commands and grow into the more advanced commands as needed.
-Thanks for checking out out expanding body of documentation to help smooth your transition to a better-manged Splunk
+Thanks for checking out our expanding body of documentation to help smooth your transition to a better-manged Splunk
 environment, or explore ways to integrate ksconf capabilities into your existing workflow.
 
 No matter where you're starting from, we think ksconf can help!  We're glad your here.  Let us
