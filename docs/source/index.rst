@@ -4,7 +4,7 @@ Kintyre's Splunk CONFiguration tool
 ..  image:: ../images/logo.png
     :alt: Ksconf logo
 
-..  only:: builder_html
+..  only:: builder_html or readthedocs
 
     ..  raw:: html
 
