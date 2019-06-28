@@ -418,7 +418,6 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertIsNone(op.a)
         self.assertIsNotNone(op.b)
 
-
     def test_imballanced_stanas(self):
         """ Imbalanced stanzas """
         a = parse_string("""
@@ -494,9 +493,44 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertEqual(op.tag, DIFF_OP_DELETE)
         self.assertEqual(op.a["live_in"], "a")
 
+    def test_attribute_replace(self):
+        props1 = parse_string(r"""
+        [dhcp]
+        EVAL-lease_end = lease_start+lease_duration
+        EXTRACT-loglevel = ^\d+ (?<log_level>[^ ]+)
+        EXTRACT-report-ack = ACK (?<dest_ip>[0-9.]+)/\d+ for (?<lease_duration>\d+)
+        """)
+
+        props2 = parse_string(r"""
+        [dhcp]
+        EVAL-lease_end = lease_start + lease_duration
+        EXTRACT-loglevel = ^\d+ (?<log_level>[^ ]+)
+        # Support IPv6
+        EXTRACT-report-ack = ACK (?<dest_ip>[0-9A-Fa-f.:]+)/\d+ for (?<lease_duration>\d+)
+        """)
+
+        delta = compare_cfgs(props1, props2)
+        delta_search = partial(self.find_op_by_location, delta)
+        self.assertEqual(delta_search("key", stanza="dhcp", key="EXTRACT-loglevel").tag, DIFF_OP_EQUAL)
+
+        lease_end = delta_search("key", stanza="dhcp", key="EVAL-lease_end")
+        self.assertEqual(lease_end.tag, DIFF_OP_REPLACE)
+        self.assertEqual(lease_end.a, "lease_start+lease_duration")
+        self.assertEqual(lease_end.b, "lease_start + lease_duration")
+
+        reportack = delta_search("key", stanza="dhcp", key="EXTRACT-report-ack")
+        self.assertEqual(reportack.tag, DIFF_OP_REPLACE)
+        self.assertIn(r"(?<dest_ip>[0-9A-Fa-f.:]+)", reportack.b)
+        self.assertNotIn(r"(?<dest_ip>[0-9A-Fa-f.:]+)", reportack.a)
+
+
     def test_summarize_compare_results(self):
         c1 = parse_string(self.cfg_props_imapsync_1)
         c2 = parse_string(self.cfg_props_imapsync_2)
         diffs = compare_cfgs(c1, c2)
         output = StringIO()
         summarize_cfg_diffs(diffs, output)
+
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()
