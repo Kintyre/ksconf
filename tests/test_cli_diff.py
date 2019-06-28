@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import unittest
 import os
 import sys
+import re
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
@@ -149,7 +150,29 @@ class CliDiffTest(unittest.TestCase):
             #self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
             self.assertRegex(ko.stderr, "No common stanzas")
 
-
+    def test_diff_attribute_replacement(self):
+        twd = TestWorkDir()
+        conf1 = twd.write_file("props-1.conf", r"""
+        [dhcp]
+        EVAL-lease_end = lease_start+lease_duration
+        EXTRACT-loglevel = ^\d+ (?<log_level>[^ ]+)
+        EXTRACT-report-ack = ACK (?<dest_ip>[0-9.]+)/\d+ for (?<lease_duration>\d+)
+        """)
+        conf2 = twd.write_file("props-2.conf", r"""
+        [dhcp]
+        EVAL-lease_end = lease_start + lease_duration
+        EXTRACT-loglevel = ^\d+ (?<log_level>[^ ]+)
+        # Add support for IPv6
+        EXTRACT-report-ack = ACK (?<dest_ip>[0-9A-Fa-f.:]+)/\d+ for (?<lease_duration>\d+)
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("diff", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+            diff_lines = re.split(r"[\r\n]+", ko.stdout)[2:]
+            self.assertIn("-EVAL-lease_end = lease_start+lease_duration", diff_lines)
+            self.assertIn("+EVAL-lease_end = lease_start + lease_duration", diff_lines)
+            self.assertIn("-EXTRACT-report-ack = ACK (?<dest_ip>[0-9.]+)/\d+ for (?<lease_duration>\d+)", diff_lines)
+            self.assertIn("+EXTRACT-report-ack = ACK (?<dest_ip>[0-9A-Fa-f.:]+)/\d+ for (?<lease_duration>\d+)", diff_lines)
 
 
 if __name__ == '__main__':  # pragma: no cover

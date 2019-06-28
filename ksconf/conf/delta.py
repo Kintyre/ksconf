@@ -325,8 +325,8 @@ def show_diff(stream, diffs, headers=None):
             if is_multiline(op.a) or is_multiline(op.b):
                 show_multiline_diff(op.a, op.b, op.location.key)
             else:
-                show_value(op.b, op.location.stanza, op.location.key, "-")
-                show_value(op.a, op.location.stanza, op.location.key, "+")
+                show_value(op.a, op.location.stanza, op.location.key, "-")
+                show_value(op.b, op.location.stanza, op.location.key, "+")
         elif op.tag == DIFF_OP_EQUAL:
             show_value(op.b, op.location.stanza, op.location.key, " ")
     stream.flush()
