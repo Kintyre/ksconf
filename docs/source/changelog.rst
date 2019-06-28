@@ -8,6 +8,12 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+
+Release v0.7.5 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Fixed a long-term bug where the diff output of a single-line attribute change was incorrectly represented in the textual output of 'ksconf diff' and the diff output in other commands.  This resolves a combination of bugs, the first half of which was fixed in 0.7.3.
+
 Release v0.7.4 (2019-06-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
