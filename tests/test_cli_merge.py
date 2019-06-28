@@ -37,17 +37,15 @@ class CliMergeTest(unittest.TestCase):
         conf2 = twd.write_file("inputs2.conf", """
         [script://./bin/ps.sh]
         disabled = FALSE
-        inverval = 97
-        index = os_linux
+        interval = 8675309
         """)
-        newfile = twd.get_path("input-new.conf")
+        newfile = twd.copy_static("inputs-ta-nix-local.conf", "input-new.conf")
+        #newfile = twd.get_path("input-new.conf")
         with ksconf_cli:
             ko = ksconf_cli("merge", conf1, conf2, "--target", newfile, "--dry-run")
-
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            # Todo: Figure out if this should be a "+" or "-"....
-            self.assertRegex(ko.stdout, r"[\r\n][+-]disabled = FALSE")
-
+            self.assertRegex(ko.stdout, r"[\r\n]\+disabled = FALSE")
+            self.assertRegex(ko.stdout, r"[\r\n]\+interval = 8675309")
         with ksconf_cli:
             ko = ksconf_cli("merge", conf1, conf2, "--target", newfile)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)

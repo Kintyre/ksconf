@@ -74,7 +74,7 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
             dest_cfg = dest.data
         else:
             dest_cfg = {}
-        show_diff(sys.stdout, compare_cfgs(merged_cfg, dest_cfg),
+        show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
                   headers=(dest.name, dest.name + "-new"))
         return SMART_UPDATE
     return dest.dump(merged_cfg)
