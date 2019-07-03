@@ -10,12 +10,15 @@
 # rebuilt.  If stale, it may be necessary to simply delete that folder and then
 # re-run this script.
 
-
 set -e
 VENV=venv_docs
 
-PY=python3
-PY="py -3"
+if command -v python3 > /dev/null 2>&1; then
+    PY=python3
+else
+    # Windows way of getting to python 3
+    PY="py -3"
+fi
 
 # Make sure we have a sane environment (figure out version # and so on)
 echo "Run setup.py"
@@ -35,7 +38,7 @@ if [[ -f "$VENV"/bin/activate ]]; then
 elif [[ -f "$VENV"/Scripts/activate ]]; then
     . "$VENV"/Scripts/activate
 else
-    echo "Can't activate virutal environment $VENV"
+    echo "Can't activate virtual environment $VENV"
 fi
 
 if [[ $INSTALL -eq 1 ]]; then
