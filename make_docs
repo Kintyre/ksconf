@@ -33,6 +33,7 @@ then
 fi
 
 echo "Activating virtual environment ($VENV)"
+# shellcheck disable=SC1090
 if [[ -f "$VENV"/bin/activate ]]; then
     . "$VENV"/bin/activate
 elif [[ -f "$VENV"/Scripts/activate ]]; then
