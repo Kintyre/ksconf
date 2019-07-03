@@ -27,6 +27,16 @@ from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksco
 from ksconf.util.completers import autocomplete
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_ENV_BUSTED, KSCONF_DEBUG
 
+
+# Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
+# Someday need to re-evaluate this and see if it's reproducable on other machines....
+try:
+    from random import choice
+except OSError: # WindowsError:  pragma: no cover
+    def choice(options):
+        return options[0]
+
+
 ###################################################################################################
 ## CLI definition
 
@@ -69,9 +79,9 @@ def build_cli_parser(do_formatter=False):
 
     version_info = []
 
-    from random import choice
     # XXX:  Check terminal size before picking a signature
     version_info.append(choice(ksconf.__ascii_sigs__))
+
     verbuild = "%(prog)s {}".format(ksconf.__version__)
     if ksconf.__build__:
         verbuild += "  (Build {})".format(ksconf.__build__)

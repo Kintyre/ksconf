@@ -17,16 +17,30 @@ sys.path.insert(0, project_dir)
 
 from ksconf.util.file import ReluctantWriter
 
+PY_ENV = {
+    "PYTHONWARNINGS": "ignore",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONHASHSEED" : "1",
+    "KSCONF_DISABLE_PLUGINS": "ksconf_cmd",
+}
 
+if PY2:
+    # Convert to bytes for Python 2
+    PY_ENV = { k.encode("utf-8"): v.encode("utf-8") for (k,v) in PY_ENV.items() }
 
 def cmd_output(*cmd):
-    p = Popen(cmd, stdout=PIPE, env={
-        b"PYTHONWARNINGS": b"ignore",
-        b"PYTHONIOENCODING": b"utf-8",
-        b"KSCONF_DISABLE_PLUGINS": b"ksconf_cmd"})
+    p = Popen(cmd, stdout=PIPE, env=PY_ENV)
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
 
+'''
+# Not sure how else to tell if environment variables should be bytes or string/unicode, so we try it and adjust from there....
+# Seems to be different based on Python version and OS
+try:
+    cmd_output("-m", "ksconf", "--version")
+except TypeError:
+    print("Falling back to unicode strings for envvars")
+'''
 
 
 def parse_subcommand(lines):
