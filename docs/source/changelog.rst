@@ -9,10 +9,11 @@ Ksconf 0.7.x
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
 
-Release v0.7.5 (DRAFT)
+Release v0.7.5 (2019-07-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Fixed a long-term bug where the diff output of a single-line attribute change was incorrectly represented in the textual output of 'ksconf diff' and the diff output in other commands.  This resolves a combination of bugs, the first half of which was fixed in 0.7.3.
+-   Allow ``make_docs`` script to run on Windows, and other internal doc build process improvements.
 
 Release v0.7.4 (2019-06-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
