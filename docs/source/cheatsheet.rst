@@ -126,7 +126,9 @@ Migrating content between apps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Say you want to move a bunch of savedsearches from ``search`` into a more appropriate app.  First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`
+Say you want to move a bunch of savedsearches from ``search`` into a more appropriate app.
+First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`.
+Next, copy just the desired stanzas, those named in the 'corp_searches' file, over to your new :file:`corp_app` application.
 
     .. code-block:: sh
 
@@ -177,7 +179,7 @@ After stopping Splunk on the new server, run the following commands.
         ksconf combine $SPLUNK_HOME/etc/users.old $SPLUNK_HOME/etc/users.new \
             --target $SPLUNK_HOME/etc/users --banner ''
 
-Now double check the results and start Splunk back up.
+Now double check the results and start Splunk.
 
 We use the ``--banner`` option here to essential disable an output banner.
 Because, in this case, the combine operation is a one-time job and therefore no warning is needed.

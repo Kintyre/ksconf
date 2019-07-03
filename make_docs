@@ -1,18 +1,51 @@
 #!/bin/bash
+#
+# Build ksconf sphinx docs using a virtual environment.  Once complete, a
+# browser window will open to view the docs locally.  Local changes will
+# automatically trigger a refresh of the impacted pages.
+#
+# This script should work on Mac, Linux, and Windows using "Git Bash" or MINGW64
+#
+# Note that, to save time, the virtual environment for docs is cached and not
+# rebuilt.  If stale, it may be necessary to simply delete that folder and then
+# re-run this script.
+
+
 set -e
 VENV=venv_docs
 
+PY=python3
+PY="py -3"
+
+# Make sure we have a sane environment (figure out version # and so on)
+echo "Run setup.py"
 python setup.py >/dev/null 2>&1 || true
 
+INSTALL=0
 if [[ ! -d "$VENV" ]]
 then
-    python3 -m virtualenv "$VENV"
-    "$VENV/bin/pip" install -r requirements-doc.txt sphinx_rtd_theme
+    echo "Create a fresh virtual environment ($VENV)"
+    $PY -m virtualenv "$VENV"
+    INSTALL=1
 fi
-. "$VENV"/bin/activate
 
-python make_dyn_docs.py || true
+echo "Activating virtual environment ($VENV)"
+if [[ -f "$VENV"/bin/activate ]]; then
+    . "$VENV"/bin/activate
+elif [[ -f "$VENV"/Scripts/activate ]]; then
+    . "$VENV"/Scripts/activate
+else
+    echo "Can't activate virutal environment $VENV"
+fi
 
+if [[ $INSTALL -eq 1 ]]; then
+    echo "Install required docs packages ($VENV)"
+    $PY -m pip install -r requirements-doc.txt sphinx_rtd_theme
+fi
 
+echo "Make dynamics docs  (ignore errors)"
+$PY make_dyn_docs.py || true
+
+echo "Building local html docs and opening browser window"
 # Or, something like:   make html
 sphinx-autobuild -p 9999 -b html -z ksconf docs/source docs/build/html -B

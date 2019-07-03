@@ -69,9 +69,22 @@ def build_cli_parser(do_formatter=False):
 
     version_info = []
 
+    '''
     from random import choice
     # XXX:  Check terminal size before picking a signature
     version_info.append(choice(ksconf.__ascii_sigs__))
+    '''
+    try:
+        from random import choice
+    except OSError:   # WindowsError:
+        # Obscure DLL issue with random initalization...  (Py 2 on Windows)
+        def choice(options):
+            return options[0]
+    #'''
+
+    # XXX:  Check terminal size before picking a signature
+    version_info.append(choice(ksconf.__ascii_sigs__))
+
     verbuild = "%(prog)s {}".format(ksconf.__version__)
     if ksconf.__build__:
         verbuild += "  (Build {})".format(ksconf.__build__)
