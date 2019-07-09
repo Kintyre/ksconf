@@ -1,29 +1,29 @@
 Introduction
 ------------
 
-:abbr:`ksconf (Kintyre's Splunk Configuration tool)`
+:abbr:`ksconf (Kintyre's Splunk Configuration Tool)`
 is a command-line tool that helps administrators and developers manage their Splunk environments by
 enhancing their ability to control configuration files.  By design, the interface is modular so that
-each function (aka subcommand) can be learned quickly and used independently.  Most Ksconf commands
-are simple enough for a quick one-off job, yet reliable enough to integrate into complex app build
+each function (aka subcommand) can be learned quickly and used independently.  Most KSConf commands
+are simple enough for a quick singular job, yet reliable enough to integrate into complex app build
 and deployment workflow.
 
-Ksconf helps manage the nuances with storing Splunk apps in a version control system, like git.  It
+KSConf helps manage the nuances of storing Splunk apps in a version control system, such as git.  It
 also supports pointing live Splunk apps to a working tree, merging changes from the live system's
 (local) folder to the version controlled folder (often 'default'), and in more complex cases, it
 deals with more than one :ref:`layer <configuration-layers>` of "default", which Splunk can't handle
-natively).
+natively.
 
 .. note:: **What KSCONF is not**
 
-    Ksconf does *not* replace your existing Splunk deployment mechanisms or version control tools.
+    KSConf does *not* replace your existing Splunk deployment mechanisms or version control tools.
     The goal is to complement and extend, not replace, the workflow that works for you.
 
 
 Design principles
 ~~~~~~~~~~~~~~~~~
 
-**Ksconf is a toolbox.**
+**KSConf is a toolbox.**
     Each tool has a specific purpose and function that works independently.
     Borrowing from the Unix philosophy, each command should do one thing well and be easily combined
     to handle higher-order tasks.
@@ -34,15 +34,15 @@ Design principles
     :command:`git` and :command:`splunk` as well.
 
 **Don’t impose workflow.**
-    Ksconf works with or without version control and independently of your deployment mechanisms.
-    If you are looking to implement these things, ksconf is a great building block.
+    KSConf works with or without version control and independently of your deployment mechanisms.
+    If you are looking to implement these things, KSConf is a great building block.
 
 **Embrace automated testing.**
-    It's impractical to check every scenarios between each release, but significant work has gone
+    It's impractical to check every scenario between each release, but significant work has gone
     into unit testing the CLI to avoid breakage.
 
 
-Common uses for ksconf
+Common uses for KSConf
 ~~~~~~~~~~~~~~~~~~~~~~
 
 - Promote changes from :file:`local` to :file:`default`
@@ -58,7 +58,7 @@ Common uses for ksconf
 Getting started
 ~~~~~~~~~~~~~~~
 
-You're already in the right place.  If you're completely new, try checking out of these first:
+You're in the right place. If you are a beginner, try checking these out first:
 
 -   :doc:`cheatsheet` - Like jumping in the deep end, or prefer examples of descriptions?  Start here.
 -   :doc:`concepts` - To get a more theoretical background on why these things matter.

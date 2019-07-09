@@ -18,11 +18,11 @@ ksconf
     Ksconf: Kintyre Splunk CONFig tool
     
     This utility handles a number of common Splunk app maintenance tasks in a small
-    and easy to deploy package.  Specifically, this tools deals with many of the
-    nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
+    and easy to deploy package.  Specifically, this tool deals with many of the
+    nuances with storing Splunk apps in git and pointing live Splunk apps to a git
     repository.  Merging changes from the live system's (local) folder to the
-    version controlled (default) folder, and dealing with more than one layer of
-    "default" (which splunk can't handle natively) are all supported tasks.
+    version controlled (default) folder and dealing with more than one layer of
+    "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
       {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
