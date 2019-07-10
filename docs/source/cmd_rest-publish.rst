@@ -5,8 +5,8 @@ ksconf rest-publish
 
 ..  note::
 
-    This command effectively replace :ref:`ksconf_cmd_rest-export` for all nearly all use cases.
-    The only thing that ``rest-publish`` can't do that ``rest-export`` is handle a disconnected scenario.
+    This command effectively replaces :ref:`ksconf_cmd_rest-export` for nearly all use cases.
+    The only thing that ``rest-publish`` can't do that ``rest-export`` can, is handle a disconnected scenario.
     But for **ALL** other use cases, the ``rest-publish`` (this command) command is far superior.
 
 ..  note:: This commands requires the Splunk Python SDK, which is automatically bundled with the *Splunk app for KSCONF*.

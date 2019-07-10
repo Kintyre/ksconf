@@ -29,32 +29,32 @@ CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 class CombineCmd(KsconfCmd):
     help = dedent("""\
     Combine configuration files across multiple source directories into a single
-    destination directory.  This allows for an arbitrary number of splunk
+    destination directory.  This allows for an arbitrary number of Splunk
     configuration layers to coexist within a single app.  Useful in both ongoing
     merge and one-time ad-hoc use.
     """)
     description = dedent("""\
     Merge .conf settings from multiple source directories into a combined target
-    directory.   Configuration files can be stored in a ``/etc/*.d`` like directory
+    directory. Configuration files can be stored in a ``/etc/*.d`` like directory
     structure and consolidated back into a single 'default' directory.
 
     This command supports both one-time operations and recurring merge jobs.  For
-    example, this command can be used to combine all users knowledge objects (stored
+    example, this command can be used to combine all users' knowledge objects (stored
     in 'etc/users') after a server migration, or to merge a single user's settings
-    after an their account has been renamed.  Recurring operations assume some type
+    after their account has been renamed.  Recurring operations assume some type
     of external scheduler is being used.  A best-effort is made to only write to
     target files as needed.
 
     The 'combine' command takes your logical layers of configs (upstream, corporate,
-    splunk admin fixes, and power user knowledge objects, ...) expressed as
+    Splunk admin fixes, and power user knowledge objects, ...) expressed as
     individual folders and merges them all back into the single ``default`` folder
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
 
-    No directory layout is mandatory, but but one simple approach is to model your
-    layers using a prioritized 'default.d' directory structure. (This idea is
+    No directory layout is mandatory, but one simple approach is to model your
+    layers using a prioritized 'default.d' directory structure. This idea is
     borrowed from the Unix System V concept where many services natively read their
-    config files from ``/etc/*.d`` directories.)
+    config files from ``/etc/*.d`` directories.
     """)
     format = "manual"
     maturity = "beta"
@@ -62,7 +62,7 @@ class CombineCmd(KsconfCmd):
     def register_args(self, parser):
         parser.add_argument("source", nargs="+", help=dedent("""
             The source directory where configuration files will be merged from.
-            When multiple sources directories are provided, start with the most general and end
+            When multiple source directories are provided, start with the most general and end
             with the specific; later sources will override values from the earlier ones.
             Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well."""
                             )).completer = DirectoriesCompleter()

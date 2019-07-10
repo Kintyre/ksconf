@@ -22,16 +22,16 @@ ksconf combine
 
 You may have noticed similarities between the ``combine`` and :ref:`merge <ksconf_cmd_merge>`
 subcommands.  That's because under the covers they are using much of the same code.  The combine
-operations essentially does a recursive merge between a set of directories.  One big difference is
-that ``combine`` command will gracefully handle non-conf files intelligently, not just conf files.
+operation essentially does a recursive merge between a set of directories.  One big difference is
+that ``combine`` command will handle non-conf files intelligently, not just conf files.
 
 
 ..  note::  Mixing layers
 
-    Just like all layers can be managed independently, they can also be combined in any way you'd
-    like.  While this workflow is out side the scope of the examples provided here, it's very doable.
-    This also allows for different layers to be mixed-and-matched by selectively including which
-    layers to combine.
+    Just like all layers can be managed independently, they can also be combined in any way you 
+    would like. While this workflow is outside of the scope of the examples provided here, it's 
+    certainly feasible. This also allows for different layers to be mixed-and-matched by selectively 
+    including which layers to combine.
 
 Examples
 --------
@@ -91,8 +91,8 @@ In this structure, you can see several layers of configurations at play:
         Note that since ``user_tracking.xml`` is not a ``.conf`` file it will fully replace the
         upstream default version (that is, the file in ``10-upstream``)
 
-Here's are the commands that could be used to generate a new (merged) ``default`` folder from all
-these layers shown above.
+Here are the commands that could be used to generate a new (merged) ``default`` folder from all
+of the layers shown above.
 
 ..  code-block:: sh
 
@@ -109,5 +109,5 @@ these layers shown above.
 Consolidating 'users' directories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``combine`` can consolidate 'users' directory across several instances after a phased server migration.
+The ``combine`` command can consolidate 'users' directory across several instances after a phased server migration.
 See  :ref:`example_combine_user_folder`.

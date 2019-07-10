@@ -20,11 +20,11 @@ ksconf check
 How 'check' differs from btool's validation
 --------------------------------------------
 
-Keep in mind that ksconf idea of *valid* is different than Splunk's.  Specifically,
+Keep in mind that idea of *valid* in ksconf is different than within Splunk.  Specifically,
 
  -  **Ksconf is more picky syntactically.**  Dangling stanzas and junk lines are picked up by
-    ksconf in general (the 'check' command or others), but silently ignored Splunk.
- -  **Btool handles content validation.** The :command:`btool check` mode does a great job of check
+    ksconf in general (the 'check' command or others), but silently by ignored Splunk.
+ -  **Btool handles content validation.** The :command:`btool check` mode does a great job of checking
     stanza names, attribute names, and values.  Btool does this well and ksconf tries to not repeat
     things that Splunk already does well.
 
@@ -50,8 +50,8 @@ Can you spot the error in this :file:`props.conf`?
 
 
 That's right, line 7 contains the stanza ``myapp:total:junk`` that doesn't have a closing ``]``.
-How Splunk handle this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
-to the ``myapp:web:access`` sourcetype and very likely going to start loosing data.
+How Splunk does handle this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
+to the ``myapp:web:access`` sourcetype, which will likely result in the loss of data.
 
 
 Splunk also ignores entries like this:
@@ -65,7 +65,7 @@ ignores it.
 
 ..  tip::
 
-    If you want to see how different this is.  Run ksconf check against the system default files:
+    If you want to see how different this is, run ksconf check against the system default files:
 
     ..  code-block:: sh
 

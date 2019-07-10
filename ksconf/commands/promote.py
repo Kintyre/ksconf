@@ -64,7 +64,7 @@ from ksconf.util.file import _samefile, file_fingerprint
 
 class PromoteCmd(KsconfCmd):
     help = dedent("""\
-    Promote .conf settings between layers using either either in batch mode (all
+    Promote .conf settings between layers using either in batch mode (all
     changes) or interactive mode.
 
     Frequently this is used to promote conf changes made via the UI (stored in
@@ -75,9 +75,9 @@ class PromoteCmd(KsconfCmd):
     to move ``local`` changes (made via the UI) into another layer, such as the
     ``default`` or a named ``default.d/50-xxxxx``) folder.
 
-    Promote has two modes:  batch and interactive.  In batch mode all changes are
+    Promote has two modes:  batch and interactive.  In batch mode, all changes are
     applied automatically and the (now empty) source file is removed.  In interactive
-    mode the user is prompted to select stanzas to promote.  This way local changes
+    mode, the user is prompted to select stanzas to promote.  This way local changes
     can be held without being promoted.
 
     NOTE: Changes are *MOVED* not copied, unless ``--keep`` is used.
@@ -90,7 +90,7 @@ class PromoteCmd(KsconfCmd):
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
                             help="The source configuration file to pull changes from. "
-                                 "Typically the :file:`local` conf file)"
+                                 "(Typically the :file:`local` conf file)"
                             ).completer = conf_files_completer
         parser.add_argument("target", metavar="TARGET",
                             type=ConfFileType("r+", "none", accept_dir=True,
@@ -104,7 +104,7 @@ class PromoteCmd(KsconfCmd):
                           dest="mode", const="batch", help=dedent("""\
             Use batch mode where all configuration settings are automatically promoted.
             All changes are removed from source and applied to target.
-            The source file will be removed, unless
+            The source file will be removed unless
             ``--keep-empty`` is used."""))
         grp1.add_argument("--interactive", "-i",
                           action="store_const",
@@ -116,11 +116,11 @@ class PromoteCmd(KsconfCmd):
                             action="store_true", default=False,
                             help=
             "Disable safety checks. "
-            "Don't check to see if SOURCE and TARGET share the same basename.")
+            "Don't check to see if SOURCE and TARGET share the same base name.")
         parser.add_argument("--keep", "-k",
                             action="store_true", default=False, help=dedent("""\
             Keep conf settings in the source file.
-            All changes will be copied into the target file instead of being moved there.
+            All changes will be copied into the TARGET file instead of being moved there.
             This is typically a bad idea since local always overrides default."""))
         parser.add_argument("--keep-empty",
                             action="store_true", default=False, help=dedent("""\

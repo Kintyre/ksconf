@@ -106,7 +106,7 @@ class RestExportCmd(KsconfCmd):
     Build an executable script of the stanzas in a configuration file that can be later applied to
     a running Splunk instance via the Splunkd REST endpoint.
 
-    This can be helpful when pushing complex props & transforms to an instance where you only have
+    This can be helpful when pushing complex props and transforms to an instance where you only have
     UI access and can't directly publish an app.
 
     """)
@@ -142,11 +142,11 @@ class RestExportCmd(KsconfCmd):
         parsg1 = parser.add_mutually_exclusive_group(required=False)
         parsg1.add_argument("-u", "--update", action="store_true", default=False,
                             help="Assume that the REST entities already exist.  "
-                                 "By default output assumes stanzas are being created.")
+                                 "By default, output assumes stanzas are being created.")
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
                             help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.
-            In this mode, stanzas attributes are unnecessary and ignored.
+            In this mode, stanza attributes are unnecessary and ignored.
             NOTE:  This works for 'local' entities only; the default folder cannot be updated.
             """))
 
@@ -157,13 +157,13 @@ class RestExportCmd(KsconfCmd):
 
         parser.add_argument("--user", help="Deprecated.  Use --owner instead.")
         parser.add_argument("--owner", default="nobody",
-                            help="Set the object owner.  Typically the default of 'nobody' is "
+                            help="Set the object owner.  Typically, the default of 'nobody' is "
                                  "ideal if you want to share the configurations at the app-level.")
         parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
                             help=dedent("""\
-            Explicitly set the configuration file type.  By default this is derived from CONF, but
-            sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
-            example include 'app', 'props', 'tags', 'savedsearches', and so on."""))
+            Explicitly set the configuration file type.  By default, this is derived from CONF, but
+            sometimes it's helpful to set this explicitly.  Can be any valid Splunk conf file type.
+            Examples include: 'app', 'props', 'tags', 'savedsearches', etc."""))
 
         parser.add_argument("--extra-args", action="append",
                             help=dedent("""\

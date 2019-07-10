@@ -21,13 +21,15 @@ Specific awareness of various Simple XML tags is baked into this product.
 
 ..  note::
 
-    This command requires the external ``lxml`` Python module
+    This command requires the external ``lxml`` Python module.
+
     This package was specifically selected (over the built-in 'xml.etree' interface) because it
-    (1) support round-trip preservation of CDATA blocks, and
-    (2) it is already ships with Splunk's embedded Python.
+    (1) supports round-trip preservation of CDATA blocks, and
+    (2) already ships with Splunk's embedded Python.
 
     This is an optional requirement, unless you want to use the ``xml-format`` command.
-    However, due to packaging limitations and pre-commit hook support, install the python package will attempt to install lxml as well.
+    However, due to packaging limitations and pre-commit hook support, installation of the python package 
+    will result in an attempt to install lxml as well.
     Please :ref:`reach out <contact_us>` if this is causing issues for you; I'm looking into other options too.
 
 

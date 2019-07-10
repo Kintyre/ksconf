@@ -154,7 +154,7 @@ class FilterCmd(KsconfCmd):
     help = "A stanza-aware GREP tool for conf files"
     description = dedent("""
     Filter the contents of a conf file in various ways.  Stanzas can be included
-    or excluded based on provided filter, based on the presents or value of a key.
+    or excluded based on a provided filter or based on the presence or value of a key.
 
     Where possible, this command supports GREP-like arguments to bring a familiar feel.
     """)
@@ -246,7 +246,7 @@ class FilterCmd(KsconfCmd):
 
         pg_con = parser.add_argument_group("Attribute selection", dedent("""\
             Include or exclude attributes passed through.
-            By default all attributes are preserved.
+            By default, all attributes are preserved.
             Whitelist (keep) operations are preformed before blacklist (reject) operations."""))
 
         pg_con.add_argument("--keep-attrs", metavar="WC-ATTR", default=[], action="append",

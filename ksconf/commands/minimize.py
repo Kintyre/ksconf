@@ -56,7 +56,7 @@ class MinimizeCmd(KsconfCmd):
     def register_args(self, parser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),help=
-            "The default configuration file(s) used to determine what base or settings are. "
+            "The default configuration file(s) used to determine what base settings are. "
             "The base settings determine what is unnecessary to repeat in target file."
                             ).completer = conf_files_completer
         parser.add_argument("--target", "-t", metavar="TARGET",
@@ -68,8 +68,8 @@ class MinimizeCmd(KsconfCmd):
         grp1 = parser.add_mutually_exclusive_group()
         grp1.add_argument("--dry-run", "-D", default=False, action="store_true", help=
             "Enable dry-run mode.  "
-            "Instead of writing the minimizing the TARGET file, preview what would be removed "
-            "the form of a 'diff'.")
+            "Instead of writing and minimizing the TARGET file, preview what would be removed "
+            "as a 'diff'.")
         grp1.add_argument("--output",
                           type=ConfFileType("w", "none", parse_profile=PARSECONF_STRICT),
                           default=None, help=

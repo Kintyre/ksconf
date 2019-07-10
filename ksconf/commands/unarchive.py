@@ -30,10 +30,10 @@ class UnarchiveCmd(KsconfCmd):
     help = "Install or upgrade an existing app in a git-friendly and safe way"
     description = dedent("""
     Install or overwrite an existing app in a git-friendly way.
-    If the app already exist, steps will be taken to upgrade it safely.
+    If the app already exists, steps will be taken to upgrade it safely.
 
     The ``default`` folder can be redirected to another path (i.e., ``default.d/10-upstream`` or
-    other desirable path if you're using the ``ksconf combine`` tool to manage extra layers.)
+    other desirable path if you're using the ``ksconf combine`` tool to manage extra layers).
     """)
     format = "manual"
     maturity = "beta"
@@ -44,7 +44,7 @@ class UnarchiveCmd(KsconfCmd):
                             ).completer = FilesCompleter(allowednames=allowed_extentions)
         parser.add_argument("--dest", metavar="DIR", default=".", help=dedent("""\
             Set the destination path where the archive will be extracted.
-            By default the current directory is used, but sane values include etc/apps,
+            By default, the current directory is used, but sane values include: etc/apps,
             etc/deployment-apps, and so on.""")
                             ).completer = DirectoriesCompleter()
         parser.add_argument("--app-name", metavar="NAME", default=None,help=dedent("""\
@@ -73,12 +73,12 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("--git-sanity-check",
                             choices=["off", "changed", "untracked", "ignored"],
                             default="untracked", help=dedent("""\
-            By default 'git status' is run on the destination folder to detect working tree or
+            By default, 'git status' is run on the destination folder to detect working tree or
             index modifications before the unarchive process start.
 
             Sanity check choices go from least restrictive to most thorough:
 
-            'off' prevents all safely checks.
+            'off' prevents all safety checks.
             'changed' aborts only upon local modifications to files tracked by git.
             'untracked' (the default) looks for changed and untracked files.
             'ignored' aborts is (any) local changes, untracked, or ignored files are found.
@@ -95,7 +95,7 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("--no-edit",
                             action="store_true", default=False, help=dedent("""\
             Tell git to skip opening your editor on commit.
-            By default you will be prompted to review/edit the commit message.
+            By default, you will be prompted to review/edit the commit message.
             (Git Tip:  Delete the content of the default message to abort the commit.)"""))
         parser.add_argument("--git-commit-args", "-G", default=[], action="append",
                             help="Extra arguments to pass to 'git'")
