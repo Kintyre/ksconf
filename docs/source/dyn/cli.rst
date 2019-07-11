@@ -431,8 +431,8 @@ ksconf sort
       -h, --help            show this help message and exit
       --target FILE, -t FILE
                             File to write results to. Defaults to standard output.
-      --inplace, -i         Replace the input file with a sorted version.
-                            [**Warning!** This a potentially destructive operation
+      --inplace, -i         Replace the input file with a sorted version. [
+                            **Warning!** This a potentially destructive operation
                             that may move/remove comments.]
       -n LINES, --newlines LINES
                             Number of lines between stanzas.
@@ -576,10 +576,10 @@ ksconf unarchive
                             SPL
     
     Install or overwrite an existing app in a git-friendly way.
-    If the app already exist, steps will be taken to upgrade it safely.
+    If the app already exists, steps will be taken to upgrade it safely.
     
     The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
-    other desirable path if you're using the 'ksconf combine' tool to manage extra layers.)
+    other desirable path if you're using the 'ksconf combine' tool to manage extra layers).
     
     positional arguments:
       SPL                   The path to the archive to install.
@@ -587,9 +587,9 @@ ksconf unarchive
     optional arguments:
       -h, --help            show this help message and exit
       --dest DIR            Set the destination path where the archive will be
-                            extracted. By default the current directory is used,
-                            but sane values include etc/apps, etc/deployment-apps,
-                            and so on.
+                            extracted. By default, the current directory is used,
+                            but sane values include: etc/apps, etc/deployment-
+                            apps, and so on.
       --app-name NAME       The app name to use when expanding the archive. By
                             default, the app name is taken from the archive as the
                             top-level path included in the archive (by
@@ -609,11 +609,11 @@ ksconf unarchive
       --allow-local         Allow local/* and local.meta files to be extracted
                             from the archive.
       --git-sanity-check {off,changed,untracked,ignored}
-                            By default 'git status' is run on the destination
+                            By default, 'git status' is run on the destination
                             folder to detect working tree or index modifications
                             before the unarchive process start. Sanity check
                             choices go from least restrictive to most thorough:
-                            'off' prevents all safely checks. 'changed' aborts
+                            'off' prevents all safety checks. 'changed' aborts
                             only upon local modifications to files tracked by git.
                             'untracked' (the default) looks for changed and
                             untracked files. 'ignored' aborts is (any) local
@@ -625,9 +625,9 @@ ksconf unarchive
                             add' or 'git rm' commands from being run, pick the
                             'nochange' mode.
       --no-edit             Tell git to skip opening your editor on commit. By
-                            default you will be prompted to review/edit the commit
-                            message. (Git Tip: Delete the content of the default
-                            message to abort the commit.)
+                            default, you will be prompted to review/edit the
+                            commit message. (Git Tip: Delete the content of the
+                            default message to abort the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
                             Extra arguments to pass to 'git'
 

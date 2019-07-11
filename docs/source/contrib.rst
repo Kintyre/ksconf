@@ -14,15 +14,16 @@ The ksconf project uses the pre-commit_ hook to enable the following checks:
 -   Confirms python code compiles (AST)
 -   Blocks the committing of large files and keys
 -   Rebuilds the dynamic portions of the docs related to the CLI.
--   Confirms that all Unit test pass. (Currently this is the same tests also run by Travis CI, but
-    since test complete in under 5 seconds, the run-everywhere approach seems appropriate for now.
+-   Confirms that all unit tests pass. (Currently, this is the same test run by Travis CI, but
+    since tests1 complete in under 5 seconds, the run-everywhere approach seems appropriate for now.
     Eventually, the local testing will likely become a subset of the full test suite.)
 
 ..  note:: Multiple uses of pre-commit
 
-    Be aware that the `ksconf repo`_ both uses pre-commit for validation of it's own content and it provides a pre-commit hook service definition for other repos.
-    The first scenario is discussed in this section of the docs.
-    The second scenario is for repositories housing Splunk apps to use :ref:`ksconf_cmd_check` and :ref:`ksconf_cmd_sort` as easy to use hooks against their own ``.conf`` files which is discussed further in :ref:`ksconf_pre_commit`.
+    Be aware, that the `ksconf repo`_ both uses pre-commit for validation of it's own content, and it provides a pre-commit hook service definition for other repos.
+    The first scenario is discussed in this section of the guide.
+    The second scenario is for repositories that house Splunk apps to use :ref:`ksconf_cmd_check` and :ref:`ksconf_cmd_sort` 
+    as easy to use hooks against their own ``.conf`` files which is discussed further in :ref:`ksconf_pre_commit`.
 
 
 Installing the pre-commit hook
@@ -44,7 +45,7 @@ Install gitlint
 ~~~~~~~~~~~~~~~
 
 Gitlint_ will check to ensure that commit messages are in compliance with the standard subject,
-empty-line, body format. You can enable it with:
+empty-line, and body format. You can enable it with:
 
 ..  code-block:: sh
 
@@ -73,7 +74,7 @@ Checklist:
 #.  Create a new module in ``ksconf.commands.<CMD>``.
 
     -   Create a new class derived from :class:`KsconfCmd`.
-        You must at a minimum define the following methods:
+        You must, at a minimum, define the following methods:
 
         -   ``register_args()`` to setup any config parser inputs.
         -   ``run()`` which handles the actual execution of the command.

@@ -7,9 +7,9 @@ Pre-commit hooks
 ----------------
 
 Ksconf is setup to work as a `pre-commit`_ plugin.
-To use ksconf in this manner, simply configuring the ksconf repo in your pre-commit configuration file.
-If you haven't done any of this before, it's not difficult to setup but beyond the scope of this guide.
-Go read the pre-commit docs and circle back here when ready to setup the hooks.
+To use ksconf in this manner, simply configure the ksconf repo in your pre-commit configuration file.
+If you haven't done any of this before, it's not difficult to setup but is beyond the scope of this guide.
+We suggest that you read the pre-commit docs and review this section when you are ready to setup the hooks.
 
 
 Hooks provided by ksconf
@@ -30,14 +30,14 @@ Two hooks are currently defined by the ksconf repository:
         which will make diffs more readable and merging more predictable.
         As with any hook, you can customize the filename pattern of which files this applies to.
         For example, to manually organize :file:`props.conf` files, simply add the ``exclude`` setting.
-        Example below.
+        *See Example below.*
 
     ksconf-xml-format:
         Runs :ref:`ksconf_cmd_xml-format` to apply consistency to your XML representations of Simple XML dashboards and navigation files.
         Formatting includes appropriate indention and the automatic addition of ``<![CDATA[ ... ]]>`` blocks, as needed,
         to reduce the need for XML escaping, resulting in more readable source file.
-        By default, this hook looks at standard locations where xml views and navigation typically live.
-        So if you use Advanced XML, proceed with caution (as they share the same path and haven't been tested.)
+        By default, this hook looks at standard locations where XML views and navigation typically live.
+        So if you use Advanced XML, proceed with caution, as they share the same path and haven't been tested.
 
 
 Configuring pre-commit hooks in you repo
@@ -59,7 +59,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
         - id: ksconf-xml-format
 
 
-For general reference, here's a copy of what I frequently use for my own repos.
+For general reference, here's a copy of what we frequently use for our own repos.
 
 ..  code-block:: yaml
 
@@ -91,13 +91,14 @@ For general reference, here's a copy of what I frequently use for my own repos.
 
     You may want to update ``sha`` to the most currently released stable version.
     Upgrading this frequently isn't typically necessary since these two operations are pretty basic and stable.
-    But it's still a good idea to review the change log to see what (if any) pre-commit functionality was updated.
+    However, it's still a good idea to review the change log to see what, if any, pre-commit functionality was updated.
 
 
 .. note::
 
     Sometimes pre-commit can get in the way.
-    Instead of disabling it entirely, it's often better to disable just the specific rule that's causing an issue
+
+    Instead of disabling it entirely, it's often better to disable the specific rule that's causing an issue
     using the ``SKIP`` environmental variable.
     So for example, if intentionally adding a file over 50 Kb, a command like this will allow all the *other* rules to still run.
 
@@ -112,13 +113,13 @@ For general reference, here's a copy of what I frequently use for my own repos.
 Should my version of ksconf and pre-commit plugins be the same?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're running both ``ksconf`` locally as well as the ksconf pre-commit plugin then technically you have ksconf installed twice.
+If you're running both ``ksconf`` locally as well as the ksconf pre-commit plugin, then technically you have ksconf installed twice.
 That may sound less than ideal, but practically, this isn't a problem.
 As long as the version of the ksconf CLI tool is *close* to the ``sha`` listed in :file:`.pre-commit-config.yaml`, then everything should work fine.
 
-My suggestion:
+Our suggestion:
 
- #. Keep versions in the same `major.minor` release range.  Or bump the version every 6-12 months.
+ #. Keep versions in the same `major.minor` release range or bump the version every 6-12 months.
  #. Check the changelog for any pre-commit related changes or compatibility concerns.
 
 While keeping ``ksconf`` CLI versions in sync across your environment is recommended, it doesn't matter as much for the pre-commit plugin.  Why?
@@ -169,7 +170,7 @@ This is especially helpful if the ``ksconf-sort`` pre-commit hook hasn't been en
         ksconf diff <(git show HEAD:./props.conf) props.conf
 
     Take note of the relative path prefix ``./``.
-    In practice, this can get ugly.
+    In practice, this can be problematic.
 
 
 Stanza aware textual diffs
@@ -180,8 +181,8 @@ Make ``git diff`` show the 'stanza' on the ``@@`` output lines.
 ..  note:: How does git know that?
 
     Ever wonder how ``git diff`` is able to show you the name of the function or method where changes
-    were made?  This works for many programming languages out of the box.  If you've ever spend much
-    time looking at diffs that additional context is invaluable.  As it turns out, this is
+    were made?  This works for many programming languages out of the box.  If you've ever spent much
+    time looking at diffs, that additional context is invaluable.  As it turns out, this is
     customizable by adding a stanza matching regular expression with a file pattern match.
 
 Simply add the following settings to your git configuration:

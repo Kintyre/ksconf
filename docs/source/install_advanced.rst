@@ -1,11 +1,10 @@
 Advanced Installation Guide
 ===========================
 
-The content in this document was split out from the :doc:`install` because it became
-unruly and the number of possible Python installation combinations and gotchas became very intense.
-However, that means that there's lots of truly helpful stuff in here, but becoming a python
-packaging expert isn't my goal, so the Splunk app install approach was introduced to alleviate much
-of this pain.
+The content in this document is a subsidiary to the :doc:`install` because it became
+disorganized and the number of possible Python installation combinations and snags intensified.
+However, that culminated in the collection of excellent information that is provided here. 
+Please remember, the Splunk app install approach was introduced to alleviate several of these issues.
 
 A portion of this document is targeted at those who can't install packages as Admin or are forced to
 use Splunk's embedded Python. For everyone else, please start with the one-liner!
@@ -42,34 +41,34 @@ Flowchart
     -   If Python 3.x, is it greater than 3.4? (I'd like to drop 3.4, but lots of old distros still have it.)
 
  -  Do you have admin access? (root/Administrator; or can you get it? How hard? Will you need it each time you upgrade the ksconf?)
- -  Do you already have a large python deployment or dependency? (If so, you'll probably be fine. Use `virtualenv`_)
+ -  Do you already have a large Python deployment or dependency? (If so, you'll probably be fine. Use `virtualenv`_)
  -  Do you have any prior Python packaging or administration experience?
  -  Are you dealing with some vendor-specific solution?
 
-    -   Example: RedHat Software Collections – where they realize there software is way too old, so
+    -   Example: RedHat Software Collections – where they realize their software is way too old, so
         they try to make it possible to install newer version of things like Python, but since they
         aren't native or the default, you still end up jumping through a bunch of wonky hoops)
 
 -   Do you have Internet connectivity? (air gap or blocked outbound traffic, or proxy)
--   Do you want to build/deploy your own ksconf extensions? If so, the python package is a better option.
+-   Do you want to build/deploy your own ksconf extensions? If so, the Python package is a better option.
     (But at that point, you can probably already handle any packaging issues yourself.)
 
 Installation
 ------------
 
-There are several ways to install ksconf. Technically all standard python packaging approaches
-should work just fine, there's no compiled code or external run-time dependencies so installation
-is fairly easy, but for non-python developers there are some gotchas. Installation options are
-listed from the most easy and recommended to more obscure and difficult:
+There are several ways to install ksconf. Technically, all standard Python packaging approaches
+should work just fine as there's no compiled code or external run-time dependencies so installation
+is fairly easy. However, for non-Python developers, there are some snags. Installation options are
+listed from the most easy and recommended, to more obscure and difficult:
 
 Install from PyPI with PIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The preferred installation method is to install via the standard Python package tool :command:`pip`. Ksconf
-can be installed via the registered `kintyre-splunk-conf`_ package using the standard python process.
+can be installed via the registered `kintyre-splunk-conf`_ package using the standard Python process.
 
 There are 2 popular variations, depending on whether or not you would like to install for all users
-or just play around with it locally.
+or test it locally.
 
 Install ksconf into a virtual environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -77,7 +76,7 @@ Install ksconf into a virtual environment
 **Use this option if you don't have admin access**
 
 Installing ``ksconf`` with virtualenv_ is a great way to test the tool without requiring admin
-privileges and has many advantages for a production install too. Here are the basic steps to get
+privileges and has many advantages for a production install. Here are the basic steps to get
 started.
 
 Please change ``venv`` to a suitable path for your environment.
@@ -113,7 +112,7 @@ On Mac or Linux, run:
 
     sudo pip install kintyre-splunk-conf
 
-On Windows, run this commands from an Administrator console.
+On Windows, run this command from an Administrator console.
 
 ..  code-block:: sh
 
@@ -145,14 +144,14 @@ too. The initial setup and deployment of Software Collections is beyond the scop
 
 ..  hint::  Missing pip?
 
-    If pip is missing from a RHSC then install the following rpm.
+    If pip is missing from a RHSC, then install the following rpm.
 
     ..  code-block:: sh
 
         yum install python27-python-pip
 
 Unfortunately, the ``ksconf`` entrypoint script (in the ``bin`` folder) will not work correctly on it's
-own because it doesn't know about the scl environment, nor is it in the default PATH. To solve this
+own because it doesn't know about the scl environment, nor is it in the default PATH. To solve this,
 run the following:
 
 ..  code-block:: sh
@@ -170,17 +169,17 @@ Use the standalone executable
 
 ..  deprecated:: 0.6.0
 
-    This option remains for historical reference and will like be disabled in the future. If
-    this seems like the best option to you, then please consider install the `KSCONF App for Splunk`_ instead.
+    This option remains for historical reference and will likely be disabled in the future. If
+    this seems like the best option to you, then please consider installing the `KSCONF App for Splunk`_ instead.
 
-Ksconf can be installed as a standalone executable zip app. This approach still requires a python
+Ksconf can be installed as a standalone executable zip app. This approach still requires a Python
 interpreter to be present either from the OS or the one embedded with Splunk Enterprise. This works
 well for testing or when all other options fail.
 
 From the `GitHub releases <https://github.com/Kintyre/ksconf/releases/latest>`__ page, grab the file name ``ksconf-*.pyz``, download it, copy
-it to a ``bin`` folder in your PATH and rename it ``ksconf``. The default shebang looks for 'python' in
+it to a ``bin`` folder in your PATH and rename it ``ksconf``. The default assemblage looks for 'python' in
 the PATH, but this can be adjusted as needed. Since installing with Splunk is a common use case, a
-second file named ``ksconf-*-splunk.pyz`` already has the shebang set for the standard ``/opt/splunk``
+second file named ``ksconf-*-splunk.pyz`` already has the assemblage set for the standard ``/opt/splunk``
 install path.
 
 Typical embedded Splunk install example:
@@ -197,7 +196,7 @@ Typical embedded Splunk install example:
 
 Reasons why this is a non-ideal install approach:
 
--   Lower performance since all python files live in a zip file, and pre-compiled version's can be
+-   Lower performance since all Python files live in a zip file, and pre-compiled version's can be
     cached.
 -   No standard install pathway (doesn't use pip); user must manually copy the executable into place.
 -   Uses a non-standard build process. (May not be a big deal, but could cause things to break in
@@ -275,7 +274,7 @@ On Windows
 2.  Rename the ``.whl`` extension to ``.zip``. (This may require showing file extensions in Explorer.)
 3.  Extract the zip file to a temporary folder. (This should create a folder named "ksconf")
 4.  Create a new folder called "Kintyre" under the Splunk installation path (aka ``SPLUNK_HOME``)
-    By default this is ``C:\Program Files\Splunk``.
+    By default, this is ``C:\Program Files\Splunk``.
 5.  Copy the "ksconf" folder to ``%SPLUNK_HOME%\Kintyre``.
 6.  Create a new batch file called ``ksconf.bat`` and paste in the following. Be sure to
     adjust for a non-standard ``%SPLUNK_HOME%`` value, if necessary.
@@ -300,31 +299,31 @@ Offline installation
 Installing ksconf to an offline or network restricted computer requires three steps: (1) download
 the latest packages from the Internet to a staging location, (2) transfer the staged content (often
 as a zip file) to the restricted host, and (3) use pip to install packages from the staged copy.
-Fortunately, pip makes offline workflows quite easy to achieve. Pip can download a python package
+Fortunately, pip makes offline workflows quite easy to achieve. Pip can download a Python package
 with all dependencies stored as wheels files into a single directory, and pip can be told to install
 from that directory instead of attempting to talk to the Internet.
 
 The process of transferring these files is very organization-specific. The example below shows the
 creation of a tarball (since ``tar`` is universally available on Unix systems), but any acceptable
 method is fine. If security is a high concern, this step is frequently where safety checks are
-implemented. For example, antivirus scans, static code analysis, manual inspection, and/or
+implemented: such as, antivirus scans, static code analysis, manual inspection, and/or
 comparison of cryptographic file hashes.
 
-One additional use-case for this workflow is to ensure the exact same version of all packages are
-deployed consistently across all servers and environments. Often building a ``requirements.txt`` file
-with ``pip freeze`` is a more appropriate solution. Or consider using ``pipenv lock`` for even more
-security benefits.
+One additional use-case for this workflow, is to ensure the exact same version of all packages are
+deployed consistently across all servers and environments. Often, building a ``requirements.txt`` file
+with ``pip freeze``, is a more appropriate solution. Alternatively, consider using ``pipenv lock`` 
+for even more security benefits.
 
 Offline installation steps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ..  important::
 
-    Pip must be installed on the destination server for this process to work. If pip is NOT installed
+    Pip must be installed on the destination server for this process to work. If pip is NOT installed,
     see the :ref:`offline_install_pip` section below.
 
 **Step 1**: Use pip to download the latest package and their dependencies. Be sure to use the same
-version of python that is running on destination machine
+version of Python that is running on destination machine.
 
 ..  code-block:: sh
 
@@ -357,7 +356,7 @@ file copy procedures necessary for your organization.
     # Test the installation
     ksconf --version
 
-The ``ksconf-packages`` folder can now safely be removed.
+The ``ksconf-packages`` folder can now be safely removed.
 
 
 ..  _offline_install_pip:
@@ -393,8 +392,8 @@ The ``ksconf-pacakges`` folder should contain 1 script, and 3 wheel (``*.whl``) 
 Use pip without installing it
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have a copy of the ``pip*.whl`` (wheel) file, then it can be executed directly by python. This
-can be used to run ``pip`` without actually installing it, or for install pip initially (bypassing the
+If you have a copy of the ``pip*.whl`` (wheel) file, then it can be executed directly by Python. This
+can be used to run ``pip`` without actually installing it, or for installing pip initially (bypassing the
 ``get-pip.py`` script step noted above.)
 
 Here's an example of how this could work:
@@ -415,7 +414,7 @@ This will create a file like ``pip-19.0.1-py2.py3-none-any.whl`` in the current 
 
     python pip-19.0.1-py2.py3-none-any.whl/pip list
 
-Just substitute the ``list`` command with whatever action you need (like ``install`` or whatever)
+Substitute the ``list`` command with whatever action you need (like ``install`` or whatever).
 
 Frequent gotchas
 ----------------
@@ -457,7 +456,7 @@ If, while trying to install ``pip`` or run a ``pip`` command you see the followi
     ImportError: No module named command.install
 
 Likely this is because you are using a crippled version of Python; like the one that ships with
-Splunk. This won't work. Either get a pre-package version (the ``.pyz`` file or install using the
+Splunk. This won't work. Either get a pre-packaged version (the ``.pyz`` file) or install using the
 OS-level Python.
 
 
@@ -472,13 +471,13 @@ Here are a few fact gathering type commands that may help you begin to track dow
 Check Python version
 ~~~~~~~~~~~~~~~~~~~~
 
-Check your installed python version by running:
+Check your installed Python version by running:
 
 ..  code-block:: sh
 
     python --version
 
-Note that Linux distributions and Mac OS X that ship with multiple version of Python may have
+Note that Linux distributions and Mac OS X that ship with multiple versions of Python may have
 renamed this to ``python2``, ``python2.7`` or similar.
 
 
@@ -489,7 +488,7 @@ Check PIP Version
 
     pip --version
 
-If you are running a different python interpreter version, you can instead run this as:
+If you are running a different Python interpreter version, you can instead run this as:
 
 ..  code-block:: sh
 
@@ -511,7 +510,7 @@ Confirm installation with the following command:
 If this works, it means that ``ksconf`` installed and is part of your ``PATH`` and should be useable
 everywhere in your system. Go forth and conquer!
 
-If this doesn't work here are a few things to try:
+If this doesn't work, here are a few things to try:
 
  1. Check that your ``PATH`` is set correctly.
  2. Try running ksconf as a "module" (sometimes works around a PATH issue).   Run ``python -m ksconf``
