@@ -59,7 +59,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
         - id: ksconf-xml-format
 
 
-For general reference, here's a copy of what we frequently use for our own repos.
+For general reference, here's a copy of what we frequently use for our repos.
 
 ..  code-block:: yaml
 

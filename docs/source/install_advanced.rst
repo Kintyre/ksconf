@@ -3,7 +3,7 @@ Advanced Installation Guide
 
 The content in this document is a subsidiary to the :doc:`install` because it became
 disorganized and the number of possible Python installation combinations and snags intensified.
-However, that culminated in the collection of excellent information that is provided here. 
+However, that culminated in the collection of excellent information that is provided here.
 Please remember, the Splunk app install approach was introduced to alleviate several of these issues.
 
 A portion of this document is targeted at those who can't install packages as Admin or are forced to
@@ -177,9 +177,9 @@ interpreter to be present either from the OS or the one embedded with Splunk Ent
 well for testing or when all other options fail.
 
 From the `GitHub releases <https://github.com/Kintyre/ksconf/releases/latest>`__ page, grab the file name ``ksconf-*.pyz``, download it, copy
-it to a ``bin`` folder in your PATH and rename it ``ksconf``. The default assemblage looks for 'python' in
+it to a ``bin`` folder in your PATH and rename it ``ksconf``. The default shebang looks for 'python' in
 the PATH, but this can be adjusted as needed. Since installing with Splunk is a common use case, a
-second file named ``ksconf-*-splunk.pyz`` already has the assemblage set for the standard ``/opt/splunk``
+second file named ``ksconf-*-splunk.pyz`` already has the shebang set for the standard ``/opt/splunk``
 install path.
 
 Typical embedded Splunk install example:
@@ -311,7 +311,7 @@ comparison of cryptographic file hashes.
 
 One additional use-case for this workflow, is to ensure the exact same version of all packages are
 deployed consistently across all servers and environments. Often, building a ``requirements.txt`` file
-with ``pip freeze``, is a more appropriate solution. Alternatively, consider using ``pipenv lock`` 
+with ``pip freeze``, is a more appropriate solution. Alternatively, consider using ``pipenv lock``
 for even more security benefits.
 
 Offline installation steps

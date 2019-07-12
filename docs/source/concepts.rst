@@ -16,10 +16,10 @@ layer-aware way.
 In a typical enterprise deployment of Splunk, a single app can easily have multiple logical sources
 of configuration:
 
- 1. Upstream app developer (typically via Splunkbase)
- 2. Local developer app-developer adds organization-specific customizations or fixes
- 3. Splunk admins who adjust the inappropriate ``indexes.conf`` settings
- 4. Subject matter experts who add custom knowledge objects
+1.  Upstream app releases, often from Splunkbase
+2.  Organization-specific customizations or fixes added by a local developer
+3.  Fixes to buggy upstream settings, like ``indexes.conf``, requested by your Splunk admin
+4.  Custom knowledge objects created by subject matter experts
 
 Ideally we would like to version control these, but doing so is complicated because normally you have to
 manage all four of these logical layers in one 'default' folder.
@@ -36,7 +36,7 @@ Let's suppose a new upstream version is released.
 If you aren't managing layers independently, then you have to manually upgrade the app, being careful to preserve all custom configurations.
 Compare this to the solution provided by the :ref:`combine <ksconf_cmd_combine>` functionality.
 The layered approach provides an advantage because logical sources can be stored separately in their own directories, thus allowing them to be modified independently.
-Using this approach, changes in the "upstream" layer will only come from an official release, and the organizational layer will contain customizations made soley by your organization.
+Using this approach, changes in the "upstream" layer will only come from an official release, and the organizational layer will contain customizations made solely by your organization.
 Practically, this means it's no longer necessary to comb through commit logs identifying which custom changes need to be preserved and reapplied.
 
 While this doesn't completely remove the need for a person to review app upgrades, it does lower the
@@ -59,7 +59,7 @@ If you've copied a default file into the local folder, this means that local fil
 So in the future, fixes published by the app creator are likely to be masked by your local settings.
 A better approach is to reduce the local conf file leaving only the stanzas and settings that you intended to change.
 While this is a monotonous to do by hand, it is easily accomplished by :ref:`ksconf_cmd_minimize`.
-This makes your conf files easier to read and makes upgrades more simple. 
+This makes your conf files easier to read and simplifies upgrades.
 
 
 What does Splunk have to say about this?   (From the docs)
@@ -75,8 +75,8 @@ What does Splunk have to say about this?   (From the docs)
 
     It's a good practice to minimize your files right away.
     If you wait, it may not be obvious what specific version of default that local was copied from.
-    In other words, if you run the :command:`minimize` command *after* you've upgraded the default folder, you may need to do extra work to manually reconcile upgrade differences, because any changes made between the initial version of the default file and the most recent release of the conf file cannot, be automatically addressed in this fashion.
-
+    In other words, if you run the :command:`minimize` command *after* you've upgraded the default folder, you may need to do extra work to manually reconcile upgrade differences,
+    because any changes made between the initial version of the default file and the most recent release of the conf file cannot, be automatically addressed in this fashion.
     If your files are all in git, and you know a REF of the previous version of your default file, you can use some commands like this:
 
     ..  code-block:: sh

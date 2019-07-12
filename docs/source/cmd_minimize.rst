@@ -89,7 +89,7 @@ If you find yourself frequently needing the power of ``--explode-default``,
 at some point a potentially better approach may be to simply post stanzas to the REST endpoint.
 However, this typically does a good enough job, especially for offline scenarios.
 
-Additionally, this command doesn't strictly require a bloated file to work with.
+Additionally, this command doesn't strictly require a bloated file.
 For example, if ``disabled = 0`` is both a global default, and set on a per-stanza basis, that could be reduced too.
 However, typically this isn't super helpful.
 

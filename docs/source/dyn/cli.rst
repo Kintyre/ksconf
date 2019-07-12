@@ -35,11 +35,11 @@ ksconf
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
         filter              A stanza-aware GREP tool for conf files
-        promote             Promote .conf settings between layers using either in
-                            batch mode (all changes) or interactive mode.
-                            Frequently this is used to promote conf changes made
-                            via the UI (stored in the 'local' folder) to a
-                            version-controlled directory, often 'default'.
+        promote             Promote .conf settings between layers using either
+                            batch or interactive mode. Frequently this is used to
+                            promote conf changes made via the UI (stored in the
+                            'local' folder) to a version-controlled directory,
+                            such as 'default'.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s)
@@ -97,7 +97,7 @@ ksconf combine
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
-    directory. Configuration files can be stored in a '/etc/*.d' like directory
+    directory.  Configuration files can be stored in a '/etc/*.d' like directory
     structure and consolidated back into a single 'default' directory.
     
     This command supports both one-time operations and recurring merge jobs.  For
@@ -288,7 +288,7 @@ ksconf promote
                          attributes. The user will be able to apply, skip, or edit
                          the changes being promoted.
       --force, -f        Disable safety checks. Don't check to see if SOURCE and
-                         TARGET share the same base name.
+                         TARGET share the same basename.
       --keep, -k         Keep conf settings in the source file. All changes will
                          be copied into the TARGET file instead of being moved
                          there. This is typically a bad idea since local always
@@ -431,9 +431,9 @@ ksconf sort
       -h, --help            show this help message and exit
       --target FILE, -t FILE
                             File to write results to. Defaults to standard output.
-      --inplace, -i         Replace the input file with a sorted version. [
-                            **Warning!** This a potentially destructive operation
-                            that may move/remove comments.]
+      --inplace, -i         Replace the input file with a sorted version. WARNING:
+                            This a potentially destructive operation that may
+                            move/remove comments.
       -n LINES, --newlines LINES
                             Number of lines between stanzas.
     
@@ -587,9 +587,9 @@ ksconf unarchive
     optional arguments:
       -h, --help            show this help message and exit
       --dest DIR            Set the destination path where the archive will be
-                            extracted. By default, the current directory is used,
-                            but sane values include: etc/apps, etc/deployment-
-                            apps, and so on.
+                            extracted. By default, the current directory is used.
+                            Sane values include: etc/apps, etc/deployment-apps,
+                            and so on.
       --app-name NAME       The app name to use when expanding the archive. By
                             default, the app name is taken from the archive as the
                             top-level path included in the archive (by

@@ -50,7 +50,7 @@ Can you spot the error in this :file:`props.conf`?
 
 
 That's right, line 7 contains the stanza ``myapp:total:junk`` that doesn't have a closing ``]``.
-How Splunk does handle this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
+How does Splunk handle this?  It ignores the broken stanza header completely and therefore ``TRANSFORMS-drop`` gets added
 to the ``myapp:web:access`` sourcetype, which will likely result in the loss of data.
 
 

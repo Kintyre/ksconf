@@ -97,7 +97,9 @@ Cleaning up
 Reduce cruft in local
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here is a quick way to 'minimize' your files.  This will reduce the *local* file by removing all the *default* settings you copied but didn't change.  (The importance of this is outlined in  :ref:`minimizing_files`.)
+If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here is a quick way to 'minimize' your files.
+This will reduce the *local* file by removing all the *default* settings you copied but didn't change.
+(The importance of this is outlined in :ref:`minimizing_files`.)
 
     .. code-block:: sh
 
@@ -228,7 +230,7 @@ Building an all-in one TA for your indexing tier
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Say you need to build a single TA containing all the index-time settings for your indexing tier.
-(Note:  Enterprise Security does something similar to this whenever they generate the indexer app.)
+(Note:  Enterprise Security does something similar when generating the indexer app.)
 
     .. code-block:: sh
 

@@ -1,11 +1,11 @@
 Introduction
 ------------
 
-:abbr:`ksconf (Kintyre's Splunk Configuration Tool)`
+:abbr:`ksconf (Kintyre's Splunk Configuration tool)`
 is a command-line tool that helps administrators and developers manage their Splunk environments by
 enhancing their ability to control configuration files.  By design, the interface is modular so that
 each function (aka subcommand) can be learned quickly and used independently.  Most KSConf commands
-are simple enough for a quick singular job, yet reliable enough to integrate into complex app build
+are simple enough for a quick one-off job, yet reliable enough to integrate into complex app build
 and deployment workflow.
 
 KSConf helps manage the nuances of storing Splunk apps in a version control system, such as git.  It

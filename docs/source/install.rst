@@ -11,9 +11,9 @@ Therefore, most users will find it easier to start with the Splunk app.
 .. note::
 
     The introduction of a Splunk app is a fairly new occurence (as of the 0.6.x release).
-    Originally we resisted this idea, since ``ksconf`` was designed to manage other apps, not live
-    within one. Ultimately however, the packaging decision was made to ensure users of all levels can utilize the program, as Python packaging can be daunting for the
-    uninitiated.
+    Originally we resisted this idea, since ``ksconf`` was designed to manage other apps, not live within one.
+    Ultimately however, the packaging decision was made to ensure users of all levels can utilize the program,
+    as Python packaging is a mess and can be daunting for the uninitiated.
 
 
 Overview
@@ -116,20 +116,22 @@ Quick Install
 Enable Bash Completion
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If you're on a Mac or Linux machine, and would like to enable bash completion, run these commands:
+If you're on Mac or Linux, and would like to enable bash completion, run these commands:
 
 .. code-block:: sh
 
    pip install argcomplete
    echo 'eval "$(register-python-argcomplete ksconf)"' >> ~/.bashrc
 
-(This option is not currently available for Splunk App installs due to a lack of documentation and testing available presently. Pull requests are welcome.)
+(This option is not currently available for Splunk App installs due to a lack of documentation and testing available presently.
+It should be possible.  Pull requests are welcome.)
 
 Ran into issues?
 ~~~~~~~~~~~~~~~~
 
-If you encounter any issues, please refer to the :doc:`install_advanced`. Substantial time and effort
-was placed into the assembly of the information based on various scenarios we encountered.  A good place to begin would be in the :ref:`python_troubleshooting` section.
+If you encounter any issues, please refer to the :doc:`install_advanced`.
+Substantial time and effort was placed into the assembly of the information based on various scenarios we encountered.
+A good place to begin would be in the :ref:`python_troubleshooting` section.
 
 
 Install from GIT

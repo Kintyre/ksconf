@@ -44,7 +44,7 @@ class UnarchiveCmd(KsconfCmd):
                             ).completer = FilesCompleter(allowednames=allowed_extentions)
         parser.add_argument("--dest", metavar="DIR", default=".", help=dedent("""\
             Set the destination path where the archive will be extracted.
-            By default, the current directory is used, but sane values include: etc/apps,
+            By default, the current directory is used.  Sane values include: etc/apps,
             etc/deployment-apps, and so on.""")
                             ).completer = DirectoriesCompleter()
         parser.add_argument("--app-name", metavar="NAME", default=None,help=dedent("""\

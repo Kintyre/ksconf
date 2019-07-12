@@ -64,11 +64,10 @@ from ksconf.util.file import _samefile, file_fingerprint
 
 class PromoteCmd(KsconfCmd):
     help = dedent("""\
-    Promote .conf settings between layers using either in batch mode (all
-    changes) or interactive mode.
+    Promote .conf settings between layers using either batch or interactive mode.
 
     Frequently this is used to promote conf changes made via the UI (stored in
-    the ``local`` folder) to a version-controlled directory, often ``default``.
+    the ``local`` folder) to a version-controlled directory, such as ``default``.
     """)
     description = dedent("""\
     Propagate .conf settings applied in one file to another.  Typically this is used
@@ -116,7 +115,7 @@ class PromoteCmd(KsconfCmd):
                             action="store_true", default=False,
                             help=
             "Disable safety checks. "
-            "Don't check to see if SOURCE and TARGET share the same base name.")
+            "Don't check to see if SOURCE and TARGET share the same basename.")
         parser.add_argument("--keep", "-k",
                             action="store_true", default=False, help=dedent("""\
             Keep conf settings in the source file.

@@ -28,10 +28,9 @@ that ``combine`` command will handle non-conf files intelligently, not just conf
 
 ..  note::  Mixing layers
 
-    Just like all layers can be managed independently, they can also be combined in any way you 
-    would like. While this workflow is outside of the scope of the examples provided here, it's 
-    certainly feasible. This also allows for different layers to be mixed-and-matched by selectively 
-    including which layers to combine.
+    Just like all layers can be managed independently, they can also be combined in any way you would like.
+    While this workflow is outside of the scope of the examples provided here, it's certainly feasible.
+    This also allows for different layers to be mixed-and-matched by selectively including which layers to combine.
 
 Examples
 --------

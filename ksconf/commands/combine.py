@@ -35,7 +35,7 @@ class CombineCmd(KsconfCmd):
     """)
     description = dedent("""\
     Merge .conf settings from multiple source directories into a combined target
-    directory. Configuration files can be stored in a ``/etc/*.d`` like directory
+    directory.  Configuration files can be stored in a ``/etc/*.d`` like directory
     structure and consolidated back into a single 'default' directory.
 
     This command supports both one-time operations and recurring merge jobs.  For
