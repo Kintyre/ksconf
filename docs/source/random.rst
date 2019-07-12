@@ -19,8 +19,9 @@ Form            Acceptability factor
 KSCONF          Okay for titles.
 Ksconf          Title case is okay too.
 KSConf          You'll see this, but weird.
+KSconf          Just proper nouns capitalized
 KsConf          No, except maybe in a class name?
-KsconF          Thought about it.
+KsconF          Thought about it.  No go!
                 Reserved for ASCII art ONLY
 ============    ====================================
 
@@ -101,7 +102,7 @@ Grandfather Paradox
 
 The KSCONF Splunk app disadvantageously breaks it's designed paradigm.  Ksconf was designed to be
 the program that manages all your other apps, so by deploying ksconf as an app itself, we open up the
-possibility that ksconf could upgrade, deploy, or manage itself. Basically, it could cut off the limb 
+possibility that ksconf could upgrade, deploy, or manage itself. Basically, it could cut off the limb
 that it's standing on. Practically, this can get messy, especially if
 you're on Windows, where file locking is also likely to cause issues.
 
