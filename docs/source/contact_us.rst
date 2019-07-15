@@ -3,7 +3,7 @@
 Contact
 -------
 
-If you have questions, concerns, ideas about the product or how to make it better, please let us know! 
+If you have questions, concerns, ideas about the product or how to make it better, please let us know!
 
 Here are some ways to get in contact with us and other KSCONF users:
 

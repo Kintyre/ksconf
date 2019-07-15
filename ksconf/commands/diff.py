@@ -22,8 +22,8 @@ class DiffCmd(KsconfCmd):
     Compares the content differences of two .conf files
 
     This command ignores textual differences (like order, spacing, and comments) and
-    focuses strictly on comparing stanzas, keys, and values.  Note that spaces within 
-    any given value, will be compared. Multi-line fields are compared in a more traditional 
+    focuses strictly on comparing stanzas, keys, and values.  Note that spaces within
+    any given value, will be compared. Multi-line fields are compared in a more traditional
     'diff' output so that long saved searches and macros can be compared more easily.
     """)
     format = "manual"

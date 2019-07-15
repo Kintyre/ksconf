@@ -52,7 +52,7 @@ Here are some of the safety mechanisms that ksconf has in place to prevent data 
 ..
 
     Syntax checking
-        Strong syntax checking is enabled for both *SOURCE* and *TARGET* to prevent mistakes, such as dangling or duplicate stanzas, 
+        Strong syntax checking is enabled for both *SOURCE* and *TARGET* to prevent mistakes, such as dangling or duplicate stanzas,
         which could lead to even more corruption.
 
     File fingerprinting
