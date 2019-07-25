@@ -9,6 +9,12 @@ Ksconf 0.7.x
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
 
+Release v0.7.6 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Fresh review and cleanup of all docs!  (A huge thank you to Brittany Barnett for this massive undertaking)
+
+
 Release v0.7.5 (2019-07-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
