@@ -6,7 +6,7 @@ Concepts
 Configuration layers
 --------------------
 
-The idea of configuration layers is shared across multiple actions in KSConf.
+The idea of configuration layers is shared across multiple actions in Ksconf.
 Specifically, :ref:`combine <ksconf_cmd_combine>` is used to merge multiple layers, and the
 :ref:`unarchive <ksconf_cmd_unarchive>` command can be used to install or upgrade an app in a
 layer-aware way.

@@ -22,9 +22,9 @@ Welcome to KSCONF!
 KSCONF is a modular command line tool for Splunk admins and app developers.
 It's quick and easy to get started with basic commands and grow into the more advanced commands as needed.
 Thank you for reviewing our expanding body of documentation to help smooth your transition to a more well-managed Splunk
-environment and explore ways to integrate KSConf capabilities into your existing workflow.
+environment and explore ways to integrate Ksconf capabilities into your existing workflow.
 
-We are glad you are here! No matter where you're starting from, KSConf can help. Let us
+We are glad you are here! No matter where you're starting from, Ksconf can help. Let us
 know if there is anything we can do to help along your journey.
 
     -- Kintyre team
@@ -33,7 +33,7 @@ know if there is anything we can do to help along your journey.
 Install
 -------
 
-KSConf can be directly installed as a Python (via ``pip``) or as a Splunk app.  The Splunk app option is often easier.
+Ksconf can be directly installed as a Python (via ``pip``) or as a Splunk app.  The Splunk app option is often easier.
 
 
 To install as a **python package**, run the following:
