@@ -6,8 +6,8 @@ The ksconf command documentation is provided in the following ways:
     1.  A detailed listing of each sub-command is provided in this section.
         This includes relevant background descriptions, typical use cases, examples, and discussion of
         relevant topics.  An expanded descriptions of CLI arguments and their usage is provided here.
-        If you've not used a particular command before, start here.
-    2.  The :doc:`Command line reference<dyn/cli>` provides a quick an convenient reference when
+        If you have not used a particular command before, start here.
+    2.  The :doc:`Command line reference<dyn/cli>` provides a quick and convenient reference when
         the command line is unavailable.  The same information is available by typing ``ksconf <CMD> --help``.
         This is most helpful if you're already familiar with a command, but need a quick refresher.
 

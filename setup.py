@@ -42,10 +42,10 @@ DESCRIPTION = """\
 # Kintyre's Splunk CONFiguration tool
 
 This utility handles a number of common Splunk app maintenance tasks in an installable python
-package.  Specifically, this tools deals with many of the nuances with storing Splunk apps in a
-version control system like git and pointing live Splunk apps to a working tree, merging changes
-from the live system's (local) folder to the version controlled (default) folder, and dealing with
-more than one layer of "default" (which splunk can't handle natively).
+package. Specifically, this tool deals with many of the nuances of storing Splunk apps in a
+version control system like git and pointing live Splunk apps to a working tree. Merging changes
+from the live system's (local) folder to the version controlled (default) folder and dealing with
+more than one layer of "default" are all supported tasks which are not native to Splunk.
 
 Install with
 

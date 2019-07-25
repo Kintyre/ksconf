@@ -14,7 +14,7 @@ ksconf snapshot
 
     The output from this command hasn't really been tested in any kind of serious way for usability.
     Consider this a proof-of-concept.
-    Anyone interested in this type of functionality should ref:`reach out <contact-us>` to discuss uses cases.
+    Anyone interested in this type of functionality should :ref:`reach out <contact_us>` to discuss uses cases.
 
 
 Example

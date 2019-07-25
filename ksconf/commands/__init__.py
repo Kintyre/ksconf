@@ -173,7 +173,7 @@ class ConfFileType(object):
     """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
 
     Started from argparse.FileType() and then changed everything.   With our use case, it's often
-    necessary to delay writing, or read before writing to a conf file (depending on weather or not
+    necessary to delay writing, or read before writing to a conf file (depending on whether or not
     --dry-run mode is enabled, for example.)
 
     Instances of FileType are typically passed as type= arguments to the
@@ -195,7 +195,7 @@ class ConfFileType(object):
     Action      Description
     ========    =============
     ``none``    No preparation or testing is done on the filename.
-    ``open``    Ensure the file exists an can be opened.
+    ``open``    Ensure the file exists and can be opened.
     ``load``    Ensure the file can be opened and parsed successfully.
     ========    =============
 

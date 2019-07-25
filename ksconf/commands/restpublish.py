@@ -35,8 +35,8 @@ class RestPublishCmd(KsconfCmd):
     help = "Publish .conf settings to a live Splunk instance via REST"
     description = dedent("""\
     Publish stanzas in a .conf file to a running Splunk instance via REST.  This requires access to
-    the HTTPS endpoint of splunk.  By default, ksconf will handle both the creation of new stanzas
-    and the update of exists stanzas.
+    the HTTPS endpoint of Splunk.  By default, ksconf will handle both the creation of new stanzas
+    and the update of existing stanzas.
 
     This can be used to push full configuration stanzas where you only have REST access and can't
     directly publish an app.
@@ -44,12 +44,12 @@ class RestPublishCmd(KsconfCmd):
     Only attributes present in the conf file are pushed.  While this may seem obvious, this fact can
     have profound implications in certain situations, like when using this command for continuous
     updates.  This means that it's possible for the source .conf to ultimately differ from what ends
-    up on the server's .conf file.  One way to avoid this is to explicitly remove object using
-    ``--delete`` mode first, and then insert a new copy of the object.  Of course this means that
+    up on the server's .conf file.  One way to avoid this, is to explicitly remove an object using
+    ``--delete`` mode first, and then insert a new copy of the object.  Of course, this means that
     the object will be unavailable.  The other impact is that diffs only compares and shows a subset
     of attribute.
 
-    Be aware that, for consistency, the configs/conf-TYPE endpoint is used for this command.
+    Be aware, that for consistency, the configs/conf-TYPE endpoint is used for this command.
     Therefore, a reload may be required for the server to use the published config settings.
     """)
 
@@ -79,9 +79,9 @@ class RestPublishCmd(KsconfCmd):
 
         parser.add_argument("--conf", dest="conf_type", metavar="TYPE",
                             help=dedent("""\
-            Explicitly set the configuration file type.  By default this is derived from CONF, but
-            sometime it's helpful set this explicitly.  Can be any valid Splunk conf file type,
-            example include 'app', 'props', 'tags', 'savedsearches', and so on."""))
+            Explicitly set the configuration file type.  By default, this is derived from CONF, but
+            sometimes it's helpful to set this explicitly. Can be any valid Splunk conf file type.
+            Examples include: 'app', 'props', 'tags', 'savedsearches', etc."""))
         parser.add_argument("-m", "--meta", action="append",
                             help=
                             "Specify one or more ``.meta`` files to determine the desired read & "
@@ -104,7 +104,7 @@ class RestPublishCmd(KsconfCmd):
         parsg1.add_argument("-D", "--delete", action="store_true", default=False,
                             help=dedent("""\
             Remove existing REST entities.  This is a destructive operation.
-            In this mode, stanzas attributes are unnecessary.
+            In this mode, stanza attributes are unnecessary.
             NOTE:  This works for 'local' entities only; the default folder cannot be updated.
             """))
 

@@ -18,28 +18,28 @@ ksconf
     Ksconf: Kintyre Splunk CONFig tool
     
     This utility handles a number of common Splunk app maintenance tasks in a small
-    and easy to deploy package.  Specifically, this tools deals with many of the
-    nuances with storing Splunk apps in git, and pointing live Splunk apps to a git
+    and easy to deploy package.  Specifically, this tool deals with many of the
+    nuances with storing Splunk apps in git and pointing live Splunk apps to a git
     repository.  Merging changes from the live system's (local) folder to the
-    version controlled (default) folder, and dealing with more than one layer of
-    "default" (which splunk can't handle natively) are all supported tasks.
+    version controlled (default) folder and dealing with more than one layer of
+    "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
       {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
-                            allows for an arbitrary number of splunk configuration
+                            allows for an arbitrary number of Splunk configuration
                             layers to coexist within a single app. Useful in both
                             ongoing merge and one-time ad-hoc use.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
         filter              A stanza-aware GREP tool for conf files
         promote             Promote .conf settings between layers using either
-                            either in batch mode (all changes) or interactive
-                            mode. Frequently this is used to promote conf changes
-                            made via the UI (stored in the 'local' folder) to a
-                            version-controlled directory, often 'default'.
+                            batch or interactive mode. Frequently this is used to
+                            promote conf changes made via the UI (stored in the
+                            'local' folder) to a version-controlled directory,
+                            such as 'default'.
         merge               Merge two or more .conf files
         minimize            Minimize the target file by removing entries
                             duplicated in the default conf(s)
@@ -72,8 +72,8 @@ ksconf check
 
     usage: ksconf check [-h] [--quiet] FILE [FILE ...]
     
-    Provide basic syntax and sanity checking for Splunk's .conf files. Use
-    Splunk's builtin 'btool check' for a more robust validation of attributes and
+    Provides basic syntax and sanity checking for Splunk's .conf files. Use
+    Splunk's built-in 'btool check' for a more robust validation of attributes and
     values. Consider using this utility as part of a pre-commit hook.
     
     positional arguments:
@@ -97,30 +97,30 @@ ksconf combine
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
-    directory.   Configuration files can be stored in a '/etc/*.d' like directory
+    directory.  Configuration files can be stored in a '/etc/*.d' like directory
     structure and consolidated back into a single 'default' directory.
     
     This command supports both one-time operations and recurring merge jobs.  For
-    example, this command can be used to combine all users knowledge objects (stored
+    example, this command can be used to combine all users' knowledge objects (stored
     in 'etc/users') after a server migration, or to merge a single user's settings
-    after an their account has been renamed.  Recurring operations assume some type
+    after their account has been renamed.  Recurring operations assume some type
     of external scheduler is being used.  A best-effort is made to only write to
     target files as needed.
     
     The 'combine' command takes your logical layers of configs (upstream, corporate,
-    splunk admin fixes, and power user knowledge objects, ...) expressed as
+    Splunk admin fixes, and power user knowledge objects, ...) expressed as
     individual folders and merges them all back into the single 'default' folder
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
     
-    No directory layout is mandatory, but but one simple approach is to model your
-    layers using a prioritized 'default.d' directory structure. (This idea is
+    No directory layout is mandatory, but one simple approach is to model your
+    layers using a prioritized 'default.d' directory structure. This idea is
     borrowed from the Unix System V concept where many services natively read their
-    config files from '/etc/*.d' directories.)
+    config files from '/etc/*.d' directories.
     
     positional arguments:
       source                The source directory where configuration files will be
-                            merged from. When multiple sources directories are
+                            merged from. When multiple source directories are
                             provided, start with the most general and end with the
                             specific; later sources will override values from the
                             earlier ones. Supports wildcards so a typical Unix
@@ -153,10 +153,9 @@ ksconf diff
     Compares the content differences of two .conf files
     
     This command ignores textual differences (like order, spacing, and comments) and
-    focuses strictly on comparing stanzas, keys, and values.  Note that spaces
-    within any given value will be compared.  Multi-line fields are compared in are
-    compared in a more traditional 'diff' output so that long savedsearches and
-    macros can be compared more easily.
+    focuses strictly on comparing stanzas, keys, and values.  Note that spaces within
+    any given value, will be compared. Multi-line fields are compared in a more traditional
+    'diff' output so that long saved searches and macros can be compared more easily.
     
     positional arguments:
       CONF1                 Left side of the comparison
@@ -188,9 +187,9 @@ ksconf filter
                          CONF [CONF ...]
     
     Filter the contents of a conf file in various ways. Stanzas can be included or
-    excluded based on provided filter, based on the presents or value of a key.
-    Where possible, this command supports GREP-like arguments to bring a familiar
-    feel.
+    excluded based on a provided filter or based on the presence or value of a
+    key. Where possible, this command supports GREP-like arguments to bring a
+    familiar feel.
     
     positional arguments:
       CONF                  Input conf file
@@ -236,7 +235,7 @@ ksconf filter
                             'file://' prefix.
     
     Attribute selection:
-      Include or exclude attributes passed through. By default all attributes
+      Include or exclude attributes passed through. By default, all attributes
       are preserved. Whitelist (keep) operations are preformed before blacklist
       (reject) operations.
     
@@ -265,16 +264,16 @@ ksconf promote
     to move 'local' changes (made via the UI) into another layer, such as the
     'default' or a named 'default.d/50-xxxxx') folder.
     
-    Promote has two modes:  batch and interactive.  In batch mode all changes are
+    Promote has two modes:  batch and interactive.  In batch mode, all changes are
     applied automatically and the (now empty) source file is removed.  In interactive
-    mode the user is prompted to select stanzas to promote.  This way local changes
+    mode, the user is prompted to select stanzas to promote.  This way local changes
     can be held without being promoted.
     
     NOTE: Changes are *MOVED* not copied, unless '--keep' is used.
     
     positional arguments:
       SOURCE             The source configuration file to pull changes from.
-                         Typically the 'local' conf file)
+                         (Typically the 'local' conf file)
       TARGET             Configuration file or directory to push the changes into.
                          (Typically the 'default' folder)
     
@@ -283,7 +282,7 @@ ksconf promote
       --batch, -b        Use batch mode where all configuration settings are
                          automatically promoted. All changes are removed from
                          source and applied to target. The source file will be
-                         removed, unless '--keep-empty' is used.
+                         removed unless '--keep-empty' is used.
       --interactive, -i  Enable interactive mode where the user will be prompted
                          to approve the promotion of specific stanzas and
                          attributes. The user will be able to apply, skip, or edit
@@ -291,7 +290,7 @@ ksconf promote
       --force, -f        Disable safety checks. Don't check to see if SOURCE and
                          TARGET share the same basename.
       --keep, -k         Keep conf settings in the source file. All changes will
-                         be copied into the target file instead of being moved
+                         be copied into the TARGET file instead of being moved
                          there. This is typically a bad idea since local always
                          overrides default.
       --keep-empty       Keep the source file, even if after the settings
@@ -356,7 +355,7 @@ ksconf minimize
     
     positional arguments:
       CONF                  The default configuration file(s) used to determine
-                            what base or settings are. The base settings determine
+                            what base settings are. The base settings determine
                             what is unnecessary to repeat in target file.
     
     optional arguments:
@@ -365,9 +364,9 @@ ksconf minimize
                             The local file that you wish to remove duplicate
                             settings from. This file will be read from and then
                             replaced with a minimized version.
-      --dry-run, -D         Enable dry-run mode. Instead of writing the minimizing
-                            the TARGET file, preview what would be removed the
-                            form of a 'diff'.
+      --dry-run, -D         Enable dry-run mode. Instead of writing and minimizing
+                            the TARGET file, preview what would be removed as a
+                            'diff'.
       --output OUTPUT       Write the minimized output to a separate file instead
                             of updating TARGET.
       --explode-default, -E
@@ -432,8 +431,8 @@ ksconf sort
       -h, --help            show this help message and exit
       --target FILE, -t FILE
                             File to write results to. Defaults to standard output.
-      --inplace, -i         Replace the input file with a sorted version. Warning
-                            this a potentially destructive operation that may
+      --inplace, -i         Replace the input file with a sorted version. WARNING:
+                            This a potentially destructive operation that may
                             move/remove comments.
       -n LINES, --newlines LINES
                             Number of lines between stanzas.
@@ -463,7 +462,7 @@ ksconf rest-export
     Build an executable script of the stanzas in a configuration file that can be later applied to
     a running Splunk instance via the Splunkd REST endpoint.
     
-    This can be helpful when pushing complex props & transforms to an instance where you only have
+    This can be helpful when pushing complex props and transforms to an instance where you only have
     UI access and can't directly publish an app.
     
     positional arguments:
@@ -475,22 +474,22 @@ ksconf rest-export
                             Save the shell script output to this file. If not
                             provided, the output is written to standard output.
       -u, --update          Assume that the REST entities already exist. By
-                            default output assumes stanzas are being created.
+                            default, output assumes stanzas are being created.
       -D, --delete          Remove existing REST entities. This is a destructive
-                            operation. In this mode, stanzas attributes are
+                            operation. In this mode, stanza attributes are
                             unnecessary and ignored. NOTE: This works for 'local'
                             entities only; the default folder cannot be updated.
       --url URL             URL of Splunkd. Default: https://localhost:8089
       --app APP             Set the namespace (app name) for the endpoint
       --user USER           Deprecated. Use --owner instead.
-      --owner OWNER         Set the object owner. Typically the default of
+      --owner OWNER         Set the object owner. Typically, the default of
                             'nobody' is ideal if you want to share the
                             configurations at the app-level.
-      --conf TYPE           Explicitly set the configuration file type. By default
-                            this is derived from CONF, but sometime it's helpful
-                            set this explicitly. Can be any valid Splunk conf file
-                            type, example include 'app', 'props', 'tags',
-                            'savedsearches', and so on.
+      --conf TYPE           Explicitly set the configuration file type. By
+                            default, this is derived from CONF, but sometimes it's
+                            helpful to set this explicitly. Can be any valid
+                            Splunk conf file type. Examples include: 'app',
+                            'props', 'tags', 'savedsearches', etc.
       --extra-args EXTRA_ARGS
                             Extra arguments to pass to all CURL commands. Quote
                             arguments on the command line to prevent confusion
@@ -517,18 +516,18 @@ ksconf rest-publish
                                CONF [CONF ...]
     
     Publish stanzas in a .conf file to a running Splunk instance via REST. This
-    requires access to the HTTPS endpoint of splunk. By default, ksconf will
-    handle both the creation of new stanzas and the update of exists stanzas. This
-    can be used to push full configuration stanzas where you only have REST access
-    and can't directly publish an app. Only attributes present in the conf file
-    are pushed. While this may seem obvious, this fact can have profound
+    requires access to the HTTPS endpoint of Splunk. By default, ksconf will
+    handle both the creation of new stanzas and the update of existing stanzas.
+    This can be used to push full configuration stanzas where you only have REST
+    access and can't directly publish an app. Only attributes present in the conf
+    file are pushed. While this may seem obvious, this fact can have profound
     implications in certain situations, like when using this command for
     continuous updates. This means that it's possible for the source .conf to
     ultimately differ from what ends up on the server's .conf file. One way to
-    avoid this is to explicitly remove object using '--delete' mode first, and
-    then insert a new copy of the object. Of course this means that the object
+    avoid this, is to explicitly remove an object using '--delete' mode first, and
+    then insert a new copy of the object. Of course, this means that the object
     will be unavailable. The other impact is that diffs only compares and shows a
-    subset of attribute. Be aware that, for consistency, the configs/conf-TYPE
+    subset of attribute. Be aware, that for consistency, the configs/conf-TYPE
     endpoint is used for this command. Therefore, a reload may be required for the
     server to use the published config settings.
     
@@ -537,11 +536,11 @@ ksconf rest-publish
     
     optional arguments:
       -h, --help            show this help message and exit
-      --conf TYPE           Explicitly set the configuration file type. By default
-                            this is derived from CONF, but sometime it's helpful
-                            set this explicitly. Can be any valid Splunk conf file
-                            type, example include 'app', 'props', 'tags',
-                            'savedsearches', and so on.
+      --conf TYPE           Explicitly set the configuration file type. By
+                            default, this is derived from CONF, but sometimes it's
+                            helpful to set this explicitly. Can be any valid
+                            Splunk conf file type. Examples include: 'app',
+                            'props', 'tags', 'savedsearches', etc.
       -m META, --meta META  Specify one or more '.meta' files to determine the
                             desired read & write ACLs, owner, and sharing for
                             objects in the CONF file.
@@ -555,7 +554,7 @@ ksconf rest-publish
       --sharing {user,app,global}
                             Set the sharing mode.
       -D, --delete          Remove existing REST entities. This is a destructive
-                            operation. In this mode, stanzas attributes are
+                            operation. In this mode, stanza attributes are
                             unnecessary. NOTE: This works for 'local' entities
                             only; the default folder cannot be updated.
 
@@ -577,10 +576,10 @@ ksconf unarchive
                             SPL
     
     Install or overwrite an existing app in a git-friendly way.
-    If the app already exist, steps will be taken to upgrade it safely.
+    If the app already exists, steps will be taken to upgrade it safely.
     
     The 'default' folder can be redirected to another path (i.e., 'default.d/10-upstream' or
-    other desirable path if you're using the 'ksconf combine' tool to manage extra layers.)
+    other desirable path if you're using the 'ksconf combine' tool to manage extra layers).
     
     positional arguments:
       SPL                   The path to the archive to install.
@@ -588,8 +587,8 @@ ksconf unarchive
     optional arguments:
       -h, --help            show this help message and exit
       --dest DIR            Set the destination path where the archive will be
-                            extracted. By default the current directory is used,
-                            but sane values include etc/apps, etc/deployment-apps,
+                            extracted. By default, the current directory is used.
+                            Sane values include: etc/apps, etc/deployment-apps,
                             and so on.
       --app-name NAME       The app name to use when expanding the archive. By
                             default, the app name is taken from the archive as the
@@ -610,11 +609,11 @@ ksconf unarchive
       --allow-local         Allow local/* and local.meta files to be extracted
                             from the archive.
       --git-sanity-check {off,changed,untracked,ignored}
-                            By default 'git status' is run on the destination
+                            By default, 'git status' is run on the destination
                             folder to detect working tree or index modifications
                             before the unarchive process start. Sanity check
                             choices go from least restrictive to most thorough:
-                            'off' prevents all safely checks. 'changed' aborts
+                            'off' prevents all safety checks. 'changed' aborts
                             only upon local modifications to files tracked by git.
                             'untracked' (the default) looks for changed and
                             untracked files. 'ignored' aborts is (any) local
@@ -626,9 +625,9 @@ ksconf unarchive
                             add' or 'git rm' commands from being run, pick the
                             'nochange' mode.
       --no-edit             Tell git to skip opening your editor on commit. By
-                            default you will be prompted to review/edit the commit
-                            message. (Git Tip: Delete the content of the default
-                            message to abort the commit.)
+                            default, you will be prompted to review/edit the
+                            commit message. (Git Tip: Delete the content of the
+                            default message to abort the commit.)
       --git-commit-args GIT_COMMIT_ARGS, -G GIT_COMMIT_ARGS
                             Extra arguments to pass to 'git'
 

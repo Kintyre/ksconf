@@ -13,7 +13,7 @@ ksconf merge
 Examples
 ---------
 
-Here's a simple, possibly silly, example that merges all ``props.conf`` file from *all* of your technology addons into a single output file:
+Here is an elementary example that merges all ``props.conf`` file from *all* of your technology addons into a single output file:
 
 ..  code-block:: sh
 

@@ -8,11 +8,11 @@ each function (aka subcommand) can be learned quickly and used independently.  M
 are simple enough for a quick one-off job, yet reliable enough to integrate into complex app build
 and deployment workflow.
 
-Ksconf helps manage the nuances with storing Splunk apps in a version control system, like git.  It
+Ksconf helps manage the nuances of storing Splunk apps in a version control system, such as git.  It
 also supports pointing live Splunk apps to a working tree, merging changes from the live system's
 (local) folder to the version controlled folder (often 'default'), and in more complex cases, it
 deals with more than one :ref:`layer <configuration-layers>` of "default", which Splunk can't handle
-natively).
+natively.
 
 .. note:: **What KSCONF is not**
 
@@ -35,14 +35,14 @@ Design principles
 
 **Don’t impose workflow.**
     Ksconf works with or without version control and independently of your deployment mechanisms.
-    If you are looking to implement these things, ksconf is a great building block.
+    If you are looking to implement these things, Ksconf is a great building block.
 
 **Embrace automated testing.**
-    It's impractical to check every scenarios between each release, but significant work has gone
+    It's impractical to check every scenario between each release, but significant work has gone
     into unit testing the CLI to avoid breakage.
 
 
-Common uses for ksconf
+Common uses for Ksconf
 ~~~~~~~~~~~~~~~~~~~~~~
 
 - Promote changes from :file:`local` to :file:`default`
@@ -58,7 +58,7 @@ Common uses for ksconf
 Getting started
 ~~~~~~~~~~~~~~~
 
-You're already in the right place.  If you're completely new, try checking out of these first:
+You're in the right place. If you are a beginner, try checking these out first:
 
 -   :doc:`cheatsheet` - Like jumping in the deep end, or prefer examples of descriptions?  Start here.
 -   :doc:`concepts` - To get a more theoretical background on why these things matter.

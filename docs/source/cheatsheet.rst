@@ -9,8 +9,8 @@ Here's a quick rundown of handy ``ksconf`` commands:
 
 ..  note::
 
-    Note that for clarity, most of the command line arguments are given in their long form.
-    Many options also have a short form too.
+    Note that for clarity, most of the command line arguments are given in their long form,
+    but many options also have a short form.
 
     Long commands may be broken across line for readability.   When this happens, a trailing
     backslash (``\``) is added so the command could still be copied verbatim into most shells.
@@ -41,7 +41,7 @@ Show the differences between two conf files using :ref:`ksconf_cmd_diff`.
 Sorting content
 ~~~~~~~~~~~~~~~
 
-Create a normalized version a configuration file, making conf files easier to merge with :command:`git`.
+Create a normalized version of a configuration file, making conf files easier to merge with :command:`git`.
 Run an in-place sort like so:
 
     .. code-block:: sh
@@ -97,7 +97,9 @@ Cleaning up
 Reduce cruft in local
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here a quick way to 'minimize' your files.  This will reduce the *local* file by removing all the *default* settings you copied but didn't change.  (The importance of this is outlined in  :ref:`minimizing_files`.)
+If you're in the habit of copying the *default* files to *local* in the TAs you deploy, here is a quick way to 'minimize' your files.
+This will reduce the *local* file by removing all the *default* settings you copied but didn't change.
+(The importance of this is outlined in :ref:`minimizing_files`.)
 
     .. code-block:: sh
 
@@ -107,14 +109,14 @@ If you're in the habit of copying the *default* files to *local* in the TAs you 
 Pushing local changes to default
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-App developers can push changes from the :file:`local` folder over to the :file:`default` folder:
+App developers can push changes from the :file:`local` folder to the :file:`default` folder:
 
     .. code-block:: sh
 
         ksconf promote --interactive myapp/local/props.conf myapp/default/props.conf
 
 You will be prompted to pick which items you want to promote.
-Or use the ``--batch`` option to promote everything in one step, without reviewing the changes first.
+Alternatively, use the ``--batch`` option to promote everything in one step, without reviewing the changes first.
 
 
 
@@ -127,7 +129,7 @@ Migrating content between apps
 
 
 Say you want to move a bunch of savedsearches from ``search`` into a more appropriate app.
-First create a file that list all the names of your searches (one per line) in :file:`corp_searches.txt`.
+First create a file that lists all the names of your searches (one per line) in :file:`corp_searches.txt`.
 Next, copy just the desired stanzas, those named in the 'corp_searches' file, over to your new :file:`corp_app` application.
 
     .. code-block:: sh
@@ -135,7 +137,7 @@ Next, copy just the desired stanzas, those named in the 'corp_searches' file, ov
         ksconf filter --match string --stanza 'file://corp_searches.txt' \
             search/local/savedsearches.conf --output corp_app/default/savedsearches.conf
 
-And now, to avoid duplication and confusion, you want to remove that exact same set of searches from the search app.
+Now, to avoid duplication and confusion, you want to remove that exact same set of searches from the search app.
 
     .. code-block:: sh
 
@@ -164,7 +166,7 @@ Migrating the 'users' folder
 Say you stood up a new Splunk server and the migration took longer than expected.
 Now you have two :file:`users` folders and don't want to loose all the goodies stored in either one.
 You've copied the users folder to :file:`user_old`.
-You're working from the new server and would generally prefer to keep whatever on the new server over what's on the old.
+You're working from the new server and would generally prefer to keep whatever is on the new server over what is on the old.
 (This is because some of your users copied over some of their critical alerts manually while waiting for the migration to complete, and they've made updates they don't want to lose.)
 
 
@@ -208,7 +210,7 @@ Putting it all together
 Pulling out a stanza defined in both default and local
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Say wanted to count the number of searches containing the word ``error``
+Say you wanted to count the number of searches containing the word ``error``
 
 
     .. code-block:: sh
@@ -228,7 +230,7 @@ Building an all-in one TA for your indexing tier
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Say you need to build a single TA containing all the index-time settings for your indexing tier.
-(Note:  Enterprise Security does something similar this whenever they generate the indexer app.)
+(Note:  Enterprise Security does something similar when generating the indexer app.)
 
     .. code-block:: sh
 
@@ -241,7 +243,7 @@ Say you need to build a single TA containing all the index-time settings for you
               --include-attr 'EVENT_BREAKER*' \
               --include-attr 'LINE_BREAKER*'
 
-This example is incomplete because it doesn't list *every* index-time :file:`props.conf` attribute, and leaves out file:`transforms.conf` and :file:`fields.conf`, but hopefully you get the idea.
+This example is incomplete because it doesn't list *every* index-time :file:`props.conf` attribute, and leaves out :file:`transforms.conf` and :file:`fields.conf`, but hopefully you get the idea.
 
 
 

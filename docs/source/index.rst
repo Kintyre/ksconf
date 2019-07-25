@@ -19,13 +19,13 @@ Kintyre's Splunk CONFiguration tool
 Welcome to KSCONF!
 ------------------
 
-KSCONF in a modular command line tool for Splunk admins and app developers.
+KSCONF is a modular command line tool for Splunk admins and app developers.
 It's quick and easy to get started with basic commands and grow into the more advanced commands as needed.
-Thanks for checking out our expanding body of documentation to help smooth your transition to a better-manged Splunk
-environment, or explore ways to integrate ksconf capabilities into your existing workflow.
+Thank you for reviewing our expanding body of documentation to help smooth your transition to a more well-managed Splunk
+environment and explore ways to integrate Ksconf capabilities into your existing workflow.
 
-No matter where you're starting from, we think ksconf can help!  We're glad your here.  Let us
-know if there's anything we can do to help along your journey.
+We are glad you are here! No matter where you're starting from, Ksconf can help. Let us
+know if there is anything we can do to help along your journey.
 
     -- Kintyre team
 
@@ -44,7 +44,7 @@ To install as a **python package**, run the following:
 
 
 To install the **Splunk app**, download the latest `KSCONF App for Splunk`_ release.  Note that a
-one-time registration command is need to make ``ksconf`` executable:
+one-time registration command is needed to make ``ksconf`` executable:
 
 ..  code-block:: shell
 

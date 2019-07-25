@@ -51,8 +51,9 @@ class SortCmd(KsconfCmd):
         mode.add_argument("--inplace", "-i",
                           action="store_true", default=False, help=dedent("""\
                           Replace the input file with a sorted version.
-                          Warning this a potentially destructive operation that may
-                          move/remove comments."""))
+
+                          WARNING:  This a potentially destructive operation that
+                          may move/remove comments."""))
 
         # Inplace update arguments
         grp1 = parser.add_argument_group("In-place update arguments")

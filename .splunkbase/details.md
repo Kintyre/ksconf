@@ -1,7 +1,7 @@
 
 # What is KSCONF?
 
-KSCONF is a command-line tool that helps administrators and developers manage their Splunk environments by enhancing control of their configuration files.  The interface is modular so that each function (or subcommand) can be learned quickly and used independently.  While most users will probably only use a subset of the total capabilities of this tool, it’s reassuring to have a deep toolbox of power goodies ready to be unleashed at a moments notice.  Ksconf works with (and does not replace) your existing Splunk deployment mechanisms and version control tools.
+KSCONF is a command-line tool that helps administrators and developers manage their Splunk environments by enhancing control of their configuration files.  The interface is modular so that each function (or subcommand) can be learned quickly and used independently.  While most users will probably only use a subset of the total capabilities of this tool, it’s reassuring to have a comprehensive toolbox of powerful assets ready to be utilized at a moment's notice.  Ksconf works with, rather than replace, your existing Splunk deployment mechanisms and version control tools.
 
 KSCONF is open source and an open development effort.  Check us out on [GitHub](https://github.com/Kintyre/ksconf#kintyres-splunk-configuration-tool)
 
@@ -11,8 +11,8 @@ Pronounced:   k·s·kȯnf
 
 - *Ksconf is a toolbox.*  - Each tool has a specific purpose and function that works independently.  Borrowing from the Unix philosophy, each command should do one small thing well and be easily combined to handle higher-order tasks.
 - *When possible, be familiar.* - Various commands borrow from popular UNIX command line tools such as “grep” and “diff”.  The overall modular nature of the command is similar to the modular interface used by “git” and the “splunk” cli.
-- *Don’t impose workflow.* - Ksconf works with or without version control and independently of your deployment mechanisms.  (If you are looking to implement these things, ksconf is a great building block)
-- *Embrace automated testing.* - It’s impractical to check every scenarios between each release, but significant work has gone into unittesting the CLI to avoid breaks between releases.
+- *Don’t impose workflow.* - Ksconf works with or without version control and independently of your deployment mechanisms. If you are looking to implement these things, ksconf is a great building block.
+- *Embrace automated testing.* - It’s impractical to check every scenario between each release, but significant work has gone into unit testing the CLI to avoid breaks between releases.
 
 ## Common uses for ksconf
 - Promote changes from “local” to “default”
@@ -26,12 +26,12 @@ Pronounced:   k·s·kȯnf
 
 This Splunk app comes bundled with a CLI tool that helps manage other Splunk apps.  While this is not a traditional use case for a Splunk app, it is a very quick and easy way to deploy ksconf.
 
-Why did we make this a Splunk app?   Well, while ksconf is technically just a Python package that can be deployed in a variety of ways, we found that the logistics of getting it deployed can be quite difficult due to a packaging issues, legacy cruft, and OS limitations.  This approach avoids all that mess.
+Why did we make this a Splunk app? While ksconf is technically just a Python package that can be deployed in a variety of ways, we found that the logistics of getting it deployed can be quite difficult due to a packaging issues, legacy cruft, and OS limitations. This approach avoids all that mess.
 
 
 # Getting Started
 
-Full documentation for ksconf and, therefore this app, is hosted at read-the-docs.  A full copy of the `ksconf` documentation is also included, just like how Splunk ships with a fully copy of the docs in the system/README folder.  (And all the air-gapped people rejoice! but sadly, no one could hear them.)
+Full documentation for ksconf, including this app, is hosted at read-the-docs.  A full copy of the `ksconf` documentation is also included, similar to how Splunk ships with a full copy of the docs in the system/README folder.  (And all the air-gapped people rejoice! but sadly, no one could hear them.)
 
 
 ## Docs
@@ -53,15 +53,15 @@ Full documentation for ksconf and, therefore this app, is hosted at read-the-doc
 
 ## Roadmap
 
-Additional Splunk UI feature are planned, but currently not implemented.
+Additional Splunk UI features are planned, but currently not implemented.
 
  * Dashboard to track all changes coordinated by `ksconf`
  * Configuration snapshot tracking
- * Custom SPL command to give visibility into the what exists in the `local` folder.  (The built-in `rest` command only shows you the final merged view of your settings; and sometimes you have to look deeper.)
+ * Custom SPL command to give visibility into what exists in the `local` folder.  (The built-in `rest` command only shows you the final merged view of your settings; and sometimes you have to look deeper.)
 
 ## Installation & Configuration
 
-See the [Install an add-on](https://docs.splunk.com/Documentation/AddOns/released/Overview/Singleserverinstall) in Splunk's official documentation.  There is one manual step required to active the CLI portion of this app, if you choose to do so.  See the [Installation docs](https://ksconf.readthedocs.io/en/latest/install.html) for more details.
+See the [Install an add-on](https://docs.splunk.com/Documentation/AddOns/released/Overview/Singleserverinstall) in Splunk's official documentation.  There is one manual step required to activate the CLI portion of this app, if you choose to do so.  See the [Installation docs](https://ksconf.readthedocs.io/en/latest/install.html) for more details.
 
 ## Support
 

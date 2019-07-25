@@ -28,7 +28,7 @@ Promote has two different modes:  batch and interactive.
         The source file can be retained by using either the ``--keep`` or ``--keep-empty`` arguments, see descriptions above.
 
     Interactive mode
-        Prompt the user to pick which stanzas and attributes to integrate.
+        Prompts the user to pick which stanzas and attributes to integrate.
         In practice, it's common that not all local changes will be ready to be promoted and committed at the same time.
 
         ..  hint:: This mode was inspired by :command:`git add --patch` command.
@@ -41,24 +41,25 @@ Safety checks
 -------------
 
 Moving content between files is a potentially risky operation.
-Here are some of the safety mechanisms that exist, because ksconf tries hard not to lose your stuff.
+Here are some of the safety mechanisms that ksconf has in place to prevent data loss.
 
 
 ..  tip::
 
     Pairing ksconf with a version control tool like :command:`git`, while not required, does provide another layer of protection against loss or corruption.
-    If you promote and commit changes frequently then the surface area of potential loss is reduced.
+    If you promote and commit changes frequently, then the scope of potential loss is reduced.
 
 ..
 
     Syntax checking
-        Strong syntax checking is enabled for both *SOURCE* and *TARGET* because otherwise mistakes like dangling or duplicate stanzas could lead to even more corruption.
+        Strong syntax checking is enabled for both *SOURCE* and *TARGET* to prevent mistakes, such as dangling or duplicate stanzas,
+        which could lead to even more corruption.
 
     File fingerprinting
         Various attributes of the *SOURCE* and *TARGET* files are captured at startup and compared again before any changes are written to disk.
         This reduces the possibility of a race-condition on a live Splunk system.
         This mostly impacts interactive mode because the session lasts longer.
-        If this a concern, run promote only when Splunk is offline.
+        If this is a concern, run promote only when Splunk is offline.
 
     Same file check
         Attempts to promote content from a file to itself are prevented.
@@ -76,7 +77,7 @@ Here are some of the safety mechanisms that exist, because ksconf tries hard not
 
 .. note::
 
-    Unfortunately the unit testing coverage for the ``promote`` command is quite low.
+    Unfortunately, the unit testing coverage for the ``promote`` command is quite low.
     This is primarily because I haven't yet figured out how to handle unit testing for interactive CLI tools (as this is the only interactive command to date.)
     I'm also not sure how much the UI may change;
     Any assistance in this area would be greatly appreciated.
@@ -99,7 +100,7 @@ This is equivalent to this minor shortcut.
 
 In this case, ksconf determines that ``default`` is a directory and therefore assumes that you want the same filename, ``props.conf`` in this case.
 
-..  tip::  Using a directory as TARGET may seem like a trivial improvement, but in practice it greatly reduces accidental cross-promotion of content.  Therefore we suggest its use.
+..  tip::  Using a directory as TARGET may seem like a trivial improvement, but in practice it greatly reduces accidental cross-promotion of content.  Therefore, we suggest its use.
 
 
 Similarly, a shortcut for pushing between metadata files exists:
@@ -129,11 +130,11 @@ Keyboard shortcuts
 Limitations
 -----------
 
--   Currently attribute-level section has not be implemented.
+-   Currently, an attribute-level section has not be implemented.
     Entire stanzas are either kept local or promoted fully.
 -   Interactive mode currently lacks "help".
     In the meantime, see the keyboard shortcuts listed above.
--   Currently comments in the *SOURCE* file will not be preserved.
+-   At present, comments in the *SOURCE* file will not be preserved.
 -   If *SOURCE* or *TARGET* is modified externally while promote is running, the entire operation will be aborted, thus loosing any custom selections you made in interactive mode.
     This needs improvement.
 -   There's currently no way to preserve certain local settings with some kind of "never-promote" flag.
