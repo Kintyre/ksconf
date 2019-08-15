@@ -447,7 +447,7 @@ def add_splunkd_access_args(parser):
                         help="Login password Splunkd.  Default:  %(default)s")
     parser.add_argument("-k", "--insecure", action="store_true", default=False,
                         help="Disable SSL cert validation.")
-    parser.add_argument("--token", default=None,
+    parser.add_argument("--session-key", default=None,
                         help="Use an existing session token instead of using a "
                              "username and password to login.")
     return parser

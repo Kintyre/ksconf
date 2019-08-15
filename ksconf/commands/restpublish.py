@@ -116,9 +116,11 @@ class RestPublishCmd(KsconfCmd):
     def connect_splunkd(self, args):
         up = urlparse(args.url)
         # Take username/password form URL, if encoded there; otherwise use defaults from argparse
-        if args.token:
-            auth_args = { "token": args.token }
-            login_fail_info = "token={}...".format(args.token[:10])
+        if args.session_key:
+            auth_args = {
+                "token": args.session_key
+            }
+            login_fail_info = "session={}...".format(args.session_key[:10])
         else:
             username = up.username or args.user
             password = up.password or args.password
@@ -129,9 +131,13 @@ class RestPublishCmd(KsconfCmd):
             login_fail_info = "user={} pass={}".format(username, "*" * len(password))
         try:
             self._service = splunklib.client.connect(
-                hostname=up.hostname, port=up.port,
+                host=up.hostname, port=up.port,
                 owner=args.owner, app=args.app, sharing=args.sharing,
                 **auth_args)
+            # Sanity check to:
+            #   (1) confirm that session key is good, and
+            #   (2) confirm that that the given namespace (app) is legit.
+            self._service.apps.list()
         except Exception as e:
             sys.stderr.write("Connect issue url=https://{}:{} {}:  {}\n".format(
                 up.hostname, up.port, login_fail_info, e))
@@ -149,7 +155,7 @@ class RestPublishCmd(KsconfCmd):
         try:
             config_file = self._service.confs[conf_type]
         except KeyError:
-            self.stderr.write("Invalid conf type named '{}'.".format(conf_type))
+            self.stderr.write("Invalid conf type named '{}'.\n".format(conf_type))
             return
         conf = conf_proxy.data
 
