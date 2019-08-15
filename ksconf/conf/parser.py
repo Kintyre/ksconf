@@ -423,7 +423,11 @@ def conf_attr_boolean(value):
     elif isinstance(value, int):
         if value == 0:
             return False
-        else:
+        elif value == 1:
+            # Technically any non-0 is true; but that's unusual in typical config files.
+            # Lets keep the logic the same as how stings are handled:  Only '1' as true.
             return True
+        else:
+            raise ValueError("Can't convert {!r} to a boolean.".format(value))
     else:
         raise ValueError("Can't convert type {} to a boolean.".format(type(value)))

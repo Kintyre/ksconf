@@ -511,8 +511,9 @@ ksconf rest-publish
  .. code-block:: none
 
     usage: ksconf rest-publish [-h] [--conf TYPE] [-m META] [--url URL]
-                               [--user USER] [--pass PASSWORD] [-k] [--app APP]
-                               [--owner OWNER] [--sharing {user,app,global}] [-D]
+                               [--user USER] [--pass PASSWORD] [-k]
+                               [--token TOKEN] [--app APP] [--owner OWNER]
+                               [--sharing {user,app,global}] [-D]
                                CONF [CONF ...]
     
     Publish stanzas in a .conf file to a running Splunk instance via REST. This
@@ -548,6 +549,8 @@ ksconf rest-publish
       --user USER           Login username Splunkd. Default: admin
       --pass PASSWORD       Login password Splunkd. Default: changeme
       -k, --insecure        Disable SSL cert validation.
+      --token TOKEN         Use an existing session token instead of using a
+                            username and password to login.
       --app APP             Set the namespace (app name) for the endpoint
       --owner OWNER         Set the user who owns the content. The default of
                             'nobody' works well for app-level sharing.

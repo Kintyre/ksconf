@@ -9,11 +9,12 @@ Ksconf 0.7.x
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
 
-Release v0.7.6 (DRAFT)
+Release v0.7.6 (2019-08-15)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Fresh review and cleanup of all docs!  (A huge thank you to Brittany Barnett for this massive undertaking)
 -   Fixed unhandled exception when encountering a global stanza in metadata files.
+-   Expand some error messages and add a session token authentication option for ``rest-publish``.
 
 Release v0.7.5 (2019-07-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

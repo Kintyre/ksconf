@@ -114,13 +114,28 @@ class RestPublishCmd(KsconfCmd):
             stanza[attr] = "1" if conf_attr_boolean(stanza[attr]) else "0"
 
     def connect_splunkd(self, args):
-        # Take username/password form URL, if encoded there; otherwise use defaults from argparse
         up = urlparse(args.url)
-        username = up.username or args.user
-        password = up.password or args.password
-        self._service = splunklib.client.connect(
-            hostname=up.hostname, port=up.port, username=username, password=password,
-            owner=args.owner, app=args.app, sharing=args.sharing)
+        # Take username/password form URL, if encoded there; otherwise use defaults from argparse
+        if args.token:
+            auth_args = { "token": args.token }
+            login_fail_info = "token={}...".format(args.token[:10])
+        else:
+            username = up.username or args.user
+            password = up.password or args.password
+            auth_args = {
+                "username": username,
+                "password": password,
+            }
+            login_fail_info = "user={} pass={}".format(username, "*" * len(password))
+        try:
+            self._service = splunklib.client.connect(
+                hostname=up.hostname, port=up.port,
+                owner=args.owner, app=args.app, sharing=args.sharing,
+                **auth_args)
+        except Exception as e:
+            sys.stderr.write("Connect issue url=https://{}:{} {}:  {}\n".format(
+                up.hostname, up.port, login_fail_info, e))
+            raise e
 
     def handle_conf_file(self, args, conf_proxy):
         if args.conf_type:
@@ -131,7 +146,11 @@ class RestPublishCmd(KsconfCmd):
         if isinstance(conf_type, six.text_type):
             conf_type = conf_type.encode("utf-8")
 
-        config_file = self._service.confs[conf_type]
+        try:
+            config_file = self._service.confs[conf_type]
+        except KeyError:
+            self.stderr.write("Invalid conf type named '{}'.".format(conf_type))
+            return
         conf = conf_proxy.data
 
         # Sorting stanza for consistent processing of large files.  No CLI option for now.
@@ -139,7 +158,11 @@ class RestPublishCmd(KsconfCmd):
         for stanza_name in sorted(conf):
             stanza_data = conf[stanza_name]
 
-            if stanza_name is GLOBAL_STANZA:
+            if not stanza_data:
+                print("Skipping empty stanza [{}]".format(stanza_name))
+                continue
+
+            if stanza_name is GLOBAL_STANZA or stanza_name == "":
                 # XXX:  Research proper handling of default/global stanzas..
                 # As-is, curl returns an HTTP error, but yet the new entry is added to the
                 # conf file.  So I suppose we could ignore the exit code?!    ¯\_(ツ)_/¯
