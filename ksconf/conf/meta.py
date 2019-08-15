@@ -36,7 +36,7 @@ import ksconf.ext.six as six
 
 from ksconf.ext.six.moves.urllib.parse import quote, unquote
 
-from ksconf.conf.parser import parse_conf
+from ksconf.conf.parser import parse_conf, GLOBAL_STANZA
 
 
 
@@ -147,9 +147,12 @@ class MetaData(object):
 
     def feed_conf(self, conf):
         for stanza_name, stanza_data in conf.items():
-            parts = [ unquote(p) for p in stanza_name.split("/") ]
-            if len(parts) == 1 and parts[0] in ("", "default", "global"):
+            if stanza_name is GLOBAL_STANZA:
                 parts = []
+            else:
+                parts = [unquote(p) for p in stanza_name.split("/")]
+                if len(parts) == 1 and parts[0] in (GLOBAL_STANZA, "", "default", "global"):
+                    parts = []
             meta_layer = self.get_layer(*parts)
             meta_layer.update(stanza_data)
 

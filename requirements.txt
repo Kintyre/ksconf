@@ -1,4 +1,7 @@
 entrypoints
 mock; python_version < '3.3'
 splunk-sdk
-lxml
+
+# Use old version of 'lxml' to keep 3.4 support for a bit longer (not strictly required)
+lxml; python_version !='3.4'
+lxml>=4.3,<4.4; python_version=='3.4.*'

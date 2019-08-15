@@ -13,7 +13,7 @@ Release v0.7.6 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Fresh review and cleanup of all docs!  (A huge thank you to Brittany Barnett for this massive undertaking)
-
+-   Fixed unhandled exception when encountering a global stanza in metadata files.
 
 Release v0.7.5 (2019-07-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

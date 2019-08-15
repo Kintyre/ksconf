@@ -116,7 +116,8 @@ Quick Install
 Enable Bash Completion
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If you're on Mac or Linux, and would like to enable bash completion, run these commands:
+Context-aware autocomplete can be a great time saver.
+If you're on a Mac or Linux, and would like to enable bash completion, run these commands:
 
 .. code-block:: sh
 
