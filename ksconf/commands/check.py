@@ -15,7 +15,7 @@ from ksconf.conf.parser import parse_conf, PARSECONF_STRICT_NC, ConfParserExcept
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR
 from ksconf.util import debug_traceback
 from ksconf.util.completers import conf_files_completer
-from ksconf.util.file import _stdin_iter
+from ksconf.util.file import _stdin_iter, expand_glob_list
 
 
 class CheckCmd(KsconfCmd):
@@ -40,6 +40,10 @@ class CheckCmd(KsconfCmd):
             "Abort check if more than this many files fail validation.  "
             "Useful for a pre-commit hook where any failure is unacceptable.")
         '''
+
+    def pre_run(self, args):
+        # For Windows users, expand any glob patterns as needed.
+        args.conf = list(expand_glob_list(args.conf))
 
     def run(self, args):
         # Should we read a list of conf files from STDIN?

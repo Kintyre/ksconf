@@ -13,6 +13,7 @@ from ksconf.conf.parser import parse_conf, PARSECONF_STRICT, smart_write_conf, w
 from ksconf.consts import SMART_NOCHANGE, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED, \
     EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
+from ksconf.util.file import expand_glob_list
 
 
 def _has_nosort_marker(path):
@@ -69,6 +70,10 @@ class SortCmd(KsconfCmd):
 
         parser.add_argument("-n", "--newlines", metavar="LINES", type=int, default=1,
                             help="Number of lines between stanzas.")
+
+    def pre_run(self, args):
+        # For Windows users, expand any glob patterns as needed.
+        args.conf = list(expand_glob_list(args.conf))
 
     def run(self, args):
         ''' Sort one or more configuration file. '''

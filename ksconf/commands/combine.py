@@ -21,7 +21,7 @@ from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_COMBINE_MARKER_MISSING, SMART_NOCHANGE
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
-from ksconf.util.file import _expand_glob_list, relwalk, _is_binary_file, smart_copy
+from ksconf.util.file import expand_glob_list, relwalk, _is_binary_file, smart_copy
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 
@@ -90,7 +90,7 @@ class CombineCmd(KsconfCmd):
             return EXIT_CODE_MISSING_ARG
 
         self.stderr.write("Combining conf files into directory {}\n".format(args.target))
-        args.source = list(_expand_glob_list(args.source))
+        args.source = list(expand_glob_list(args.source))
         for src in args.source:
             self.stderr.write("Reading conf files from directory {}\n".format(src))
 

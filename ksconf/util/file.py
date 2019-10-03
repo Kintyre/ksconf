@@ -65,7 +65,7 @@ def file_fingerprint(path, compare_to=None):
         return fp
 
 
-def _expand_glob_list(iterable):
+def expand_glob_list(iterable):
     for item in iterable:
         if "*" in item or "?" in item:
             for match in glob(item):
