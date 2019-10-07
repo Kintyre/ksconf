@@ -14,6 +14,17 @@ from ksconf.util.compare import file_compare
 from ksconf.ext.six.moves import range
 
 
+try:
+    # Builtin in Python 3.3+
+    from shutil import where
+except ImportError:
+    def which(file):
+        for path in os.environ.get("PATH", os.defpath).split(os.pathsep):
+            if os.path.exists(os.path.join(path, file)):
+                return os.path.join(path, file)
+        return None
+
+
 def _is_binary_file(filename, peek=2048):
     # https://stackoverflow.com/a/7392391/315892; modified for Python 2.6 compatibility
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))

@@ -17,12 +17,12 @@ from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker
     gen_arch_file_remapper
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import parse_conf, PARSECONF_LOOSE, ConfParserException, default_encoding
-from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE
+from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
-from ksconf.util.file import file_hash, match_bwlist, dir_exists
+from ksconf.util.file import file_hash, match_bwlist, dir_exists, relwalk
 from ksconf.vc.git import git_is_working_tree, git_ls_files, git_is_clean, git_status_ui, \
-    git_cmd_iterable, git_cmd
+    git_cmd_iterable, git_cmd, git_version
 
 allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
@@ -105,6 +105,8 @@ class UnarchiveCmd(KsconfCmd):
         # Handle ignored files by preserving them as much as possible.
         # Add --dry-run mode?  j/k - that's what git is for!
 
+        DEBUG = KSCONF_DEBUG in os.environ
+
         if not os.path.isfile(args.tarball):
             self.stderr.write("No such file or directory {}\n".format(args.tarball))
             return EXIT_CODE_FAILED_SAFETY_CHECK
@@ -169,21 +171,31 @@ class UnarchiveCmd(KsconfCmd):
 
         # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
         app_name_msg = app_name
-        vc_msg = "without version control support"
+
+        git_ver = git_version()
+        if git_ver is None:
+            vc_msg = "without version control support (git not present)"
+            is_git = False
+        else:
+            vc_msg = "without version control support"
 
         old_app_conf = {}
+
         if os.path.isdir(dest_app):
             mode = "upgrade"
-            is_git = git_is_working_tree(dest_app)
+            if git_ver:
+                is_git = git_is_working_tree(dest_app)
             try:
                 # Ignoring the 'local' entries since distributed apps shouldn't contain local
                 old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
                 old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
             except ConfParserException:
                 self.stderr.write("Unable to read app.conf from existing install.\n")
+                # Assume upgrade form unknown version
         else:
             mode = "install"
-            is_git = git_is_working_tree(args.dest)
+            if git_ver:
+                is_git = git_is_working_tree(args.dest)
         if is_git:
             vc_msg = "with git support"
         if new_app_name and new_app_name != app_name:
@@ -240,7 +252,7 @@ class UnarchiveCmd(KsconfCmd):
                             git_status_ui(dest_app)
                         return EXIT_CODE_FAILED_SAFETY_CHECK
             else:
-                for (root, dirs, filenames) in os.walk(dest_app):
+                for (root, dirs, filenames) in relwalk(dest_app):
                     for fn in filenames:
                         existing_files.add(os.path.join(root, fn))
             self.stdout.write("Before upgrade.  App has {} files\n".format(len(existing_files)))
@@ -310,11 +322,11 @@ class UnarchiveCmd(KsconfCmd):
             del fp, full_path
 
         files_new, files_upd, files_del = _cmp_sets(installed_files, existing_files)
-        '''
-        print "New: \n\t{}".format("\n\t".join(sorted(files_new)))
-        print "Existing: \n\t{}".format("\n\t".join(sorted(files_upd)))
-        print "Removed:  \n\t{}".format("\n\t".join(sorted(files_del)))
-        '''
+
+        if DEBUG:
+            print("New: \n\t{}".format("\n\t".join(sorted(files_new))))
+            print("Existing: \n\t{}".format("\n\t".join(sorted(files_upd))))
+            print("Removed:  \n\t{}".format("\n\t".join(sorted(files_del))))
 
         self.stdout.write("Extracted {} files:  {} new, {} existing, and {} removed\n".format(
             len(installed_files), len(files_new), len(files_upd), len(files_del)))

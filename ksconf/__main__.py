@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import argparse
 import sys
 import os
+import platform
 
 from collections import defaultdict
 
@@ -90,6 +91,17 @@ def build_cli_parser(do_formatter=False):
     if ksconf.__vcs_info__:
         version_info.append(ksconf.__vcs_info__)
     version_info.append("Installed at: {}".format(os.path.dirname(os.path.abspath(ksconf.__file__))))
+    version_info.append("Platform:  {}".format(platform.version()))
+    try:
+        from ksconf.vc.git import git_version
+        git_ver = git_version()
+        if git_ver:
+            version_info.append("Git support:  ({}) {}".format(git_ver["path"], git_ver["version"]))
+        else:
+            version_info.append("Git support:  'git' not found in PATH")
+    except Exception as e:
+        # Shouldn't happen, but we really don't blowup!
+        version_info.append("Git support:  Detection failed!  {}".format(e))
     # XXX:  Grab splunk version and home, if running as a splunk app
     version_info.append("Written by {}.".format(ksconf.__author__))
     version_info.append("Copyright {}, all rights reserved.".format(ksconf.__copyright__))

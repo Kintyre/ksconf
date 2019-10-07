@@ -4,11 +4,17 @@ from collections import namedtuple, Counter
 from subprocess import Popen, PIPE, list2cmdline, call
 
 from ksconf.util import _xargs
+from ksconf.util.file import which
 
 GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
 
 unitesting = False
+
+
+class GitNotAvailable(Exception):
+    pass
+
 
 def git_cmd(args, shell=False, cwd=None, capture_std=True, encoding="utf-8"):
     if isinstance(args, tuple):
@@ -32,6 +38,20 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
         if p.returncode != 0:  # pragma: no cover
             raise RuntimeError("git exited with code {}.  Command: {}".format(
                 p.returncode, list2cmdline(args + chunk)))
+
+
+def git_version():
+    git_path = which(GIT_BIN)
+    if not git_path:
+        return None
+    try:
+        cmd = git_cmd(["--version"])
+    except GitNotAvailable:
+        return None
+    return {
+        "version": cmd.stdout.strip(),
+        "path": git_path,
+    }
 
 
 def git_status_summary(path):
