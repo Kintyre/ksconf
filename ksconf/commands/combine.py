@@ -80,6 +80,11 @@ class CombineCmd(KsconfCmd):
                             help="A banner or warning comment added to the top of the TARGET file. "
                                  "Used to discourage Splunk admins from editing an auto-generated "
                                  "file.")
+        parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent("""
+            Prevents the creation of or checking for the '{}' marker file safety check.
+            This file is typically used indicate that the destination folder is managed by ksconf.
+            This option should be reserved for well-controlled batch processing scenarios.
+            """.format(CONTROLLED_DIR_MARKER)))
 
     def run(self, args):
         # Ignores case sensitivity.  If you're on Windows, name your files right.
@@ -96,8 +101,8 @@ class CombineCmd(KsconfCmd):
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
         if os.path.isdir(args.target):
-            if not os.path.isfile(os.path.join(args.target, CONTROLLED_DIR_MARKER)):
-                self.stderr.write("Target directory already exists, but it appears to have been"
+            if not args.disable_marker and not os.path.isfile(marker_file):
+                self.stderr.write("Target directory already exists, but it appears to have been "
                                   "created by some other means.  Marker file missing.\n")
                 return EXIT_CODE_COMBINE_MARKER_MISSING
         elif args.dry_run:
@@ -106,7 +111,8 @@ class CombineCmd(KsconfCmd):
         else:
             self.stderr.write("Creating destination directory {0}\n".format(args.target))
             os.mkdir(args.target)
-            open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
+            if not args.disable_marker:
+                open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
 
         # Build a common tree of all src files.
         src_file_index = defaultdict(list)

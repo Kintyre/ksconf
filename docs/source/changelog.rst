@@ -14,6 +14,7 @@ Release v0.7.7 (DRAFT)
 -   Corrected Windows issue where wildcard (glob) patterns weren't expanded by for ``check`` and ``sort``.  This is primarily a difference in how a proper shells (e.g., bash, csh, zsh) handle expansion natively vs CMD on Windows does not.  However, since this is typically tranparently handled by many CLI tools, we'll follow suite.  (BTW, running ksconf from the GIT Bash prompt is a great alternative.)  Only the most minimalistic expansion rules will be available, (so don't expect ``{props,transforms,app}.conf`` to work anytime soon), but this should be good enough for most use cases.  Thanks to SID800 for reporting this bug.
 -   Fixed issues with the ``unarchive`` command when ``git`` is not installed or an app is being unarchived (installed/upgrade) into a location not managed by Git.  Note that additional output is now enabled when the ``KSCONF_DEBUG`` environmental variable is set (in liue of a proper verbose mode).  Bug report provided by SID800.
 -   Enhanced ``ksconf --version`` output to include Git executable path and version information; as well as a platform dump.  (Helpful for future bug reporting.)
+-   Add feature to disable the marker file (safety check) automatically created by the ``combine`` command for use in automated processing workflows.
 
 Release v0.7.6 (2019-08-15)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

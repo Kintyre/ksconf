@@ -30,7 +30,7 @@ from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_ENV_BUSTED, KSCONF
 
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
-# Someday need to re-evaluate this and see if it's reproducable on other machines....
+# Someday need to re-evaluate this and see if it's reproducible on other machines....
 try:
     from random import choice
 except OSError: # WindowsError:  pragma: no cover

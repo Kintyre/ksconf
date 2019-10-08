@@ -94,6 +94,7 @@ ksconf combine
  .. code-block:: none
 
     usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
+                          [--disable-marker]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -138,6 +139,12 @@ ksconf combine
                             A banner or warning comment added to the top of the
                             TARGET file. Used to discourage Splunk admins from
                             editing an auto-generated file.
+      --disable-marker      Prevents the creation of or checking for the
+                            '.ksconf_controlled' marker file safety check. This
+                            file is typically used indicate that the destination
+                            folder is managed by ksconf. This option should be
+                            reserved for well-controlled batch processing
+                            scenarios.
 
 
 
