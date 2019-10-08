@@ -17,7 +17,7 @@ ksconf combine
 
     --banner -b : @after
         For other on-going *combine* operations, it's helpful to inform any .conf file readers or potential editors that the file is automatically generated and therefore could be overwritten again.
-        For one-time *combine* operations, the default banner can be suppressed by passing in an empty string (``''``)
+        For one-time *combine* operations, the default banner can be suppressed by passing in an empty string (``''`` or ``""`` on Windows)
 
 
 You may have noticed similarities between the ``combine`` and :ref:`merge <ksconf_cmd_merge>`
