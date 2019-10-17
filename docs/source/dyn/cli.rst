@@ -93,8 +93,8 @@ ksconf combine
 
  .. code-block:: none
 
-    usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--banner BANNER]
-                          [--disable-marker]
+    usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--follow-symlink]
+                          [--banner BANNER] [--disable-marker]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -135,6 +135,8 @@ ksconf combine
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
+      --follow-symlink, -l  Follow symbolic links pointing to directories.
+                            Symlinks to files are followed.
       --banner BANNER, -b BANNER
                             A banner or warning comment added to the top of the
                             TARGET file. Used to discourage Splunk admins from

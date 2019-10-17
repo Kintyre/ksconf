@@ -74,6 +74,9 @@ class CombineCmd(KsconfCmd):
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes as a 'diff'.
             If TARGET doesn't exist, then show the merged file."""))
+        parser.add_argument("--follow-symlink", "-l", action="store_true", default=False,
+                            help="Follow symbolic links pointing to directories.  "
+                                 "Symlinks to files are followed.")
         parser.add_argument("--banner", "-b",
                             default=" **** WARNING: This file is managed by 'ksconf combine', do "
                                     "not edit hand-edit this file! ****",
@@ -117,7 +120,7 @@ class CombineCmd(KsconfCmd):
         # Build a common tree of all src files.
         src_file_index = defaultdict(list)
         for src_root in args.source:
-            for (root, dirs, files) in relwalk(src_root):
+            for (root, dirs, files) in relwalk(src_root, followlinks=args.follow_symlink):
                 for fn in files:
                     # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
                     if fn.endswith(".swp") or fn.endswith("*.bak"):
@@ -128,7 +131,7 @@ class CombineCmd(KsconfCmd):
 
         # Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         target_extra_files = set()
-        for (root, dirs, files) in relwalk(args.target):
+        for (root, dirs, files) in relwalk(args.target, followlinks=args.follow_symlink):
             for fn in files:
                 tgt_file = os.path.join(root, fn)
                 if tgt_file not in src_file_index:
