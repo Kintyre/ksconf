@@ -25,10 +25,10 @@ matrix:
     sudo: true
   - os: osx
     language: objective-c
-    env: PYENV_VERSION=2.7.15
+    env: PYENV_VERSION=2.7.17
   - os: osx
     language: objective-c
-    env: PYENV_VERSION=3.6.5
+    env: PYENV_VERSION=3.7.5
   - os: linux
     python: 'pypy'
 
