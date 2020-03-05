@@ -52,31 +52,8 @@ class FileReadlinesCache(object):
             return stream.readlines()
 
 
-
-class XmlFormatCmd(KsconfCmd):
-    help = "Normalize XML view and nav files"
-    description = dedent("""
-    Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and
-    navigation files.
-
-    Technically this could be used on *any* XML file, but certain element names specific to Splunk's
-    simple XML dashboards are handled specially, and therefore could result in unusable results.
-
-    The expected indentation level is guessed based on the first element indentation, but can be
-    explicitly set if not detectable.
-    """)
-    maturity = "alpha"
-
+class SplunkSimpleXmlFormatter(object):
     keep_tags = {"latest", "earliest", "set", "label", "fieldset", "default", "search", "option"}
-
-    @classmethod
-    def _handle_imports(cls):
-        g = globals()
-        if globals()["etree"]:
-            return
-        from lxml import etree
-        cls.version_extra = "lxml {}".format(etree.__version__)
-        g["etree"] = etree
 
     @classmethod
     def indent_tree(cls, elem, level=0, indent=2):
@@ -151,20 +128,19 @@ class XmlFormatCmd(KsconfCmd):
         return indent
 
     @classmethod
-    def pretty_print_xml(cls, path, default_indent=2):
+    def format_xml(cls, src, dest, default_indent=2):
         # Copied from https://stackoverflow.com/a/5649263/315892
         parser = etree.XMLParser(resolve_entities=False, strip_cdata=False)
-        document = etree.parse(path, parser)
+        document = etree.parse(src, parser)
         root = document.getroot()
         i = cls.guess_indent(root, default_indent)
         cls.indent_tree(root, indent=i)
         cls.cdata_tags(root, ["query"])
         cls.expand_tags(root, cls.keep_tags)
 
-
         b = BytesIO()
         document.write(b, pretty_print=True, encoding='utf-8')
-        writer = ReluctantWriter(path, "wb")
+        writer = ReluctantWriter(dest, "wb")
         with writer as f:
             if PY2:
                 f.write(b.getvalue().strip("\r\n"))
@@ -175,6 +151,29 @@ class XmlFormatCmd(KsconfCmd):
                 f.write(b"\n")
         return writer.change_needed
 
+
+class XmlFormatCmd(KsconfCmd):
+    help = "Normalize XML view and nav files"
+    description = dedent("""
+    Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and
+    navigation files.
+
+    Technically this could be used on *any* XML file, but certain element names specific to Splunk's
+    simple XML dashboards are handled specially, and therefore could result in unusable results.
+
+    The expected indentation level is guessed based on the first element indentation, but can be
+    explicitly set if not detectable.
+    """)
+    maturity = "alpha"
+
+    @classmethod
+    def _handle_imports(cls):
+        g = globals()
+        if globals()["etree"]:
+            return
+        from lxml import etree
+        cls.version_extra = "lxml {}".format(etree.__version__)
+        g["etree"] = etree
 
     def register_args(self, parser):
         parser.add_argument("xml", metavar="FILE", nargs="+", help=dedent("""\
@@ -188,6 +187,7 @@ class XmlFormatCmd(KsconfCmd):
                             help="Reduce the volume of output.")
 
     def run(self, args):
+        formatter = SplunkSimpleXmlFormatter()
         # Should we read a list of conf files from STDIN?
         if len(args.xml) == 1 and args.xml[0] == "-":
             files = _stdin_iter()
@@ -202,7 +202,7 @@ class XmlFormatCmd(KsconfCmd):
                 c["missing"] += 1
                 continue
             try:
-                if self.pretty_print_xml(fn, args.indent):
+                if formatter.format_xml(fn, fn, args.indent):
                     self.stderr.write("Replaced file {0} with formatted content\n".format(fn))
                     c["changed"] += 1
                 else:
