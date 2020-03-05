@@ -16,6 +16,7 @@ Release v0.7.7 (DRAFT)
 -   Fixed issues with the ``unarchive`` command when ``git`` is not installed or an app is being unarchived (installed/upgrade) into a location not managed by Git.  Note that additional output is now enabled when the ``KSCONF_DEBUG`` environmental variable is set (in liue of a proper verbose mode).  Bug report provided by SID800.
 -   Enhanced ``ksconf --version`` output to include Git executable path and version information; as well as a platform dump.  (Helpful for future bug reporting.)
 -   Add feature to disable the marker file (safety check) automatically created by the ``combine`` command for use in automated processing workflows.
+-   Updated ``pre-commit`` documentation and sample configurations to use ``rev`` rather than ``sha`` as the means of identifying upstream tags or revisions.  Recent releases of ``pre-commit`` will warn you about this during each run.
 
 Release v0.7.6 (2019-08-15)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

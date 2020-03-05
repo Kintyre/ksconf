@@ -52,7 +52,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
 
     repos:
     - repo: https://github.com/Kintyre/ksconf
-      sha: v0.7.4
+      rev: v0.7.7
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
@@ -64,7 +64,7 @@ For general reference, here's a copy of what we frequently use for our repos.
 ..  code-block:: yaml
 
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      sha: v2.0.0
+      rev: v2.0.0
       hooks:
         - id: trailing-whitespace
           exclude: README.md
@@ -80,7 +80,7 @@ For general reference, here's a copy of what we frequently use for our repos.
         - id: mixed-line-ending
           args: [ '--fix=lf' ]
     - repo: https://github.com/Kintyre/ksconf
-      sha: v0.7.4
+      rev: v0.7.7
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
@@ -89,7 +89,7 @@ For general reference, here's a copy of what we frequently use for our repos.
 
 ..  tip::
 
-    You may want to update ``sha`` to the most currently released stable version.
+    You should update ``rev`` to the most currently released stable version.
     Upgrading this frequently isn't typically necessary since these two operations are pretty basic and stable.
     However, it's still a good idea to review the change log to see what, if any, pre-commit functionality was updated.
 
@@ -115,7 +115,7 @@ Should my version of ksconf and pre-commit plugins be the same?
 
 If you're running both ``ksconf`` locally as well as the ksconf pre-commit plugin, then technically you have ksconf installed twice.
 That may sound less than ideal, but practically, this isn't a problem.
-As long as the version of the ksconf CLI tool is *close* to the ``sha`` listed in :file:`.pre-commit-config.yaml`, then everything should work fine.
+As long as the version of the ksconf CLI tool is *close* to the ``rev`` listed in :file:`.pre-commit-config.yaml`, then everything should work fine.
 
 Our suggestion:
 

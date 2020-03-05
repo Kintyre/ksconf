@@ -49,4 +49,32 @@ the following (for building docs, etc.):
     brew install homebrew/cask/mactex-no-gui
 
 
+
+Running TOX
+-----------
+
+Local testing across multiple versions of python can be accomplished with tox_ and pyenv_.
+See the online docs for theses tools for more details.
+
+Tox and pyenv can be run like so:
+
+..  code-block:: sh
+
+    # Install the necessary python versions
+    pyenv install 2.7.17
+    ...
+    pyenv install 3.8.1
+
+    # Set specific default version of python for each major/minor release (tab completion is your friend here)
+    pyenv local 2.7.17 ... 3.8.1
+
+    # Run tox for ALL python versions
+    tox
+
+    # Run tox for just a specific python version
+    tox -e py38
+
+Some additional information about how to setup and run these tests can be gleaned from the ``Vagrantfile`` and ``Dockerfile``
+in the root of the git repository, though specific python versions contained there may be quite out of date.
+
 ..  include:: common

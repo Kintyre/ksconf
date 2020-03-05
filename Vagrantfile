@@ -93,7 +93,7 @@ Vagrant.configure("2") do |config|
     eval "$(pyenv init -)"
 
     # Keep python versions in just one list to reduce number of edits and typos ;-)
-    PYVERS="2.7.15 3.7.1 3.6.7 3.5.6 3.4.9 pypy2.7-6.0.0"
+    PYVERS="2.7.17 3.8.1 3.7.6 3.6.10 3.5.9 3.4.9 pypy2.7-6.0.0"
 
     for ver in $PYVERS
     do

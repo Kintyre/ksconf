@@ -44,7 +44,7 @@ RUN git clone https://github.com/magicmonty/bash-git-prompt.git ~/.bash-git-prom
     && echo 'GIT_PROMPT_ONLY_IN_REPO=1' >> ~/.bashrc \
     && echo 'source ~/.bash-git-prompt/gitprompt.sh' >> ~/.bashrc
 
-ENV PYVERS="2.7.15 3.7.1 3.6.7 3.5.6 3.4.9 pypy2.7-6.0.0"
+ENV PYVERS="2.7.17 3.8.1 3.7.6 3.6.10 3.5.9 3.4.9 pypy2.7-6.0.0"
 
 RUN for i in ${PYVERS}; do \
         ~/.pyenv/bin/pyenv install ${i}; \

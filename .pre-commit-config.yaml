@@ -2,7 +2,7 @@
 # See http://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  sha: v2.0.0
+  rev: v2.0.0
   hooks:
     - id: trailing-whitespace
       exclude: (cli\.rst|\.md|\.csv)$
@@ -34,11 +34,11 @@ repos:
 
 # Way too much noise.... (or I just have bad code, either way it's too much)
 #- repo: https://github.com/pre-commit/mirrors-pylint
-#  sha: master
+#  rev: master
 #  hooks:
 #    - id: pylint
 
 #- repo: https://github.com/jorisroovers/gitlint
-#  sha: master
+#  rev: master
 #  hooks:
 #    - id: gitlint
