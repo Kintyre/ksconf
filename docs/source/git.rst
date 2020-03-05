@@ -15,7 +15,7 @@ We suggest that you read the pre-commit docs and review this section when you ar
 Hooks provided by ksconf
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two hooks are currently defined by the ksconf repository:
+Three hooks are currently defined by the ksconf repository:
 
 
     ksconf-check

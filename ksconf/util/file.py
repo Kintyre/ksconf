@@ -224,6 +224,7 @@ class ReluctantWriter(object):
         except:
             raise
         if exc_type:
+            # Should remove tmp file?  self._tmpfile
             return
         if not os.path.isfile(self.path):
             os.rename(self._tmpfile, self.path)

@@ -34,6 +34,7 @@ if not splunk_home:
     sys.exit(1)
 
 
+
 def install_to(ksconf_home, bin_path, platform="nix"):
     bin_file = os.path.join(bin_path, "ksconf")
 
@@ -73,6 +74,7 @@ if __name__ == '__main__':
 
     install_to(_bootstrap.ksconf_modules, os.path.join(splunk_home, "bin"), plat)
 
+    # XXX: Report if installation path is NOT part of the user's $PATH
     check_path()
 
     print("Try running 'ksconf --version' to ensure that install worked correctly.")
