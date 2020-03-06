@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
 # -- Project information -----------------------------------------------------
 
 project = u'KSConf'
-copyright = u'2019, Kintyre Solutions, Inc.'
+copyright = u'2020, Kintyre Solutions'
 
 from ksconf import __version__ as release, __author__ as author
 

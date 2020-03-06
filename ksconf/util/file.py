@@ -9,7 +9,7 @@ import sys
 from glob import glob
 from io import open
 
-from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, KSCONF_DEBUG
 from ksconf.util.compare import file_compare
 from ksconf.ext.six.moves import range
 
@@ -218,13 +218,17 @@ class ReluctantWriter(object):
         return self._fp
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Don't do anything, other than try to close the file, if an error occurred.
+        # Don't do anything, other than try to close/delete the file, if an error occurred.
         try:
             self._fp.close()
         except:
             raise
         if exc_type:
-            # Should remove tmp file?  self._tmpfile
+            if KSCONF_DEBUG in os.environ:
+                # LOG that temp file is being kept
+                pass
+            else:
+                os.unlink(self._tmpfile)
             return
         if not os.path.isfile(self.path):
             os.rename(self._tmpfile, self.path)
