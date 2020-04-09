@@ -8,6 +8,12 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+Release v0.7.8 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder.
+
+
 Release v0.7.7 (2020-03-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

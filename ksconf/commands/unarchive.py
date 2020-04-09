@@ -133,7 +133,8 @@ class UnarchiveCmd(KsconfCmd):
                 conffile.name = os.path.join(args.tarball, gaf.path)
                 app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
                 del conffile
-            elif gaf_relpath.startswith("local") or gaf_relpath.endswith("local.meta"):
+            elif gaf_relpath.startswith("local" + os.path.sep) or \
+                 gaf_relpath.endswith("local.meta"):
                 local_files.add(gaf_relpath)
             app_name.add(gaf.path.split("/", 1)[0])
             del gaf_app, gaf_relpath
