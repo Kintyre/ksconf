@@ -13,6 +13,7 @@ import os
 import re
 from collections import defaultdict
 
+from ksconf.layer import DirectLayerRoot
 from ksconf.commands import ConfFileProxy
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.delta import show_text_diff
@@ -90,6 +91,9 @@ class CombineCmd(KsconfCmd):
             """.format(CONTROLLED_DIR_MARKER)))
 
     def run(self, args):
+        layer_root = DirectLayerRoot()
+        layer_root.config.follow_symlink = args.follow_symlink
+
         # Ignores case sensitivity.  If you're on Windows, name your files right.
         conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
 
@@ -98,9 +102,12 @@ class CombineCmd(KsconfCmd):
             return EXIT_CODE_MISSING_ARG
 
         self.stderr.write("Combining conf files into directory {}\n".format(args.target))
-        args.source = list(expand_glob_list(args.source))
+        args.source = list(expand_glob_list(args.source, do_sort=True))
         for src in args.source:
             self.stderr.write("Reading conf files from directory {}\n".format(src))
+            layer_root.add_layer(src)
+
+        self.stderr.write("Layers detected:  {}\n".format(layer_root.list_layer_names()))
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
         if os.path.isdir(args.target):
@@ -118,31 +125,23 @@ class CombineCmd(KsconfCmd):
                 open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
 
         # Build a common tree of all src files.
-        src_file_index = defaultdict(list)
-        for src_root in args.source:
-            for (root, dirs, files) in relwalk(src_root, followlinks=args.follow_symlink):
-                for fn in files:
-                    # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
-                    if fn.endswith(".swp") or fn.endswith("*.bak"):
-                        continue  # pragma: no cover  (peephole optimization)
-                    src_file = os.path.join(root, fn)
-                    src_path = os.path.join(src_root, root, fn)
-                    src_file_index[src_file].append(src_path)
+        src_file_listing = set(layer_root.list_files())
 
         # Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         target_extra_files = set()
         for (root, dirs, files) in relwalk(args.target, followlinks=args.follow_symlink):
             for fn in files:
                 tgt_file = os.path.join(root, fn)
-                if tgt_file not in src_file_index:
-                    # Todo:  Add support for additional blacklist wildcards (using fnmatch)
-                    if fn == CONTROLLED_DIR_MARKER or fn.endswith(".bak"):
+                if tgt_file not in src_file_listing:
+                    if fn == CONTROLLED_DIR_MARKER or layer_root.config.blacklist_files.search(fn):
                         continue  # pragma: no cover (peephole optimization)
                     target_extra_files.add(tgt_file)
 
-        for (dest_fn, src_files) in sorted(src_file_index.items()):
+        for src_file in sorted(src_file_listing):
             # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
-            src_files = sorted(src_files)
+            sources = list(layer_root.get_file(src_file))
+            src_files = [src.physical_path for src in sources]
+            dest_fn = sources[0].relative_path
             dest_path = os.path.join(args.target, dest_fn)
 
             # Make missing destination folder, if missing
@@ -154,7 +153,7 @@ class CombineCmd(KsconfCmd):
             if not conf_file_re.search(dest_fn):
                 # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
                 # Always use the last file in the list (since last directory always wins)
-                src_file = src_files[-1]
+                src_file = sources[-1].physical_path
                 if args.dry_run:
                     if os.path.isfile(dest_path):
                         if file_compare(src_file, dest_path):
