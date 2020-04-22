@@ -41,14 +41,32 @@ This must work with an explicitly given list of layers
 """
 
 
-
-
 def _path_join(*parts):
     """ A slightly smarter / more flexible path appender.
     Drop any None or "." elements
     """
     parts = [p for p in parts if p is not None]
     return os.path.join(*parts)
+
+
+def path_in_layer(layer, path, sep=os.path.sep):
+    """ Check to see if path exist within layer.
+    Returns either None, or the path without the shared prefix with layer.
+    """
+    # Using 'sep' over os.path.join / os.path.split should be okay here as we should only ever be
+    # given relative paths (no Windows UNC/drive letters)
+    if layer is None:
+        # Return as-is, since layer is root
+        return path
+    layer_parts = layer.split(sep)
+    layer_count = len(layer_parts)
+    path_parts = path.split(sep)
+    if len(path_parts) < layer_count:
+        return False
+    path_suffix = path_parts[:layer_count]
+    if layer_parts != path_suffix:
+        return False
+    return sep.join(path_parts[layer_count:])
 
 
 # Exceptions
@@ -115,16 +133,25 @@ class LayerRootBase(object):
 
         def list_files(self):
             File = self._file_cls
-            for (root, dirs, files) in self.walk():
+            for (top, dirs, files) in self.walk():
                 for file in files:
-                    yield File(self, _path_join(root, file))
+                    yield File(self, _path_join(top, file))
 
-        def get_file(self, rel_path):
-            """ Return file object, if it exists. """
+        def get_file(self, path):
+            """ Return file object (by logical path), if it exists in this layer. """
+            # XXX: There's probably ways to optimize this.  fine for now (correctness over speed)
             File = self._file_cls
+            rel_path = path_in_layer(self.logical_path, path)
+            if not rel_path:
+                return None
+            file_ = File(self, rel_path)
+            if os.path.isfile(file_.physical_path):
+                return file_
+            '''
             path_p = _path_join(self.root, self.physical_path, rel_path)
             if os.path.isfile(path_p):
                 return File(self, rel_path)
+            '''
 
     def __init__(self, config=None):
         self._layers = []
@@ -142,7 +169,7 @@ class LayerRootBase(object):
         return self._layers
 
     def list_layer_names(self):
-        return [l.name for l in self._layers]
+        return [l.name for l in self.list_layers()]
 
     def list_files(self):
         """ Return a list of logical paths. """
@@ -262,8 +289,8 @@ class DotDLayerRoot(LayerRootBase):
     mount_regex = re.compile("(?P<realname>[\w_.-]+)\.d$")
     layer_regex = re.compile("(?P<layer>\d\d-[\w_.-]+)")
 
-    def __init__(self):
-        super(DotDLayerRoot, self).__init__()
+    def __init__(self, config=None):
+        super(DotDLayerRoot, self).__init__(config)
         #self.root = None
         self._root_layer = None
         self._mount_points = defaultdict(list)
@@ -285,8 +312,8 @@ class DotDLayerRoot(LayerRootBase):
                         # XXX: Nested layers breakage, must substitute multiple ".d" folders in `top`
                         layer = Layer(dir_mo.group("layer"),
                                       root,
-                                      os.path.join(root, top, dir_),
-                                      os.path.join(os.path.dirname(top), mount_mo.group("realname")),
+                                      physical=os.path.join(os.path.basename(top), dir_),
+                                      logical=mount_mo.group("realname"),
                                       config=self.config,
                                       file_cls=File)
                         self.add_layer(layer)

@@ -13,13 +13,14 @@ import os
 import re
 from collections import defaultdict
 
-from ksconf.layer import DirectLayerRoot
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig
 from ksconf.commands import ConfFileProxy
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
-from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_COMBINE_MARKER_MISSING, SMART_NOCHANGE
+from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_COMBINE_MARKER_MISSING, SMART_NOCHANGE, \
+    EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_BAD_ARGS
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
 from ksconf.util.file import expand_glob_list, relwalk, _is_binary_file, smart_copy
@@ -71,6 +72,25 @@ class CombineCmd(KsconfCmd):
             Directory where the merged files will be stored.
             Typically either 'default' or 'local'"""
                             )).completer = DirectoriesCompleter()
+        parser.add_argument("-m", "--layer-method",
+                            choices=["auto", "dir.d", "disable"],
+                            default="auto",
+                            help="""
+            Select the layer method in use.
+            Currently, there are two layer management options.
+            Most often 'dir.d' will work well when using '*.d' folders for layers.
+            This assumes your layers are like so:  'MyApp/default.d/##-layer-name'.
+            Using 'dir.d' mode, any layer directories that are found will be handled automatically.
+            If you'd like to manage the layers explicitly and turn off built-in layer support, use
+            'disable'.
+
+            By default, 'auto' mode will enable transparent switching between 'dir.d' and 'disable'
+            (legacy) behavior.
+            In auto mode, if more than one source directory is given, then 'disable' mode is used,
+            if only a single directory is given then 'dir.d' will be used.
+
+            Version notes:  dir.d was added in ksconf 0.8.  Starting in 1.0 the default will switch
+            to 'dir.d', so if you need the old behavior be sure to update your scripts.""")
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes as a 'diff'.
@@ -91,22 +111,49 @@ class CombineCmd(KsconfCmd):
             """.format(CONTROLLED_DIR_MARKER)))
 
     def run(self, args):
-        layer_root = DirectLayerRoot()
-        layer_root.config.follow_symlink = args.follow_symlink
-
-        # Ignores case sensitivity.  If you're on Windows, name your files right.
+        # Note this case sensitive.  Don't be lazy, name your files correctly  :-)
         conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
+        args.source = list(expand_glob_list(args.source, do_sort=True))
+
+        config = LayerConfig()
+        config.follow_symlink = args.follow_symlink
+
+        if args.layer_method == "auto":
+            self.stderr.write(
+                "Warning:  Automatically guessing an appropriate directory layer detection.  "
+                "Consider using '--layer-method' to avoid this warning.\n")
+            if len(args.source) == 1:
+                layer_method = "dir.d"
+            else:
+                layer_method = "disable"
+        else:
+            layer_method = args.layer_method
+
+        if layer_method == "dir.d":
+            self.stderr.write("Using automatic '*.d' directory layer detection.\n")
+            if len(args.source) > 1:
+                # XXX: Lift this restriction, if possible.  Seems like this *should* be doable. idk
+                self.stderr.write("ERROR:  Only one source directory is allowed when running the "
+                                  "'dir.d' layer mode.\n")
+                return EXIT_CODE_BAD_ARGS
+
+            layer_root = DotDLayerRoot(config=config)
+            layer_root.set_root(args.source[0])
+            for (dir, layers) in layer_root._mount_points.items():
+                self.stderr.write("Found layer parent folder:  {}  with layers {}\n"
+                                  .format(dir, ", ".join(layers)))
+        else:
+            self.stderr.write("Automatic layer detection is disabled.\n")
+            layer_root = DirectLayerRoot(config=config)
+            for src in args.source:
+                self.stderr.write("Reading conf files from directory {}\n".format(src))
+                layer_root.add_layer(src)
 
         if args.target is None:
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
         self.stderr.write("Combining conf files into directory {}\n".format(args.target))
-        args.source = list(expand_glob_list(args.source, do_sort=True))
-        for src in args.source:
-            self.stderr.write("Reading conf files from directory {}\n".format(src))
-            layer_root.add_layer(src)
-
         self.stderr.write("Layers detected:  {}\n".format(layer_root.list_layer_names()))
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
@@ -133,7 +180,7 @@ class CombineCmd(KsconfCmd):
             for fn in files:
                 tgt_file = os.path.join(root, fn)
                 if tgt_file not in src_file_listing:
-                    if fn == CONTROLLED_DIR_MARKER or layer_root.config.blacklist_files.search(fn):
+                    if fn == CONTROLLED_DIR_MARKER or config.blacklist_files.search(fn):
                         continue  # pragma: no cover (peephole optimization)
                     target_extra_files.add(tgt_file)
 
@@ -141,7 +188,12 @@ class CombineCmd(KsconfCmd):
             # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
             sources = list(layer_root.get_file(src_file))
             src_files = [src.physical_path for src in sources]
-            dest_fn = sources[0].relative_path
+            try:
+                dest_fn = sources[0].logical_path
+            except IndexError:
+                self.stderr.write("File disappeared during execution?  {}\n".format(src_file))
+                return EXIT_CODE_NO_SUCH_FILE
+
             dest_path = os.path.join(args.target, dest_fn)
 
             # Make missing destination folder, if missing
@@ -191,9 +243,10 @@ class CombineCmd(KsconfCmd):
                     for src in srcs:
                         src.close()
 
-        if True and target_extra_files:  # Todo: Allow for cleanup to be disabled via CLI
+        # Todo: Allow for cleanup to be disabled via CLI
+        if True and target_extra_files:
             self.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".
-                format(len(target_extra_files)))
+                              format(len(target_extra_files)))
             for dest_fn in target_extra_files:
                 self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
                 os.unlink(os.path.join(args.target, dest_fn))

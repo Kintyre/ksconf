@@ -27,6 +27,28 @@ from tests.cli_helper import TestWorkDir
 from ksconf.layer import *
 
 
+def np(p, nominal="/"):
+    """ Transform a normalize path into an OS-specific path format """
+    if os.path.sep != nominal:
+        p = p.replace(nominal, os.path.sep)
+    return p
+
+def npl(iterable, nominal="/"):
+    return [np(i, nominal) for i in iterable]
+
+
+
+class TestHelperFunctionsTestCase(unittest.TestCase):
+
+    def test_path_in_layer_01(self):
+        path = np("default/data/ui/nav/default.xml")
+        self.assertEqual(path_in_layer("default", path), np("data/ui/nav/default.xml"))
+        self.assertEqual(path_in_layer("bin", path), False)
+        self.assertEqual(path_in_layer(np("a/path/longer/than/the/given/path"), path), False)
+
+    def test_path_in_layer_nulls(self):
+        self.assertEqual(path_in_layer(None, "path"), "path")
+
 
 
 class DefaultLayerTestCase(unittest.TestCase):
@@ -100,7 +122,7 @@ class DefaultLayerTestCase(unittest.TestCase):
         self.assertListEqual(layers, ["10-upstream", "20-corp", "60-dept"])
         # Order doesn't matter for file names
         expect_files = [
-            "data/ui/nav/default.xml".replace("/", os.path.sep),
+            np("data/ui/nav/default.xml"),
             "props.conf",
             "transforms.conf",
         ]
@@ -119,14 +141,14 @@ class DefaultLayerTestCase(unittest.TestCase):
 
         self.maxDiff = 1000
         # Order doesn't matter for file names
-        expect_files = [
+        expect_files = npl([
             "bin/hello_world.py",
             "README.md",
             "default/data/ui/nav/default.xml",
             "default/props.conf",
             "default/transforms.conf",
-        ]
-        expect_files = sorted([f.replace("/", os.path.sep) for f in expect_files])
+        ])
+        expect_files = sorted([np(f) for f in expect_files])
         self.assertListEqual(sorted(dlr.list_files()), sorted(expect_files))
 
 

@@ -93,8 +93,9 @@ ksconf combine
 
  .. code-block:: none
 
-    usage: ksconf combine [-h] [--target TARGET] [--dry-run] [--follow-symlink]
-                          [--banner BANNER] [--disable-marker]
+    usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}]
+                          [--dry-run] [--follow-symlink] [--banner BANNER]
+                          [--disable-marker]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -132,6 +133,24 @@ ksconf combine
       --target TARGET, -t TARGET
                             Directory where the merged files will be stored.
                             Typically either 'default' or 'local'
+      -m {auto,dir.d,disable}, --layer-method {auto,dir.d,disable}
+                            Select the layer method in use. Currently, there are
+                            two layer management options. Most often 'dir.d' will
+                            work well when using '*.d' folders for layers. This
+                            assumes your layers are like so: 'MyApp/default.d
+                            /##-layer-name'. Using 'dir.d' mode, any layer
+                            directories that are found will be handled
+                            automatically. If you'd like to manage the layers
+                            explicitly and turn off built-in layer support, use
+                            'disable'. By default, 'auto' mode will enable
+                            transparent switching between 'dir.d' and 'disable'
+                            (legacy) behavior. In auto mode, if more than one
+                            source directory is given, then 'disable' mode is
+                            used, if only a single directory is given then 'dir.d'
+                            will be used. Version notes: dir.d was added in ksconf
+                            0.8. Starting in 1.0 the default will switch to
+                            'dir.d', so if you need the old behavior be sure to
+                            update your scripts.
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
