@@ -3,11 +3,12 @@ from __future__ import absolute_import, unicode_literals
 import sys
 import os
 import re
+from fnmatch import fnmatch
+from collections import defaultdict
+
 import ksconf.ext.six as six
 
-
 from ksconf.util.file import relwalk
-from collections import defaultdict
 
 
 """
@@ -79,8 +80,35 @@ class LayerUsageException(LayerException):
     pass
 
 
+class LayerFilter(object):
+    _valid_actions = ("include", "exclude")
 
+    def __init__(self):
+        self._rules = []
 
+    def add_rule(self, action, pattern):
+        # If no filter rules have been setup yet, be sure to set the default
+        if action not in self._valid_actions:
+            raise ValueError("Unknown action of {}.  Valid actions include: {}"
+                             .format(action, self._valid_actions))
+        if not self._rules:
+            if action == "include":
+                first_filter = ("exclude", "*")
+            elif "exclude":
+                first_filter = ("include", "*")
+            self._rules.append(first_filter)
+        self._rules.append((action, pattern))
+
+    def evaluate(self, layer):
+        # type: (LayerRootBase.Layer) -> bool
+        response = True
+        layer_name = layer.name
+        for rule_action, rule_pattern in self._rules:
+            if fnmatch(layer_name, rule_pattern):
+                response = rule_action == "include"
+        return response
+
+    __call__ = evaluate
 
 
 class LayerConfig(object):
@@ -155,7 +183,18 @@ class LayerRootBase(object):
 
     def __init__(self, config=None):
         self._layers = []
+        self.layer_filter = None
         self.config = config or LayerConfig()
+
+    def apply_filter(self, layer_filter):
+        """
+        Apply a destructive filter to all layers.  layer_filter(layer) will be called one for each
+        layer, if the filter returns True than the layer is kept.  Root layers are always kept.
+        """
+        layers = [l for l in self._layers if layer_filter(l)]
+        result = self._layers != layers
+        self._layers = layers
+        return result
 
     def order_layers(self):
         raise NotImplementedError
@@ -294,6 +333,12 @@ class DotDLayerRoot(LayerRootBase):
         #self.root = None
         self._root_layer = None
         self._mount_points = defaultdict(list)
+
+    def apply_filter(self, layer_filter):
+        # Apply filter function, but also be sure to keep the root layer
+        def fltr(l):
+            return l is self._root_layer or layer_filter(l)
+        return super(DotDLayerRoot, self).apply_filter(fltr)
 
     def set_root(self, root):
         """ Set a root path, and auto discover all '.d' directories.

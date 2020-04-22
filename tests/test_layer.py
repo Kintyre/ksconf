@@ -49,6 +49,43 @@ class TestHelperFunctionsTestCase(unittest.TestCase):
     def test_path_in_layer_nulls(self):
         self.assertEqual(path_in_layer(None, "path"), "path")
 
+    def test_layerfilter_include(self):
+        class mocklayer(object):
+            def __init__(self, name):
+                self.name = name
+        layers = [mocklayer(l) for l in [
+            "10-upstream",
+            "20-kintyre",
+            "30-indexers",
+            "30-searchhead",
+            "30-cloudinputs"
+        ]]
+
+        def eval_layer_filter(rules):
+            layerfilter = LayerFilter()
+            for rule in rules:
+                layerfilter.add_rule(*rule)
+            return [i.name for i in layers if layerfilter.evaluate(i)]
+
+        # Simple include/exclude test
+        self.assertListEqual(eval_layer_filter([("include", "20-kintyre")]),
+                             ["20-kintyre"])
+        self.assertListEqual(eval_layer_filter([("exclude", "20-kintyre")]),
+                             ["10-upstream", "30-indexers", "30-searchhead", "30-cloudinputs"])
+
+        # Test wildcards
+        self.assertListEqual(eval_layer_filter([("exclude", "30-*")]),
+                             ["10-upstream", "20-kintyre"])
+        self.assertListEqual(eval_layer_filter([("include", "*search*")]),
+                             ["30-searchhead"])
+
+        # Test chained rules
+        self.assertListEqual(eval_layer_filter([("exclude", "30-*"), ("include", "30-indexers")]),
+                             ["10-upstream", "20-kintyre", "30-indexers"])
+
+        # Default to all if NO rules provided
+        self.assertListEqual(eval_layer_filter([]),
+                             ["10-upstream", "20-kintyre", "30-indexers", "30-searchhead", "30-cloudinputs"])
 
 
 class DefaultLayerTestCase(unittest.TestCase):

@@ -13,7 +13,7 @@ import os
 import re
 from collections import defaultdict
 
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.commands import ConfFileProxy
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.delta import show_text_diff
@@ -62,6 +62,12 @@ class CombineCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
+
+        def wb_type(action):
+            def f(pattern):
+                return action, pattern
+            return f
+
         parser.add_argument("source", nargs="+", help=dedent("""
             The source directory where configuration files will be merged from.
             When multiple source directories are provided, start with the most general and end
@@ -91,6 +97,13 @@ class CombineCmd(KsconfCmd):
 
             Version notes:  dir.d was added in ksconf 0.8.  Starting in 1.0 the default will switch
             to 'dir.d', so if you need the old behavior be sure to update your scripts.""")
+
+        parser.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
+                            type=wb_type("include"), metavar="PATTERN",
+                            help="Name or pattern of layers to include.")
+        parser.add_argument("-E", "--exclude", action="append", default=[], dest="layer_filter",
+                            type=wb_type("exclude"), metavar="PATTERN",
+                            help="Name or pattern of layers to exclude from the target.")
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes as a 'diff'.
@@ -117,6 +130,10 @@ class CombineCmd(KsconfCmd):
 
         config = LayerConfig()
         config.follow_symlink = args.follow_symlink
+
+        layer_filter = LayerFilter()
+        for (action, pattern) in args.layer_filter:
+            layer_filter.add_rule(action, pattern)
 
         if args.layer_method == "auto":
             self.stderr.write(
@@ -153,8 +170,12 @@ class CombineCmd(KsconfCmd):
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
-        self.stderr.write("Combining conf files into directory {}\n".format(args.target))
+        self.stderr.write("Combining files into directory {}\n".format(args.target))
+
         self.stderr.write("Layers detected:  {}\n".format(layer_root.list_layer_names()))
+
+        if layer_root.apply_filter(layer_filter):
+            self.stderr.write("Layers after filter: {}\n".format(layer_root.list_layer_names()))
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
         if os.path.isdir(args.target):

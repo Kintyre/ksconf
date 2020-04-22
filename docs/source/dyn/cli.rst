@@ -94,8 +94,8 @@ ksconf combine
  .. code-block:: none
 
     usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}]
-                          [--dry-run] [--follow-symlink] [--banner BANNER]
-                          [--disable-marker]
+                          [-I PATTERN] [-E PATTERN] [--dry-run] [--follow-symlink]
+                          [--banner BANNER] [--disable-marker]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -151,6 +151,10 @@ ksconf combine
                             0.8. Starting in 1.0 the default will switch to
                             'dir.d', so if you need the old behavior be sure to
                             update your scripts.
+      -I PATTERN, --include PATTERN
+                            Name or pattern of layers to include.
+      -E PATTERN, --exclude PATTERN
+                            Name or pattern of layers to exclude from the target.
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
