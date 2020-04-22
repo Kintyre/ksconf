@@ -286,7 +286,7 @@ class DescriptionFormatterNoReST(argparse.HelpFormatter):
         text = self.strip_simple_rest(text)
         text = self._whitespace_matcher.sub(' ', text).strip()
         return textwrap.fill(text, width, initial_indent=indent,
-                                           subsequent_indent=indent)
+                             subsequent_indent=indent)
 
     def _split_lines(self, text, width):
         text = self.strip_simple_rest(text)

@@ -88,7 +88,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf", {
             "aws:config": {"TIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%6NZ"}
         })
-        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-the-force/data/ui/nav/default.xml", """
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-theforce/data/ui/nav/default.xml", """
         <nav search_view="search" color="#65A637">
         <view name="My custom view" />
         <view name="Inputs" default="true" label="Inputs" />
