@@ -90,4 +90,50 @@ Checklist:
 
 When in doubt, it may be helpful to look back over history in git for other recently added commands and use that as an example.
 
+
+Here's an overview of paths you should expect to update:
+
+================================    ==========================================================================
+File path                           Description / purpose
+--------------------------------    --------------------------------------------------------------------------
+================================    ==========================================================================
+``ksconf/commands/fancy.py``        The core python code and CLI interface
+``tests/tests/test_cli_CMD.py``     Add new unit test here
+``docs/source/cmd_CMD.rst``         Command line documentation.  Make sure to include the `argparse` module
+``ksconf/setup_entrypoints.py``     Addd a new entrypoint line here, or the new command won't be registered
+``.pre-commit-hooks.yaml``          Only needed if the new command is a command is pre-commit hook
+``setup.py``                        Update if there are any new external dependancies
+``requirements.txt``                Same as above
+``make_splunk_app``                 If there's new dependencies that need to go into the Splunk app
+================================    ==========================================================================
+
+
+Cookiecutter options
+--------------------
+
+The following example assume we're make a new command called ``asciiart``:
+
+..  code-block:: sh
+
+    git clone https://github.com/Kintyre/ksconf.git
+    cd ksconf
+
+    # Kick off a cookiecutter  (promt submodule: asciiart)
+    cookiecutter https://github.com/Kintyre/ksconf.git -c cookiecutter-subcommand
+
+    cp ksconf-asciiart/* .
+
+    git add ksconf/commands/*.py docs/source/cmd_*.rst tests/test_cli*.py
+
+    # Merge that one line into entrypoints
+    vim ksconf/setup_entrypoints*.py
+    git add kconf/setup_entrypoints.py
+
+    # Now run-precomit to ensure that the new command is found sucessfully and is importable
+
+    pre-commit
+    # Now go write code, tests, docs and commit ...
+
+
+
 ..  include:: common
