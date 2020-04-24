@@ -159,9 +159,9 @@ How do I pick?
 |             |   multiple places          | * Have multiple source         |
 |             |   (``default.d``, and      |   directories.                 |
 |             |   ``lookups.d``)           |                                |
-|             |* If you sometimes have     |                                |
-|             |  *no* layers, then fallback|                                |
-|             |  a recursive copy.         |                                |
+|             | * If you sometimes have no |                                |
+|             |   layers, then combine     |                                |
+|             |   falls back to a file copy|                                |
 +-------------+----------------------------+--------------------------------+
 | ``disable`` | * Highly customized work   | * For app build scripts.       |
 |             |   flows / full-control     |                                |
