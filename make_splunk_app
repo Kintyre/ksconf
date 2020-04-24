@@ -77,10 +77,13 @@ then
     exit 1
 fi
 
-# Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other approaches considered (like manifest \w custom REST cleanup script) would likely be flagged as self-deleting files may be problematic for AppInspect.  Using an REST handler upgrade for this kind of thing also means that (1) the app isn't a simple as untarring the archive, and may not work correctly on SHCs.  Sticking with the "always-overwrite-all-your-old-files" approach.
+# Remove version strings from ALL '.dist-info' folders to keep Splunk upgrades working.  All other
+# approaches considered (like manifest \w custom REST cleanup script) would likely be unacceptable
+# for AppInspect.  We want app installation to remain equivalent to untaring the archive, therefore
+# Sticking with the "always-overwrite-all-your-old-files" approach.
 for di in "${PIP_TARGET}/"*.dist-info
 do
-    di_nover=$(echo "$di" | sed -E 's~^(.*/[a-zA-Z][a-zA-Z_-]+)-[0-9devrcitya-f+.]+\.dist-info~\1.dist-info~')
+    di_nover=$(echo "$di" | sed -E 's~^(.*/[a-zA-Z][a-zA-Z_0-9-]+)-[0-9devrcitya-f+.]+\.dist-info~\1.dist-info~')
     mv -v "$di" "$di_nover"
 done
 
