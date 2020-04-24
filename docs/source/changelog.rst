@@ -12,14 +12,15 @@ Release v0.7.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder.
-
+-   Fixed bug with ``minimize`` when the required ``--target`` argument is not given.  This now results in a reminder to the user rather than an unhandled exception.
+-   Splunk app packaging fix.  Write access to the app was previously not granted due to a spelling mistake in the metadata file.
 
 Release v0.7.7 (2020-03-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Added new ``--follow-symlink`` option to the ``combine`` command so that input directory structures with sybolic links can be treated the same as proper directories.
--   Corrected Windows issue where wildcard (glob) patterns weren't expanded by for ``check`` and ``sort``.  This is primarily a difference in how a proper shells (e.g., bash, csh, zsh) handle expansion natively vs CMD on Windows does not.  However, since this is typically tranparently handled by many CLI tools, we'll follow suite.  (BTW, running ksconf from the GIT Bash prompt is a great alternative.)  Only the most minimalistic expansion rules will be available, (so don't expect ``{props,transforms,app}.conf`` to work anytime soon), but this should be good enough for most use cases.  Thanks to SID800 for reporting this bug.
--   Fixed issues with the ``unarchive`` command when ``git`` is not installed or an app is being unarchived (installed/upgrade) into a location not managed by Git.  Note that additional output is now enabled when the ``KSCONF_DEBUG`` environmental variable is set (in liue of a proper verbose mode).  Bug report provided by SID800.
+-   Corrected Windows issue where wildcard (glob) patterns weren't expanded by for ``check`` and ``sort``.  This is primarily a difference in how a proper shells (e.g., bash, csh, zsh) handle expansion natively vs CMD on Windows does not.  However, since this is typically transparently handled by many CLI tools, we'll follow suite.  (BTW, running ksconf from the GIT Bash prompt is a great alternative.)  Only the most minimalistic expansion rules will be available, (so don't expect ``{props,transforms,app}.conf`` to work anytime soon), but this should be good enough for most use cases.  Thanks to SID800 for reporting this bug.
+-   Fixed issues with the ``unarchive`` command when ``git`` is not installed or an app is being unarchived (installed/upgrade) into a location not managed by Git.  Note that additional output is now enabled when the ``KSCONF_DEBUG`` environmental variable is set (in lieu of a proper verbose mode).  Bug report provided by SID800.
 -   Enhanced ``ksconf --version`` output to include Git executable path and version information; as well as a platform dump.  (Helpful for future bug reporting.)
 -   Added feature to disable the marker file (safety check) automatically created by the ``combine`` command for use in automated processing workflows.
 -   Updated ``pre-commit`` documentation and sample configurations to use ``rev`` rather than ``sha`` as the means of identifying upstream tags or revisions.  Recent releases of ``pre-commit`` will warn you about this during each run.
@@ -79,8 +80,6 @@ Release v0.7.2 (2019-03-22)
 
 Release v0.7.1 (2019-03-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 -   Additional fixes for UTF-8 BOM files which appear to happen more frequently with ``local`` files on Windows.
     This time some additional unit tests were added so hopefully there are few regressions in the future.
