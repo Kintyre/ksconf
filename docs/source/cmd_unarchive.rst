@@ -42,10 +42,10 @@ ksconf unarchive
         Supports tarballs (.tar.gz, .spl), and less-common zip files (.zip)
 
 
-..  note:: Git features are automatically disabled.
+..  note:: What if I'm not using version control?
 
     Sanity checks and commit modes are automatically disabled if the app is being installed into a directory that is *not* contained within a git working tree.
-    Additionaly, this check is only completed after first confirming that git is present and functional.
+    Ksconf confirms that `git` is present and functional before running sanity checks.
 
 
 .. TODO:  Add some example stuff here...
