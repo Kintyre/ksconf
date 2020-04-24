@@ -53,10 +53,13 @@ class CombineCmd(KsconfCmd):
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
 
-    No directory layout is mandatory, but one simple approach is to model your
-    layers using a prioritized 'default.d' directory structure. This idea is
-    borrowed from the Unix System V concept where many services natively read their
-    config files from ``/etc/*.d`` directories.
+    No directory layout is mandatory, but taking advantages of the native-support
+    for 'dir.d' layout works well for many uses cases.  This idea is borrowed from
+    the Unix System V concept where many services natively read their config files
+    from ``/etc/*.d`` directories.
+
+    Version notes:  dir.d was added in ksconf 0.8.  Starting in 1.0 the default will
+    switch to 'dir.d', so if you need the old behavior be sure to update your scripts.
     """)
     format = "manual"
     maturity = "beta"
@@ -82,21 +85,13 @@ class CombineCmd(KsconfCmd):
                             choices=["auto", "dir.d", "disable"],
                             default="auto",
                             help="""
-            Select the layer method in use.
-            Currently, there are two layer management options.
-            Most often 'dir.d' will work well when using '*.d' folders for layers.
-            This assumes your layers are like so:  'MyApp/default.d/##-layer-name'.
-            Using 'dir.d' mode, any layer directories that are found will be handled automatically.
-            If you'd like to manage the layers explicitly and turn off built-in layer support, use
-            'disable'.
+            Set the layer type used by SOURCE.
 
-            By default, 'auto' mode will enable transparent switching between 'dir.d' and 'disable'
+            Use ``dir.d`` if you have directories like ``MyApp/default.d/##-layer-name``, or use
+            ``disable`` to manage layers explicitly and avoid any accidental layer detection.
+            By default, ``auto`` mode will enable transparent switching between 'dir.d' and 'disable'
             (legacy) behavior.
-            In auto mode, if more than one source directory is given, then 'disable' mode is used,
-            if only a single directory is given then 'dir.d' will be used.
-
-            Version notes:  dir.d was added in ksconf 0.8.  Starting in 1.0 the default will switch
-            to 'dir.d', so if you need the old behavior be sure to update your scripts.""")
+            """)
 
         parser.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
                             type=wb_type("include"), metavar="PATTERN",
@@ -118,7 +113,7 @@ class CombineCmd(KsconfCmd):
                                  "Used to discourage Splunk admins from editing an auto-generated "
                                  "file.")
         parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent("""
-            Prevents the creation of or checking for the '{}' marker file safety check.
+            Prevents the creation of or checking for the ``{}`` marker file safety check.
             This file is typically used indicate that the destination folder is managed by ksconf.
             This option should be reserved for well-controlled batch processing scenarios.
             """.format(CONTROLLED_DIR_MARKER)))

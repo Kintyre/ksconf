@@ -10,7 +10,7 @@ Therefore, most users will find it easier to start with the Splunk app.
 
 .. note::
 
-    The introduction of a Splunk app is a fairly new occurence (as of the 0.6.x release).
+    The introduction of a Splunk app is a fairly new occurrence (as of the 0.6.x release).
     Originally we resisted this idea, since ``ksconf`` was designed to manage other apps, not live within one.
     Ultimately however, the packaging decision was made to ensure users of all levels can utilize the program,
     as Python packaging is a mess and can be daunting for the uninitiated.

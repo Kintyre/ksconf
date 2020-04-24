@@ -41,6 +41,14 @@ Building the docs
     make html
     open build/html/index.html
 
+
+If you are actively editing the docs, and would like changes to be updated in your browser as you save changes ``.rst`` files, then use the script in the root directory:
+
+..  code-block:: sh
+
+    ./make_docs
+
+
 If you’d like to build PDF, then you’ll need some extra tools. On Mac, you may also want to install
 the following (for building docs, etc.):
 

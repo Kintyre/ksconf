@@ -30,6 +30,15 @@ ksconf.consts module
     :undoc-members:
     :show-inheritance:
 
+ksconf.layer module
+--------------------
+
+..  automodule:: ksconf.layer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 ksconf.setup\_entrypoints module
 --------------------------------
 
@@ -38,6 +47,14 @@ ksconf.setup\_entrypoints module
     :undoc-members:
     :show-inheritance:
 
+
+ksconf.xmlformat module
+-----------------------
+
+..  automodule:: ksconf.xmlformat
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Module contents
 ---------------

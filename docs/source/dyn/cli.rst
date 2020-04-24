@@ -115,10 +115,13 @@ ksconf combine
     that Splunk reads from.  One way to keep the 'default' folder up-to-date is
     using client-side git hooks.
     
-    No directory layout is mandatory, but one simple approach is to model your
-    layers using a prioritized 'default.d' directory structure. This idea is
-    borrowed from the Unix System V concept where many services natively read their
-    config files from '/etc/*.d' directories.
+    No directory layout is mandatory, but taking advantages of the native-support
+    for 'dir.d' layout works well for many uses cases.  This idea is borrowed from
+    the Unix System V concept where many services natively read their config files
+    from '/etc/*.d' directories.
+    
+    Version notes:  dir.d was added in ksconf 0.8.  Starting in 1.0 the default will
+    switch to 'dir.d', so if you need the old behavior be sure to update your scripts.
     
     positional arguments:
       source                The source directory where configuration files will be
@@ -134,23 +137,12 @@ ksconf combine
                             Directory where the merged files will be stored.
                             Typically either 'default' or 'local'
       -m {auto,dir.d,disable}, --layer-method {auto,dir.d,disable}
-                            Select the layer method in use. Currently, there are
-                            two layer management options. Most often 'dir.d' will
-                            work well when using '*.d' folders for layers. This
-                            assumes your layers are like so: 'MyApp/default.d
-                            /##-layer-name'. Using 'dir.d' mode, any layer
-                            directories that are found will be handled
-                            automatically. If you'd like to manage the layers
-                            explicitly and turn off built-in layer support, use
-                            'disable'. By default, 'auto' mode will enable
-                            transparent switching between 'dir.d' and 'disable'
-                            (legacy) behavior. In auto mode, if more than one
-                            source directory is given, then 'disable' mode is
-                            used, if only a single directory is given then 'dir.d'
-                            will be used. Version notes: dir.d was added in ksconf
-                            0.8. Starting in 1.0 the default will switch to
-                            'dir.d', so if you need the old behavior be sure to
-                            update your scripts.
+                            Set the layer type used by SOURCE. Use 'dir.d' if you
+                            have directories like 'MyApp/default.d/##-layer-name',
+                            or use 'disable' to manage layers explicitly and avoid
+                            any accidental layer detection. By default, 'auto'
+                            mode will enable transparent switching between 'dir.d'
+                            and 'disable' (legacy) behavior.
       -I PATTERN, --include PATTERN
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN
