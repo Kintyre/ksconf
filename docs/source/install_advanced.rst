@@ -164,44 +164,6 @@ run the following:
     chmod +x /usr/local/bin/ksconf
 
 
-Use the standalone executable
------------------------------
-
-..  deprecated:: 0.6.0
-
-    This option remains for historical reference and will likely be disabled in the future. If
-    this seems like the best option to you, then please consider installing the `KSCONF App for Splunk`_ instead.
-
-Ksconf can be installed as a standalone executable zip app. This approach still requires a Python
-interpreter to be present either from the OS or the one embedded with Splunk Enterprise. This works
-well for testing or when all other options fail.
-
-From the `GitHub releases <https://github.com/Kintyre/ksconf/releases/latest>`__ page, grab the file name ``ksconf-*.pyz``, download it, copy
-it to a ``bin`` folder in your PATH and rename it ``ksconf``. The default shebang looks for 'python' in
-the PATH, but this can be adjusted as needed. Since installing with Splunk is a common use case, a
-second file named ``ksconf-*-splunk.pyz`` already has the shebang set for the standard ``/opt/splunk``
-install path.
-
-Typical embedded Splunk install example:
-
-..  code-block:: sh
-
-    VER=0.5.0
-    curl https://github.com/Kintyre/ksconf/releases/download/v${VER}/ksconf-${VER}-splunk.pyz
-    mv ksconf-${VER}-splunk.pyz /opt/splunk/bin/
-    cd /opt/splunk/bin
-    ln -sf ksconf-${VER}-splunk.pyz ksconf
-    chmod +x ksconf
-    ksconf --version
-
-Reasons why this is a non-ideal install approach:
-
--   Lower performance since all Python files live in a zip file, and pre-compiled version's can be
-    cached.
--   No standard install pathway (doesn't use pip); user must manually copy the executable into place.
--   Uses a non-standard build process. (May not be a big deal, but could cause things to break in
-    the future.)
-
 Install the Wheel manually (offline mode)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -268,7 +230,6 @@ Test the install:
 
 On Windows
 ^^^^^^^^^^
-
 
 1.  Open a browser and download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_.
 2.  Rename the ``.whl`` extension to ``.zip``. (This may require showing file extensions in Explorer.)
@@ -456,7 +417,7 @@ If, while trying to install ``pip`` or run a ``pip`` command you see the followi
     ImportError: No module named command.install
 
 Likely this is because you are using a crippled version of Python; like the one that ships with
-Splunk. This won't work. Either get a pre-packaged version (the ``.pyz`` file) or install using the
+Splunk. This won't work. Either install the Splunk app package from Splunkbase or install using the
 OS-level Python.
 
 

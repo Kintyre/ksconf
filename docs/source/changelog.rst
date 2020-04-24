@@ -8,6 +8,16 @@ Ksconf 0.8.0
 ------------
 
 Adds automatic layer detection support to the core library that's usable within multiple commands.
+Removed the deprecated zipapp deployment method.
+
+
+v0.8-beta2 (2020-04-24)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Removed support for building a standalone executable (zipapp).
+   This packaging option was added in v0.4.3, and deprecated in v0.6.0, once the Splunk app install option became available.
+   Yeah, I didn't use it much either!
+
 
 v0.8-beta1 (2020-04-24)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

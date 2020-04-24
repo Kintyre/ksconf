@@ -76,7 +76,6 @@ after_success:
   - '[[ $BUILD_SDIST == "true" ]] && coverage run -a -m make_cli_docs'
   - codecov
   - coveralls
-  - '[[ $BUILD_SDIST == "true" ]] && ./make_zipapp'
   - '[[ $BUILD_SDIST == "true" ]] && ./make_splunk_app'
   - '[[ $BUILD_SDIST == "true" ]] && ls -lsh zdist'
 deploy:
