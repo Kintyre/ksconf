@@ -1,0 +1,16 @@
+# See http://pre-commit.com for more information
+# See http://pre-commit.com/hooks.html for more hooks
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.0.0
+  hooks:
+    - id: trailing-whitespace
+      exclude: (cli\.rst|\.md|\.csv)$
+    - id: end-of-file-fixer
+      exclude: (cli\.rst|\.md|\.csv)$
+    - id: check-added-large-files
+      args: [ '--maxkb=200' ]
+    - id: check-merge-conflict
+    - id: mixed-line-ending
+      args: [ '--fix=lf' ]
+      exclude: (\.bat|\.csv)$

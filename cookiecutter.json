@@ -1,0 +1,8 @@
+{
+    "subcommand": "fancy",
+    "subcommand_module" : "{{ cookiecutter.subcommand | replace('-', '') }}",
+    "subcommand_class": "{{ cookiecutter.subcommand | replace('-', ' ') | title | replace(' ','') }}Cmd",
+    "short_description": "Do {{ cookiecutter.subcommand }} things",
+    "docs_format": ["manual"],
+    "maturity": ["alpha", "beta", "stable"]
+}
