@@ -3,6 +3,22 @@ Changelog
 
 .. note:: Changes in master, but not released yet are marked as *DRAFT*.
 
+
+Ksconf 0.8.0
+------------
+
+Adds automatic layer detection support to the core library that's usable within multiple commands.
+
+v0.8.0-beta1 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-   Add automatic layer support.  Currently the two supported layer schemes are (1) explicit layers (really this will ``disable`` automatic layer detection), and (2) the ``dir.d`` format which uses the ``default.d/##-layer-name`` style directory support, which we previously promoted in the docs, but never really *fully* supported in a native way.
+    This new ``dir.d`` directory layout support also allows for multiple ``*.d`` folders in a single tree (so not just ``default.d``), and if your apps have different layer-points in different apps, it's all handled transparently.  Currently support is limited to just the :ref:`ksconf_cmd_combine` command but support for ``unarchive`` hasn't been completed yet.  (This should be done before the 0.8.0 release.)
+-   Layer selection support was added to the ``combine`` command.  This allows you to ``--include`` and ``--exclude`` layers as you see fit.
+    See the docs for more details and examples of this new functionality.
+    This works for both the new ``dir.d`` directories and the explicit layers, though moving to the ``dir.d`` format is highly encouraged.
+
+
 Ksconf 0.7.x
 ------------
 

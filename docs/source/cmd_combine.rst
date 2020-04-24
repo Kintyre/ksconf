@@ -27,17 +27,102 @@ that ``combine`` command will handle non-conf files intelligently, not just conf
 Additionally, ``combined`` can automatically detect layers for you, depending on the layering scheme in use.
 
 
-..  note::  Mixing layers
+Mixing layers
+-------------
 
-    Just like all layers can be managed independently, they can also be combined in any way you would like.
-    This also allows for different layers to be mixed-and-matched by selectively including which layers to combine.
-    This feature is now available in ksconf 0.8.0 and later using the ``--include`` and ``--exclude`` CLI options.
+Just like all layers can be managed independently, they can also be combined in any way you would like.
+This also allows for different layers to be mixed-and-matched by selectively including layers to combine.
+This feature is now available in ksconf 0.8.0 and later using the ``--include`` and ``--exclude`` CLI options,
+which should behave as just as you'd expected.
+
+..  note:: A more detailed explination
+
+    The ``--include`` and ``--exclude`` arguments are processed in the order given.
+    These filters are applied to all layer names.
+    The last match wins.
+
+    If ``--include`` is first, then by default all layers, except for the ones explicitly included, will be excluded.
+    Conversly, if ``--exclude`` is first, then all layers will be included except for the ones explicily included.
+    If *no* filters are given then all layers will be processsed.
+
+Here's an example, truncated for brevity, to further demonstrate how this can be used practically:
+
+::
+
+    Splunk_TA_nix/
+    ├── README.txt
+    ├── bin
+    │   ├── bandwidth.sh
+    │   ├── common.sh
+    ├── default.d
+    │   ├── 10-upstream
+    │   │   ├── app.conf
+    │   │   ├── data
+    │   │   │   └── ui
+    │   │   │       ├── nav
+    │   │   │       │   └── default.xml
+    │   │   │       └── views
+    │   │   │           └── setup.xml
+    │   │   ├── eventtypes.conf
+    │   │   ├── inputs.conf
+    │   │   ├── props.conf
+    │   │   ├── tags.conf
+    │   │   ├── transforms.conf
+    │   │   └── web.conf
+    │   ├── 20-common
+    │   │   ├── inputs.conf
+    │   │   ├── props.conf
+    │   │   └── transforms.conf
+    │   ├── 30-master-apps
+    │   │   └── inputs.conf
+    │   └── 30-shcluster-apps
+    │       ├── inputs.conf
+    │       └── web.conf
+    ├── lookups
+    │   ├── nix_da_update_status.csv
+    │   ├── nix_da_version_ranges.csv
+    └── metadata
+        └── default.meta
+
+Here we have several named layers in play:
+
+ * ``10-upstream`` - the layer used to contain the default app content that ships from the Splunk TA, or whatever is "upstream" source is.
+ * ``20-common`` - organizational level change to deployed everywhere.
+ * ``30-master-apps`` - The bits that should just go to the indexers.
+ * ``30-shcluster-apps`` - Content that should go to just the search heads.
+
+In this case, we always want to combine the ``10-*`` and ``20-*`` layers, but only want to include either the master or searchhead cluster layer depending on server role.
+
+..  code-block:: sh
+
+    ksconf combine src/Splunk_TA_nix --target build/shcd/Splunk_TA_nix \
+        --exclude=30-* --include=30-shcluster-apps
+    ksconf combine src/Splunk_TA_nix --target build/cm/Splunk_TA_nix \
+        --exclude=30-* --include=30-master-apps
+
+    # Say you just want the origional app, for some reason:
+    ksconf combine src/Splunk_TA_nix --target /build/orig/Splunk_TA_nix --include=10-upstream
+
+
+Using this technique you can pretty quickly write some simple shell scripts to build these all at once:
+
+..  code-block:: sh
+
+    for role in shcluster master
+    do
+        ksconf combine src/Splunk_TA_nix \
+            --target build/${role}/Splunk_TA_nix \
+            --exclude=30-* --include=30-${role}-apps
+    done
+
+Hopefully this gives you some ideas on how you can start to build some custom workflows with just a few small shell scripts.
 
 
 Layer methods
 -------------
 
 Ksconf supports different methods of layer detection mechanism.
+Right now just two different schemes are supported, but if you have other ways of organizing your layers, please :ref:`reach out <contact_us>`.
 
 ..
 
@@ -51,7 +136,7 @@ Ksconf supports different methods of layer detection mechanism.
 
         When these layers are combined, the top level folder is modified to remove the trailing ``.d``, and all content from the enable layers is combined within that folder.
         The layer-name portion of the path is discarded in the final combined path.
-        Content is combined baed on the assigned ranking of each layer, or directory sort order.
+        Content is combined based on the assigned ranking of each layer, or directory sort order.
 
     Disable (legacy)
         If you would prefer to stick with the previous behavior (no automatic detection of layers) and specify all *SOURCE* directories manually, then use this mode.
@@ -62,21 +147,21 @@ Ksconf supports different methods of layer detection mechanism.
 
 
 How do I pick?
-
+^^^^^^^^^^^^^^
 
 .. tabularcolumns:: |c|L|L|
 
 +-------------+----------------------------+--------------------------------+
-|    Mode     | Useful for                 | Avoid if                       |
+|    Mode     | Useful when                | Avoid if                       |
 +=============+============================+================================+
 | ``dir.d``   | * Building a full app      | * Have existing ``.d`` folders |
 |             | * If you need layers in    |   with other meaning           |
 |             |   multiple places          | * Have multiple source         |
 |             |   (``default.d``, and      |   directories.                 |
 |             |   ``lookups.d``)           |                                |
-|             | * Simply does a recursive  |                                |
-|             |   copy if you have *no*    |                                |
-|             |   layers in place.         |                                |
+|             |* If you sometimes have     |                                |
+|             |  *no* layers, then fallback|                                |
+|             |  a recursive copy.         |                                |
 +-------------+----------------------------+--------------------------------+
 | ``disable`` | * Highly customized work   | * For app build scripts.       |
 |             |   flows / full-control     |                                |
@@ -130,11 +215,9 @@ This example features the Cisco Security Suite.
    │       │           └── user_tracking.xml
    │       └── eventtypes.conf
    ├── lookups
-   │   ├──
    ├── metadata
-   │   ├──
-   ├── static
-   │   ├──
+   └─── static
+
 
 
 In this structure, you can see several layers of configurations at play:
@@ -171,7 +254,7 @@ of the layers shown above.
     ksconf combine default.d/* --target=default
 
 Note that in the example above, the ``default`` folder now lives along side the ``default.d`` folder.
-Also note that *only* the contenst of ``default.d`` are copied, not the entire app, like in the above example.
+Also note that *only* the contents of ``default.d`` are copied, not the entire app, like in the above example.
 
 ..  seealso::
 

@@ -105,7 +105,7 @@ class CombineCmd(KsconfCmd):
             If TARGET doesn't exist, then show the merged file."""))
         parser.add_argument("--follow-symlink", "-l", action="store_true", default=False,
                             help="Follow symbolic links pointing to directories.  "
-                                 "Symlinks to files are followed.")
+                                 "Symlinks to files are always followed.")
         parser.add_argument("--banner", "-b",
                             default=" **** WARNING: This file is managed by 'ksconf combine', do "
                                     "not edit hand-edit this file! ****",

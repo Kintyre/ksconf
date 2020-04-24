@@ -151,7 +151,7 @@ ksconf combine
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
       --follow-symlink, -l  Follow symbolic links pointing to directories.
-                            Symlinks to files are followed.
+                            Symlinks to files are always followed.
       --banner BANNER, -b BANNER
                             A banner or warning comment added to the top of the
                             TARGET file. Used to discourage Splunk admins from
