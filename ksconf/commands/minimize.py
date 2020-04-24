@@ -19,6 +19,7 @@ import ksconf.ext.six as six
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, DIFF_OP_EQUAL, DiffStanza, \
     DIFF_OP_INSERT, DIFF_OP_REPLACE, show_diff
+from ksconf.consts import EXIT_CODE_MISSING_ARG
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import GLOBAL_STANZA, _drop_stanza_comments
 from ksconf.conf.parser import PARSECONF_STRICT, PARSECONF_LOOSE
@@ -84,6 +85,9 @@ class MinimizeCmd(KsconfCmd):
             "Specify attributes that should always be kept.")
 
     def run(self, args):
+        if not args.target:
+            self.stderr.write("You must specify the target file with '--target'.\n")
+            return EXIT_CODE_MISSING_ARG
         if args.explode_default:
             # Is this the SAME as exploding the defaults AFTER the merge?;
             # I think NOT.  Needs testing

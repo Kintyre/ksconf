@@ -83,6 +83,17 @@ class CliMinimizeTest(unittest.TestCase):
             self.assertTrue(orig_size > final_size)
 
 
+    def test_missing_target(self):
+        twd = TestWorkDir()
+        local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
+        default = static_data("inputs-ta-nix-default.conf")
+        inputs_min = twd.get_path("inputs-new.conf")
+        rebuilt = twd.get_path("inputs-rebuild.conf")
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--output", inputs_min, local, default)
+            self.assertEqual(ko.returncode, EXIT_CODE_MISSING_ARG)
+            self.assertIn("--target", ko.stderr)
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()
