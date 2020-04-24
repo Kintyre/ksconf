@@ -9,7 +9,7 @@ Ksconf 0.8.0
 
 Adds automatic layer detection support to the core library that's usable within multiple commands.
 
-v0.8.0-beta1 (DRAFT)
+v0.8-beta1 (2020-04-24)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -   Add automatic layer support.  Currently the two supported layer schemes are (1) explicit layers (really this will ``disable`` automatic layer detection), and (2) the ``dir.d`` format which uses the ``default.d/##-layer-name`` style directory support, which we previously promoted in the docs, but never really *fully* supported in a native way.
