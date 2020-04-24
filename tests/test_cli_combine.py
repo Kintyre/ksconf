@@ -15,8 +15,8 @@ from tests.cli_helper import *
 
 class CliKsconfCombineTestCase(unittest.TestCase):
 
-    def test_combine_3dir(self):
-        twd = TestWorkDir()
+
+    def build_test01(self, twd):
         twd.write_file("etc/apps/Splunk_TA_aws/default.d/10-upstream/props.conf", """
         [aws:config]
         SHOULD_LINEMERGE = false
@@ -72,6 +72,10 @@ class CliKsconfCombineTestCase(unittest.TestCase):
 
         </nav>
         """)
+
+    def test_combine_3dir(self):
+        twd = TestWorkDir()
+        self.build_test01(twd)
         default = twd.get_path("etc/apps/Splunk_TA_aws/default")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
@@ -88,7 +92,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         twd.write_conf("etc/apps/Splunk_TA_aws/default.d/99-theforce/props.conf", {
             "aws:config": {"TIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%6NZ"}
         })
-        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-the-force/data/ui/nav/default.xml", """
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-theforce/data/ui/nav/default.xml", """
         <nav search_view="search" color="#65A637">
         <view name="My custom view" />
         <view name="Inputs" default="true" label="Inputs" />
@@ -111,6 +115,23 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertRegex(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
+
+    def test_combine_dird(self):
+        twd = TestWorkDir()
+        self.build_test01(twd)
+        default = twd.get_path("etc/apps/Splunk_TA_aws")
+        target = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT")
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--layer-method", "dir.d", "--dry-run", "--target", target, default)
+            ko = ksconf_cli("combine", "--layer-method", "dir.d", "--target", target, default)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            cfg = parse_conf(target + "/default/props.conf")
+            self.assertIn("aws:config", cfg)
+            self.assertEqual(cfg["aws:config"]["ANNOTATE_PUNCT"], "true")
+            self.assertEqual(cfg["aws:config"]["EVAL-change_type"], '"configuration"')
+            self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
+            nav_content = twd.read_file("etc/apps/Splunk_TA_aws-OUTPUT/default/data/ui/nav/default.xml")
+            self.assertIn("My custom view", nav_content)
 
     def test_require_arg(self):
         with ksconf_cli:

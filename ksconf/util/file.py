@@ -127,10 +127,13 @@ def file_fingerprint(path, compare_to=None):
         return fp
 
 
-def expand_glob_list(iterable):
+def expand_glob_list(iterable, do_sort=False):
     for item in iterable:
         if "*" in item or "?" in item:
-            for match in glob(item):
+            glob_expanded = glob(item)
+            if do_sort:
+                glob_expanded.sort()
+            for match in glob_expanded:
                 yield match
         else:
             yield item
