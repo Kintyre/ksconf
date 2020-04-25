@@ -35,15 +35,15 @@ This also allows for different layers to be mixed-and-matched by selectively inc
 This feature is now available in ksconf 0.8.0 and later using the ``--include`` and ``--exclude`` CLI options,
 which should behave as just as you'd expected.
 
-..  note:: A more detailed explination
+..  note:: A more detailed explanation
 
     The ``--include`` and ``--exclude`` arguments are processed in the order given.
     These filters are applied to all layer names.
     The last match wins.
 
     If ``--include`` is first, then by default all layers, except for the ones explicitly included, will be excluded.
-    Conversly, if ``--exclude`` is first, then all layers will be included except for the ones explicily included.
-    If *no* filters are given then all layers will be processsed.
+    Conversely, if ``--exclude`` is first, then all layers will be included except for the ones explicitly included.
+    If *no* filters are given then all layers will be processed.
 
 Here's an example, truncated for brevity, to further demonstrate how this can be used practically:
 
@@ -100,7 +100,7 @@ In this case, we always want to combine the ``10-*`` and ``20-*`` layers, but on
     ksconf combine src/Splunk_TA_nix --target build/cm/Splunk_TA_nix \
         --exclude=30-* --include=30-master-apps
 
-    # Say you just want the origional app, for some reason:
+    # Say you just want the original app, for some reason:
     ksconf combine src/Splunk_TA_nix --target /build/orig/Splunk_TA_nix --include=10-upstream
 
 

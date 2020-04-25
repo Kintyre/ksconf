@@ -110,7 +110,7 @@ class _KsconfCli():
         return stream.read()
 
     def __call__(self, *args):
-        # In later version of Python (3.4), something like this could be considered:
+        # In later versions of Python (3.4), something like this could be considered:
         # from contextlib import redirect_stdout
         self._last_args = args
         _stdout, _stderr = (sys.stdout, sys.stderr)

@@ -4,6 +4,7 @@
 :ref:`ksconf filter <ksconf_cmd_filter>`,alpha,A stanza-aware GREP tool for conf files
 :ref:`ksconf merge <ksconf_cmd_merge>`,stable,Merge two or more .conf files
 :ref:`ksconf minimize <ksconf_cmd_minimize>`,beta,Minimize the target file by removing entries duplicated in the default conf(s)
+:ref:`ksconf package <ksconf_cmd_package>`,alpha,Create a Splunk app .spl file from an application directory
 :ref:`ksconf promote <ksconf_cmd_promote>`,beta,"Promote .conf settings between layers using either batch or interactive mode.  Frequently this is used to promote conf changes made via the UI (stored in the ``local`` folder) to a version-controlled directory, such as ``default``. "
 :ref:`ksconf rest-export <ksconf_cmd_rest-export>`,beta,Export .conf settings as a curl script to apply to a Splunk instance later (via REST)
 :ref:`ksconf rest-publish <ksconf_cmd_rest-publish>`,alpha,Publish .conf settings to a live Splunk instance via REST

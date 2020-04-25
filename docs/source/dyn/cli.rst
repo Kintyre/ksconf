@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color]
-                  {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+                  {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
     Ksconf: Kintyre Splunk CONFig tool
@@ -25,7 +25,7 @@ ksconf
     "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
-      {check,combine,diff,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+      {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -34,6 +34,8 @@ ksconf
                             ongoing merge and one-time ad-hoc use.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
+        package             Create a Splunk app .spl file from an application
+                            directory
         filter              A stanza-aware GREP tool for conf files
         promote             Promote .conf settings between layers using either
                             batch or interactive mode. Frequently this is used to
@@ -192,6 +194,39 @@ ksconf diff
                             out.
       --comments, -C        Enable comparison of comments. (Unlikely to work
                             consistently)
+
+
+
+.. _ksconf_cli_package:
+
+ksconf package
+**************
+
+ .. code-block:: none
+
+    usage: ksconf package [-h] [-f SPL] [--blacklist BLACKLIST] [-I PATTERN]
+                          [-E PATTERN] [--follow-symlink]
+                          SOURCE
+    
+    Create a Splunk app or add on tarball (.spl) file file from an app directory.
+    
+    This function can do several useful things like, exclude unwanted files, combine layers, set the
+    application version and build number, drop or merge the local directory into default.
+    
+    positional arguments:
+      SOURCE                Source directory for the Splunk app.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -f SPL, --file SPL    Name of splunk app file (tarball) to create.
+      --blacklist BLACKLIST, -b BLACKLIST
+                            Pattern for files/directories to exclude.
+      -I PATTERN, --include PATTERN
+                            Name or pattern of layers to include.
+      -E PATTERN, --exclude PATTERN
+                            Name or pattern of layers to exclude from the target.
+      --follow-symlink, -l  Follow symbolic links pointing to directories.
+                            Symlinks to files are always followed.
 
 
 
