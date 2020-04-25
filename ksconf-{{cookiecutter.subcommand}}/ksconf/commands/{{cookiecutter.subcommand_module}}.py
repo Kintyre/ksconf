@@ -31,6 +31,8 @@ class {{ cookiecutter.subcommand_class }}(KsconfCmd):
     maturity = "{{cookiecutter.maturity}}"
 
     def register_args(self, parser):
+        # type: (argparse.ArgumentParser) -> None
+
         parser.add_argument("conf1", metavar="CONF1", help="Left side of the comparison",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_MID_NC)
                             ).completer = conf_files_completer
