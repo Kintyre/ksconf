@@ -1,8 +1,8 @@
 ..  _ksconf_cmd_{{cookiecutter.subcommand}}:
 
 
-ksconf fancy
-============
+ksconf {{cookiecutter.subcommand}}
+======={{ "=" * (cookiecutter.subcommand | length) }}
 
 
 .. argparse::
