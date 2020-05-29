@@ -17,7 +17,7 @@ from ksconf.ext.six.moves import input
 from ksconf.commands import ConfDirProxy
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs, show_diff, \
-    DIFF_OP_EQUAL, DiffStanza, DiffStzKey
+    DIFF_OP_EQUAL, DiffStanza, DiffStzKey, DIFF_OP_INSERT, DIFF_OP_REPLACE
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import PARSECONF_STRICT_NC, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
@@ -111,6 +111,9 @@ class PromoteCmd(KsconfCmd):
             Enable interactive mode where the user will be prompted to approve
             the promotion of specific stanzas and attributes.
             The user will be able to apply, skip, or edit the changes being promoted."""))
+        grp1.add_argument("--stanza", metavar="PATTERN", action="append", default=[], help=dedent("""
+            Match any stanza who's name matches the given pattern.
+            PATTERN supports bulk patterns via the ``file://`` prefix."""))
         parser.add_argument("--force", "-f",
                             action="store_true", default=False,
                             help=
@@ -192,7 +195,7 @@ class PromoteCmd(KsconfCmd):
             self.stderr.write("No settings in {}.  Nothing to promote.\n".format(args.source.name))
             return EXIT_CODE_NOTHING_TO_DO
 
-        if args.mode == "ask":
+        if args.mode == "ask" and args.stanza == []:
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
             delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
@@ -215,6 +218,11 @@ class PromoteCmd(KsconfCmd):
 
         if args.mode == "interactive":
             (cfg_final_src, cfg_final_tgt) = self._do_promote_interactive(cfg_src, cfg_tgt, args)
+        elif args.stanza != []:
+            try:
+                (cfg_final_src, cfg_final_tgt) = self._do_promote_list(cfg_src, cfg_tgt, args)
+            except Exception as e:
+                return EXIT_CODE_FAILED_SAFETY_CHECK
         else:
             (cfg_final_src, cfg_final_tgt) = self._do_promote_automatic(cfg_src, cfg_tgt, args)
 
@@ -355,4 +363,29 @@ class PromoteCmd(KsconfCmd):
                         # If last remaining key in the src stanza?  Then delete the entire stanza
                         if not out_src[op.location.stanza]:
                             del out_src[op.location.stanza]
+        return (out_src, out_cfg)
+
+    def _do_promote_list(self, cfg_src, cfg_tgt, args):
+        out_src = deepcopy(cfg_src)
+        out_cfg = deepcopy(cfg_tgt)
+        diff = filter(lambda op: op.tag == DIFF_OP_INSERT or op.tag == DIFF_OP_REPLACE, compare_cfgs(cfg_tgt, cfg_src, allow_level0=False))
+        diff_stanza_names = set(map(lambda op: op.location.stanza, diff))
+        for stanza_name in args.stanza:
+            if not stanza_name in diff_stanza_names:
+                self.stderr.write("Stanza [{}] is not a recognized as a new or modified stanza.\n".format(stanza_name))
+                raise Exception()
+        for op in diff:
+            if op.location.stanza in args.stanza:
+                show_diff(self.stdout, [op])
+                if isinstance(op.location, DiffStanza):
+                    # Move entire stanza
+                    out_cfg[op.location.stanza] = op.b
+                    del out_src[op.location.stanza]
+                else:
+                    # Move key
+                    out_cfg[op.location.stanza][op.location.key] = op.b
+                    del out_src[op.location.stanza][op.location.key]
+                    # If last remaining key in the src stanza?  Then delete the entire stanza
+                    if not out_src[op.location.stanza]:
+                        del out_src[op.location.stanza]
         return (out_src, out_cfg)
