@@ -368,7 +368,7 @@ class PromoteCmd(KsconfCmd):
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        diff = filter(lambda op: op.tag == DIFF_OP_INSERT or op.tag == DIFF_OP_REPLACE, compare_cfgs(cfg_tgt, cfg_src, allow_level0=False))
+        diff = list(filter(lambda op: op.tag == DIFF_OP_INSERT or op.tag == DIFF_OP_REPLACE, compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)))
         diff_stanza_names = set(map(lambda op: op.location.stanza, diff))
         for stanza_name in args.stanza:
             if not stanza_name in diff_stanza_names:
