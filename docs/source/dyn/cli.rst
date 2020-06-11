@@ -265,7 +265,7 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive | --stanza PATTERN]
+    usage: ksconf promote [-h] [--batch | --interactive] [--stanza PATTERN]
                           [--force] [--keep] [--keep-empty]
                           SOURCE TARGET
     
@@ -296,8 +296,6 @@ ksconf promote
                          to approve the promotion of specific stanzas and
                          attributes. The user will be able to apply, skip, or edit
                          the changes being promoted.
-      --stanza PATTERN   Match any stanza who's name matches the given pattern.
-                         PATTERN supports bulk patterns via the 'file://' prefix.
       --force, -f        Disable safety checks. Don't check to see if SOURCE and
                          TARGET share the same basename.
       --keep, -k         Keep conf settings in the source file. All changes will
@@ -309,6 +307,16 @@ ksconf promote
                          will be removed after all content has been moved into
                          TARGET. Splunk will re-create any necessary local files
                          on the fly.
+    
+    Batch mode filtering options:
+      Include or exclude entire stanzas using these filter options.
+      
+      All filter options can be provided multiple times.
+      If you have a long list of filters, they can be saved in a file and referenced using
+      the special 'file://' prefix.  One entry per line.
+    
+      --stanza PATTERN   Match any stanza who's name matches the given pattern.
+                         PATTERN supports bulk patterns via the 'file://' prefix.
 
 
 

@@ -78,7 +78,7 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_2_stanzas(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--stanza", "Stanza1", "--stanza", "Stanza2", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch", "--stanza", "Stanza1", "--stanza", "Stanza2", self.conf_local, self.conf_default)
             self.assertFalse(os.path.isfile(self.conf_local))
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
@@ -95,7 +95,7 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_modify_existing_stanza(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--stanza", "Stanza1", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch", "--stanza", "Stanza1", self.conf_local, self.conf_default)
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
             self.assertEqual(stanza1["a"], "3")
@@ -114,7 +114,7 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_add_new_stanza(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--stanza", "Stanza2", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch", "--stanza", "Stanza2", self.conf_local, self.conf_default)
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
             self.assertEqual(stanza1["a"], "2")
@@ -135,16 +135,14 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_non_existing_stanza(self):
             twd = self.sample_data02()
             with ksconf_cli:
-                ko = ksconf_cli("promote", "--stanza", "unknown-stanza", self.conf_local, self.conf_default)
-                self.assertEqual(ko.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
+                ko = ksconf_cli("promote", "--batch", "--stanza", "unknown-stanza", self.conf_local, self.conf_default)
                 self.assertRegex(ko.stderr, "is not a recognized as a new or modified stanza.")
             del twd
 
     def test_promote_list_non_modified_stanza(self):
                 twd = self.sample_data02()
                 with ksconf_cli:
-                    ko = ksconf_cli("promote", "--stanza", "Stanza3", self.conf_local, self.conf_default)
-                    self.assertEqual(ko.returncode, EXIT_CODE_FAILED_SAFETY_CHECK)
+                    ko = ksconf_cli("promote", "--batch", "--stanza", "Stanza3", self.conf_local, self.conf_default)
                     self.assertRegex(ko.stderr, "is not a recognized as a new or modified stanza.")
                 del twd
 

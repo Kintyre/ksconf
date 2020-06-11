@@ -21,7 +21,7 @@ from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs,
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import PARSECONF_STRICT_NC, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
-    EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT
+    EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT, EXIT_CODE_FEAT_NOT_IMPLEMENTED
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import _samefile, file_fingerprint
 
@@ -85,6 +85,7 @@ class PromoteCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
+        # type: (argparse.ArgumentParser) -> None
         parser.set_defaults(mode="ask")
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
@@ -111,9 +112,19 @@ class PromoteCmd(KsconfCmd):
             Enable interactive mode where the user will be prompted to approve
             the promotion of specific stanzas and attributes.
             The user will be able to apply, skip, or edit the changes being promoted."""))
-        grp1.add_argument("--stanza", metavar="PATTERN", action="append", default=[], help=dedent("""
+
+        pg_ftr = parser.add_argument_group("Batch mode filtering options", dedent("""\
+            Include or exclude entire stanzas using these filter options.
+
+            All filter options can be provided multiple times.
+            If you have a long list of filters, they can be saved in a file and referenced using
+            the special ``file://`` prefix.  One entry per line."""))
+
+        pg_ftr.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
+                            help=dedent("""\
             Match any stanza who's name matches the given pattern.
             PATTERN supports bulk patterns via the ``file://`` prefix."""))
+
         parser.add_argument("--force", "-f",
                             action="store_true", default=False,
                             help=
@@ -195,7 +206,7 @@ class PromoteCmd(KsconfCmd):
             self.stderr.write("No settings in {}.  Nothing to promote.\n".format(args.source.name))
             return EXIT_CODE_NOTHING_TO_DO
 
-        if args.mode == "ask" and args.stanza == []:
+        if args.mode == "ask":
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
             delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
@@ -218,11 +229,11 @@ class PromoteCmd(KsconfCmd):
 
         if args.mode == "interactive":
             (cfg_final_src, cfg_final_tgt) = self._do_promote_interactive(cfg_src, cfg_tgt, args)
-        elif args.stanza != []:
-            try:
-                (cfg_final_src, cfg_final_tgt) = self._do_promote_list(cfg_src, cfg_tgt, args)
-            except Exception as e:
-                return EXIT_CODE_FAILED_SAFETY_CHECK
+            if args.stanza:
+                self.stderr.write("Aborting!  We don't yet support using '--stanza' filters along "
+                                  "side interactive mode.  Pull requests welcome!\n"
+                                  "To use '--stanza' you must also use '--batch' mode.\n")
+                return EXIT_CODE_FEAT_NOT_IMPLEMENTED
         else:
             (cfg_final_src, cfg_final_tgt) = self._do_promote_automatic(cfg_src, cfg_tgt, args)
 
@@ -253,8 +264,10 @@ class PromoteCmd(KsconfCmd):
                 else:
                     args.source.unlink()
 
-    @staticmethod
-    def _do_promote_automatic(cfg_src, cfg_tgt, args):
+    def _do_promote_automatic(self, cfg_src, cfg_tgt, args):
+        # If the --stanza filter was provided, use that promotional logic instead
+        if args.stanza:
+            return self._do_promote_list(cfg_src, cfg_tgt, args)
         # Promote ALL entries;  simply, isn't it...  ;-)
         final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
         return ({}, final_cfg)
@@ -366,14 +379,17 @@ class PromoteCmd(KsconfCmd):
         return (out_src, out_cfg)
 
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
+        # For now this ONLY handles batch/automatic style promotions
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        diff = list(filter(lambda op: op.tag == DIFF_OP_INSERT or op.tag == DIFF_OP_REPLACE, compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)))
-        diff_stanza_names = set(map(lambda op: op.location.stanza, diff))
+        diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+                if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
+        diff_stanza_names = set(op.location.stanza for op in diff)
+
         for stanza_name in args.stanza:
-            if not stanza_name in diff_stanza_names:
+            if stanza_name not in diff_stanza_names:
                 self.stderr.write("Stanza [{}] is not a recognized as a new or modified stanza.\n".format(stanza_name))
-                raise Exception()
+
         for op in diff:
             if op.location.stanza in args.stanza:
                 show_diff(self.stdout, [op])
