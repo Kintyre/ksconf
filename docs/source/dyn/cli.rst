@@ -265,8 +265,8 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
-                          [--keep-empty]
+    usage: ksconf promote [-h] [--batch | --interactive | --stanza PATTERN]
+                          [--force] [--keep] [--keep-empty]
                           SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is used
@@ -296,6 +296,8 @@ ksconf promote
                          to approve the promotion of specific stanzas and
                          attributes. The user will be able to apply, skip, or edit
                          the changes being promoted.
+      --stanza PATTERN   Match any stanza who's name matches the given pattern.
+                         PATTERN supports bulk patterns via the 'file://' prefix.
       --force, -f        Disable safety checks. Don't check to see if SOURCE and
                          TARGET share the same basename.
       --keep, -k         Keep conf settings in the source file. All changes will
