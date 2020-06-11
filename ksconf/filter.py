@@ -83,7 +83,7 @@ class FilteredListString(FilteredList):
     def _pre_match(self):
         if self.flags & self.IGNORECASE:
             # Lower-case all strings in self.data.  (Only need to do this once)
-            self.data = [i.lower() for i in self.data]
+            self.data = {i.lower() for i in self.data}
 
     def _match(self, item):
         if self.flags & self.IGNORECASE:

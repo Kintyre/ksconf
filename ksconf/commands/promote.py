@@ -16,6 +16,7 @@ from ksconf.ext.six.moves import input
 
 from ksconf.commands import ConfDirProxy
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
+from ksconf.filter import FilteredList, FilterListWildcard, create_filtered_list
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs, show_diff, \
     DIFF_OP_EQUAL, DiffStanza, DiffStzKey, DIFF_OP_INSERT, DIFF_OP_REPLACE
 from ksconf.conf.merge import merge_conf_dicts
@@ -113,16 +114,36 @@ class PromoteCmd(KsconfCmd):
             the promotion of specific stanzas and attributes.
             The user will be able to apply, skip, or edit the changes being promoted."""))
 
-        pg_ftr = parser.add_argument_group("Batch mode filtering options", dedent("""\
-            Include or exclude entire stanzas using these filter options.
+        parser.add_argument("--verbose", action="store_true", default=False,
+                            help="Enable additional output.")
+
+        pg_ftr = parser.add_argument_group("Automatic filtering options", dedent("""\
+            Include or exclude stanzas to promote using these filter options.
+            Stanzas selected by these filters will be promoted.
 
             All filter options can be provided multiple times.
-            If you have a long list of filters, they can be saved in a file and referenced using
-            the special ``file://`` prefix.  One entry per line."""))
-
+            If you have a long list of filters, they can be saved in a file and
+            referenced using the special ``file://`` prefix.  One entry per line."""))
+        pg_ftr.add_argument("--match", "-m",
+                            choices=["regex", "wildcard", "string"],
+                            default="wildcard",
+                            help=dedent("""\
+            Specify pattern matching mode.
+            Defaults to 'wildcard' allowing for ``*`` and  ``?`` matching.
+            Use 'regex' for more power but watch out for shell escaping.
+            Use 'string' enable literal matching."""))
+        pg_ftr.add_argument("--ignore-case", action="store_true",
+                            help=dedent("""\
+            Ignore case when comparing or matching strings.
+            By default matches are case-sensitive."""))
+        pg_ftr.add_argument("--invert-match", "-v", action="store_true",
+                            help=dedent("""\
+            Invert match results.
+            This can be used to show what content does NOT match,
+            or make a backup copy of excluded content."""))
         pg_ftr.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
                             help=dedent("""\
-            Match any stanza who's name matches the given pattern.
+            Promote any stanza with a name matching the given pattern.
             PATTERN supports bulk patterns via the ``file://`` prefix."""))
 
         parser.add_argument("--force", "-f",
@@ -197,6 +218,8 @@ class PromoteCmd(KsconfCmd):
                     "check with '--force'\n".format(bn_source, bn_target))
                 return EXIT_CODE_FAILED_SAFETY_CHECK
 
+        self.prep_filters(args)
+
         # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
         # Parse all config files
         cfg_src = args.source.data
@@ -263,6 +286,14 @@ class PromoteCmd(KsconfCmd):
                     args.source.dump(cfg_final_src)
                 else:
                     args.source.unlink()
+
+    def prep_filters(self, args):
+        flags = 0
+        if args.ignore_case:
+            flags |= FilteredList.IGNORECASE
+        if args.verbose:
+            flags |= FilteredList.VERBOSE
+        self.stanza_filters = create_filtered_list(args.match, flags).feedall(args.stanza)
 
     def _do_promote_automatic(self, cfg_src, cfg_tgt, args):
         # If the --stanza filter was provided, use that promotional logic instead
@@ -384,15 +415,10 @@ class PromoteCmd(KsconfCmd):
         out_cfg = deepcopy(cfg_tgt)
         diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
-        diff_stanza_names = set(op.location.stanza for op in diff)
-
-        for stanza_name in args.stanza:
-            if stanza_name not in diff_stanza_names:
-                self.stderr.write("Stanza [{}] is not a recognized as a new or modified stanza.\n".format(stanza_name))
-
         for op in diff:
-            if op.location.stanza in args.stanza:
-                show_diff(self.stdout, [op])
+            if self.stanza_filters.match(op.location.stanza) ^ args.invert_match:
+                if args.verbose:
+                    show_diff(self.stdout, [op])
                 if isinstance(op.location, DiffStanza):
                     # Move entire stanza
                     out_cfg[op.location.stanza] = op.b

@@ -265,8 +265,10 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive] [--stanza PATTERN]
-                          [--force] [--keep] [--keep-empty]
+    usage: ksconf promote [-h] [--batch | --interactive] [--verbose]
+                          [--match {regex,wildcard,string}] [--ignore-case]
+                          [--invert-match] [--stanza PATTERN] [--force] [--keep]
+                          [--keep-empty]
                           SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is used
@@ -281,42 +283,55 @@ ksconf promote
     NOTE: Changes are *MOVED* not copied, unless '--keep' is used.
     
     positional arguments:
-      SOURCE             The source configuration file to pull changes from.
-                         (Typically the 'local' conf file)
-      TARGET             Configuration file or directory to push the changes into.
-                         (Typically the 'default' folder)
+      SOURCE                The source configuration file to pull changes from.
+                            (Typically the 'local' conf file)
+      TARGET                Configuration file or directory to push the changes
+                            into. (Typically the 'default' folder)
     
     optional arguments:
-      -h, --help         show this help message and exit
-      --batch, -b        Use batch mode where all configuration settings are
-                         automatically promoted. All changes are removed from
-                         source and applied to target. The source file will be
-                         removed unless '--keep-empty' is used.
-      --interactive, -i  Enable interactive mode where the user will be prompted
-                         to approve the promotion of specific stanzas and
-                         attributes. The user will be able to apply, skip, or edit
-                         the changes being promoted.
-      --force, -f        Disable safety checks. Don't check to see if SOURCE and
-                         TARGET share the same basename.
-      --keep, -k         Keep conf settings in the source file. All changes will
-                         be copied into the TARGET file instead of being moved
-                         there. This is typically a bad idea since local always
-                         overrides default.
-      --keep-empty       Keep the source file, even if after the settings
-                         promotions the file has no content. By default, SOURCE
-                         will be removed after all content has been moved into
-                         TARGET. Splunk will re-create any necessary local files
-                         on the fly.
+      -h, --help            show this help message and exit
+      --batch, -b           Use batch mode where all configuration settings are
+                            automatically promoted. All changes are removed from
+                            source and applied to target. The source file will be
+                            removed unless '--keep-empty' is used.
+      --interactive, -i     Enable interactive mode where the user will be
+                            prompted to approve the promotion of specific stanzas
+                            and attributes. The user will be able to apply, skip,
+                            or edit the changes being promoted.
+      --verbose             Enable additional output.
+      --force, -f           Disable safety checks. Don't check to see if SOURCE
+                            and TARGET share the same basename.
+      --keep, -k            Keep conf settings in the source file. All changes
+                            will be copied into the TARGET file instead of being
+                            moved there. This is typically a bad idea since local
+                            always overrides default.
+      --keep-empty          Keep the source file, even if after the settings
+                            promotions the file has no content. By default, SOURCE
+                            will be removed after all content has been moved into
+                            TARGET. Splunk will re-create any necessary local
+                            files on the fly.
     
-    Batch mode filtering options:
-      Include or exclude entire stanzas using these filter options.
+    Automatic filtering options:
+      Include or exclude stanzas to promote using these filter options.
+      Stanzas selected by these filters will be promoted.
       
       All filter options can be provided multiple times.
-      If you have a long list of filters, they can be saved in a file and referenced using
-      the special 'file://' prefix.  One entry per line.
+      If you have a long list of filters, they can be saved in a file and
+      referenced using the special 'file://' prefix.  One entry per line.
     
-      --stanza PATTERN   Match any stanza who's name matches the given pattern.
-                         PATTERN supports bulk patterns via the 'file://' prefix.
+      --match {regex,wildcard,string}, -m {regex,wildcard,string}
+                            Specify pattern matching mode. Defaults to 'wildcard'
+                            allowing for '*' and '?' matching. Use 'regex' for
+                            more power but watch out for shell escaping. Use
+                            'string' enable literal matching.
+      --ignore-case         Ignore case when comparing or matching strings. By
+                            default matches are case-sensitive.
+      --invert-match, -v    Invert match results. This can be used to show what
+                            content does NOT match, or make a backup copy of
+                            excluded content.
+      --stanza PATTERN      Promote any stanza with a name matching the given
+                            pattern. PATTERN supports bulk patterns via the
+                            'file://' prefix.
 
 
 
