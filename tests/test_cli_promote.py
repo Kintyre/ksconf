@@ -238,6 +238,14 @@ class CliPromoteTest(unittest.TestCase):
         pass
     '''
 
+    def test_promote_summary(self):
+        twd = self.sample_data01()
+        with ksconf_cli:
+            ko = ksconf_cli("promote", "--summary", self.conf_local, self.conf_default)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertRegex(ko.stderr, r"\s*[License usage trend by sourcetype]\s+3 keys")
+        del twd
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

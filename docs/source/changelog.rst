@@ -11,6 +11,14 @@ New functionality, massive documentation improvements, metadata support, and Spl
 Release v0.7.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-   New automatic ``promote`` mode is now avaiable using CLI arguments!
+    This allows stanzas to be selected for promotion from the CLI in batch and interactive modes.
+    This implementation borrows (and shares code) with the ``ksconf filter`` command so hopefully the CLI arguments look familiar.
+    It's possible to promote a single stanza, a stanza wildcard, regex or invert the matching logic and promote everything except for the named stanza (blacklist).
+    Right now ``--stanza`` is the only supporting matching mode, but more can be added as needed.
+    A huge thanks to mthambipillai for providing a pull-request with an initial implementation of this feature!
+-   Added a new summary output mode (``ksconf promote --summary``) that will provide a quick summary of what content could be promoted.
+    This can be used along side the new ``--stanza`` filtering options to show the names of stanzas that can be promoted.
 -   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder.
 -   Fixed bug with ``minimize`` when the required ``--target`` argument is not given.  This now results in a reminder to the user rather than an unhandled exception.
 -   Splunk app packaging fix.  Write access to the app was previously not granted due to a spelling mistake in the metadata file.

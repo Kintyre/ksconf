@@ -113,6 +113,10 @@ class PromoteCmd(KsconfCmd):
             Enable interactive mode where the user will be prompted to approve
             the promotion of specific stanzas and attributes.
             The user will be able to apply, skip, or edit the changes being promoted."""))
+        grp1.add_argument("--summary", "-s",
+                          action="store_const",
+                          dest="mode", const="summary",
+                          help="Summarize content that could be promoted.")
 
         parser.add_argument("--verbose", action="store_true", default=False,
                             help="Enable additional output.")
@@ -131,7 +135,7 @@ class PromoteCmd(KsconfCmd):
             Specify pattern matching mode.
             Defaults to 'wildcard' allowing for ``*`` and  ``?`` matching.
             Use 'regex' for more power but watch out for shell escaping.
-            Use 'string' enable literal matching."""))
+            Use 'string' to enable literal matching."""))
         pg_ftr.add_argument("--ignore-case", action="store_true",
                             help=dedent("""\
             Ignore case when comparing or matching strings.
@@ -139,8 +143,7 @@ class PromoteCmd(KsconfCmd):
         pg_ftr.add_argument("--invert-match", "-v", action="store_true",
                             help=dedent("""\
             Invert match results.
-            This can be used to show what content does NOT match,
-            or make a backup copy of excluded content."""))
+            This can be used to prevent content from being promoted."""))
         pg_ftr.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
                             help=dedent("""\
             Promote any stanza with a name matching the given pattern.
@@ -206,8 +209,10 @@ class PromoteCmd(KsconfCmd):
             # Allow local.meta -> default.meta without --force or a warning message
             pass
         elif bn_source != bn_target:
+            if args.mode == "summary":
+                pass
             # Todo: Allow for interactive prompting when in interactive but not force mode.
-            if args.force:
+            elif args.force:
                 self.stderr.write(
                     "Promoting content across conf file types ({0} --> {1}) because the "
                     "'--force' CLI option was set.\n".format(bn_source, bn_target))
@@ -218,8 +223,6 @@ class PromoteCmd(KsconfCmd):
                     "check with '--force'\n".format(bn_source, bn_target))
                 return EXIT_CODE_FAILED_SAFETY_CHECK
 
-        self.prep_filters(args)
-
         # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
         # Parse all config files
         cfg_src = args.source.data
@@ -229,12 +232,19 @@ class PromoteCmd(KsconfCmd):
             self.stderr.write("No settings in {}.  Nothing to promote.\n".format(args.source.name))
             return EXIT_CODE_NOTHING_TO_DO
 
-        if args.mode == "ask":
+        # Prep filters and determine if there's any automatic work that can be done
+        if self.prep_filters(args):
+            # Run filter and then return control back
+            cfg_src, cfg_tgt = self._do_promote_list(cfg_src, cfg_tgt, args)
+
+        if args.mode in ("ask", "summary"):
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
             delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
             delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
             summarize_cfg_diffs(delta, self.stderr)
+            if args.mode == "summary":
+                return
 
             while True:
                 resp = input("Would you like to apply ALL changes?  (y/n/d/q) ")
@@ -252,11 +262,9 @@ class PromoteCmd(KsconfCmd):
 
         if args.mode == "interactive":
             (cfg_final_src, cfg_final_tgt) = self._do_promote_interactive(cfg_src, cfg_tgt, args)
-            if args.stanza:
-                self.stderr.write("Aborting!  We don't yet support using '--stanza' filters along "
-                                  "side interactive mode.  Pull requests welcome!\n"
-                                  "To use '--stanza' you must also use '--batch' mode.\n")
-                return EXIT_CODE_FEAT_NOT_IMPLEMENTED
+        elif args.stanza:
+            # We already applied changes above.
+            cfg_final_src, cfg_final_tgt = cfg_src, cfg_tgt
         else:
             (cfg_final_src, cfg_final_tgt) = self._do_promote_automatic(cfg_src, cfg_tgt, args)
 
@@ -294,11 +302,10 @@ class PromoteCmd(KsconfCmd):
         if args.verbose:
             flags |= FilteredList.VERBOSE
         self.stanza_filters = create_filtered_list(args.match, flags).feedall(args.stanza)
+        if args.stanza:
+            return True
 
     def _do_promote_automatic(self, cfg_src, cfg_tgt, args):
-        # If the --stanza filter was provided, use that promotional logic instead
-        if args.stanza:
-            return self._do_promote_list(cfg_src, cfg_tgt, args)
         # Promote ALL entries;  simply, isn't it...  ;-)
         final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
         return ({}, final_cfg)
@@ -410,7 +417,6 @@ class PromoteCmd(KsconfCmd):
         return (out_src, out_cfg)
 
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
-        # For now this ONLY handles batch/automatic style promotions
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
         diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)

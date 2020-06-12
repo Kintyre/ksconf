@@ -64,7 +64,7 @@ class FilterCmd(KsconfCmd):
             Specify pattern matching mode.
             Defaults to 'wildcard' allowing for ``*`` and  ``?`` matching.
             Use 'regex' for more power but watch out for shell escaping.
-            Use 'string' enable literal matching."""))
+            Use 'string' to enable literal matching."""))
         parser.add_argument("--ignore-case", "-i", action="store_true",
                             help=dedent("""\
             Ignore case when comparing or matching strings.

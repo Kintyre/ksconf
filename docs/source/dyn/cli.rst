@@ -214,7 +214,7 @@ ksconf filter
                             Specify pattern matching mode. Defaults to 'wildcard'
                             allowing for '*' and '?' matching. Use 'regex' for
                             more power but watch out for shell escaping. Use
-                            'string' enable literal matching.
+                            'string' to enable literal matching.
       --ignore-case, -i     Ignore case when comparing or matching strings. By
                             default matches are case-sensitive.
       --invert-match, -v    Invert match results. This can be used to show what
@@ -265,7 +265,7 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive] [--verbose]
+    usage: ksconf promote [-h] [--batch | --interactive | --summary] [--verbose]
                           [--match {regex,wildcard,string}] [--ignore-case]
                           [--invert-match] [--stanza PATTERN] [--force] [--keep]
                           [--keep-empty]
@@ -298,6 +298,7 @@ ksconf promote
                             prompted to approve the promotion of specific stanzas
                             and attributes. The user will be able to apply, skip,
                             or edit the changes being promoted.
+      --summary, -s         Summarize content that could be promoted.
       --verbose             Enable additional output.
       --force, -f           Disable safety checks. Don't check to see if SOURCE
                             and TARGET share the same basename.
@@ -323,12 +324,11 @@ ksconf promote
                             Specify pattern matching mode. Defaults to 'wildcard'
                             allowing for '*' and '?' matching. Use 'regex' for
                             more power but watch out for shell escaping. Use
-                            'string' enable literal matching.
+                            'string' to enable literal matching.
       --ignore-case         Ignore case when comparing or matching strings. By
                             default matches are case-sensitive.
-      --invert-match, -v    Invert match results. This can be used to show what
-                            content does NOT match, or make a backup copy of
-                            excluded content.
+      --invert-match, -v    Invert match results. This can be used to prevent
+                            content from being promoted.
       --stanza PATTERN      Promote any stanza with a name matching the given
                             pattern. PATTERN supports bulk patterns via the
                             'file://' prefix.

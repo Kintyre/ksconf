@@ -20,8 +20,7 @@ ksconf promote
 Modes
 -----
 
-Promote has two different modes:  batch and interactive.
-
+Promote has different modes:
 
     Batch mode
         Changes are applied automatically and the (now empty) source file is removed by default.
@@ -33,9 +32,39 @@ Promote has two different modes:  batch and interactive.
 
         ..  hint:: This mode was inspired by :command:`git add --patch` command.
 
+    Summary mode
+        Shows the user a brief breakdown of what stanzas are available for promotion.
+        This can be used to simply the use of the ``--stanza`` filtering options (automatic promotion) to show the names of stanzas available for promotion.
+        Note that when ``--summary`` and ``--stanza`` are used at the same time, then the summary output will include any output not *already* matched by ``--stanza`` filter.
+
     Default
         If you haven’t specified either batch or interactive mode, you’ll be asked to pick one at startup.
         You'll be given the option to show a diff, apply all changes, or be prompted to keep or reject changes interactively.
+
+
+Automated promotions
+--------------------
+
+Ksconf 0.7.8 added support for automatic stanza matching and promotion using a ``ksconf filter``-like CLI options.
+
+Key features include:
+
+    Automatic promotion of stanzas
+        One or more named stanzas can be promoted automatically using the ``--stanza`` argument.
+        This argument can be given multiple times to match multiples stanzas at once.
+        In batch mode, only the named stanzas will be promoted;
+        but in interactive mode, the named stanzas will be promoted first, and any content remaining to be promoted can be handled interactively.
+
+    Matching mode
+        Like with the ``ksconf filter`` command, multiple methods of matching are supported.
+        This includes:  string matching (default), wildcard (or "glob") matching, and regular expressions.
+
+    Inversion
+        The ``--invert-match`` option allows for the selection to be inverted.
+        In this mode, it's possible to select which stanzas should *not* be promoted.
+        This can be used as a blacklist to prevent accidental promotions.
+
+
 
 Safety checks
 -------------
@@ -75,6 +104,8 @@ Here are some of the safety mechanisms that ksconf has in place to prevent data 
 
 
 
+
+
 .. note::
 
     Unfortunately, the unit testing coverage for the ``promote`` command is quite low.
@@ -109,6 +140,19 @@ Similarly, a shortcut for pushing between metadata files exists:
 
             ksconf promote metadata/local.meta metadata
 
+
+A few example of automatic promotion of a named stanza:
+
+    ..  code-block:: sh
+
+            # Single stanzas
+            ksconf promote local/savedsearches.conf default --stanza "My fancy search"
+
+            # Wildcard promote all prod server alerts
+            ksconf promote local/savedsearches.conf default --match wildcard --stanza "Server PRD* Alert"
+
+            # Automatically promote everything except for one search:
+            ksconf promote local/savedsearches.conf default --batch --invert-match --stanza "Local test"
 
 
 Interactive mode
