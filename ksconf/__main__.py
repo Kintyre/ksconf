@@ -68,6 +68,28 @@ def check_py_sane():
     return True
 
 
+def handle_cmd_failed(subparser, ep):
+    """ Build a bogus subparser for a cmd that can't be loaded, with the only purpose of providing
+    a more consistent user experiencee. """
+    # Not sure how much *better* this is.  But it at least it gets away from the dumb stares
+    # when the subcommand silently disappears.  (Visible from ksconf --version, but still...
+    # It's confusing, even if *just* during development)
+    marker = "*" * 80
+    description = "{0}\n***   {1}\n{0}".format(marker, ep.error)
+    badparser = subparser.add_parser(ep.name, description=description,
+                                     help="****** {} ******".format(ep.error),
+                                     formatter_class=DescriptionHelpFormatterPreserveLayout)
+
+    def handler(args):
+        sys.stderr.write("Unable to process due to internal error in '{}'\n{}\n"
+                         .format(ep.name, ep.error))
+        return EXIT_CODE_INTERNAL_ERROR
+    badparser.set_defaults(funct=handler)
+    # Consume all remaining args.  But if params are passed first sometimes the user still sees
+    # "unrecognized arguments".  A deeper hack is needed to improve beyond this.
+    badparser.add_argument('args', nargs=argparse.REMAINDER)
+
+
 def build_cli_parser(do_formatter=False):
     parser_kwargs = dict(
         fromfile_prefix_chars="@",
@@ -128,6 +150,8 @@ def build_cli_parser(do_formatter=False):
             cmd = ep.cmd_cls(ep.entry.name)
             # XXX: Find a better way to handle argparse errors: (TypeError) ex: invalid arguments
             cmd.add_parser(subparsers)
+        elif ep.error:
+            handle_cmd_failed(subparsers, ep)
 
     for distro_name, items in sorted(subcommands.items()):
         if distro_name:

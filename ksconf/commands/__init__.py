@@ -370,23 +370,25 @@ class KsconfCmd(object):
     def launch(self, args):
         """ Handle flow control between pre_run() / run() / post_run() """
         # If this fails, exception is passed up, no handling errors/logging done here.
-        self.pre_run(args)
+        return_code = self.pre_run(args)
+        if return_code:
+            return return_code
 
         exc = None
         try:
             return_code = self.run(args)
         except KsconfCmdReadConfException as e:
             return_code = e.returncode
-        except:     # pragma: no cover
+        except BaseException:     # pragma: no cover
             exc = sys.exc_info()
             raise
         finally:
-            # No matter what, post_run is called.
+            # No matter what, if run() was called, so is post_run()
             self.post_run(args, exc)
         return return_code
 
     def pre_run(self, args):
-        """ Pre-run hook.  Any exceptions here prevent run() from being called. """
+        """ Pre-run hook.  Any exceptions or true return code, prevents run()/post_run() from being called. """
         pass
 
     def run(self, args):    # pragma: no cover
