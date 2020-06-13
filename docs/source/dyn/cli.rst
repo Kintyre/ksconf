@@ -34,8 +34,7 @@ ksconf
                             ongoing merge and one-time ad-hoc use.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
-        package             Create a Splunk app .spl file from an application
-                            directory
+        package             Create a Splunk app .spl file from a source directory
         filter              A stanza-aware GREP tool for conf files
         promote             Promote .conf settings between layers using either
                             batch or interactive mode. Frequently this is used to
@@ -204,14 +203,18 @@ ksconf package
 
  .. code-block:: none
 
-    usage: ksconf package [-h] [-f SPL] [--blacklist BLACKLIST] [-I PATTERN]
-                          [-E PATTERN] [--follow-symlink]
+    usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
+                          [--blacklist BLACKLIST] [-I PATTERN] [-E PATTERN]
+                          [--follow-symlink] [--set-version VERSION]
+                          [--set-build BUILD]
+                          [--allow-local | --block-local | --merge-local]
+                          [--release-file RELEASE_FILE] [--hook-script COMMAND]
                           SOURCE
     
-    Create a Splunk app or add on tarball (.spl) file file from an app directory.
-    
-    This function can do several useful things like, exclude unwanted files, combine layers, set the
-    application version and build number, drop or merge the local directory into default.
+    Create a Splunk app or add on tarball (.spl) file from an app directory.
+    'ksconf package' can do useful things like, exclude unwanted files, combine
+    layers, set the application version and build number, drop or promote the
+    'local' directory into 'default'.
     
     positional arguments:
       SOURCE                Source directory for the Splunk app.
@@ -219,14 +222,56 @@ ksconf package
     optional arguments:
       -h, --help            show this help message and exit
       -f SPL, --file SPL    Name of splunk app file (tarball) to create.
+      --app-name APP_NAME   Specify the top-level app folder name. If this is not
+                            given, the app folder name is automatically extracted
+                            from the basename of SOURCE.
       --blacklist BLACKLIST, -b BLACKLIST
-                            Pattern for files/directories to exclude.
+                            Pattern for files/directories to exclude. Can be given
+                            multiple times. You can load multiple exclusions from
+                            disk by using 'file://path' which can be used with
+                            '.gitignore' for example. (Default includes: '.git*',
+                            '*.py[co]', '__pycache__', '.DS_Store')
+      --follow-symlink, -l  Follow symbolic links pointing to directories.
+                            Symlinks to files are always followed.
+      --set-version VERSION
+                            Set application version. By default the application
+                            version is read from default/app.conf
+      --set-build BUILD     Set application build number.
+      --allow-local         Allow the local folder to be kept. WARNING: This goes
+                            against Splunk packaging practices, and will cause
+                            AppInspect to fail. However, this option can be useful
+                            for private package transfers between servers or
+                            possibly for app backups.
+      --block-local         Block the local folder and local.meta from the
+                            resulting SPL.
+      --merge-local         Merge any files in local into the default folder when
+                            build the archive. This is the default behavior.
+    
+    Layer filtering:
+      If the app being packaged includes multiple layers, these arguments can be
+      used to control which ones should be included in the final app file. If no
+      layer options are specified, then all layers will be included.
+    
       -I PATTERN, --include PATTERN
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN
                             Name or pattern of layers to exclude from the target.
-      --follow-symlink, -l  Follow symbolic links pointing to directories.
-                            Symlinks to files are always followed.
+    
+    Advanced Build Options:
+      The following options are for more advanced app building workflows.
+    
+      --release-file RELEASE_FILE
+                            Write the path of the newly generated archive file
+                            (SPL) after the archive is written. This is useful in
+                            build scripts when the SPL contains variables so the
+                            final name may not be known ahead of time.
+      --hook-script COMMAND
+                            Run the given command or script. This is run after all
+                            layer have been combined, and local directory
+                            handling, but before blacklist cleanup. Therefore if
+                            this command produces any unwanted files they can be
+                            removed with a '--blacklist' entry. This can be used
+                            to install python packages, for example.
 
 
 

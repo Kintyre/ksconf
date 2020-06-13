@@ -117,6 +117,7 @@ class LayerConfig(object):
         # Set defaults
         self.follow_symlink = False
         self.blacklist_files = re.compile("\.(bak|swp)$")
+        self.blacklist_dirs = {".git"}
 
 
 class LayerRootBase(object):
@@ -157,6 +158,9 @@ class LayerRootBase(object):
             for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
                                                followlinks=self.config.follow_symlink):
                 files = [f for f in files if not self.config.blacklist_files.search(f)]
+                for d in list(dirs):
+                    if d in self.config.blacklist_dirs:
+                        dirs.remove(d)
                 yield (root, dirs, files)
 
         def list_files(self):

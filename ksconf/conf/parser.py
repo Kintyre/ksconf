@@ -431,3 +431,48 @@ def conf_attr_boolean(value):
             raise ValueError("Can't convert {!r} to a boolean.".format(value))
     else:
         raise ValueError("Can't convert type {} to a boolean.".format(type(value)))
+
+
+class update_conf(object):
+    """
+    Context manager that allows for simple in-place updates to conf files
+    """
+
+    def __init__(self, conf_path, profile=PARSECONF_MID, encoding=None, make_missing=False):
+        self.path = conf_path
+        self.profile = profile
+        self.encoding = encoding
+        self.make_missing = make_missing
+        self._data = None
+
+    def __enter__(self):
+        if not os.path.isfile(self.path) and self.make_missing:
+            self._data = {}
+        else:
+            self._data = parse_conf(self.path, self.profile, self.encoding)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            # No update since an exception was raised
+            return
+        smart_write_conf(self.path, self._data, sort=True)
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+        return value
+
+    def __contains__(self, item):
+        return item in self._data
+
+    def __iter__(self):
+        return iter
+
+    def keys(self):
+        return list(self._data)
+
+    def update(self, *args, **kwargs):
+        self._data.update(*args, **kwargs)
