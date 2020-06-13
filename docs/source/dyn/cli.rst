@@ -204,9 +204,9 @@ ksconf package
  .. code-block:: none
 
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
-                          [--blacklist BLACKLIST] [-I PATTERN] [-E PATTERN]
-                          [--follow-symlink] [--set-version VERSION]
-                          [--set-build BUILD]
+                          [--blacklist BLACKLIST] [--whitelist WHITELIST]
+                          [-I PATTERN] [-E PATTERN] [--follow-symlink]
+                          [--set-version VERSION] [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
                           [--release-file RELEASE_FILE] [--hook-script COMMAND]
                           SOURCE
@@ -231,6 +231,9 @@ ksconf package
                             disk by using 'file://path' which can be used with
                             '.gitignore' for example. (Default includes: '.git*',
                             '*.py[co]', '__pycache__', '.DS_Store')
+      --whitelist WHITELIST, -w WHITELIST
+                            Remove a pattern that was previously added to the
+                            blacklist.
       --follow-symlink, -l  Follow symbolic links pointing to directories.
                             Symlinks to files are always followed.
       --set-version VERSION

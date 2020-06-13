@@ -293,6 +293,11 @@ class PackageCmd(KsconfCmd):
                                  "with ``.gitignore`` for example.  (Default includes: {})"
                             .format(", ".join("``{}``".format(i) for i in self.default_blacklist)))
 
+        # XXX: This should be smarter; stacked like we support for layers -- where order matters.
+        parser.add_argument("--whitelist", "-w",
+                            action="append", default=[],
+                            help="Remove a pattern that was previously added to the blacklist.")
+
         player = parser.add_argument_group("Layer filtering",
             "If the app being packaged includes multiple layers, these arguments can be used to "
             "control which ones should be included in the final app file.  If no layer options "
@@ -374,7 +379,7 @@ class PackageCmd(KsconfCmd):
                 blacklist.extend(expanded)
             else:
                 blacklist.append(pattern)
-        args.blacklist = blacklist
+        args.blacklist = [pattern for pattern in blacklist if pattern not in args.whitelist]
 
     def run(self, args):
         ''' Create a Splunk app/add-on .spl file from a directory '''
