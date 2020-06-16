@@ -62,7 +62,7 @@ Key features include:
     Inversion
         The ``--invert-match`` option allows for the selection to be inverted.
         In this mode, it's possible to select which stanzas should *not* be promoted.
-        This can be used as a blacklist to prevent accidental promotions.
+        This can be used as a blocklist to prevent accidental promotions.
 
 
 

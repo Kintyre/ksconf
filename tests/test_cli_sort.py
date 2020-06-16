@@ -94,7 +94,7 @@ class CliSortTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
             self.assertRegex(ko.stderr,
                              r"Error [^\r\n]+? file [^\r\n]+?[/\\]badfile\.conf[^\r\n]+ \[BAD_STANZA")
-            self.assertRegex(ko.stderr, r"Skipping blacklisted file [^ ]+[/\\]transforms\.conf")
+            self.assertRegex(ko.stderr, r"Skipping no-sort file [^ ]+[/\\]transforms\.conf")
 
     def test_sort_stdout(self):
         # Not yet implemented.  Currently relying on the shell to do this.

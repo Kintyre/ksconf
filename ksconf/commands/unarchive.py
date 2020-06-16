@@ -310,7 +310,7 @@ class UnarchiveCmd(KsconfCmd):
         self.stdout.write("Extracting app now...\n")
         for gaf in files_iter:
             if match_bwlist(gaf.path, excludes, escape=False):
-                self.stdout.write("Skipping [blacklist] {}\n".format(gaf.path))
+                self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
                 self.stdout.write("{0:60s} {2:o} {1:-6d}\n".format(gaf.path, gaf.size, gaf.mode))
@@ -332,7 +332,7 @@ class UnarchiveCmd(KsconfCmd):
         self.stdout.write("Extracted {} files:  {} new, {} existing, and {} removed\n".format(
             len(installed_files), len(files_new), len(files_upd), len(files_del)))
 
-        # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
+        # Filer out "removed" files; and let us keep some based on a keep-allowlist:  This should
         # include things like local, ".gitignore", ".gitattributes" and so on
 
         keep_list = [".git*"]
@@ -355,7 +355,7 @@ class UnarchiveCmd(KsconfCmd):
             else:
                 files_to_delete.append(fn)
         if files_to_keep:
-            self.stdout.write("Keeping {} of {} files marked for deletion due to whitelist.\n"
+            self.stdout.write("Keeping {} of {} files marked for deletion due to allow list.\n"
                               .format(len(files_to_keep), len(files_del)))
         git_rm_queue = []
 

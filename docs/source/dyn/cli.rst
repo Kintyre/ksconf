@@ -245,7 +245,7 @@ ksconf filter
     
     Attribute selection:
       Include or exclude attributes passed through. By default, all attributes
-      are preserved. Whitelist (keep) operations are preformed before blacklist
+      are preserved. Allowlist (keep) operations are preformed before blocklist
       (reject) operations.
     
       --keep-attrs WC-ATTR  Select which attribute(s) will be preserved. This
@@ -455,7 +455,7 @@ ksconf sort
     config file will be echoed to the screen.  (2) the config files are updated
     in-place when the '-i' option is used.
     
-    Manually managed conf files can be blacklisted by adding a comment containing the
+    Manually managed conf files can be protected against changes by adding a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
     
     positional arguments:

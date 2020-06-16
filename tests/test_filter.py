@@ -42,9 +42,9 @@ class FilterTestCase(unittest.TestCase):
         fl, res = self.filter("string", ("ftp:auth", "http:auth"), self.sample01)
         self.assertEqual(res, ["ftp:auth", "http:auth"])
 
-    def test_string_blackslist(self):
+    def test_string_invert(self):
         fl, res = self.filter("string", ("ftp:auth", "http:auth"), self.sample01,
-                              flags=FilteredList.BLACKLIST)
+                              flags=FilteredList.INVERT)
         self.assertEqual(res, ["ftp:exchange", "ftp:transfer", "ftp:debug", "http:exchange"])
 
     def test_regex(self):
@@ -93,10 +93,10 @@ class FilterTestCase(unittest.TestCase):
         self.assertEqual(fl.counter["*nomatch*"], 0)
         self.assertEqual(len(fl.counter), 2)
 
-    def test_string_blacklist_counter(self):
-        # Note that blacklist (match inversion) doesn't change the counter numbers calculation.
+    def test_string_invert_counter(self):
+        # Note that match inversion doesn't change the counter numbers calculation.
         fl, res = self.filter("string", ("http:auth", "ftp:auth", "ftp:bogus"), self.sample01,
-                              flags=FilteredList.BLACKLIST)
+                              flags=FilteredList.INVERT)
         self.assertEqual(res, ["ftp:exchange", "ftp:transfer", "ftp:debug", "http:exchange"])
         self.assertEqual(fl.counter["ftp:auth"], 1)
         self.assertEqual(fl.counter["http:auth"], 1)
@@ -105,7 +105,6 @@ class FilterTestCase(unittest.TestCase):
         self.assertEqual(len(fl.counter), 3)
 
     def test_string_ignorecase_counter(self):
-        # Note that blacklist (match inversion) doesn't change the counter numbers calculation.
         sample = list(self.sample01)
         sample[4] = sample[4].upper()
         fl, res = self.filter("string", ("http:AUTH", "fTp:AuTh"), self.sample01, flags=FilteredList.IGNORECASE)

@@ -450,7 +450,7 @@ class CliKsconfFilter(unittest.TestCase):
         JSON_TRIM_BRACES_IN_ARRAY_NAMES = true
         """)
 
-    def test_filter_attrs_whitelist(self):
+    def test_filter_attrs_keep(self):
         with ksconf_cli:
             ko = ksconf_cli("filter", self.props03, "--keep-attrs", "SHOULD_LINEMERGE")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
@@ -460,7 +460,7 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertEqual(len(out["kvstore"]), 1)
             self.assertEqual(list(out["kvstore"]), ["SHOULD_LINEMERGE"])
 
-    def test_filter_attrs_blacklist(self):
+    def test_filter_attrs_rejected(self):
         with ksconf_cli:
             ko = ksconf_cli("filter", self.props03,
                             "--reject-attrs", "METRICS_PROTOCOL NO_BINARY_CHECK")
@@ -475,7 +475,7 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("JSON_TRIM_BRACES_IN_ARRAY_NAMES", keys)
 
     def test_filter_attrs_whbllist(self):
-        """ Confirm that blacklist is applied after whitelist """
+        """ Confirm that 'reject' is applied after 'keep'"""
         with ksconf_cli:
             ko = ksconf_cli("filter", self.props03, self.props02, "--ignore-case",
                             "--keep-attrs", "*TIME*",

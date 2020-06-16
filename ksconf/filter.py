@@ -11,9 +11,9 @@ from ksconf.conf.parser import GLOBAL_STANZA
 
 
 class FilteredList(object):
-    IGNORECASE = I = 1
-    BLACKLIST = B = 2
-    VERBOSE = V = 4
+    IGNORECASE = 1
+    INVERT = 2
+    VERBOSE = 4
 
     def __init__(self, flags=0):
         self.data = []
@@ -75,7 +75,7 @@ class FilteredList(object):
         else:
             #  No patterns defined.  No filter rule(s) => allow all through
             return True
-        if self.flags & self.BLACKLIST:
+        if self.flags & self.INVERT:
             return not result
         else:
             return result

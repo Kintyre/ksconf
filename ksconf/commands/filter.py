@@ -122,7 +122,7 @@ class FilterCmd(KsconfCmd):
         pg_con = parser.add_argument_group("Attribute selection", dedent("""\
             Include or exclude attributes passed through.
             By default, all attributes are preserved.
-            Whitelist (keep) operations are preformed before blacklist (reject) operations."""))
+            Allowlist (keep) operations are preformed before blocklist (reject) operations."""))
 
         pg_con.add_argument("--keep-attrs", metavar="WC-ATTR", default=[], action="append",
                             help=dedent("""\
@@ -151,7 +151,7 @@ class FilterCmd(KsconfCmd):
             self.attrs_keep_filter = FilterListWildcard(flags)
             for attrs in args.keep_attrs:
                 self.attrs_keep_filter.feedall(attrs.split(" "))
-            self.attrs_reject_filter = FilterListWildcard(FilteredList.BLACKLIST | flags)
+            self.attrs_reject_filter = FilterListWildcard(FilteredList.INVERT | flags)
             for attrs in args.reject_attrs:
                 self.attrs_reject_filter.feedall(attrs.split(" "))
         else:

@@ -122,7 +122,7 @@ class CombineCmd(KsconfCmd):
         for src_root in args.source:
             for (root, dirs, files) in relwalk(src_root, followlinks=args.follow_symlink):
                 for fn in files:
-                    # Todo: Add blacklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
+                    # Todo: Add blocklist CLI support:  defaults to consider: *sw[po], .git*, .bak, .~
                     if fn.endswith(".swp") or fn.endswith("*.bak"):
                         continue  # pragma: no cover  (peephole optimization)
                     src_file = os.path.join(root, fn)
@@ -135,7 +135,7 @@ class CombineCmd(KsconfCmd):
             for fn in files:
                 tgt_file = os.path.join(root, fn)
                 if tgt_file not in src_file_index:
-                    # Todo:  Add support for additional blacklist wildcards (using fnmatch)
+                    # Todo:  Add support for additional blocklist wildcards (using fnmatch)
                     if fn == CONTROLLED_DIR_MARKER or fn.endswith(".bak"):
                         continue  # pragma: no cover (peephole optimization)
                     target_extra_files.add(tgt_file)

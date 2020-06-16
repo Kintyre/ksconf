@@ -30,7 +30,7 @@ class SortCmd(KsconfCmd):
     config file will be echoed to the screen.  (2) the config files are updated
     in-place when the ``-i`` option is used.
 
-    Manually managed conf files can be blacklisted by adding a comment containing the
+    Manually managed conf files can be protected against changes by adding a comment containing the
     string ``KSCONF-NO-SORT`` to the top of any .conf file.
     """)
     format = "manual"
@@ -86,7 +86,7 @@ class SortCmd(KsconfCmd):
                 try:
                     if not args.force and _has_nosort_marker(conf):
                         if not args.quiet:
-                            self.stderr.write("Skipping blacklisted file {}\n".format(conf))
+                            self.stderr.write("Skipping no-sort file {}\n".format(conf))
                         continue
                     c = self.parse_conf(conf, mode='r+', raw_exec=True)
                     #c = parse_conf(conf, profile=PARSECONF_STRICT)
