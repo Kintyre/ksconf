@@ -5,6 +5,8 @@ import fnmatch
 import re
 import sys
 
+from collections import Counter
+
 from ksconf.conf.parser import GLOBAL_STANZA
 
 
@@ -15,6 +17,8 @@ class FilteredList(object):
 
     def __init__(self, flags=0):
         self.data = []
+        self.rules = None
+        self.counter = Counter()
         self.flags = flags
         self._prep = True
 
@@ -54,13 +58,20 @@ class FilteredList(object):
             # Kick off any first-time preparatory activities
             if self._prep is False:
                 self._pre_match()
+                self.reset_counters()
                 self._prep = True
 
             # Q:  Is this the best way to handle global entries?
             if item is GLOBAL_STANZA:
                 item = "default"
 
-            result = self._match(item)
+            ret = self._match(item)
+            if ret:
+                self.counter[ret] += 1
+                result = True
+            else:
+                result = False
+
         else:
             #  No patterns defined.  No filter rule(s) => allow all through
             return True
@@ -69,11 +80,17 @@ class FilteredList(object):
         else:
             return result
 
+    def reset_counters(self):
+        # Set all the counters to 0, so the caller can know which filters had 0 hits
+        self.counter = Counter()
+        self.counter.update((n, 0) for n in self.data)
+
     @property
     def has_rules(self):
-        return len(self.data) > 0
+        return bool(self.data)
 
     def _match(self, item):  # pragma: no cover
+        """ Return name of rule, indicating a match or not. """
         raise NotImplementedError
 
 
@@ -83,29 +100,49 @@ class FilteredListString(FilteredList):
     def _pre_match(self):
         if self.flags & self.IGNORECASE:
             # Lower-case all strings in self.data.  (Only need to do this once)
-            self.data = {i.lower() for i in self.data}
+            self.rules = {i.lower() for i in self.data}
+        else:
+            self.rules = set(self.data)
+        return self.rules
 
     def _match(self, item):
         if self.flags & self.IGNORECASE:
             item = item.lower()
-        return item in self.data
+        if item in self.rules:
+            return item
+        else:
+            return False
+
+    def reset_counters(self):
+        self.counter = Counter()
+        self.counter.update({n: 0 for n in self.rules})
 
 
 class FilteredListRegex(FilteredList):
     """ Regular Expression support """
-    def _pre_match(self):
+
+    def calc_regex_flags(self):
         re_flags = 0
         if self.flags & self.IGNORECASE:
             re_flags |= re.IGNORECASE
+        return re_flags
+
+    def _pre_match(self):
         # Compile all regular expressions
+        re_flags = self.calc_regex_flags()
         # XXX: Add better error handling here for friendlier user feedback
-        self.data = [re.compile(pattern, re_flags) for pattern in self.data]
+        self.rules = [(pattern, re.compile(pattern, re_flags)) for pattern in self.data]
 
     def _match(self, item):
-        for pattern_re in self.data:
+        for name, pattern_re in self.rules:
             if pattern_re.match(item):
-                return True
+                #self.counter[name] += 1
+                return name
         return False
+
+    def reset_counters(self):
+        self.counter = Counter()
+        self.counter.update({i[0]: 0 for i in self.rules})
 
 
 class FilterListWildcard(FilteredListRegex):
@@ -114,13 +151,12 @@ class FilterListWildcard(FilteredListRegex):
     """
 
     def _pre_match(self):
-        # Use fnmatch to translate wildcard expression to a regex
-        self.data = [fnmatch.translate(pat) for pat in self.data]
-        # Now call regex (parent version)
-        super(FilterListWildcard, self)._pre_match()
+        # Use fnmatch to translate wildcard expression to a regex, and compile regex
+        re_flags = self.calc_regex_flags()
+        self.rules = [(wc, re.compile(fnmatch.translate(wc), re_flags)) for wc in self.data]
 
 
-def create_filtered_list(match_mode, flags):
+def create_filtered_list(match_mode, flags=0):
     if match_mode == "string":
         return FilteredListString(flags)
     elif match_mode == "wildcard":

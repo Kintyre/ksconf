@@ -26,6 +26,9 @@ class MetaDataTestCase(unittest.TestCase):
     def setUp(self):
         self.twd = TestWorkDir()
 
+    def tearDown(self):
+        # Cleanup test working directory
+        self.twd.clean()
 
     @property
     def sample01(self):
