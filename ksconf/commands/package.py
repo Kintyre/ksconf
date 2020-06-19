@@ -162,8 +162,8 @@ class AppPackageBuilder(object):
         if rc != 0:
             raise ValueError("Issue calling 'combine' internally during app build....")
 
-    def blacklist(self, patterns):
-        # XXX:  Rewrite -- Had to hack the layers to explicitly blacklist '.git' dir, because '*.git' wasn't working here. :=(
+    def blocklist(self, patterns):
+        # XXX:  Rewrite -- Had to hack the layers to explicitly blocklist '.git' dir, because '*.git' wasn't working here. :=(
 
         # For now we just delete files out the build directory.  Not sophisticated, but it works
         # Do we need relwalker here?  relwalk
@@ -260,7 +260,7 @@ class PackageCmd(KsconfCmd):
     #format = "manual"
     maturity = "alpha"
 
-    default_blacklist = [
+    default_blocklist = [
         ".git*",
         "*.py[co]",
         "__pycache__",
@@ -284,19 +284,19 @@ class PackageCmd(KsconfCmd):
                             help="Specify the top-level app folder name.  "
                                  "If this is not given, the app folder name is automatically "
                                  "extracted from the basename of SOURCE.")
-        parser.add_argument("--blacklist", "-b",
+        parser.add_argument("--blocklist", "-b",
                             action="append",
-                            default=self.default_blacklist,
+                            default=self.default_blocklist,
                             help="Pattern for files/directories to exclude.  "
                                  "Can be given multiple times.  You can load multiple exclusions "
                                  "from disk by using ``file://path`` which can be used "
                                  "with ``.gitignore`` for example.  (Default includes: {})"
-                            .format(", ".join("``{}``".format(i) for i in self.default_blacklist)))
+                            .format(", ".join("``{}``".format(i) for i in self.default_blocklist)))
 
         # XXX: This should be smarter; stacked like we support for layers -- where order matters.
-        parser.add_argument("--whitelist", "-w",
+        parser.add_argument("--allowlist", "-w",
                             action="append", default=[],
-                            help="Remove a pattern that was previously added to the blacklist.")
+                            help="Remove a pattern that was previously added to the blocklist.")
 
         player = parser.add_argument_group("Layer filtering",
             "If the app being packaged includes multiple layers, these arguments can be used to "
@@ -350,13 +350,13 @@ class PackageCmd(KsconfCmd):
                             action="append", default=[],
                             help="Run the given command or script.  "
                                  "This is run after all layer have been combined, and local "
-                                 "directory handling, but before blacklist cleanup.  "
+                                 "directory handling, but before blocklist cleanup.  "
                                  "Therefore if this command produces any unwanted files they can "
-                                 "be removed with a ``--blacklist`` entry. "
+                                 "be removed with a ``--blocklist`` entry. "
                                  "This can be used to install python packages, for example.")
 
     @staticmethod
-    def load_blacklist(path):
+    def load_blocklist(path):
         with open(path) as stream:
             for line in stream:
                 line = line.rstrip()
@@ -364,22 +364,22 @@ class PackageCmd(KsconfCmd):
                     yield line
 
     def pre_run(self, args):
-        if "local" in args.blacklist:
+        if "local" in args.blocklist:
             self.stderr.write("Blacklisting 'local' is not supported.   "
                               "Most likely you want '--block-local' instead.\n")
             return EXIT_CODE_BAD_ARGS
 
-        blacklist = []
-        for pattern in args.blacklist:
+        blocklist = []
+        for pattern in args.blocklist:
             if pattern.startswith("file://"):
-                blacklist_file = pattern[7:]
-                expanded = list(self.load_blacklist(blacklist_file))
-                self.stderr.write("Extended blacklist from {} with {:d} entries\n"
-                                  .format(blacklist_file, len(expanded)))
-                blacklist.extend(expanded)
+                blocklist_file = pattern[7:]
+                expanded = list(self.load_blocklist(blocklist_file))
+                self.stderr.write("Extended blocklist from {} with {:d} entries\n"
+                                  .format(blocklist_file, len(expanded)))
+                blocklist.extend(expanded)
             else:
-                blacklist.append(pattern)
-        args.blacklist = [pattern for pattern in blacklist if pattern not in args.whitelist]
+                blocklist.append(pattern)
+        args.blocklist = [pattern for pattern in blocklist if pattern not in args.allowlist]
 
     def run(self, args):
         ''' Create a Splunk app/add-on .spl file from a directory '''
@@ -406,9 +406,9 @@ class PackageCmd(KsconfCmd):
             for script in args.hook_script:
                 builder.run_hook_script(script)
 
-            if args.blacklist:
-                self.stderr.write("Applying blacklist:  {!r}\n".format(args.blacklist))
-                builder.blacklist(args.blacklist)
+            if args.blocklist:
+                self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))
+                builder.blocklist(args.blocklist)
 
             if args.set_build or args.set_version:
                 builder.update_app_conf(version=args.set_version,

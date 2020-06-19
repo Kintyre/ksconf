@@ -204,7 +204,7 @@ ksconf package
  .. code-block:: none
 
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
-                          [--blacklist BLACKLIST] [--whitelist WHITELIST]
+                          [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
                           [-I PATTERN] [-E PATTERN] [--follow-symlink]
                           [--set-version VERSION] [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
@@ -225,15 +225,15 @@ ksconf package
       --app-name APP_NAME   Specify the top-level app folder name. If this is not
                             given, the app folder name is automatically extracted
                             from the basename of SOURCE.
-      --blacklist BLACKLIST, -b BLACKLIST
+      --blocklist BLOCKLIST, -b BLOCKLIST
                             Pattern for files/directories to exclude. Can be given
                             multiple times. You can load multiple exclusions from
                             disk by using 'file://path' which can be used with
                             '.gitignore' for example. (Default includes: '.git*',
                             '*.py[co]', '__pycache__', '.DS_Store')
-      --whitelist WHITELIST, -w WHITELIST
+      --allowlist ALLOWLIST, -w ALLOWLIST
                             Remove a pattern that was previously added to the
-                            blacklist.
+                            blocklist.
       --follow-symlink, -l  Follow symbolic links pointing to directories.
                             Symlinks to files are always followed.
       --set-version VERSION
@@ -271,9 +271,9 @@ ksconf package
       --hook-script COMMAND
                             Run the given command or script. This is run after all
                             layer have been combined, and local directory
-                            handling, but before blacklist cleanup. Therefore if
+                            handling, but before blocklist cleanup. Therefore if
                             this command produces any unwanted files they can be
-                            removed with a '--blacklist' entry. This can be used
+                            removed with a '--blocklist' entry. This can be used
                             to install python packages, for example.
 
 
