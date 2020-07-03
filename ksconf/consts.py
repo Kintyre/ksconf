@@ -38,6 +38,7 @@ EXIT_CODE_EXTERNAL_FILE_EDIT = 50
 
 # Unresolvable issues (developer required)
 EXIT_CODE_INTERNAL_ERROR = 100
+EXIT_CODE_FEAT_NOT_IMPLEMENTED = 101     # Too bad we can't use 404 :=)
 
 # Environmental error
 EXIT_CODE_ENV_BUSTED = 120

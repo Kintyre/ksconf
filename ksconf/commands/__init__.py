@@ -546,7 +546,7 @@ def get_all_ksconf_cmds(on_error="warn"):
             cmd_cls = entry.load()
         except (ImportError, NameError, SyntaxError) as e:
             if on_error == "warn":
-                warn("Unable to load entrypoint for {}.  Disabling."
+                warn("Unable to load entrypoint for {}.  Disabling.\n"
                      "Base exception {}.".format(name, e), KsconfPluginWarning)
             elif on_error == "return":
                 error = "Internal error:  {}".format(e)
@@ -555,7 +555,7 @@ def get_all_ksconf_cmds(on_error="warn"):
                 raise e
             continue
         if not issubclass(cmd_cls, KsconfCmd):
-            msg = "Issue loading class for entrypoint:  Disabling." \
+            msg = "Issue loading class for entrypoint:  Disabling.\n" \
                   "{!r} is not derived from KsconfCmd.  ".format(entry)
             if on_error == "warn":
                 warn(msg, KsconfPluginWarning)

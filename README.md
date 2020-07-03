@@ -8,6 +8,8 @@
 [![Documentation Status](https://readthedocs.org/projects/ksconf/badge/?version=latest)](https://ksconf.readthedocs.io/en/latest/?badge=latest)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/kintyre-splunk-conf.svg)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+
 
 ![Ksconf logo][logo]
 
@@ -60,7 +62,7 @@ Get involved:
 Presentations:
 
   * [The joys and pitfalls of managing your Splunk deployment with Git](http://kintyre.rocks/70d87) Philly Splunk Meetup - June 6, 2018
-  * [Managing Splunk Deployments With Git and KSCONF](https://youtu.be/-NIME9XRqlo)
+  * [Managing Splunk Deployments With Git and KSCONF](https://youtu.be/-NIME9XRqlo) ![YouTube Video Likes](https://img.shields.io/youtube/likes/-NIME9XRqlo?logo=youtube&style=flat-square)
     ([slides](https://kintyre.rocks/ksconf18)) Splunk .conf bsides talk - Oct 2, 2018
 
 

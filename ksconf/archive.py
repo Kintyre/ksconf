@@ -67,15 +67,15 @@ def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
             yield GenArchFile(zi.filename, mode, zi.file_size, payload)
 
 
-def sanity_checker(interable):
-    for gaf in interable:
+def sanity_checker(iterable):
+    for gaf in iterable:
         if gaf.path.startswith("/") or ".." in gaf.path:
             raise ValueError("Bad path found in archive:  {}".format(gaf.path))
         yield gaf
 
 
 def gen_arch_file_remapper(iterable, mapping):
-    # Mapping is assumed to be a sequence of (find,replace) strings (may eventually support re.sub?)
+    # Mapping is assumed to be a sequence of (find,replace) strings; find can be compiled regex
     for gaf in iterable:
         path = gaf.path
         for (find, replace) in mapping:

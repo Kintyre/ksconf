@@ -26,6 +26,12 @@ from ksconf.vc.git import git_is_working_tree, git_ls_files, git_is_clean, git_s
 
 allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
+
+# XXX:  Add a git status --ignored --porcelain APPNAME check to list out files/dirs that are excluded...
+
+
+DEFAULT_DIR = "default"
+
 class UnarchiveCmd(KsconfCmd):
     help = "Install or upgrade an existing app in a git-friendly and safe way"
     description = dedent("""
@@ -52,7 +58,7 @@ class UnarchiveCmd(KsconfCmd):
             By default, the app name is taken from the archive as the top-level path included
             in the archive (by convention).
             """))
-        parser.add_argument("--default-dir", default="default", metavar="DIR", help=dedent("""\
+        parser.add_argument("--default-dir", default=DEFAULT_DIR, metavar="DIR", help=dedent("""\
             Name of the directory where the default contents will be stored.
             This is a useful feature for apps that use a dynamic default directory
             that's created and managed by the 'combine' mode."""
@@ -188,9 +194,9 @@ class UnarchiveCmd(KsconfCmd):
                 is_git = git_is_working_tree(dest_app)
             try:
                 # Ignoring the 'local' entries since distributed apps shouldn't contain local
-                old_app_conf_file = os.path.join(dest_app, args.default_dir or "default", "app.conf")
+                old_app_conf_file = os.path.join(dest_app, args.default_dir, "app.conf")
                 old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
-            except ConfParserException:
+            except (ConfParserException, FileNotFoundError):
                 self.stderr.write("Unable to read app.conf from existing install.\n")
                 # Assume upgrade form unknown version
         else:
@@ -296,9 +302,9 @@ class UnarchiveCmd(KsconfCmd):
         files_iter = extract_archive(args.tarball)
         if True:
             files_iter = sanity_checker(files_iter)
-        if args.default_dir:
-            rep = "/{}/".format(args.default_dir.strip("/"))
-            path_rewrites.append(("/default/", rep))
+        if args.default_dir != DEFAULT_DIR:
+            rep = r"\1/{}/".format(args.default_dir.strip("/"))
+            path_rewrites.append((re.compile(r"^(/?[^/]+)/{}/".format(DEFAULT_DIR)), rep))
             del rep
         if new_app_name:
             # We do have the "app_name" extracted from our first pass above, but
@@ -310,7 +316,7 @@ class UnarchiveCmd(KsconfCmd):
         self.stdout.write("Extracting app now...\n")
         for gaf in files_iter:
             if match_bwlist(gaf.path, excludes, escape=False):
-                self.stdout.write("Skipping [blacklist] {}\n".format(gaf.path))
+                self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
                 self.stdout.write("{0:60s} {2:o} {1:-6d}\n".format(gaf.path, gaf.size, gaf.mode))
@@ -332,7 +338,7 @@ class UnarchiveCmd(KsconfCmd):
         self.stdout.write("Extracted {} files:  {} new, {} existing, and {} removed\n".format(
             len(installed_files), len(files_new), len(files_upd), len(files_del)))
 
-        # Filer out "removed" files; and let us keep some based on a keep-whitelist:  This should
+        # Filer out "removed" files; and let us keep some based on a keep-allowlist:  This should
         # include things like local, ".gitignore", ".gitattributes" and so on
 
         keep_list = [".git*"]
@@ -355,7 +361,7 @@ class UnarchiveCmd(KsconfCmd):
             else:
                 files_to_delete.append(fn)
         if files_to_keep:
-            self.stdout.write("Keeping {} of {} files marked for deletion due to whitelist.\n"
+            self.stdout.write("Keeping {} of {} files marked for deletion due to allow list.\n"
                               .format(len(files_to_keep), len(files_del)))
         git_rm_queue = []
 

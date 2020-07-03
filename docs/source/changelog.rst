@@ -34,10 +34,22 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
-Release v0.7.8 (DRAFT)
+Release v0.7.8 (2020-06-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder.
+-   New automatic ``promote`` mode is now available using CLI arguments!
+    This allows stanzas to be selected for promotion from the CLI in batch and interactive modes.
+    This implementation borrows (and shares code) with the ``ksconf filter`` command so hopefully the CLI arguments look familiar.
+    It's possible to promote a single stanza, a stanza wildcard, regex or invert the matching logic and promote everything except for the named stanza (blocklist).
+    Right now ``--stanza`` is the only supporting matching mode, but more can be added as needed.
+    A huge thanks to mthambipillai for providing a pull-request with an initial implementation of this feature!
+-   Added a new summary output mode (``ksconf promote --summary``) that will provide a quick summary of what content could be promoted.
+    This can be used along side the new ``--stanza`` filtering options to show the names of stanzas that can be promoted.
+-   Replaced insensitive terminology with race-neutral terms.  Specifically the terms 'blacklist' and 'whitelist' have been replaced.
+    NOTE:  This does *not* change any CLI attributes, but in a few cases the standard output terminology is slighly different.
+    Also terminology in ``.conf`` files couldn't be updated as that's controlled by Splunk.
+-   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder and where a nested ``default`` folder (nested under a Python package, for example) could get renamed if ``--default-dir`` was used, now only the top-most ``default`` folder is updated.
+    Also fixed an unlikley bug triggered when ``default/app.conf`` is missing.
 -   Fixed bug with ``minimize`` when the required ``--target`` argument is not given.  This now results in a reminder to the user rather than an unhandled exception.
 -   Splunk app packaging fix.  Write access to the app was previously not granted due to a spelling mistake in the metadata file.
 
@@ -204,7 +216,7 @@ Release v0.5.5 (2019-01-28)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  New :ref:`ksconf_cmd_filter` command added for slicing up a conf file into smaller pieces. Think of this as
-   GREP that’s stanza-aware. Can also whitelist or blacklist attributes, if desirable.
+   GREP that’s stanza-aware. Can also allow or block attributes, if desirable.
 -  Expanded ``rest-export`` CLI capabilities to include a new ``--delete`` option, pretty-printing,
    and now supports stdin by allowing the user to explicitly set the file type using ``--conf``.
 -  Refactored all CLI unittests for increased readability and long-term maintenance. Unit tests
@@ -364,7 +376,7 @@ rewritten.
 Release legacy-v1.0.1 (2018-04-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Fixes to blacklist support and many enhancements to ``ksconf unarchive``.
+-  Fixes to blocklist support and many enhancements to ``ksconf unarchive``.
 -  Introduces parsing profiles.
 -  Lots of bug fixes to various subcommands.
 -  Added automatic detection of ‘subcommands’ for CLI documentation helper script.

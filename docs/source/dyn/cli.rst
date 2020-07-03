@@ -312,7 +312,7 @@ ksconf filter
                             Specify pattern matching mode. Defaults to 'wildcard'
                             allowing for '*' and '?' matching. Use 'regex' for
                             more power but watch out for shell escaping. Use
-                            'string' enable literal matching.
+                            'string' to enable literal matching.
       --ignore-case, -i     Ignore case when comparing or matching strings. By
                             default matches are case-sensitive.
       --invert-match, -v    Invert match results. This can be used to show what
@@ -343,7 +343,7 @@ ksconf filter
     
     Attribute selection:
       Include or exclude attributes passed through. By default, all attributes
-      are preserved. Whitelist (keep) operations are preformed before blacklist
+      are preserved. Allowlist (keep) operations are preformed before blocklist
       (reject) operations.
     
       --keep-attrs WC-ATTR  Select which attribute(s) will be preserved. This
@@ -363,7 +363,9 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive] [--force] [--keep]
+    usage: ksconf promote [-h] [--batch | --interactive | --summary] [--verbose]
+                          [--match {regex,wildcard,string}] [--ignore-case]
+                          [--invert-match] [--stanza PATTERN] [--force] [--keep]
                           [--keep-empty]
                           SOURCE TARGET
     
@@ -379,32 +381,55 @@ ksconf promote
     NOTE: Changes are *MOVED* not copied, unless '--keep' is used.
     
     positional arguments:
-      SOURCE             The source configuration file to pull changes from.
-                         (Typically the 'local' conf file)
-      TARGET             Configuration file or directory to push the changes into.
-                         (Typically the 'default' folder)
+      SOURCE                The source configuration file to pull changes from.
+                            (Typically the 'local' conf file)
+      TARGET                Configuration file or directory to push the changes
+                            into. (Typically the 'default' folder)
     
     optional arguments:
-      -h, --help         show this help message and exit
-      --batch, -b        Use batch mode where all configuration settings are
-                         automatically promoted. All changes are removed from
-                         source and applied to target. The source file will be
-                         removed unless '--keep-empty' is used.
-      --interactive, -i  Enable interactive mode where the user will be prompted
-                         to approve the promotion of specific stanzas and
-                         attributes. The user will be able to apply, skip, or edit
-                         the changes being promoted.
-      --force, -f        Disable safety checks. Don't check to see if SOURCE and
-                         TARGET share the same basename.
-      --keep, -k         Keep conf settings in the source file. All changes will
-                         be copied into the TARGET file instead of being moved
-                         there. This is typically a bad idea since local always
-                         overrides default.
-      --keep-empty       Keep the source file, even if after the settings
-                         promotions the file has no content. By default, SOURCE
-                         will be removed after all content has been moved into
-                         TARGET. Splunk will re-create any necessary local files
-                         on the fly.
+      -h, --help            show this help message and exit
+      --batch, -b           Use batch mode where all configuration settings are
+                            automatically promoted. All changes are removed from
+                            source and applied to target. The source file will be
+                            removed unless '--keep-empty' is used.
+      --interactive, -i     Enable interactive mode where the user will be
+                            prompted to approve the promotion of specific stanzas
+                            and attributes. The user will be able to apply, skip,
+                            or edit the changes being promoted.
+      --summary, -s         Summarize content that could be promoted.
+      --verbose             Enable additional output.
+      --force, -f           Disable safety checks. Don't check to see if SOURCE
+                            and TARGET share the same basename.
+      --keep, -k            Keep conf settings in the source file. All changes
+                            will be copied into the TARGET file instead of being
+                            moved there. This is typically a bad idea since local
+                            always overrides default.
+      --keep-empty          Keep the source file, even if after the settings
+                            promotions the file has no content. By default, SOURCE
+                            will be removed after all content has been moved into
+                            TARGET. Splunk will re-create any necessary local
+                            files on the fly.
+    
+    Automatic filtering options:
+      Include or exclude stanzas to promote using these filter options.
+      Stanzas selected by these filters will be promoted.
+      
+      All filter options can be provided multiple times.
+      If you have a long list of filters, they can be saved in a file and
+      referenced using the special 'file://' prefix.  One entry per line.
+    
+      --match {regex,wildcard,string}, -m {regex,wildcard,string}
+                            Specify pattern matching mode. Defaults to 'wildcard'
+                            allowing for '*' and '?' matching. Use 'regex' for
+                            more power but watch out for shell escaping. Use
+                            'string' to enable literal matching.
+      --ignore-case         Ignore case when comparing or matching strings. By
+                            default matches are case-sensitive.
+      --invert-match, -v    Invert match results. This can be used to prevent
+                            content from being promoted.
+      --stanza PATTERN      Promote any stanza with a name matching the given
+                            pattern. PATTERN supports bulk patterns via the
+                            'file://' prefix.
 
 
 
@@ -528,7 +553,7 @@ ksconf sort
     config file will be echoed to the screen.  (2) the config files are updated
     in-place when the '-i' option is used.
     
-    Manually managed conf files can be blacklisted by adding a comment containing the
+    Manually managed conf files can be protected against changes by adding a comment containing the
     string 'KSCONF-NO-SORT' to the top of any .conf file.
     
     positional arguments:
