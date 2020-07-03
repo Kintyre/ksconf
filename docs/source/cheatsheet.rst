@@ -119,6 +119,24 @@ You will be prompted to pick which items you want to promote.
 Alternatively, use the ``--batch`` option to promote everything in one step, without reviewing the changes first.
 
 
+Packaging and building apps
+---------------------------
+
+
+Quick package and install
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Use the ``--release-file`` option of the package command to write out the name of the final created tarball.
+This helps when the final tarball name isn't known in advance because it contains a version string, for example.
+By simply placing the latest release in a static location, this allows commonly repeated operations, like build+install be chained together in a convienent way making iterations quite fast from a shell.
+
+    .. code-block:: sh
+
+        cd my-apps
+        ksconf package kintyre_app_speedtest --release-file .release && $SPLUNK_HOME/bin/splunk install app $(<.release) -update 1
+
+To save time, I often put this command (along with a first-time install) command in a README or DEVELOPMENT file at the top-level of the app repo.
 
 Advanced usage
 ---------------
