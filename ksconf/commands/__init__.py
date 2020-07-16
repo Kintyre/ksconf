@@ -379,6 +379,11 @@ class KsconfCmd(object):
             return_code = self.run(args)
         except KsconfCmdReadConfException as e:
             return_code = e.returncode
+        except BrokenPipeError as e:    # pragma: no cover
+            try:
+                self.stderr.write("Broken pipe\n")
+            except:
+                pass
         except BaseException:     # pragma: no cover
             exc = sys.exc_info()
             raise
