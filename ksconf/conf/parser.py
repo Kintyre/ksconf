@@ -103,7 +103,7 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
     This generator break a configuration file stream into sections.  Each section contains a name
     and a list of text lines held within that section.
 
-    Sections that have no entries may be dropped.  Any lines before the first section are send back
+    Sections that have no entries must be preserved.  Any lines before the first section are send back
     with the section name of None.
 
     :param stream: configuration file input stream
@@ -118,8 +118,7 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
         line = line.rstrip("\r\n")
         match = section_re.match(line)
         if match:
-            if buf:
-                yield section, buf
+            yield section, buf
             section = match.group(1)
             buf = []
         else:

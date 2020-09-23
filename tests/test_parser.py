@@ -80,6 +80,18 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(len(c["stanza2"]), 0)
         self.assertEqual(c["stanza3"]["has_key"], "true")
 
+
+    def test_preserve_empty_stanza_bug77(self):
+        c = parse_string("""
+        [capability::db_connect_create_connection]
+        [capability::db_connect_read_connection]
+        [capability::db_connect_update_connection]
+        [capability::db_connect_delete_connection]
+        """)
+        self.assertTrue("capability::db_connect_create_connection" in c, "Must preserve empty stanza")
+        self.assertTrue("capability::db_connect_delete_connection" in c, "Must preserve empty stanza")
+        self.assertEqual(len(c), 4)
+
     def test_whitespace_keyvalue(self):
         c = parse_string("""
         [stanza1]

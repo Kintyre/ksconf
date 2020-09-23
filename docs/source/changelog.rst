@@ -8,6 +8,14 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+
+Release v0.7.9 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Fixed bug where empty stanzas could be removed from ``.conf`` files.
+   This can be detrimental for capability entries in ``authorize.conf``, for example.
+   A big thanks to nebffa for tracking down this bug!
+
 Release v0.7.8 (2020-06-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
