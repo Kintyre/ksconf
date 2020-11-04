@@ -34,7 +34,8 @@ matrix:
     language: objective-c
     env: PYENV_VERSION=3.7.5
   - os: linux
-    python: 'pypy'
+    python: 'pypy3'
+    dist: bionic
 
 # command to install dependencies
 
