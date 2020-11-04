@@ -491,7 +491,7 @@ class ConfigDiffTestCase(unittest.TestCase):
 
         [in_b_only]
         """)
-        delta = compare_cfgs(a, b)
+        delta = compare_cfgs(a, b, preserve_empty=True)
         delta_search = partial(self.find_op_by_location, delta)
         self.assertEqual(delta_search("stanza", stanza="common").tag, DIFF_OP_EQUAL)
         self.assertEqual(delta_search("stanza", stanza="in_a_only").tag, DIFF_OP_DELETE)

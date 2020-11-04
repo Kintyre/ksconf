@@ -8,6 +8,11 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
+Release v0.7.10 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Fixed bug where empty stanzas in the local file could result in deletion in default with ``ksconf promote``.
+   Updated diff interface to improve handling of empty stanzas, but wider support is still needed across other commands; but this isn't a high priority.
 
 Release v0.7.9 (2020-09-23)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

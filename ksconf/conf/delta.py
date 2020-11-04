@@ -49,13 +49,18 @@ class DiffHeader(object):
         return "{0:50} {1}".format(self.name, ts)
 
 
-def compare_stanzas(a, b, stanza_name):
+def compare_stanzas(a, b, stanza_name, preserve_empty=False):
+    if preserve_empty:
+        is_empty = lambda v: v is None
+    else:
+        is_empty = lambda v: not v
+
     if a == b:
         return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b) ]
-    elif not b:
+    elif is_empty(b):
         # A only
         return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None) ]
-    elif not a:
+    elif is_empty(a):
         # B only
         return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b) ]
     else:
@@ -84,7 +89,7 @@ def _compare_stanzas(a, b, stanza_name):
             yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
 
 
-def compare_cfgs(a, b, allow_level0=True):
+def compare_cfgs(a, b, allow_level0=True, preserve_empty=False):
     '''
     Return list of 5-tuples describing how to turn a into b.
 
@@ -147,18 +152,7 @@ def compare_cfgs(a, b, allow_level0=True):
         all_stanzas = list(all_stanzas)
     all_stanzas = sorted(all_stanzas)
     for stanza in all_stanzas:
-        if stanza in a and stanza in b:
-            if a[stanza] == b[stanza]:
-                delta.append(DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza),
-                                    a[stanza], b[stanza]))
-            else:
-                delta.extend(_compare_stanzas(a[stanza], b[stanza], stanza))
-        elif stanza in a:
-            # A only
-            delta.append(DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza), a[stanza], None))
-        else:
-            # B only
-            delta.append(DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza), None, b[stanza]))
+        delta.extend(compare_stanzas(a.get(stanza), b.get(stanza), stanza, preserve_empty))
     return delta
 
 

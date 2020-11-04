@@ -188,6 +188,29 @@ class CliPromoteTest(unittest.TestCase):
             self.assertNotIn("Stanza2", l)
         del twd
 
+    def test_promote_empty_stanza(self):
+        twd = TestWorkDir()
+        conf_default = twd.write_file("default/test.conf", r"""
+        [Stanza1]
+        a = 2
+        c = 8
+        [Stanza3]
+        z = 0
+        """)
+        conf_local = twd.write_file("local/test.conf", r"""
+        [Stanza1]
+
+        [Stanza3]
+        z = 2
+        """)
+        with ksconf_cli:
+            ksconf_cli("promote", "--batch", conf_local, conf_default)
+            d = twd.read_conf("default/test.conf")
+            self.assertFalse(os.path.isfile(conf_local))
+            self.assertEqual(d["Stanza1"]["a"], "2")
+            self.assertEqual(d["Stanza1"]["c"], "8")
+            self.assertEqual(d["Stanza3"]["z"], "2")
+
     def test_promote_batch_simple_keep(self):
         twd = self.sample_data01()
         with ksconf_cli:
