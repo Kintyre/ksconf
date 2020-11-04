@@ -36,6 +36,7 @@ matrix:
   - os: linux
     python: 'pypy3'
     dist: bionic
+    sudo: true
 
 # command to install dependencies
 
