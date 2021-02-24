@@ -12,7 +12,7 @@ from pathlib import Path, PurePath
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, KSCONF_DEBUG
 from ksconf.util.compare import file_compare
-from ksconf.ext.six import text_type, PY2
+from ksconf.ext.six import text_type
 from ksconf.ext.six.moves import range
 
 
@@ -21,7 +21,7 @@ def _path_to_str(p):
 
 
 def pathlib_compat(f):
-    if PY2:
+    if sys.version_info < (3, 6):
         from functools import wraps
         @wraps(f)
         def wrapper(*args, **kwargs):

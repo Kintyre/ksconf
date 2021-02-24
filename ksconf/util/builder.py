@@ -24,14 +24,15 @@ decorator used to implement caching:
 
 import json
 import os
+import sys
 from collections import namedtuple
+from datetime import datetime
 from functools import wraps
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
-from datetime import datetime
 
+from ksconf.ext.six import PY2, text_type
 from ksconf.util.file import file_hash
-from ksconf.ext.six import text_type, PY2
 
 try:
     from tempfile import TemporaryDirectory
@@ -39,7 +40,7 @@ except ImportError:
     from backports.tempfile import TemporaryDirectory
 
 
-if PY2:
+if sys.version_info < (3, 6):
     # Make these standard functions receive strings rather than Path objects
     from ksconf.util.file import pathlib_compat
     copy2 = pathlib_compat(copy2)
@@ -278,7 +279,6 @@ class BuildManager(object):
                     # 6. √ Copy output to real build folder
 
                     # Make temporary folder for executing wrapped function
-                    # PY2 requires passing a string vs Path object
                     with TemporaryDirectory(dir=self.cache_path,
                                             prefix="{}-tmp-".format(name)) as temp_dir:
                         # NOTE: Make a 't' dir under the temp folder so that the cache.rename() doesn't remove the
