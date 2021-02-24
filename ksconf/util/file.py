@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import filecmp
 import os
@@ -8,74 +7,33 @@ import shutil
 import sys
 from glob import glob
 from io import open
+from pathlib import Path, PurePath
+
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, KSCONF_DEBUG
 from ksconf.util.compare import file_compare
+from ksconf.ext.six import text_type, PY2
 from ksconf.ext.six.moves import range
 
 
-try:
-    # Builtin in Python 3.3+
-    from shutil import where
-except ImportError:
-    # Borrowed from Python's stdlib 3.7 shutil.py; comments removed to keep this short
-
-    def which(cmd, mode=os.F_OK | os.X_OK, path=None):
-        """Given a command, mode, and a PATH string, return the path which
-        conforms to the given mode on the PATH, or None if there is no such
-        file.
-        `mode` defaults to os.F_OK | os.X_OK. `path` defaults to the result
-        of os.environ.get("PATH"), or can be overridden with a custom search
-        path.
-        """
-        def _access_check(fn, mode):
-            return (os.path.exists(fn) and os.access(fn, mode)
-                    and not os.path.isdir(fn))
-        if os.path.dirname(cmd):
-            if _access_check(cmd, mode):
-                return cmd
-            return None
-
-        if path is None:
-            path = os.environ.get("PATH", None)
-            if path is None:
-                try:
-                    path = os.confstr("CS_PATH")
-                except (AttributeError, ValueError):
-                    # os.confstr() or CS_PATH is not available
-                    path = os.defpath
-        # PATH='' doesn't match, whereas PATH=':' looks in the current directory
-        if not path:
-            return None
-        path = path.split(os.pathsep)
-
-        if sys.platform == "win32":
-            # The current directory takes precedence on Windows.
-            if not os.curdir in path:
-                path.insert(0, os.curdir)
-
-            # PATHEXT is necessary to check on Windows.
-            pathext = os.environ.get("PATHEXT", "").split(os.pathsep)
-            if any(cmd.lower().endswith(ext.lower()) for ext in pathext):
-                files = [cmd]
-            else:
-                files = [cmd + ext for ext in pathext]
-        else:
-            files = [cmd]
-
-        seen = set()
-        for dir in path:
-            normdir = os.path.normcase(dir)
-            if not normdir in seen:
-                seen.add(normdir)
-                for thefile in files:
-                    name = os.path.join(dir, thefile)
-                    if _access_check(name, mode):
-                        return name
-        return None
+def _path_to_str(p):
+    return text_type(p) if isinstance(p, PurePath) else p
 
 
+def pathlib_compat(f):
+    if PY2:
+        from functools import wraps
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            args = [_path_to_str(p) for p in args]
+            kwargs = {k: _path_to_str(v) for k, v in kwargs.items()}
+            return f(*args, **kwargs)
+        return wrapper
+    else:
+        return f
 
+
+@pathlib_compat
 def _is_binary_file(filename, peek=2048):
     # https://stackoverflow.com/a/7392391/315892; modified for Python 2.6 compatibility
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
@@ -87,6 +45,7 @@ def _is_binary_file(filename, peek=2048):
 _dir_exists_cache = set()
 
 
+@pathlib_compat
 def dir_exists(directory):
     """ Ensure that the directory exists """
     # This works as long as we never call os.chdir()
@@ -97,6 +56,7 @@ def dir_exists(directory):
     _dir_exists_cache.add(directory)
 
 
+@pathlib_compat
 def smart_copy(src, dest):
     """ Copy (overwrite) file only if the contents have changed. """
     ret = SMART_CREATE
@@ -118,6 +78,7 @@ def _stdin_iter(stream=None):
         yield line.rstrip()
 
 
+@pathlib_compat
 def file_fingerprint(path, compare_to=None):
     stat = os.stat(path)
     fp = (stat.st_mtime, stat.st_size)
@@ -179,17 +140,19 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
         yield (dirpath, dirnames, filenames)
 
 
+@pathlib_compat
 def file_hash(path, algorithm="sha256"):
     import hashlib
     h = hashlib.new(algorithm)
     with open(path, "rb") as fp:
-        buf = fp.read(4096)
+        buf = True
         while buf:
-            h.update(buf)
             buf = fp.read(4096)
+            h.update(buf)
     return h.hexdigest()
 
 
+@pathlib_compat
 def _samefile(file1, file2):
     if hasattr(os.path, "samefile"):
         # Nix

@@ -4,7 +4,12 @@ from collections import namedtuple, Counter
 from subprocess import Popen, PIPE, list2cmdline, call
 
 from ksconf.util import _xargs
-from ksconf.util.file import which
+
+try:
+    from shutil import which
+except ImportError:
+    from backports.shutil_which import which
+
 
 GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
