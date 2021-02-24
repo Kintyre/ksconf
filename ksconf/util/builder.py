@@ -23,10 +23,8 @@ decorator used to implement caching:
 """
 
 import json
-import os
 import sys
-from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
@@ -48,11 +46,18 @@ if sys.version_info < (3, 6):
     TemporaryDirectory = pathlib_compat(TemporaryDirectory)
 
 
-class BuildStep(object):
-    __slots__ = ["build_path", "config", "verbosity"]
 
-    def __init__(self, path):
-        self.build_path = path
+class BuildCacheException(Exception):
+    pass
+
+
+
+class BuildStep(object):
+    __slots__ = ["build_path", "source_path", "config", "verbosity"]
+
+    def __init__(self, build, source=None):
+        self.build_path = build
+        self.source_path = source
         self.config = {}
         self.verbosity = 0
 
@@ -74,7 +79,7 @@ class _FileSet(object):
         self.files_meta = {}
 
     def __eq__(self, other):
-        # type: _FileSet -> bool
+        # type: (_FileSet) -> bool
         return self.files_meta == other.files_meta
 
     def __iter__(self):
@@ -85,7 +90,14 @@ class _FileSet(object):
         instance = cls()
         root = Path(root)
         for file_name in files:
-            instance.add_file(root, file_name)
+            # XXX: Support globs
+            if file_name.endswith("/"):
+                # Recursive directory walk
+                instance.add_glob(root, file_name + "**/*")
+            elif "*" in file_name:
+                instance.add_glob(root, file_name)
+            else:
+                instance.add_file(root, file_name)
         return instance
 
     @classmethod
@@ -99,9 +111,23 @@ class _FileSet(object):
 
     def add_file(self, root, relative_path):
         relative_path = PurePath(relative_path)
-        self.files.add(relative_path)
         p = root / relative_path
+        if not p.is_file():
+            if p.is_dir():
+                raise BuildCacheException("Expected file {} is a directory.  "
+                                          "Please make directories with a trailing '/'".format(p))
+            raise BuildCacheException("Missing expected file {}".format(p))
+        self.files.add(relative_path)
         self.files_meta[relative_path] = self.get_fingerprint(p)
+
+    def add_glob(self, root, relative_path):
+        """ Recursively add all files matching glob pattern. """
+        for p in root.glob(relative_path):
+            if not p.is_file():
+                continue
+            relative_path = p.relative_to(root)
+            self.files.add(relative_path)
+            self.files_meta[relative_path] = self.get_fingerprint(p)
 
     @staticmethod
     def get_fingerprint(path):
@@ -121,7 +147,7 @@ class _FileSet(object):
 
 
 class CachedRun(object):
-    #__slots__ = ["root", ... ]
+    __slots__ = ["root", "config_file", "cache_dir", "_info", "_settings", "_state"]
 
     STATE_NEW = "new"
     STATE_EXISTS = "exists"
@@ -133,6 +159,7 @@ class CachedRun(object):
         self.root = root
         self.config_file = self.root / "cache.json"
         self.cache_dir = self.root / "data"
+        self._settings = {}
         self._info = {}
         self._state = self.STATE_NEW
         # self._inputs = []
@@ -142,6 +169,9 @@ class CachedRun(object):
             self.cache_dir.mkdir(parents=True)
         elif self.config_file.is_file() and self.cache_dir.is_dir():
             self._state = self.STATE_EXISTS
+
+    def set_settings(self, cache_settings):
+        self._settings.update(cache_settings)
 
     '''
     def set_lists(self, inputs, outputs):
@@ -180,35 +210,57 @@ class CachedRun(object):
     def is_new(self):
         return self._state == self.STATE_NEW
 
+    @property
+    def is_expired(self):
+
+        timeout = self._settings["timeout"]
+        if timeout is None:
+            return False
+        try:
+            create_time = self._info["timestamp"]
+            timeout = timedelta(seconds=timeout)
+            expired = create_time + timeout
+            return datetime.now() > expired
+        except KeyError:  # no cover
+            raise   # For initial testing
+            # If anything about the info/settings were missing; assume expired
+            return True
+
     def inputs_identical(self, inputs):
         # type: _FileSet
         return self.cached_inputs == inputs
 
-    @staticmethod
-    def _transform_type(data, key_convert):
-        """ Update the filename key by passing it through key_convert()
-           dict[type][filename] = {}
-                      ^^^^^^^^
-        """
-        return {
-            root: {key_convert(key): value
-                   for key, value in child.items()}
-            for root, child in data.items()}
+    def dump(self):
+        def map_keys(d):
+            return {text_type(k): v for k, v in d.items()}
+        mode = "wb" if PY2 else "w"
+        meta = dict(self._info)
+        inputs = meta.pop("inputs")
+        outputs = meta.pop("outputs")
+        data = {
+            "settings": self._settings,
+            "timestamp": datetime.now().strftime(self._timestamp_format),
+            "meta": meta,
+            "state": {
+                "inputs": map_keys(inputs),
+                "outputs": map_keys(outputs),
+            },
+        }
+        with self.config_file.open(mode) as f:
+            json.dump(data, f, indent=2)
 
     def load(self):
+        def map_keys(d):
+            return {Path(k): v for k, v in d.items()}
         with self.config_file.open() as f:
             data = json.load(f)
-            ts = data.pop("timestamp")
-            data = self._transform_type(data, Path)
-            data["timestamp"] = datetime.strptime(ts, self._timestamp_format)
-            self._info = data
-
-    def dump(self):
-        mode = "wb" if PY2 else "w"
-        with self.config_file.open(mode) as f:
-            data = self._transform_type(self._info, text_type)
-            data["timestamp"] = datetime.now().strftime(self._timestamp_format)
-            json.dump(data, f)
+        info = {}
+        info.update(data["meta"])
+        info["timestamp"] = datetime.strptime(data["timestamp"], self._timestamp_format)
+        for state_type, value in data["state"].items():
+            info[state_type] = map_keys(value)
+        self._settings = data["settings"]
+        self._info = info
 
     def set_cache_info(self, type, data):
         # type: str, _FileSet
@@ -223,7 +275,6 @@ class CachedRun(object):
         self.cached_outputs.copy_all(self.cache_dir, dest_path)
 
     def rename(self, dest):
-        #dest = self.root.with_name(new_name)
         if dest.is_dir():
             rmtree(dest)
         self.root.rename(dest)
@@ -239,6 +290,10 @@ class BuildManager(object):
         self.cache_path = None
         self._cache_enabled = True
 
+    def get_build_step(self):
+        step = BuildStep(self.build_path, self.source_path)
+        return step
+
     def set_folders(self, source_path, build_path):
         self.source_path = Path(source_path)
         self.build_path = Path(build_path)
@@ -252,6 +307,13 @@ class BuildManager(object):
     def cache(self, inputs, outputs=".", timeout=None, name=None):
         """ function decorator """
         name_ = name
+        cache_settings = {
+            "name": name,
+            "inputs": inputs,
+            "outputs": outputs,
+            "timeout": timeout,
+        }
+
         def decorator(f):
             # nonlocal name
             if name_ is None:
@@ -261,12 +323,17 @@ class BuildManager(object):
             def wrapper(build_step):
                 # args: BuildStep -> None
                 cache = self.get_cache_info(name)
+                # Once the first cached build step is executed, then block access to the source path
+                build_step.source_path = None
                 if cache.exists:
                     cache.load()
+                # Always use the most up-to-date value for timeout
+                cache.set_settings({"timeout": timeout})
+                # TODO: Validate that cache settings match; for example if 'outputs' changes then files could be skipped
+                # TODO: Check for cache tampering (confirm that existing files haven't been modified); user requestable
                 current_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                 # Determine if previous cache entry exists, and if the inputs haven't changed
-                if cache.exists and cache.inputs_identical(current_inputs):
-                    # XXX: Check for timeout condition here too
+                if cache.exists and cache.inputs_identical(current_inputs) and not cache.is_expired:
                     # Cache HIT:  Reuse cache, by simply copying the outputs to the build folder
                     cache.copy_output_to(self.build_path)
                 else:
@@ -284,6 +351,7 @@ class BuildManager(object):
                         # NOTE: Make a 't' dir under the temp folder so that the cache.rename() doesn't remove the
                         #       folder managed by TemporaryDirectory, which it doesn't like.
                         temp_dir = Path(temp_dir) / "t"
+                        final_cache_root = cache.root
                         cache = CachedRun(temp_dir)
                         alt_bs = build_step.alternate_path(cache.cache_dir)
                         # XXX: Copy any other settings from the original 'build_step' to our copied version
@@ -298,20 +366,28 @@ class BuildManager(object):
                         except Exception:
                             # XXX: More error handling here.  Add custom exception class
                             raise
+                        # TODO: Check for change to inputs.  This could lead to nondeterministic results
                         fs_outputs = _FileSet.from_filesystem(cache.cache_dir, outputs)
                         # Store input/output fingerprint to the internal cache state and persist to disk
+                        cache.set_settings(cache_settings)
                         cache.set_cache_info("inputs", fs_inputs)
                         cache.set_cache_info("outputs", fs_outputs)
                         cache.dump()
                         # Copy output files to real build directory
                         fs_outputs.copy_all(cache.cache_dir, self.build_path)
-                        cache.rename(self.get_cache_info(name).root)
+                        cache.rename(final_cache_root)
                 # No return (on purpose); as we don't want to track extra state
 
-            wrapper.inputs = inputs
-            wrapper.outputs = outputs
-            wrapper.timeout = timeout
-            wrapper.name = name
-            return wrapper
+            if self._cache_enabled:
+                wrapper.inputs = inputs
+                wrapper.outputs = outputs
+                wrapper.timeout = timeout
+                wrapper.name = name
+                wrapper.cached = True
+                return wrapper
+            else:
+                # No caching, just return the original function
+                f.cached = False
+                return f
 
         return decorator
