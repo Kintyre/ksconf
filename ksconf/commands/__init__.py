@@ -31,6 +31,14 @@ __all__ = [
 ]
 
 
+try:
+    BrokenPipeError
+except NameError:
+    # Ugh?!  Close enough.  Dropping Python 2 ASAP!
+    import socket
+    BrokenPipeError = socket.error
+
+
 class ConfDirProxy(object):
     def __init__(self, name, mode, parse_profile=None):
         self.name = name
