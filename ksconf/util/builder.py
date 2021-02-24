@@ -24,7 +24,6 @@ decorator used to implement caching:
 
 import json
 import os
-import typing
 from collections import namedtuple
 from functools import wraps
 from pathlib import Path, PurePath
