@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from collections import namedtuple, Counter
 from subprocess import Popen, PIPE, list2cmdline, call
 
-from ksconf.util import _xargs
+from ksconf.util import _xargs, memoize
 
 try:
     from shutil import which
@@ -45,6 +45,8 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
                 p.returncode, list2cmdline(args + chunk)))
 
 
+# Shave time off of unit testing; or anyting that does CLI calls from the API
+@memoize
 def git_version():
     git_path = which(GIT_BIN)
     if not git_path:
