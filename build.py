@@ -4,7 +4,7 @@ import sys
 from shutil import copy2, rmtree
 import argparse
 
-from ksconf.util.builder import BuildManager, VERBOSE, QUIET
+from ksconf.builder import BuildManager, VERBOSE, QUIET
 
 manager = BuildManager()
 

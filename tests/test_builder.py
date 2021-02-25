@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function, unicode_literals
 
-import json
 import os
 import sys
 import unittest
@@ -19,8 +18,7 @@ if __package__ is None:
     sys.path.append(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import *
-from ksconf.util.builder import BuildManager, BuildStep, BuildCacheException
+from ksconf.builder import BuildManager, BuildCacheException
 from tests.cli_helper import TestWorkDir
 
 
@@ -88,7 +86,7 @@ class BuilderTestCase(unittest.TestCase):
 
         from datetime import datetime, timedelta
         # Make system clock return a time from 10 hours ago
-        with mock.patch("ksconf.util.builder.datetime",
+        with mock.patch("ksconf.builder.cache.datetime",
                         mock.Mock(now=lambda: datetime.now() - timedelta(hours=10))):
             install_package(step)
 
