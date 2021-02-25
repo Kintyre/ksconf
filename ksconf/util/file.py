@@ -23,6 +23,7 @@ def _path_to_str(p):
 def pathlib_compat(f):
     if sys.version_info < (3, 6):
         from functools import wraps
+
         @wraps(f)
         def wrapper(*args, **kwargs):
             args = [_path_to_str(p) for p in args]

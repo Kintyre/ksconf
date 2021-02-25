@@ -329,7 +329,7 @@ class CliKsconfFilter(unittest.TestCase):
             with ksconf_cli:
                 ko = ksconf_cli("filter", "/dev/stdin", "--stanza", "Errors in the last hour")
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-                out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
+                out = ko.get_conf(PARSECONF_STRICT)     # explicit profile to boost coverage
                 self.assertIn("Errors in the last hour", out)
     """
 
