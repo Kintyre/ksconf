@@ -146,11 +146,10 @@ class _FileSet(object):
     def add_glob(self, root, relative_path):
         """ Recursively add all files matching glob pattern. """
         for p in root.glob(relative_path):
-            if not p.is_file():
-                continue
-            relative_path = p.relative_to(root)
-            self.files.add(relative_path)
-            self.files_meta[relative_path] = self.get_fingerprint(p)
+            if p.is_file():
+                relative_path = p.relative_to(root)
+                self.files.add(relative_path)
+                self.files_meta[relative_path] = self.get_fingerprint(p)
 
     @staticmethod
     def get_fingerprint(path):
@@ -203,16 +202,6 @@ class CachedRun(object):
     @property
     def cached_outputs(self):
         return _FileSet.from_cache(self._info["outputs"])
-
-    @property
-    def filesystem_outputs(self):
-        return _FileSet.from_filesystem(self.cache_dir, self._outputs)
-
-    '''
-    @property
-    def filesystem_inputs(self):
-        return _FileSet.from_filesystem(self.source_dir, self._inputs)
-    '''
 
     @property
     def exists(self):
@@ -282,15 +271,6 @@ class CachedRun(object):
         # type: str, _FileSet
         assert type in ("inputs", "outputs")
         self._info[type] = data.files_meta
-
-    def copy_inputs_from(self, src_path, files):
-        fs = _FileSet.from_filesystem(src_path, files)
-        fs.copy_all(self.cache_dir)
-
-    '''
-    def copy_output_to(self, dest_path):
-        self.cached_outputs.copy_all(self.cache_dir, dest_path)
-    '''
 
     def rename(self, dest):
         if dest.is_dir():
@@ -432,7 +412,7 @@ class BuildManager(object):
                         fs_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
                         log("Copied {} input files".format(len(fs_inputs)), VERBOSE*2)
-                        log("Copied input files: {}".format(fs_inputs), VERBOSE*3)
+                        log("Copied input files: {}".format(", ".join(text_type(p) for p in fs_inputs)), VERBOSE*3)
                         try:
                             # Run wrapped function
                             ret = f(alt_bs)
