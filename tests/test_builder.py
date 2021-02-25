@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import sys
 import unittest
+from io import StringIO
 
 try:
     # Python 3.3+
@@ -30,6 +31,8 @@ class BuilderTestCase(unittest.TestCase):
         self.source = twd.makedir("src")
         self.build = twd.makedir("build")
         self.build_manager.set_folders(self.source, self.build)
+        self.out_stream = StringIO()
+        self.build_step = self.build_manager.get_build_step(output=self.out_stream)
 
     def tearDown(self):
         self.twd.clean()
@@ -38,7 +41,7 @@ class BuilderTestCase(unittest.TestCase):
     def test_cache_call_once(self):
         self.twd.write_file("src/requirements.txt", "six==1.14.0")
         call_count = [0]
-        step = self.build_manager.get_build_step()
+        step = self.build_step
 
         @self.build_manager.cache(inputs=["requirements.txt"], outputs=["lib/six.py"])
         def install_package(build):
@@ -69,7 +72,7 @@ class BuilderTestCase(unittest.TestCase):
     def test_cache_expire(self):
         """Mock datetime object to ensure that cache expires so that wrapped funcion is re-run. """
         self.twd.write_file("src/requirements.txt", "six==1.14.0")
-        step = self.build_manager.get_build_step()
+        step = self.build_step
         call_count = [0]
 
         @self.build_manager.cache(inputs=["requirements.txt"], outputs=["lib/*.py"], timeout=3600)
@@ -98,10 +101,11 @@ class BuilderTestCase(unittest.TestCase):
         install_package(step)
         self.assertEqual(call_count[0], 2, "install_package() should have run 2 times due to cache expiration")
         self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+        self.assertIn("Cache expired", self.out_stream.getvalue())
 
     def test_change_inputs(self):
         self.twd.write_file("src/requirements.txt", "six")
-        step = self.build_manager.get_build_step()
+        step = self.build_step
 
         @self.build_manager.cache(inputs=["requirements.txt"], outputs=["x/"])
         def change_input(build):
@@ -111,6 +115,7 @@ class BuilderTestCase(unittest.TestCase):
 
         with self.assertRaises(BuildCacheException) as e:
             change_input(step)
+        self.assertIn("Inputs changed", self.out_stream.getvalue())
 
         @self.build_manager.cache(inputs=["requirements.txt"], outputs=["*.py"])
         def del_input(build):

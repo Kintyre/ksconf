@@ -71,8 +71,11 @@ class BuildManager(object):
     def disable_cache(self):
         self._cache_enabled = False
 
-    def get_build_step(self):
-        step = BuildStep(self.build_path, self.source_path)
+    def get_build_step(self, output=None):
+        kw = {}
+        if output:
+            kw["output"] = output
+        step = BuildStep(self.build_path, self.source_path, **kw)
         return step
 
     def set_folders(self, source_path, build_path):
