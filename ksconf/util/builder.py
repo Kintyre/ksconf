@@ -51,15 +51,20 @@ class BuildCacheException(Exception):
     pass
 
 
+QUIET = -1
+NORMAL = 0
+VERBOSE = 1
+
 
 class BuildStep(object):
-    __slots__ = ["build_path", "source_path", "config", "verbosity"]
+    __slots__ = ["build_path", "source_path", "config", "verbosity", "output"]
 
-    def __init__(self, build, source=None):
+    def __init__(self, build, source=None, output=sys.stdout):
         self.build_path = build
         self.source_path = source
         self.config = {}
         self.verbosity = 0
+        self.output = output
 
     def alternate_path(self, path):
         """ Create a new BuildStep instance with only 'build_path' altered. """
@@ -69,6 +74,16 @@ class BuildStep(object):
             if slot != "build_path":
                 setattr(instance, slot, getattr(self, slot))
         return instance
+
+    def log(self, message, verbosity=0):
+        """ verbosity:  lower=more important,
+            -1 = quiet
+             0 = default
+            +1 verbose.
+        """
+        if verbosity <= self.verbosity:
+            self.output.write(message)
+            self.output.write("\n")
 
 
 class _FileSet(object):
@@ -82,8 +97,15 @@ class _FileSet(object):
         # type: (_FileSet) -> bool
         return self.files_meta == other.files_meta
 
+    def __ne__(self, other):
+        # type: (_FileSet) -> bool
+        return self.files_meta != other.files_meta
+
     def __iter__(self):
         return iter(self.files)
+
+    def __len__(self):
+        return len(self.files)
 
     @classmethod
     def from_filesystem(cls, root, files):
@@ -115,7 +137,8 @@ class _FileSet(object):
         if not p.is_file():
             if p.is_dir():
                 raise BuildCacheException("Expected file {} is a directory.  "
-                                          "Please make directories with a trailing '/'".format(p))
+                                          "Please make directories with a "
+                                          "trailing '/'".format(p))
             raise BuildCacheException("Missing expected file {}".format(p))
         self.files.add(relative_path)
         self.files_meta[relative_path] = self.get_fingerprint(p)
@@ -142,7 +165,7 @@ class _FileSet(object):
             src = src_dir / file_name
             dest = dest_dir / file_name
             if not dest.parent.is_dir():
-                dest.parent.mkdir()
+                dest.parent.mkdir(parents=True)
             copy2(src, dest)
 
 
@@ -151,6 +174,8 @@ class CachedRun(object):
 
     STATE_NEW = "new"
     STATE_EXISTS = "exists"
+    STATE_TAINT = "taint"
+    STATE_DISABLED = "disabled"
 
     _timestamp_format = "%Y-%m-%d %H:%M:%S"
 
@@ -162,8 +187,6 @@ class CachedRun(object):
         self._settings = {}
         self._info = {}
         self._state = self.STATE_NEW
-        # self._inputs = []
-        # self._outputs = []
 
         if not self.cache_dir.is_dir():
             self.cache_dir.mkdir(parents=True)
@@ -172,17 +195,6 @@ class CachedRun(object):
 
     def set_settings(self, cache_settings):
         self._settings.update(cache_settings)
-
-    '''
-    def set_lists(self, inputs, outputs):
-        self._inputs = inputs
-        self._outputs = outputs
-    @property
-    def config_file():
-        return os.path.join(self.root, "cache.json")
-    @property
-        return os.path.join(self.root, "data")
-    '''
 
     @property
     def cached_inputs(self):
@@ -212,7 +224,6 @@ class CachedRun(object):
 
     @property
     def is_expired(self):
-
         timeout = self._settings["timeout"]
         if timeout is None:
             return False
@@ -222,9 +233,13 @@ class CachedRun(object):
             expired = create_time + timeout
             return datetime.now() > expired
         except KeyError:  # no cover
-            raise   # For initial testing
+            raise   # XXX: For initial testing
             # If anything about the info/settings were missing; assume expired
             return True
+
+    @property
+    def is_disabled(self):
+        return self._state == self.STATE_DISABLED
 
     def inputs_identical(self, inputs):
         # type: _FileSet
@@ -256,7 +271,8 @@ class CachedRun(object):
             data = json.load(f)
         info = {}
         info.update(data["meta"])
-        info["timestamp"] = datetime.strptime(data["timestamp"], self._timestamp_format)
+        info["timestamp"] = datetime.strptime(data["timestamp"],
+                                              self._timestamp_format)
         for state_type, value in data["state"].items():
             info[state_type] = map_keys(value)
         self._settings = data["settings"]
@@ -271,8 +287,10 @@ class CachedRun(object):
         fs = _FileSet.from_filesystem(src_path, files)
         fs.copy_all(self.cache_dir)
 
+    '''
     def copy_output_to(self, dest_path):
         self.cached_outputs.copy_all(self.cache_dir, dest_path)
+    '''
 
     def rename(self, dest):
         if dest.is_dir():
@@ -280,6 +298,14 @@ class CachedRun(object):
         self.root.rename(dest)
         # Update root incase any other operations need to take place
         self.root = dest
+
+    def taint(self):
+        cf = self.config_file
+        if cf.exists(): cf.unlink()
+        self._state = self.STATE_TAINT
+
+    def disable(self):
+        self._state = self.STATE_DISABLED
 
 
 class BuildManager(object):
@@ -289,6 +315,13 @@ class BuildManager(object):
         self.build_path = None
         self.cache_path = None
         self._cache_enabled = True
+        self._taint = False
+
+    def taint_cache(self):
+        self._taint = True
+
+    def disable_cache(self):
+        self._cache_enabled = False
 
     def get_build_step(self):
         step = BuildStep(self.build_path, self.source_path)
@@ -302,9 +335,15 @@ class BuildManager(object):
     def get_cache_info(self, name):
         path = self.cache_path / name
         cache_info = CachedRun(path)
+        if self._taint:
+            cache_info.taint()
+        if not self._cache_enabled:
+            cache_info.disable()
         return cache_info
 
-    def cache(self, inputs, outputs=".", timeout=None, name=None):
+    def cache(self, inputs, outputs, timeout=None, name=None,
+              cache_invalidation=None):
+        # type: (List[str], List[str], int, str, List[str])
         """ function decorator """
         name_ = name
         cache_settings = {
@@ -312,6 +351,7 @@ class BuildManager(object):
             "inputs": inputs,
             "outputs": outputs,
             "timeout": timeout,
+            "cache_invalidation": cache_invalidation,
         }
 
         def decorator(f):
@@ -322,24 +362,57 @@ class BuildManager(object):
             @wraps(f)
             def wrapper(build_step):
                 # args: BuildStep -> None
+                def log(message, *args):
+                    build_step.log("[{}] {}".format(name, message), *args)
+                use_cache = True
                 cache = self.get_cache_info(name)
-                # Once the first cached build step is executed, then block access to the source path
+
+                # After the first cached build step is executed, block access to source path
                 build_step.source_path = None
+
+                if cache.is_disabled:
+                    log("Caching disabled", VERBOSE)
+                    # Run directly with no additional
+                    return f(build_step)
+
                 if cache.exists:
-                    cache.load()
-                # Always use the most up-to-date value for timeout
-                cache.set_settings({"timeout": timeout})
-                # TODO: Validate that cache settings match; for example if 'outputs' changes then files could be skipped
+                    try:
+                        cache.load()
+                    except Exception as e:
+                        log("Failed to load cache for.  Error: {}".format(e), QUIET)
+                        use_cache = False
+                if cache._settings:
+                    # Always use the most up-to-date value for timeout
+                    cache.set_settings({"timeout": timeout})
+                    for setting in cache_settings:
+                        if cache_settings[setting] != cache._settings[setting]:
+                            log("Cache invalided due to '{}' setting: {} vs {}"
+                                .format(setting, cache_settings[setting],
+                                        cache._settings[setting]))
+                            use_cache = False
+                            break
                 # TODO: Check for cache tampering (confirm that existing files haven't been modified); user requestable
                 current_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                 # Determine if previous cache entry exists, and if the inputs haven't changed
-                if cache.exists and cache.inputs_identical(current_inputs) and not cache.is_expired:
+                if not cache.exists:
+                    log("No cache found", VERBOSE)
+                    use_cache = False
+                elif not cache.inputs_identical(current_inputs):
+                    log("Inputs differ", VERBOSE)
+                    use_cache = False
+                elif cache.is_expired:
+                    log("Cache expired.  Will re-run.", VERBOSE)
+                    use_cache = False
+                if use_cache:
                     # Cache HIT:  Reuse cache, by simply copying the outputs to the build folder
-                    cache.copy_output_to(self.build_path)
+                    log("Cache used", VERBOSE)
+                    cached_output = cache.cached_outputs
+                    cached_output.copy_all(cache.cache_dir, self.build_path)
+                    log("Reused {} output objects from cache".format(len(cached_output)), VERBOSE*2)
                 else:
                     # Cache MISS: Prepare to call the wrapped function
                     # 1. √ Make temporary location
-                    # 2. √ Copy inputs to temp location
+                    # 2. √ Copy inputs to temp locations
                     # 3. √ Run wrapped functionality
                     # 4. √ Expand output into FileSet (Collect)
                     # 5. √ Store metadata (inputs/outputs/...) to JSON
@@ -358,17 +431,25 @@ class BuildManager(object):
                         # Collect inputs from the source directory and copy them to the temporary directory
                         fs_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
+                        log("Copied {} input files".format(len(fs_inputs)), VERBOSE*2)
+                        log("Copied input files: {}".format(fs_inputs), VERBOSE*3)
                         try:
                             # Run wrapped function
                             ret = f(alt_bs)
                             if ret is not None:
                                 raise NotImplementedError("A return value not supported for cached build steps")
-                        except Exception:
+                        except Exception as e:
+                            log("Failed during executing.  Error: {}".format(e), QUIET*2)
                             # XXX: More error handling here.  Add custom exception class
                             raise
                         # TODO: Check for change to inputs.  This could lead to nondeterministic results
+                        fs_inputs2 = _FileSet.from_filesystem(cache.cache_dir, inputs)
+                        if fs_inputs != fs_inputs2:
+                            log("Inputs changed during execution", QUIET*2)
+                            raise BuildCacheException("Inputs were modified")
                         fs_outputs = _FileSet.from_filesystem(cache.cache_dir, outputs)
                         # Store input/output fingerprint to the internal cache state and persist to disk
+                        log("Capture {} outputs".format(len(fs_outputs)))
                         cache.set_settings(cache_settings)
                         cache.set_cache_info("inputs", fs_inputs)
                         cache.set_cache_info("outputs", fs_outputs)
@@ -378,16 +459,9 @@ class BuildManager(object):
                         cache.rename(final_cache_root)
                 # No return (on purpose); as we don't want to track extra state
 
-            if self._cache_enabled:
-                wrapper.inputs = inputs
-                wrapper.outputs = outputs
-                wrapper.timeout = timeout
-                wrapper.name = name
-                wrapper.cached = True
-                return wrapper
-            else:
-                # No caching, just return the original function
-                f.cached = False
-                return f
-
+            wrapper.inputs = inputs
+            wrapper.outputs = outputs
+            wrapper.timeout = timeout
+            wrapper.name = name
+            return wrapper
         return decorator

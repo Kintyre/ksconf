@@ -20,7 +20,7 @@ if __package__ is None:
         os.path.dirname(os.path.abspath(__file__))))
 
 from ksconf.consts import *
-from ksconf.util.builder import BuildManager, BuildStep
+from ksconf.util.builder import BuildManager, BuildStep, BuildCacheException
 from tests.cli_helper import TestWorkDir
 
 
@@ -101,6 +101,27 @@ class BuilderTestCase(unittest.TestCase):
         install_package(step)
         self.assertEqual(call_count[0], 2, "install_package() should have run 2 times due to cache expiration")
         self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+
+    def test_change_inputs(self):
+        self.twd.write_file("src/requirements.txt", "six")
+        step = self.build_manager.get_build_step()
+
+        @self.build_manager.cache(inputs=["requirements.txt"], outputs=["x/"])
+        def change_input(build):
+            requirements_txt = build.build_path / "requirements.txt"
+            with requirements_txt.open("w") as f:
+                f.write("Input modified.  This isn't allowed")
+
+        with self.assertRaises(BuildCacheException) as e:
+            change_input(step)
+
+        @self.build_manager.cache(inputs=["requirements.txt"], outputs=["x/"])
+        def del_input(build):
+            requirements_txt = build.build_path / "requirements.txt"
+            requirements_txt.unlink()
+
+        with self.assertRaises(BuildCacheException) as e:
+            del_input(step)
 
 
 
