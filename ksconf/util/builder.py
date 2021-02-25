@@ -23,6 +23,7 @@ decorator used to implement caching:
 """
 
 import json
+import re
 import sys
 from datetime import datetime, timedelta
 from functools import wraps
@@ -30,7 +31,7 @@ from pathlib import Path, PurePath
 from shutil import copy2, rmtree
 
 from ksconf.ext.six import PY2, text_type
-from ksconf.util.file import file_hash
+from ksconf.util.file import file_hash, pathlib_compat
 
 try:
     from tempfile import TemporaryDirectory
@@ -39,8 +40,7 @@ except ImportError:
 
 
 if sys.version_info < (3, 6):
-    # Make these standard functions receive strings rather than Path objects
-    from ksconf.util.file import pathlib_compat
+    # Allow these stdlib functions to work with pathlib
     copy2 = pathlib_compat(copy2)
     rmtree = pathlib_compat(rmtree)
     TemporaryDirectory = pathlib_compat(TemporaryDirectory)
@@ -57,17 +57,17 @@ VERBOSE = 1
 
 
 class BuildStep(object):
-    __slots__ = ["build_path", "source_path", "config", "verbosity", "output"]
+    __slots__ = ["build_path", "source_path", "config", "verbosity", "_output"]
 
     def __init__(self, build, source=None, output=sys.stdout):
         self.build_path = build
         self.source_path = source
         self.config = {}
         self.verbosity = 0
-        self.output = output
+        self._output = output
 
     def alternate_path(self, path):
-        """ Create a new BuildStep instance with only 'build_path' altered. """
+        """ Construct a new BuildStep instance with only 'build_path' altered. """
         cls = self.__class__
         instance = cls(path)
         for slot in cls.__slots__:
@@ -75,21 +75,51 @@ class BuildStep(object):
                 setattr(instance, slot, getattr(self, slot))
         return instance
 
-    def log(self, message, verbosity=0):
+    @property
+    def is_quiet(self):
+        return self.verbosity <= QUIET
+
+    def is_verbose(self):
+        return self.verbosity >= VERBOSE
+
+    def get_logger(self, prefix=None):
+        # type: (str) -> typing.Callable[str, int]
+        if prefix is None:
+            import inspect
+            prefix = inspect.currentframe().f_back.f_code.co_name
+        elif re.match(r'[\w_]+', prefix):
+            prefix = "[{}] ".format(prefix)
+
+        def log(message, *args, **kwargs):
+            message = "{} {}".format(prefix, message)
+            return self._log(message, *args, **kwargs)
+        return log
+
+    def _log(self, message, verbosity=0):
         """ verbosity:  lower=more important,
             -1 = quiet
              0 = default
             +1 verbose.
         """
         if verbosity <= self.verbosity:
-            self.output.write(message)
-            self.output.write("\n")
+            self._output.write(message)
+            self._output.write("\n")
 
 
 class _FileSet(object):
-    # XXX: setup slots?
+    """ A collection of fingerprinted files.
+
+    Currently the fingerprint is only a SHA256 hash.
+
+    Two constructore are provided for building an instance from either file that
+    live on the filesystem, via `:method:from_filesystem()` or from a persisted
+    cached record aviable from the `:method:from_cache()`.
+    The filesystem version actively reads all inputs files at object creation
+    time, so this can be costly, especially if repeated.
+    """
+    __slots__ = ["files", "files_meta"]
+
     def __init__(self):
-        # self.root = None
         self.files = set()
         self.files_meta = {}
 
@@ -132,24 +162,30 @@ class _FileSet(object):
         return instance
 
     def add_file(self, root, relative_path):
+        """ Add a simple relative path to a file to the FileSet. """
         relative_path = PurePath(relative_path)
         p = root / relative_path
         if not p.is_file():
             if p.is_dir():
-                raise BuildCacheException("Expected file {} is a directory.  "
-                                          "Please make directories with a "
-                                          "trailing '/'".format(p))
+                # Audience: Exception text relevant to from_filesystem() caller
+                raise BuildCacheException(
+                    "Expected file '{0}' is actually a directory.  If this is "
+                    "correct indicate a directory with a trailing slash: "
+                    "'{0}/'".format(p))
             raise BuildCacheException("Missing expected file {}".format(p))
+        fp = self.get_fingerprint(p)
         self.files.add(relative_path)
-        self.files_meta[relative_path] = self.get_fingerprint(p)
+        self.files_meta[relative_path] = fp
 
-    def add_glob(self, root, relative_path):
+    def add_glob(self, root, pattern):
         """ Recursively add all files matching glob pattern. """
-        for p in root.glob(relative_path):
+        for p in root.glob(pattern):
             if p.is_file():
                 relative_path = p.relative_to(root)
+
+                fp = self.get_fingerprint(p)
                 self.files.add(relative_path)
-                self.files_meta[relative_path] = self.get_fingerprint(p)
+                self.files_meta[relative_path] = fp
 
     @staticmethod
     def get_fingerprint(path):
@@ -158,6 +194,7 @@ class _FileSet(object):
         }
 
     def copy_all(self, src_dir, dest_dir):
+        """ Copy a the given set of files from one location to another. """
         src_dir = Path(src_dir)
         dest_dir = Path(dest_dir)
         for file_name in self.files:
@@ -281,7 +318,8 @@ class CachedRun(object):
 
     def taint(self):
         cf = self.config_file
-        if cf.exists(): cf.unlink()
+        if cf.exists():
+            cf.unlink()
         self._state = self.STATE_TAINT
 
     def disable(self):
@@ -342,8 +380,7 @@ class BuildManager(object):
             @wraps(f)
             def wrapper(build_step):
                 # args: BuildStep -> None
-                def log(message, *args):
-                    build_step.log("[{}] {}".format(name, message), *args)
+                log = build_step.get_logger(name)
                 use_cache = True
                 cache = self.get_cache_info(name)
 
@@ -359,36 +396,38 @@ class BuildManager(object):
                     try:
                         cache.load()
                     except Exception as e:
-                        log("Failed to load cache for.  Error: {}".format(e), QUIET)
+                        log("Failed to load cache:  {}".format(e), QUIET)
                         use_cache = False
                 if cache._settings:
                     # Always use the most up-to-date value for timeout
                     cache.set_settings({"timeout": timeout})
                     for setting in cache_settings:
                         if cache_settings[setting] != cache._settings[setting]:
-                            log("Cache invalided due to '{}' setting: {} vs {}"
+                            log("Cache invalided due to setting '{}': {} vs {}"
                                 .format(setting, cache_settings[setting],
                                         cache._settings[setting]))
                             use_cache = False
                             break
                 # TODO: Check for cache tampering (confirm that existing files haven't been modified); user requestable
                 current_inputs = _FileSet.from_filesystem(self.source_path, inputs)
-                # Determine if previous cache entry exists, and if the inputs haven't changed
+                # Determine if previous cache entry exists, and if the input files are the same
                 if not cache.exists:
                     log("No cache found", VERBOSE)
                     use_cache = False
                 elif not cache.inputs_identical(current_inputs):
-                    log("Inputs differ", VERBOSE)
+                    # XXX: Tell user which file(s) changed?
+                    log("Cache skipped due to change in inputs.  Will re-run.")
                     use_cache = False
                 elif cache.is_expired:
-                    log("Cache expired.  Will re-run.", VERBOSE)
+                    log("Cache expired.  Will re-run.")
                     use_cache = False
                 if use_cache:
                     # Cache HIT:  Reuse cache, by simply copying the outputs to the build folder
-                    log("Cache used", VERBOSE)
+                    log("Cache used")
                     cached_output = cache.cached_outputs
                     cached_output.copy_all(cache.cache_dir, self.build_path)
-                    log("Reused {} output objects from cache".format(len(cached_output)), VERBOSE*2)
+                    log("Reused {} output objects from cache".format(len(cached_output)), VERBOSE)
+                    # XXX:  VERBOSE 3 should list all expanded files
                 else:
                     # Cache MISS: Prepare to call the wrapped function
                     # 1. √ Make temporary location
@@ -411,21 +450,21 @@ class BuildManager(object):
                         # Collect inputs from the source directory and copy them to the temporary directory
                         fs_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
-                        log("Copied {} input files".format(len(fs_inputs)), VERBOSE*2)
-                        log("Copied input files: {}".format(", ".join(text_type(p) for p in fs_inputs)), VERBOSE*3)
+                        log("Copied {} input files".format(len(fs_inputs)), VERBOSE * 2)
+                        log("Copied input files: {}".format(", ".join(text_type(p) for p in fs_inputs)), VERBOSE * 3)
                         try:
                             # Run wrapped function
                             ret = f(alt_bs)
                             if ret is not None:
                                 raise NotImplementedError("A return value not supported for cached build steps")
                         except Exception as e:
-                            log("Failed during executing.  Error: {}".format(e), QUIET*2)
+                            log("Failed during executing.  Error: {}".format(e), QUIET * 2)
                             # XXX: More error handling here.  Add custom exception class
                             raise
                         # TODO: Check for change to inputs.  This could lead to nondeterministic results
                         fs_inputs2 = _FileSet.from_filesystem(cache.cache_dir, inputs)
                         if fs_inputs != fs_inputs2:
-                            log("Inputs changed during execution", QUIET*2)
+                            log("Inputs changed during execution", QUIET * 2)
                             raise BuildCacheException("Inputs were modified")
                         fs_outputs = _FileSet.from_filesystem(cache.cache_dir, outputs)
                         # Store input/output fingerprint to the internal cache state and persist to disk

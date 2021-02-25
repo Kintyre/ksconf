@@ -73,17 +73,16 @@ class BuilderTestCase(unittest.TestCase):
         self.twd.write_file("src/requirements.txt", "six==1.14.0")
         step = self.build_manager.get_build_step()
         call_count = [0]
+
         @self.build_manager.cache(inputs=["requirements.txt"], outputs=["lib/*.py"], timeout=3600)
         def install_package(step):
             # nonlocal call_count
             call_count[0] += 1
             requirements_txt = step.build_path / "requirements.txt"
             self.assertTrue(requirements_txt.exists(), "Missing input file")
-            with requirements_txt.open() as fp:
-                self.assertEqual(fp.read(), "six==1.14.0")
-            # Pretend that pip ran...
-            six_py = step.build_path / "lib" / "six.py"
-            six_py.parent.mkdir()
+            lib = step.build_path / "lib"
+            lib.mkdir()
+            six_py = lib / "six.py"
             with six_py.open("w") as f:
                 f.write("#!/bin/python\n# SIX!\n")
 
@@ -115,7 +114,7 @@ class BuilderTestCase(unittest.TestCase):
         with self.assertRaises(BuildCacheException) as e:
             change_input(step)
 
-        @self.build_manager.cache(inputs=["requirements.txt"], outputs=["x/"])
+        @self.build_manager.cache(inputs=["requirements.txt"], outputs=["*.py"])
         def del_input(build):
             requirements_txt = build.build_path / "requirements.txt"
             requirements_txt.unlink()

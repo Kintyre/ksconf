@@ -5,25 +5,28 @@ from subprocess import call
 from shutil import copy2, rmtree
 import argparse
 
-from ksconf.util.builder import BuildManager
+from ksconf.util.builder import BuildManager, VERBOSE, QUIET
 
 manager = BuildManager()
 
 def copy_files(step):
     # args: (BuildStep)
+    log = step.get_logger()
     if step.build_path.is_dir():
-        step.log("Purging previous build folder")
+        log("Purging previous build folder")
         rmtree(str(step.build_path))
     else:
-        step.log("Make build folder")
+        log("Make build folder")
     step.build_path.mkdir()
+
+    log("Copying files into build folder")
     for pattern in [
         "requirements.txt",
         "ksconf/**",
         "tests/*.py",
     ]:
         for f in step.source_path.glob(pattern):
-            step.log("Copy {}".format(f))
+            log("Copy {}".format(f), VERBOSE)
             relative = f.relative_to(step.source_path)
             dest = step.build_path / relative
 
@@ -42,15 +45,24 @@ def copy_files(step):
 @manager.cache(["requirements.txt"], ["lib/"], timeout=86400,
                cache_invalidation=[list(sys.version_info)])
 def pip_install(step):
-
+    log = step.get_logger()
     # --isolated --disable-pip-version-check --no-deps --target="$PIP_TARGET" \
     # "$wheel_dir"/*.whl entrypoints splunk-sdk
 
     target = step.build_path / "lib"
+
+    # XXX: Update the external pip call to detach stdout / stderr if step.verbosity is < 0 (quiet)
     call([sys.executable, "-m", "pip", "install",
           "--target", str(target),
+          "--disable-pip-version-check",    # Warnings are helpful here
+          "--no-compile",   # Avoid creating *.pyc files
           "-r", "requirements.txt"])
-    step.log("pip installation completed successfully", -1)
+    log("pip installation completed successfully", QUIET)
+
+    #  With the "--no-compile" options, this shouldn't be needed.  Keeping for now.
+    for unwanted in target.rglob("*.py[co]"):
+        log("Remove unwanted {}".format(unwanted), VERBOSE * 2)
+        unwanted.unlink()
 
 
 def build():
@@ -80,6 +92,7 @@ def build():
 
     # 2. PIP install
     pip_install(step)
+
 
 if __name__ == '__main__':
     build()
