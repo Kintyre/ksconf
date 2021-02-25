@@ -17,7 +17,13 @@ from ksconf.ext.six.moves import range
 
 
 def _path_to_str(p):
-    return text_type(p) if isinstance(p, PurePath) else p
+    if isinstance(p, PurePath):
+        return text_type(p)
+    if isinstance(p, tuple):
+        return tuple(_path_to_str(i) for i in p)
+    if isinstance(p, list):
+        return [_path_to_str(i) for i in p]
+    return p
 
 
 def pathlib_compat(f):

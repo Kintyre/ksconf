@@ -22,12 +22,14 @@ decorator used to implement caching:
         * name=None     If not given, default to the short name of the function.  (Cache "slot"), must be filesystem safe]
 """
 
+import inspect
 import json
 import re
 import sys
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path, PurePath
+from subprocess import Popen, PIPE
 from shutil import copy2, rmtree
 
 from ksconf.ext.six import PY2, text_type
@@ -44,11 +46,24 @@ if sys.version_info < (3, 6):
     copy2 = pathlib_compat(copy2)
     rmtree = pathlib_compat(rmtree)
     TemporaryDirectory = pathlib_compat(TemporaryDirectory)
+    Popen = pathlib_compat(Popen)
 
 
+
+class BuildExternalException(Exception):
+    pass
 
 class BuildCacheException(Exception):
     pass
+
+
+
+def _get_function_sourcecode_hash(f):
+    import hashlib
+    h = hashlib.new("sha256")
+    code = inspect.getsource(f).encode("utf-8")
+    h.update(code)
+    return h.hexdigest()
 
 
 QUIET = -1
@@ -85,7 +100,6 @@ class BuildStep(object):
     def get_logger(self, prefix=None):
         # type: (str) -> typing.Callable[str, int]
         if prefix is None:
-            import inspect
             prefix = inspect.currentframe().f_back.f_code.co_name
         elif re.match(r'[\w_]+', prefix):
             prefix = "[{}] ".format(prefix)
@@ -99,11 +113,26 @@ class BuildStep(object):
         """ verbosity:  lower=more important,
             -1 = quiet
              0 = default
-            +1 verbose.
+            +1 verbose
         """
         if verbosity <= self.verbosity:
             self._output.write(message)
             self._output.write("\n")
+
+    def run(self, *args):
+        """ Execute an OS-level command regarding the build process.
+        The process will run withing the working directory of the build folder.
+        """
+        # X: Update the external pip call to detach stdout / stderr if self.is_quiet
+        executable = args[0]
+        self._log("EXEC:  {}".format(" ".join(args)), VERBOSE)
+        process = Popen(args, cwd=self.build_path)
+        process.wait()
+        if process.returncode != 0:
+            raise BuildExternalException("Exit code of {} while executing {}".format(
+                process.returncode, executable))
+
+
 
 
 class _FileSet(object):
@@ -117,6 +146,7 @@ class _FileSet(object):
     The filesystem version actively reads all inputs files at object creation
     time, so this can be costly, especially if repeated.
     """
+    # XXX: Do we need both files (set), and file_meta (dict)?  Try to make this work with just files_meta
     __slots__ = ["files", "files_meta"]
 
     def __init__(self):
@@ -130,6 +160,19 @@ class _FileSet(object):
     def __ne__(self, other):
         # type: (_FileSet) -> bool
         return self.files_meta != other.files_meta
+
+    '''
+    def __iadd__(self, other):
+        self.files.update(other.files)
+        self.files_meta.update(other.files_meta)
+
+    def __add__(self, other):
+        combined = _FileSet()
+        for item in (self, other):
+            combined.files.update(item.files)
+            combined.files_meta.update(item.files_meta)
+        return combined
+    '''
 
     def __iter__(self):
         return iter(self.files)
@@ -377,6 +420,9 @@ class BuildManager(object):
             if name_ is None:
                 name = f.__name__.split(".")[-1]
 
+            f_source_hash = _get_function_sourcecode_hash(f)
+            cache_settings["function_code_hash"] = f_source_hash
+
             @wraps(f)
             def wrapper(build_step):
                 # args: BuildStep -> None
@@ -401,13 +447,17 @@ class BuildManager(object):
                 if cache._settings:
                     # Always use the most up-to-date value for timeout
                     cache.set_settings({"timeout": timeout})
-                    for setting in cache_settings:
-                        if cache_settings[setting] != cache._settings[setting]:
-                            log("Cache invalided due to setting '{}': {} vs {}"
-                                .format(setting, cache_settings[setting],
-                                        cache._settings[setting]))
-                            use_cache = False
-                            break
+                    try:
+                        for setting in cache_settings:
+                            if cache_settings[setting] != cache._settings[setting]:
+                                log("Cache invalided due to setting '{}': {} was {}"
+                                    .format(setting, cache_settings[setting],
+                                            cache._settings[setting]))
+                                use_cache = False
+                                break
+                    except KeyError as e:
+                        log("Cache invalided due to missing setting {}".format(e))
+                        use_cache = False
                 # TODO: Check for cache tampering (confirm that existing files haven't been modified); user requestable
                 current_inputs = _FileSet.from_filesystem(self.source_path, inputs)
                 # Determine if previous cache entry exists, and if the input files are the same

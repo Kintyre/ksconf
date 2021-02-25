@@ -1,7 +1,6 @@
 # Example app building script
 
 import sys
-from subprocess import call
 from shutil import copy2, rmtree
 import argparse
 
@@ -33,12 +32,6 @@ def copy_files(step):
             dest_parent = dest.parent
             if not dest_parent.is_dir():
                 dest_parent.mkdir(parents=True)
-            '''
-            if f.is_dir():
-                if not dest.is_dir():
-                    dest.mkdir(parents=True)
-            else:
-            '''
             if f.is_file():
                 copy2(str(f), str(dest))
 
@@ -51,12 +44,12 @@ def pip_install(step):
 
     target = step.build_path / "lib"
 
-    # XXX: Update the external pip call to detach stdout / stderr if step.verbosity is < 0 (quiet)
-    call([sys.executable, "-m", "pip", "install",
-          "--target", str(target),
-          "--disable-pip-version-check",    # Warnings are helpful here
-          "--no-compile",   # Avoid creating *.pyc files
-          "-r", "requirements.txt"])
+    step.run(sys.executable, "-m", "pip", "install",
+             "--target", str(target),
+             "--disable-pip-version-check",    # Warnings are helpful here
+             "--no-compile",   # Avoid creating *.pyc files
+             "-r", "requirements.txt")
+
     log("pip installation completed successfully", QUIET)
 
     #  With the "--no-compile" options, this shouldn't be needed.  Keeping for now.
@@ -64,6 +57,13 @@ def pip_install(step):
         log("Remove unwanted {}".format(unwanted), VERBOSE * 2)
         unwanted.unlink()
 
+    # Remove any console-script entry points files (bin|Script)
+
+    for folder in ("bin", "Scripts"):
+        path = target / folder
+        if path.is_dir():
+            log("Removing console-script folder: {}".format(path))
+            rmtree(str(path))
 
 def build():
     parser = argparse.ArgumentParser()
