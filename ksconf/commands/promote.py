@@ -63,6 +63,11 @@ from ksconf.util.file import _samefile, file_fingerprint
 
 
 
+def empty_dict(d):
+    # Or just   d == {}?   Not sure which is better
+    return isinstance(d, dict) and len(d) == 0
+
+
 class PromoteCmd(KsconfCmd):
     help = dedent("""\
     Promote .conf settings between layers using either batch or interactive mode.
@@ -305,6 +310,14 @@ class PromoteCmd(KsconfCmd):
         if args.stanza:
             return True
 
+    @staticmethod
+    def combine_stanza(a, b):
+        if a is None:
+            return b
+        d = dict(a)
+        d.update(b)
+        return d
+
     def _do_promote_automatic(self, cfg_src, cfg_tgt, args):
         # Promote ALL entries;  simply, isn't it...  ;-)
         final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
@@ -400,9 +413,16 @@ class PromoteCmd(KsconfCmd):
                 '''
                 if isinstance(op.location, DiffStanza):
                     # Move entire stanza
-                    show_diff(self.stdout, [op])
+                    """ ----  If we need to support empty stanza promotion.....
+                    print("OP:   {!r}".format(op))
+                    if empty_dict(op.b):
+                        print("Empty stanza [{}]".format(op.location.stanza))
+                    else:
+                    """
+                    if True:
+                        show_diff(self.stdout, [op])
                     if prompt_yes_no("Apply [{0}]".format(op.location.stanza)):
-                        out_cfg[op.location.stanza] = op.b
+                        out_cfg[op.location.stanza] = self.combine_stanza(op.a, op.b)
                         del out_src[op.location.stanza]
                 else:
                     show_diff(self.stdout, [op])
@@ -427,7 +447,7 @@ class PromoteCmd(KsconfCmd):
                     show_diff(self.stdout, [op])
                 if isinstance(op.location, DiffStanza):
                     # Move entire stanza
-                    out_cfg[op.location.stanza] = op.b
+                    out_cfg[op.location.stanza] = self.combine_stanza(op.a, op.b)
                     del out_src[op.location.stanza]
                 else:
                     # Move key
