@@ -2,10 +2,13 @@ from __future__ import absolute_import, unicode_literals
 
 import inspect
 import re
+import os
 import sys
 from subprocess import Popen
 from pathlib import Path
 import argparse
+
+from ksconf.consts import KSCONF_DEBUG, EXIT_CODE_INTERNAL_ERROR
 from ksconf.ext.six import text_type
 
 if sys.version_info < (3, 6):
@@ -124,4 +127,13 @@ def default_cli(build_manager, build_funct, argparse_parents=()):
         build_manager.taint_cache()
     step = build_manager.get_build_step()
     step.verbosity = verbosity
-    return build_funct(step, args)
+
+    try:
+        return build_funct(step, args)
+    except Exception as e:
+        if KSCONF_DEBUG in os.environ:
+            # XXX: instead of re-raising; write out traceback (with this final frame removed)?
+            # Allow stack track to be dumped to screen for developer review/debugging
+            raise
+        sys.stderr.write("Unhandled exception in build process:  {}\n".format(e))
+        sys.exit(EXIT_CODE_INTERNAL_ERROR)

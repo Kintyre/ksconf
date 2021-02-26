@@ -7,7 +7,7 @@ Cache build requirements:
     * Caching mechanism should inspet 'inputs' (collect file hashes) to determine if any content has changed.  If input varies, then command should be re-run.
     * Command (decorated function) should be generally unaware of all other details of build process, and it should *ONLY* be able to see files listed in "inputs"
     * Allow caching to be fully disabled (run in-place with no dir proxying) for CI/CD
-    * Cache should have allow a timeout paramater
+    * Cache should have allow a timeout parameter
 
 
 
@@ -100,8 +100,20 @@ class BuildManager(object):
 
     def cache(self, inputs, outputs, timeout=None, name=None,
               cache_invalidation=None):
-        # type: (List[str], List[str], int, str, List[str])
-        """ function decorator """
+        # type: (List[str], List[str], int, str, Any[dict,list,str]) -> None
+        """ function decorator
+
+        XXX:  Clearly document what things are good cache candidates and which are not.
+
+        Example:
+
+            * No extra argument to the function (at least currently)
+            * Changes to inputs files are not supported
+            * Deleting files aren't supported
+            * Can only operate in a single directory given a limited set of inputs
+            * Cannot read from the source directory, and agrees not to write to dist
+              (In other words, limit all activities to build_path for deterministic behavior)
+        """
         name_ = name
         cache_settings = {
             "name": name,
