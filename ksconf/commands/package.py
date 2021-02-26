@@ -70,7 +70,7 @@ class AppVarMagic(object):
             return self[var]
         return re.sub(r"\{\{\s*([\w_]+)\s*\}\}", replace, value)
 
-    def git_singline(self, *args):
+    def git_single_line(self, *args):
         out = git_cmd(args, cwd=self.src_dir)
         if out.returncode != 0:
             return "git-errorcode-{}".format(out.returncode)
@@ -96,16 +96,16 @@ class AppVarMagic(object):
 
     def get_git_tag(self):
         """ Git version tag using the 'git describe --tags' command """
-        tag = self.git_singline("describe", "--tags", "--always", "--dirty")
+        tag = self.git_single_line("describe", "--tags", "--always", "--dirty")
         return re.sub(r'^(v|release|version)-', "", tag)
 
     def get_git_last_rev(self):
         """ Git abbreviated rev of the last change of the app.  This may not be the same as HEAD. """
-        return self.git_singline("log", "-n1", "--pretty=format:%h", "--", ".")
+        return self.git_single_line("log", "-n1", "--pretty=format:%h", "--", ".")
 
     def get_git_head(self):
         """ Git HEAD rev abbreviated """
-        return self.git_singline("rev-parse", "--short", "HEAD")
+        return self.git_single_line("rev-parse", "--short", "HEAD")
 
     ## END Variable fetching functions.
 
