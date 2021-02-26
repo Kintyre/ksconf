@@ -38,7 +38,7 @@ def npl(iterable, nominal="/"):
 
 
 
-class TestHelperFunctionsTestCase(unittest.TestCase):
+class HelperFunctionsTestCase(unittest.TestCase):
 
     def test_path_in_layer_01(self):
         path = np("default/data/ui/nav/default.xml")

@@ -95,11 +95,15 @@ def build_cli_parser(do_formatter=False):
         fromfile_prefix_chars="@",
         description=_cli_description,
         prog="ksconf")
+    if sys.version_info > (3, 5):
+        # Disable abbreviations as they could lead to accidental assignment as the CLI grows.
+        parser_kwargs["allow_abbrev"] = False
     if do_formatter:
         parser_kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
     parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 
+    # XXX: Lazyload version information. Notable a 'git' subshell is launched which is expensive.
     version_info = []
 
     # XXX:  Check terminal size before picking a signature

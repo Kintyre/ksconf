@@ -20,7 +20,7 @@ def file_compare(fn1, fn2):
         return fileobj_compare(f1, f2)
 
 
-def _cmp_sets(a, b):
+def cmp_sets(a, b):
     """ Result tuples in format (a-only, common, b-only) """
     set_a = set(a)
     set_b = set(b)
@@ -28,3 +28,6 @@ def _cmp_sets(a, b):
     common = sorted(set_a.intersection(set_b))
     b_only = sorted(set_b.difference(set_a))
     return (a_only, common, b_only)
+
+# For backwards compability
+_cmp_sets = cmp_sets

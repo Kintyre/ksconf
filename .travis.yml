@@ -33,8 +33,6 @@ matrix:
   - os: osx
     language: objective-c
     env: PYENV_VERSION=3.7.5
-  - os: linux
-    python: 'pypy'
 
 # command to install dependencies
 

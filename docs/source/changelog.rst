@@ -11,6 +11,12 @@ Adds automatic layer detection support to the core library that's usable within 
 Removed the deprecated zipapp deployment method.
 
 
+-   *CLI option abbreivation has been disabled.*
+    This could be a breaking change for existing scripts.
+    Hopefully no one was relying on this already, but in order to prevent long-term CLI consitency issues as new CLI arguments are added, this feature has been disabled for all version of Python.
+    This feature is only available, and was enabled by default, starting in Python 3.5.
+
+
 v0.8-beta2 (2020-04-24)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
