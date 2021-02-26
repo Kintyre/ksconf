@@ -96,6 +96,7 @@ setup(name="kintyre-splunk-conf",
       },
       packages=[
           "ksconf",
+          "ksconf.builder",
           "ksconf.commands",
           "ksconf.conf",
           "ksconf.util",

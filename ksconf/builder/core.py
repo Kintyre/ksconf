@@ -61,6 +61,7 @@ class BuildManager(object):
     def __init__(self):
         self.source_path = None
         self.build_path = None
+        self.dist_path = None
         self.cache_path = None
         self._cache_enabled = True
         self._taint = False
@@ -75,12 +76,17 @@ class BuildManager(object):
         kw = {}
         if output:
             kw["output"] = output
-        step = BuildStep(self.build_path, self.source_path, **kw)
+        step = BuildStep(self.build_path, self.source_path, self.dist_path, **kw)
         return step
 
-    def set_folders(self, source_path, build_path):
-        self.source_path = Path(source_path)
-        self.build_path = Path(build_path)
+    def set_folders(self, source_path, build_path, dist_path=None):
+        self.source_path = Path(source_path).absolute()
+        self.build_path = Path(build_path).absolute()
+        if dist_path:
+            self.dist_path = Path(dist_path).absolute()
+        else:
+            # Assume 'dist' lives along side 'build'
+            self.dist_path = self.build_path.with_name("dist")
         self.cache_path = self.build_path.with_suffix(".cache")
 
     def get_cache_info(self, name):
