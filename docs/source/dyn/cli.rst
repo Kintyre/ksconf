@@ -205,10 +205,11 @@ ksconf package
 
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
                           [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
-                          [-I PATTERN] [-E PATTERN] [--follow-symlink]
-                          [--set-version VERSION] [--set-build BUILD]
+                          [--layer-method {auto,dir.d,disable}] [-I PATTERN]
+                          [-E PATTERN] [--follow-symlink] [--set-version VERSION]
+                          [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
-                          [--release-file RELEASE_FILE] [--hook-script COMMAND]
+                          [--release-file RELEASE_FILE]
                           SOURCE
     
     Create a Splunk app or add on tarball (.spl) file from an app directory.
@@ -240,21 +241,24 @@ ksconf package
                             Set application version. By default the application
                             version is read from default/app.conf
       --set-build BUILD     Set application build number.
-      --allow-local         Allow the local folder to be kept. WARNING: This goes
-                            against Splunk packaging practices, and will cause
-                            AppInspect to fail. However, this option can be useful
-                            for private package transfers between servers or
-                            possibly for app backups.
-      --block-local         Block the local folder and local.meta from the
-                            resulting SPL.
-      --merge-local         Merge any files in local into the default folder when
-                            build the archive. This is the default behavior.
+      --allow-local         Allow the 'local' folder to be kept as-is WARNING:
+                            This goes against Splunk packaging practices, and will
+                            cause AppInspect to fail. However, this option can be
+                            useful for private package transfers between servers,
+                            app backups, or other admin-like tasks.
+      --block-local         Block the 'local' folder and 'local.meta' from the
+                            package.
+      --merge-local         Merge any files in 'local' into the 'default' folder
+                            during packaging. This is the default behavior.
     
     Layer filtering:
       If the app being packaged includes multiple layers, these arguments can be
       used to control which ones should be included in the final app file. If no
       layer options are specified, then all layers will be included.
     
+      --layer-method {auto,dir.d,disable}
+                            Set the layer type used by SOURCE. Additional
+                            description provided in in the 'combine' command.
       -I PATTERN, --include PATTERN
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN
@@ -268,13 +272,6 @@ ksconf package
                             (SPL) after the archive is written. This is useful in
                             build scripts when the SPL contains variables so the
                             final name may not be known ahead of time.
-      --hook-script COMMAND
-                            Run the given command or script. This is run after all
-                            layer have been combined, and local directory
-                            handling, but before blocklist cleanup. Therefore if
-                            this command produces any unwanted files they can be
-                            removed with a '--blocklist' entry. This can be used
-                            to install python packages, for example.
 
 
 

@@ -185,7 +185,8 @@ class CombineCmd(KsconfCmd):
             self.stderr.write("Creating destination directory {0}\n".format(args.target))
             os.mkdir(args.target)
             if not args.disable_marker:
-                open(marker_file, "w").write("This directory is managed by KSCONF.  Don't touch\n")
+                with open(marker_file, "w") as f:
+                    f.write("This directory is managed by KSCONF.  Don't touch\n")
 
         # Build a common tree of all src files.
         src_file_listing = set(layer_root.list_files())

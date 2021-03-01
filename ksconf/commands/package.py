@@ -17,20 +17,17 @@ Build system example:
 from __future__ import absolute_import, unicode_literals
 
 import argparse
-import shutil
-import tempfile
 import os
 import re
 import shutil
 import tarfile
+import tempfile
 
-
-from ksconf.commands import KsconfCmd, dedent, ConfFileType
+from ksconf.commands import KsconfCmd, dedent
+from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import parse_conf, update_conf
-from ksconf.conf.merge import merge_conf_dicts
-from ksconf.vc.git import git_cmd
-from ksconf.util.file import relwalk
 from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_ARGS, KSCONF_DEBUG
+from ksconf.vc.git import git_cmd
 
 
 def find_conf_in_layers(app_dir, conf, *layers):
@@ -40,6 +37,7 @@ def find_conf_in_layers(app_dir, conf, *layers):
         conf_file = os.path.join(app_dir, layer, conf)
         if os.path.isfile(conf_file):
             return conf_file
+
 
 def get_merged_conf(app_dir, conf, *layers):
     if not layers:
@@ -132,6 +130,7 @@ class AppVarMagic(object):
 
 
 class AppPackageBuilder(object):
+    # XXX: Rename this to AppPackager; move to ksconf.package  (ksconf.package.AppPackager seems reasonable
 
     def __init__(self, src_path, app_name, output):
         self.src_path = src_path
@@ -173,31 +172,37 @@ class AppPackageBuilder(object):
                 path = os.path.join(root, fn)
                 for pattern in patterns:
                     if ("*" in pattern and fnmatch(path, pattern)) or fn == pattern:
-                        self.output.write("Blacklisted file: {}  (pattern: {})\n".format(path, pattern))
+                        self.output.write("Blocked file: {}  (pattern: {})\n".format(path, pattern))
                         os.unlink(path)
                         break
             for d in list(dirs):
                 path = os.path.join(root, d)
                 for pattern in patterns:
                     if ("*" in pattern and fnmatch(path, pattern)) or d == pattern:
-                        self.output.write("Blacklisted dir:  {}  (pattern: {})\n".format(path, pattern))
+                        self.output.write("Blocked dir:  {}  (pattern: {})\n".format(path, pattern))
                         dirs.remove(d)
                         shutil.rmtree(path)
                         break
 
     def merge_local(self):
-        raise NotImplementedError
-        # XXX: Recursive merge:   local --> default.
-        # XXX: Merge local.meta -> default.meta
+        """
+        Find everything in local, if it has a corresponding file in default, merge.
+        """
+        # XXX: No logging/reporting done here :-(
+        merge_app_local(self.app_dir)
+        # Cleanup anything remaining in local
+        self.block_local(report=False)
 
-    def block_local(self):
+    def block_local(self, report=True):
         local_dir = os.path.join(self.app_dir, "local")
         if os.path.isdir(local_dir):
-            self.output.write("Removing local directory.\n")
+            if report:
+                self.output.write("Removing local directory.\n")
             shutil.rmtree(local_dir)
         local_meta = os.path.join(self.app_dir, "metadata", "local.meta")
         if os.path.isfile(local_meta):
-            self.output.write("Removing local.meta\n")
+            if report:
+                self.output.write("Removing local.meta\n")
             os.unlink(local_meta)
 
     def update_app_conf(self, version=None, build=None):
@@ -217,6 +222,7 @@ class AppPackageBuilder(object):
                     self.output.write("\tUpdate app.conf:  [{}] {} = {}\n".format(stanza, attr, value))
                     conf[stanza][attr] = value
 
+    '''
     def run_hook_script(self, script):
         # XXX: Add environmental vars and such to make available to the script
         from subprocess import Popen
@@ -227,8 +233,9 @@ class AppPackageBuilder(object):
             self.output.write("Running external hook shell:  {}\n".format(script))
             proc = Popen(script, cwd=self.app_dir, shell=True)
         proc.wait()
-        if proc.returncode !=0:
+        if proc.returncode != 0:
             raise Exception("Hook script returned non-0.  Aborting")
+    '''
 
     def make_archive(self, filename):
         #if os.path.isfile(filename):
@@ -302,6 +309,12 @@ class PackageCmd(KsconfCmd):
             "If the app being packaged includes multiple layers, these arguments can be used to "
             "control which ones should be included in the final app file.  If no layer options "
             "are specified, then all layers will be included.")
+
+        player.add_argument("--layer-method",
+                            choices=["auto", "dir.d", "disable"],
+                            default="auto",
+                            help="Set the layer type used by SOURCE.  "
+                                 "Additional description provided in in the ``combine`` command.")
         player.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
                             type=wb_type("include"), metavar="PATTERN",
                             help="Name or pattern of layers to include.")
@@ -324,19 +337,19 @@ class PackageCmd(KsconfCmd):
         parser.set_defaults(local="merge")
         plocal.add_argument("--allow-local",
                             dest="local", action="store_const", const="preserve",
-                            help="Allow the local folder to be kept.  "
+                            help="Allow the ``local`` folder to be kept as-is  "
                                  "WARNING: "
                                  "This goes against Splunk packaging practices, and will cause "
                                  "AppInspect to fail.  "
                                  "However, this option can be useful for private package transfers "
-                                 "between servers or possibly for app backups.")
+                                 "between servers, app backups, or other admin-like tasks.")
         plocal.add_argument("--block-local",
                             dest="local", action="store_const", const="block",
-                            help="Block the local folder and local.meta from the resulting SPL.")
+                            help="Block the ``local`` folder and ``local.meta`` from the package.")
         plocal.add_argument("--merge-local",
                             dest="local", action="store_const", const="merge",
-                            help="Merge any files in local into the default folder when build the "
-                                 "archive.  This is the default behavior.")
+                            help="Merge any files in ``local`` into the ``default`` folder during "
+                                 "packaging.  This is the default behavior.")
 
         pbuild = parser.add_argument_group("Advanced Build Options",
                                            "The following options are for more advanced app "
@@ -346,6 +359,8 @@ class PackageCmd(KsconfCmd):
                                  "the archive is written.  "
                                  "This is useful in build scripts when the SPL contains variables "
                                  "so the final name may not be known ahead of time.")
+        ''' # A better option here is ksconf.builder.  Let's avoid creating 2 mechanisms for the
+            # same task (but technically this works)
         pbuild.add_argument("--hook-script", metavar="COMMAND",
                             action="append", default=[],
                             help="Run the given command or script.  "
@@ -354,6 +369,7 @@ class PackageCmd(KsconfCmd):
                                  "Therefore if this command produces any unwanted files they can "
                                  "be removed with a ``--blocklist`` entry. "
                                  "This can be used to install python packages, for example.")
+        '''
 
     @staticmethod
     def load_blocklist(path):
@@ -365,7 +381,7 @@ class PackageCmd(KsconfCmd):
 
     def pre_run(self, args):
         if "local" in args.blocklist:
-            self.stderr.write("Blacklisting 'local' is not supported.   "
+            self.stderr.write("Blocking 'local' is not supported.   "
                               "Most likely you want '--block-local' instead.\n")
             return EXIT_CODE_BAD_ARGS
 
@@ -391,8 +407,12 @@ class PackageCmd(KsconfCmd):
         app_name = args.app_name or os.path.basename(args.source)
         dest = args.file or "{}.tgz".format(app_name.lower().replace("-", "_"))
         builder = AppPackageBuilder(args.source, app_name, output=self.stderr)
+
+        # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out for faster builds in simple scenarios
         with builder:
-            builder.combine(args.source, args.layer_filter, allow_symlink=args.follow_symlink)
+            builder.combine(args.source, args.layer_filter,
+                            layer_method=args.layer_method,
+                            allow_symlink=args.follow_symlink)
             # Handle local files
             if args.local == "merge":
                 builder.merge_local()
@@ -403,8 +423,10 @@ class PackageCmd(KsconfCmd):
             else:   # pragma: no cover
                 raise ValueError("Unknown value for 'local': {}".format(args.local))
 
+            ''' # Disabling this for now.   Suggest using ksconf.builder.* instead
             for script in args.hook_script:
                 builder.run_hook_script(script)
+            '''
 
             if args.blocklist:
                 self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))
@@ -422,6 +444,7 @@ class PackageCmd(KsconfCmd):
 
             if args.release_file:
                 # Should this be expanded to be an absolute path?
-                open(args.release_file, "w").write(dest)
+                with open(args.release_file, "w") as f:
+                    f.write(dest)
 
         return EXIT_CODE_SUCCESS
