@@ -225,6 +225,9 @@ def cli(argv=None, _unittest=False):
         return_code = args.funct(args)
     except Exception as e:  # pragma: no cover
         # Set KSCONF_DEBUG=1 to enable a traceback
+        if _unittest:
+            from ksconf.consts import KSCONF_DEBUG
+            os.environ[KSCONF_DEBUG] = "1"
         sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
         ksconf.util.debug_traceback()
         return_code = EXIT_CODE_INTERNAL_ERROR
