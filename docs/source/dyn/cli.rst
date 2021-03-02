@@ -94,7 +94,7 @@ ksconf combine
 
  .. code-block:: none
 
-    usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}]
+    usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
                           [-I PATTERN] [-E PATTERN] [--dry-run] [--follow-symlink]
                           [--banner BANNER] [--disable-marker]
                           source [source ...]
@@ -144,6 +144,8 @@ ksconf combine
                             any accidental layer detection. By default, 'auto'
                             mode will enable transparent switching between 'dir.d'
                             and 'disable' (legacy) behavior.
+      -q, --quiet           Make output a bit less noisy. This may change in the
+                            future...
       -I PATTERN, --include PATTERN
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN

@@ -50,6 +50,7 @@ class AppPackager(object):
                  "--layer-method", layer_method,
                  # Stuff we shouldn't have to do with a proper interface:
                  "--banner", "",
+                 "--quiet",
                  "--disable-marker" ]
         if allow_symlink:
             args.append("--follow-symlink")

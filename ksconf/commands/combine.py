@@ -93,6 +93,9 @@ class CombineCmd(KsconfCmd):
             (legacy) behavior.
             """)
 
+        parser.add_argument("-q", "--quiet", action="store_true",
+                            help="Make output a bit less noisy.  This may change in the future...")
+
         parser.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
                             type=wb_type("include"), metavar="PATTERN",
                             help="Name or pattern of layers to include.")
@@ -239,8 +242,9 @@ class CombineCmd(KsconfCmd):
                 else:
                     smart_rc = smart_copy(src_file, dest_path)
                 if smart_rc != SMART_NOCHANGE:
-                    self.stderr.write(
-                        "Copy <{0}>   {1:50}  from {2}\n".format(smart_rc, dest_path, src_file))
+                    if not args.quiet:
+                        self.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(
+                            smart_rc, dest_path, src_file))
             else:
                 try:
                     # Handle merging conf files
@@ -251,9 +255,9 @@ class CombineCmd(KsconfCmd):
                     smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
                                                 banner_comment=args.banner)
                     if smart_rc != SMART_NOCHANGE:
-                        self.stderr.write(
-                            "Merge <{0}>   {1:50}  from {2!r}\n".format(smart_rc, dest_path,
-                                                                        src_files))
+                        if not args.quiet:
+                            self.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(
+                                smart_rc, dest_path,src_files))
                 finally:
                     # Protect against any dangling open files:  (ResourceWarning: unclosed file)
                     dest.close()
