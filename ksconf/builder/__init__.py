@@ -85,7 +85,7 @@ class BuildStep(object):
         """ Execute an OS-level command regarding the build process.
         The process will run withing the working directory of the build folder.
         """
-        # X: Update the external pip call to detach stdout / stderr if self.is_quiet
+        # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
         executable = args[0]
         self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args), VERBOSE))
         process = Popen(args, cwd=self.build_path)

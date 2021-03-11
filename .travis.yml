@@ -27,6 +27,10 @@ matrix:
     python: '3.8'
     dist: xenial
     sudo: true
+  - os: linux
+    python: '3.9'
+    dist: xenial
+    sudo: true
   - os: osx
     language: objective-c
     env: PYENV_VERSION=2.7.17
@@ -91,9 +95,9 @@ deploy:
       all_branches: true
       condition: $DO_RELEASE = True
   - provider: pypi
-    user: lowellalleman
+    user: __token__
     password:
-      secure: OqhsEKwmMHB26imHCH23UXINk0VEkeMR7uJRKvj90zz4c34VvPE5VJoYTOERMIEoNMBGr9VN1O216CJDAeykswxQG0CxsbTeIOVHB7avAQaodvWgosQDyyrwAypWtLsBu/LZdXWZ0j09CYB+DiG2zKBOdtER+YEqRSIMDFXRmWKfPvkOHkhh7v4bSjjs/w6HvV9FLgXnz1y7YxVwLmRHku8NWiqBq1q09b0gezBgOll7QhKFXMJLLtsy7V1JWV42e/B812RORiW+pnyZqLzDG6qoUd+W0aJMGUpMetm8dcgp70Teyq0jLSPVZ7BtuzudL8mimxONFr7QHDWwv2gsMKVg3xvfOJ1FvDsugGXTmbu3WtSeZEaXLaLo4xiyC5GLOGsPxZPPqpsE5K7UW14HQlCWPOYWD161fxW6stbDeIvxJOVn4aYUZFWr6jypJW2SYK1xCjSB8r8FSpJCCz1/3d5j9jFOJGf8eY9dDDkSUxWWjPHjbHjI5bWIC5k+sxXLmURA4Ne5gl4QSynX1TQFsU3AiSul93Ds6SSXSQJbSp0kwFwHPDju/g4RJB9rcH0EpJ0aTzuavvTIPLLCXO1HI8c/6uL5nWWUN6zwXjLsGrLY0Pb6VTxH/qiQPYJduWSXOXV9R2a0mGr8Jc4dCTQBeUCGGqEwMRnn3Iknx7JF0AE=
+      secure: 1gyPI3Mc+DUInpLswll08xSQkoG00bKh96JvKdyskKl4vLGR83Frr6oKdYIyZxHoPE5o43A+VKA1CaXmeru6F/eMFqDT6O0QYuqUEo6BxnTX3RMeHEJExL2NZ2KmN9KvB0THBCg8GHXXSdAceCHm2LKJOszNpF1ajSb7ap92HMwBfJ22RKgstQ/LER7jmscfmfZ0AbOK7gBWiMW2tWEw+XuxqR6w/Tg5o6K5uHDNQNQTZTTvsjg0onnwjyFgOR5+sywypiHhlR02PCdCJWWTkVo++AE17sNi5y3PPDtvPSLOePL3e4lAOWodQEBm9b2aUUinvS/886vL7QIzhLmsA0U24AE6ym+4jK/YhhQXx9TF9CNKoU28qmVfhv3i/iiQDmjeJqeI8YWH+DoMk6g8+l2q69WNWWv+wNLgMjphaanstFvzWMIVj5N6RzKfhttZWJC54XdDV0FukxoBNMwe5lndTDJAP6Qbit7+0RKhW3upBagYEuCN+5o0RkH+cR6lgASMyUmVTCrbwMWaA30egIUOnf3bJPyKZC1dk655DWWVcA8m5ubLiqm90jxNd62lFkeed5zb/HpVNgNOcifQD0zc2GUlNswXDeQyHzzyMfPyOsX/k0BkgkfIQM9Gssoer/uUlzDXMruA0OEJltBAYnCGGCzz4sJubMEPr0Mu9w4=
     distributions: "sdist bdist_wheel"
     skip_cleanup: true
     on:
