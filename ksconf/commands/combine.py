@@ -221,8 +221,8 @@ class CombineCmd(KsconfCmd):
             if not os.path.isdir(dest_dir) and not args.dry_run:
                 os.makedirs(dest_dir)
 
-            # Handle conf files and non-conf files separately
-            if not conf_file_re.search(dest_fn):
+            # Handle conf files (merge) and non-conf (copy-only) files separately
+            if not conf_file_re.search(dest_fn) or len(sources) == 1:
                 # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].physical_path
@@ -257,7 +257,7 @@ class CombineCmd(KsconfCmd):
                     if smart_rc != SMART_NOCHANGE:
                         if not args.quiet:
                             self.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(
-                                smart_rc, dest_path,src_files))
+                                smart_rc, dest_path, src_files))
                 finally:
                     # Protect against any dangling open files:  (ResourceWarning: unclosed file)
                     dest.close()

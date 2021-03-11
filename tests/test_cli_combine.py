@@ -117,13 +117,13 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
 
     def test_sort_order(self):
+        "Confirm that single input files are copied as-is"
         twd = TestWorkDir()
-        #self.build_test01(twd)
         default = twd.get_path("input")
         target = twd.get_path("output")
         unique_conf = [
             "z = 1",
-            "b = ?",
+            " b=?  ",
             "a = 9"]
         twd.write_file("input/unique.conf",
                        "\n".join(unique_conf))
@@ -132,7 +132,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
                             "--target", target, default)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             data = twd.read_file("output/unique.conf").splitlines()
-            self.assertListEqual(sorted(unique_conf), sorted(data))
+            self.assertListEqual(unique_conf, data)
 
     def test_combine_dird(self):
         twd = TestWorkDir()
