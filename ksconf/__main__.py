@@ -70,7 +70,7 @@ def check_py_sane():
 
 def handle_cmd_failed(subparser, ep):
     """ Build a bogus subparser for a cmd that can't be loaded, with the only purpose of providing
-    a more consistent user experiencee. """
+    a more consistent user experience. """
     # Not sure how much *better* this is.  But it at least it gets away from the dumb stares
     # when the subcommand silently disappears.  (Visible from ksconf --version, but still...
     # It's confusing, even if *just* during development)

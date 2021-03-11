@@ -116,6 +116,24 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
 
+    def test_sort_order(self):
+        twd = TestWorkDir()
+        #self.build_test01(twd)
+        default = twd.get_path("input")
+        target = twd.get_path("output")
+        unique_conf = [
+            "z = 1",
+            "b = ?",
+            "a = 9"]
+        twd.write_file("input/unique.conf",
+                       "\n".join(unique_conf))
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--layer-method", "disable", "--banner", "",
+                            "--target", target, default)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            data = twd.read_file("output/unique.conf").splitlines()
+            self.assertListEqual(sorted(unique_conf), sorted(data))
+
     def test_combine_dird(self):
         twd = TestWorkDir()
         self.build_test01(twd)
