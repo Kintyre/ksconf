@@ -11,6 +11,7 @@ import unittest
 
 from io import StringIO
 from functools import partial
+from collections import OrderedDict
 
 import ksconf.ext.six as six
 
@@ -79,7 +80,6 @@ class ParserTestCase(unittest.TestCase):
         self.assertTrue("stanza2" in c, "Must preserve empty stanza")
         self.assertEqual(len(c["stanza2"]), 0)
         self.assertEqual(c["stanza3"]["has_key"], "true")
-
 
     def test_preserve_empty_stanza_bug77(self):
         c = parse_string("""
@@ -356,6 +356,19 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(st["int2"], "0")
         self.assertEqual(st["none"], "")
 
+    @unittest.expectedFailure
+    def test_write_unsorted(self):
+        d = OrderedDict()
+        d["stanza3"] = {"added": "first"}
+        d["stanza2"] = {"added": "second"}
+        tfile1 = StringIO()
+        write_conf(tfile1, d, sort=False)
+        tfile2 = StringIO()
+        write_conf(tfile2, d, sort=True)
+        self.assertNotEqual(tfile1.getvalue(), tfile2.getvalue())
+        # XXX:  Confirm that stanza3 occurs before stanza2
+
+
 
 # @unittest.expectedFailure()
 
@@ -534,7 +547,6 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertEqual(reportack.tag, DIFF_OP_REPLACE)
         self.assertIn(r"(?<dest_ip>[0-9A-Fa-f.:]+)", reportack.b)
         self.assertNotIn(r"(?<dest_ip>[0-9A-Fa-f.:]+)", reportack.a)
-
 
     def test_summarize_compare_results(self):
         c1 = parse_string(self.cfg_props_imapsync_1)
