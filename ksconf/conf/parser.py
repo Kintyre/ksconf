@@ -209,7 +209,7 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
         elif "=" in entry:
             k, v = entry.split("=", 1)
             yield k.rstrip(), v.lstrip()
-        elif re.search('^\s*\[|\]\s*$', entry):
+        elif re.search(r'^\s*\[|\]\s*$', entry):
             # ToDo:  There should be a 'loose' mode that allows this to be ignored...
             raise ConfParserException("Dangling stanza header:  {0}".format(entry))
         elif strict and entry.strip():
@@ -313,7 +313,7 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
         sorter = list
 
     def write_stanza_body(items):
-        for (key, value) in sorted(items.items()):
+        for (key, value) in sorter(items.items()):
             if value is None:
                 value = ""
             else:
@@ -326,7 +326,7 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
                 # Avoid a trailing whitespace to keep the git gods happy
                 stream.write("{0} =\n".format(key))
 
-    keys = sorted(conf)
+    keys = sorter(conf)
     while keys:
         section = keys.pop(0)
         cfg = conf[section]

@@ -356,7 +356,6 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(st["int2"], "0")
         self.assertEqual(st["none"], "")
 
-    @unittest.expectedFailure
     def test_write_unsorted(self):
         d = OrderedDict()
         d["stanza3"] = {"added": "first"}
