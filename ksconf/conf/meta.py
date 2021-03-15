@@ -17,6 +17,11 @@ LEVELS:
 
 from __future__ import absolute_import, unicode_literals
 
+import re
+
+import ksconf.ext.six as six
+from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
+from ksconf.ext.six.moves.urllib.parse import quote, unquote
 
 """
 
@@ -28,16 +33,6 @@ d = dict(zip(("conf", "stanza", "attribute"), (unquote(p) for p in stanza_name.s
     {"conf" :
 
 """
-
-
-import re
-
-import ksconf.ext.six as six
-
-from ksconf.ext.six.moves.urllib.parse import quote, unquote
-
-from ksconf.conf.parser import parse_conf, GLOBAL_STANZA
-
 
 
 class MetaLayer(object):
@@ -67,7 +62,7 @@ class MetaLayer(object):
         if self._children:
             for child_name, child in six.iteritems(self._children):
                 # PY3: yield from
-                for r in child.walk(_prefix=_prefix+(child_name,)):
+                for r in child.walk(_prefix=_prefix + (child_name,)):
                     yield r
 
     def items(self, prefix=None):
@@ -79,9 +74,8 @@ class MetaLayer(object):
         if self._children:
             for child_name, child in six.iteritems(self._children):
                 # yield from  (PY3)
-                for r in child.items(prefix=prefix+(child_name,)):
+                for r in child.items(prefix=prefix + (child_name,)):
                     yield r
-
 
 
 class MetaData(object):
@@ -120,7 +114,7 @@ class MetaData(object):
             access = stanza["access"]
             for match in re.finditer(cls.regex_access, access):
                 stanza_name = "access.{}".format(match.group("action"))
-                values = [ role.strip() for role in match.group("roles").split(",") ]
+                values = [role.strip() for role in match.group("roles").split(",")]
                 stanza[stanza_name] = values
         return stanza
 
@@ -132,13 +126,13 @@ class MetaData(object):
 
     def get(self, *names):
         node = self._meta
-        layers = [ node.data ]
+        layers = [node.data]
         for name in names:
             node = node.resolve(name)
             layers.append(node.data)
         d = self.expand_layers(layers)
         # Parser access:   split out 'read' vs 'write', return as list
-        #d["acesss"]
+        # d["acesss"]
         return self.parse_meta(d)
 
     def feed_file(self, stream):
@@ -167,9 +161,9 @@ class MetaData(object):
     def write_stream(self, stream, sort=True):
         if sort:
             # Prefix level # to list for sorting purposes
-            data = [ (len(parts), parts, payload) for parts, payload in self.iter_raw() ]
+            data = [(len(parts), parts, payload) for parts, payload in self.iter_raw()]
             data.sort()
-            raw = [ (i[1], i[2]) for i in data ]
+            raw = [(i[1], i[2]) for i in data]
             del data
         else:
             raw = self.iter_raw()

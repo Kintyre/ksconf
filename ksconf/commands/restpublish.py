@@ -83,11 +83,10 @@ class RestPublishCmd(KsconfCmd):
             sometimes it's helpful to set this explicitly. Can be any valid Splunk conf file type.
             Examples include: 'app', 'props', 'tags', 'savedsearches', etc."""))
         parser.add_argument("-m", "--meta", action="append",
-                            help=
-                            "Specify one or more ``.meta`` files to determine the desired read & "
+                            help="Specify one or more ``.meta`` files to determine the desired read & "
                             "write ACLs, owner, and sharing for objects in the CONF file.")
 
-        #add_splunkd_namespace(
+        # add_splunkd_namespace(
         #    add_splunkd_access_args(parser.add_argument("Splunkd endpoint")))
 
         add_splunkd_namespace(
@@ -180,7 +179,8 @@ class RestPublishCmd(KsconfCmd):
             else:
                 action, info = self.publish_conf(stanza_name, stanza_data, config_file)
 
-            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name), action, len(info.get("delta",[]))))
+            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name),
+                                                         action, len(info.get("delta", []))))
 
             update_time = info.get("updated", 0)
             ###headers = (conf_proxy.name, "{}/{}".format(args.url, config_file.path))
@@ -227,14 +227,14 @@ class RestPublishCmd(KsconfCmd):
             stz_data = stz.content
 
             # Diff printing really doesn't like 'None's...
-            stz_data = { k:v or "" for k,v in six.iteritems(stz_data) }
+            stz_data = {k: v or "" for k, v in six.iteritems(stz_data)}
             self.make_boolean(stz_data)
             res["path"] = stz.path
             try:
                 res["updated"] = stz.state["updated"]
             except:
                 pass
-            ## print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
+            # print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
             ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
             delta = res["delta"] = compare_stanzas(stanza_data, data, stanza_name)
@@ -311,9 +311,9 @@ class RestPublishCmd(KsconfCmd):
             svc = config_file.service
             all_headers = svc.additional_headers + svc._auth_headers
             resource = svc.authority + \
-                       svc._abspath(stz.path + "acl",
-                                    owner=svc.namespace.owner, app=svc.namespace.app,
-                                    sharing=svc.namespace.sharing)
+                svc._abspath(stz.path + "acl",
+                             owner=svc.namespace.owner, app=svc.namespace.app,
+                             sharing=svc.namespace.sharing)
             #logger.debug("request to do the ACL THING!  (Round trip debugging)")
             response = svc.http.post(resource, all_headers, **final_meta)
 

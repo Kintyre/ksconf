@@ -10,5 +10,5 @@ if not hasattr(unittest.TestCase, "assertRegex"):
     unittest.TestCase.assertRegex = unittest.TestCase.assertRegexpMatches
 
 if not hasattr(unittest.TestCase, "assertNotRegex") and \
-       hasattr(unittest.TestCase, "assertNotRegexpMatches"):
+        hasattr(unittest.TestCase, "assertNotRegexpMatches"):
     unittest.TestCase.assertNotRegex = unittest.TestCase.assertNotRegexpMatches

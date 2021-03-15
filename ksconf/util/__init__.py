@@ -7,6 +7,7 @@ from ksconf.ext.six import PY2, binary_type
 
 from ksconf.consts import KSCONF_DEBUG
 
+
 def _xargs(iterable, cmd_len=1024):
     fn_len = 0
     buf = []
@@ -32,8 +33,10 @@ try:
 except ImportError:
     # Modified from http://book.pythontips.com/en/latest/function_caching.html
     from functools import wraps
+
     def memoize(function):
         memo = {}
+
         @wraps(function)
         def wrapper(*args, **kwargs):
             key = (args, tuple(sorted(kwargs.items())))

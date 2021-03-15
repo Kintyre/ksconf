@@ -62,7 +62,6 @@ from ksconf.util.file import _samefile, file_fingerprint
 """
 
 
-
 def empty_dict(d):
     # Or just   d == {}?   Not sure which is better
     return isinstance(d, dict) and len(d) == 0
@@ -156,9 +155,8 @@ class PromoteCmd(KsconfCmd):
 
         parser.add_argument("--force", "-f",
                             action="store_true", default=False,
-                            help=
-            "Disable safety checks. "
-            "Don't check to see if SOURCE and TARGET share the same basename.")
+                            help="Disable safety checks. "
+                            "Don't check to see if SOURCE and TARGET share the same basename.")
         parser.add_argument("--keep", "-k",
                             action="store_true", default=False, help=dedent("""\
             Keep conf settings in the source file.
@@ -323,7 +321,6 @@ class PromoteCmd(KsconfCmd):
         final_cfg = merge_conf_dicts(cfg_tgt, cfg_src)
         return ({}, final_cfg)
 
-
     def _do_promote_interactive(self, cfg_src, cfg_tgt, args):
         ''' Interactively "promote" settings from one configuration file into another
 
@@ -386,7 +383,7 @@ class PromoteCmd(KsconfCmd):
 
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        ###  Todo:  IMPLEMENT A MANUAL MERGE/DIFF HERE:
+        # Todo:  IMPLEMENT A MANUAL MERGE/DIFF HERE:
         # What ever is migrated, move it OUT of cfg_src, and into cfg_tgt
 
         diff = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)

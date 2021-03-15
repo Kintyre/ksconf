@@ -32,6 +32,7 @@ allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
 DEFAULT_DIR = "default"
 
+
 class UnarchiveCmd(KsconfCmd):
     help = "Install or upgrade an existing app in a git-friendly and safe way"
     description = dedent("""
@@ -53,7 +54,7 @@ class UnarchiveCmd(KsconfCmd):
             By default, the current directory is used.  Sane values include: etc/apps,
             etc/deployment-apps, and so on.""")
                             ).completer = DirectoriesCompleter()
-        parser.add_argument("--app-name", metavar="NAME", default=None,help=dedent("""\
+        parser.add_argument("--app-name", metavar="NAME", default=None, help=dedent("""\
             The app name to use when expanding the archive.
             By default, the app name is taken from the archive as the top-level path included
             in the archive (by convention).
@@ -61,8 +62,8 @@ class UnarchiveCmd(KsconfCmd):
         parser.add_argument("--default-dir", default=DEFAULT_DIR, metavar="DIR", help=dedent("""\
             Name of the directory where the default contents will be stored.
             This is a useful feature for apps that use a dynamic default directory
-            that's created and managed by the 'combine' mode."""
-                            )).completer = DirectoriesCompleter()
+            that's created and managed by the 'combine' mode.""")
+                            ).completer = DirectoriesCompleter()
         parser.add_argument("--exclude", "-e", action="append", default=[], help=dedent("""\
             Add a file pattern to exclude from extraction.
             Splunk's pseudo-glob patterns are supported here.
@@ -140,7 +141,7 @@ class UnarchiveCmd(KsconfCmd):
                 app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
                 del conffile
             elif gaf_relpath.startswith("local" + os.path.sep) or \
-                 gaf_relpath.endswith("local.meta"):
+                    gaf_relpath.endswith("local.meta"):
                 local_files.add(gaf_relpath)
             app_name.add(gaf.path.split("/", 1)[0])
             del gaf_app, gaf_relpath

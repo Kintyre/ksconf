@@ -15,7 +15,6 @@ from tests.cli_helper import *
 
 class CliKsconfCombineTestCase(unittest.TestCase):
 
-
     def build_test01(self, twd):
         twd.write_file("etc/apps/Splunk_TA_aws/default.d/10-upstream/props.conf", """
         [aws:config]
@@ -111,7 +110,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stdout, r'[\r\n][-]\s*<view name="search"')
-            self.assertRegex(ko.stdout, r'[\r\n][-] ?[\r\n]') # Remove empty lines from nav
+            self.assertRegex(ko.stdout, r'[\r\n][-] ?[\r\n]')  # Remove empty lines from nav
             self.assertRegex(ko.stdout, r"[\r\n][+]TIME_FORMAT = [^\r\n]+%6N")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")

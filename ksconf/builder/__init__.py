@@ -1,14 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
-import inspect
-import re
-import os
-import sys
-from subprocess import Popen
-from pathlib import Path
 import argparse
+import inspect
+import os
+import re
+import sys
+from pathlib import Path
+from subprocess import Popen
 
-from ksconf.consts import KSCONF_DEBUG, EXIT_CODE_INTERNAL_ERROR
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.ext.six import text_type
 
 if sys.version_info < (3, 6):
@@ -28,8 +28,6 @@ class BuildExternalException(Exception):
 
 class BuildCacheException(Exception):
     pass
-
-
 
 
 class BuildStep(object):
@@ -95,7 +93,7 @@ class BuildStep(object):
                 process.returncode, executable))
 
 
-from ksconf.builder.core import BuildManager
+from ksconf.builder.core import BuildManager  # noqa
 
 
 def default_cli(build_manager, build_funct, argparse_parents=()):
@@ -137,3 +135,8 @@ def default_cli(build_manager, build_funct, argparse_parents=()):
             raise
         sys.stderr.write("Unhandled exception in build process:  {}\n".format(e))
         sys.exit(EXIT_CODE_INTERNAL_ERROR)
+
+
+# Used for type hints / avoid unused variable warnings moving to Python 3 only: # nopep8
+_ = BuildStep
+del _

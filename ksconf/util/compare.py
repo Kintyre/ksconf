@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+
 def fileobj_compare(f1, f2):
     # Borrowed from filecmp
     f1.seek(0)
@@ -16,7 +17,7 @@ def fileobj_compare(f1, f2):
 
 def file_compare(fn1, fn2):
     with open(fn1, "rb") as f1, \
-         open(fn2, "rb") as f2:
+            open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
 
 
@@ -28,6 +29,7 @@ def cmp_sets(a, b):
     common = sorted(set_a.intersection(set_b))
     b_only = sorted(set_b.difference(set_a))
     return (a_only, common, b_only)
+
 
 # For backwards compability
 _cmp_sets = cmp_sets

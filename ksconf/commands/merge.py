@@ -55,9 +55,9 @@ class MergeCmd(KsconfCmd):
         self.parse_profile = PARSECONF_MID
 
         if args.ignore_missing:
-            cfgs = [ self.parse_conf(c) for c in args.conf if os.path.isfile(c) or c == "-" ]
+            cfgs = [self.parse_conf(c) for c in args.conf if os.path.isfile(c) or c == "-"]
         else:
-            cfgs = [ self.parse_conf(conf) for conf in args.conf ]
+            cfgs = [self.parse_conf(conf) for conf in args.conf]
 
         merge_conf_files(args.target, cfgs, dry_run=args.dry_run,
                          banner_comment=args.banner)

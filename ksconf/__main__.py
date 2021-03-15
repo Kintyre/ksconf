@@ -33,13 +33,13 @@ from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_ENV_BUSTED, KSCONF
 # Someday need to re-evaluate this and see if it's reproducible on other machines....
 try:
     from random import choice
-except OSError: # WindowsError:  pragma: no cover
+except OSError:  # WindowsError:  pragma: no cover
     def choice(options):
         return options[0]
 
 
 ###################################################################################################
-## CLI definition
+# CLI definition
 
 
 # ------------------------------------------ wrap to 80 chars ----------------v
@@ -244,13 +244,14 @@ def check_py():
         sys.stderr.write("Doh!  Environmental configuration issue found preventing 'ksconf' from running.\n")
         # TODO:  We should show the Windows equivalent, but primarily this is an issue on Linux.
         # TODO:  If we're install as a splunk app, we should be able to give the real path to SPLUNK_HOME, which quite likely is ALSO not set.
-        sys.stderr.write("\n\n") # Often there's crap on the console from warnings.  Whitespace!
+        sys.stderr.write("\n\n")  # Often there's crap on the console from warnings.  Whitespace!
         sys.stderr.write("Try running this command first:  source $SPLUNK_HOME/bin/setSplunkEnv\n")
         # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist
         if KSCONF_DEBUG not in os.environ:
             sys.exit(EXIT_CODE_ENV_BUSTED)
     # Okay, now NEVER call this code again....   (helpful for unit-testing)
     globals()["check_py"] = None
+
 
 if __name__ == '__main__':  # pragma: no cover
     cli()

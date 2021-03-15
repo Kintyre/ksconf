@@ -78,7 +78,10 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_2_stanzas(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--batch", "--stanza", "Stanza1", "--stanza", "Stanza2", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch",
+                       "--stanza", "Stanza1",
+                       "--stanza", "Stanza2",
+                       self.conf_local, self.conf_default)
             self.assertFalse(os.path.isfile(self.conf_local))
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
@@ -95,7 +98,9 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_glob_stanzas(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--batch", "--match=wildcard", "--stanza", "Stanza*", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch", "--match=wildcard",
+                       "--stanza", "Stanza*",
+                       self.conf_local, self.conf_default)
             self.assertFalse(os.path.isfile(self.conf_local))
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
@@ -112,7 +117,9 @@ class CliPromoteTest(unittest.TestCase):
     def test_promote_list_invert_stanzas(self):
         twd = self.sample_data02()
         with ksconf_cli:
-            ksconf_cli("promote", "--batch", "--invert-match", "--stanza", "Stanza2", self.conf_local, self.conf_default)
+            ksconf_cli("promote", "--batch", "--invert-match",
+                       "--stanza", "Stanza2",
+                       self.conf_local, self.conf_default)
             d = twd.read_conf("default/test.conf")
             stanza1 = d["Stanza1"]
             self.assertEqual(stanza1["a"], "3")

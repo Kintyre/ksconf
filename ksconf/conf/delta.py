@@ -14,7 +14,7 @@ from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import TermColor, ANSI_RESET, ANSI_GREEN, ANSI_RED, ANSI_YELLOW, ANSI_BOLD
 
 ####################################################################################################
-## Diff logic
+# Diff logic
 
 DIFF_OP_INSERT = "insert"
 DIFF_OP_DELETE = "delete"
@@ -51,18 +51,20 @@ class DiffHeader(object):
 
 def compare_stanzas(a, b, stanza_name, preserve_empty=False):
     if preserve_empty:
-        is_empty = lambda v: v is None
+        def is_empty(v):
+            return v is None
     else:
-        is_empty = lambda v: not v
+        def is_empty(v):
+            return not v
 
     if a == b:
-        return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b) ]
+        return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)]
     elif is_empty(b):
         # A only
-        return [ DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None) ]
+        return [DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None)]
     elif is_empty(a):
         # B only
-        return [ DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b) ]
+        return [DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b)]
     else:
         return list(_compare_stanzas(a, b, stanza_name))
 
@@ -340,6 +342,7 @@ def show_text_diff(stream, a, b):
             tc.color(_diff_color_mapping.get(d[0], 0))
             stream.write(d)
             tc.reset()
+
 
 def reduce_stanza(stanza, keep_attrs):
     """ Pre-process a stanzas so that only a common set of keys will be compared.

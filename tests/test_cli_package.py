@@ -88,7 +88,6 @@ class CliPackageCmdTest(unittest.TestCase):
         self.assertTrue(tarball.endswith("my_app_on_splunkbase-1.2.3.spl"))
         self.assertTrue(os.path.isfile(tarball))
 
-
         tf = tarfile.open(tarball, r":gz")
         names = tf.getnames()
         # Expected files
@@ -98,8 +97,6 @@ class CliPackageCmdTest(unittest.TestCase):
         self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
         self.assertNotIn("my_app_on_splunkbase/metadata/local.meta", names)
         # self.assertRegex(ko.stdout, r"^diff ", "Missing diff header line")
-
-
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -2,7 +2,7 @@
 # See http://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.0.0
+  rev: v2.5.0
   hooks:
     - id: trailing-whitespace
       exclude: (cli\.rst|\.md|\.csv)$
@@ -16,6 +16,12 @@ repos:
     - id: mixed-line-ending
       args: [ '--fix=lf' ]
       exclude: (\.bat|\.csv)$
+
+- repo: https://github.com/pre-commit/mirrors-autopep8
+  rev: v1.5.4
+  hooks:
+    - id: autopep8
+      exclude: (ksconf/ext/)
 
 - repo: local
   hooks:

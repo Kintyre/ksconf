@@ -20,7 +20,6 @@ from ksconf.conf.delta import compare_cfgs, DIFF_OP_EQUAL
 from tests.cli_helper import TestWorkDir
 
 
-
 class MetaDataTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -77,13 +76,12 @@ class MetaDataTestCase(unittest.TestCase):
 
         d = md.get("props", "Vendor:Engine:Errors")
         self.assertEqual(d["export"], "system")
-        self.assertEqual(d["owner"],  "joeadmin")
+        self.assertEqual(d["owner"], "joeadmin")
 
         d = md.get("props", "Vendor:Engine:Errors", "EXTRACT-VendorId")
         self.assertEqual(d["export"], "system")
-        self.assertEqual(d["owner"],  "admin")
+        self.assertEqual(d["owner"], "admin")
         self.assertEqual(d["modtime"], "1518721483.877502000")
-
 
     def test_encoded_slash(self):
         """ Ensure that encoded slashes (%2f) are parsed correctly. """

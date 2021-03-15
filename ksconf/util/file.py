@@ -177,6 +177,7 @@ class ReluctantWriter(object):
     to a temp file, and then compared to the current file's content.  The file file will be
     overwritten only if the contents changed.
     """
+
     def __init__(self, path, *args, **kwargs):
         self.path = path
         self._arg = (args, kwargs)

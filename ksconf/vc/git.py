@@ -120,6 +120,7 @@ def git_ls_files(path, *modifiers):
                            .format(proc.returncode))
     return proc.stdout.splitlines()
 
+
 def git_status_ui(path, *args):  # pragma: no cover
     # For unittesting purposes, this function is a nuisance
     if unitesting:

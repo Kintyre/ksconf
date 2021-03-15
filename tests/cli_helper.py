@@ -5,23 +5,22 @@ import shutil
 import stat
 import sys
 import tempfile
-from io import open, StringIO
+from io import StringIO, open
 from subprocess import list2cmdline
 from textwrap import dedent
 
 import ksconf.ext.six as six
-
-# Some unittest fixup for various python versions
-import tests.compat as _
-
-del _
-
 from ksconf.__main__ import cli
+from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
+                                parse_conf_stream, write_conf)
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
-from ksconf.conf.parser import parse_conf, write_conf, parse_conf_stream, \
-    GLOBAL_STANZA, PARSECONF_MID
+# Some unittest fixup for various python versions
+import tests.compat as _  # nopep8
+
+del _
+
 
 # What to export
 __all__ = [
@@ -120,7 +119,7 @@ class _KsconfCli():
             temp_stderr = sys.stderr = StringIO()
             try:
                 rc = cli(args, _unittest=True)
-            except SystemExit as e: # pragma: no cover
+            except SystemExit as e:  # pragma: no cover
                 if hasattr(e, "code"):  # PY3
                     rc = e.code
                 else:

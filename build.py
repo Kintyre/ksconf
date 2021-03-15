@@ -8,6 +8,7 @@ from ksconf.builder import BuildManager, VERBOSE, QUIET
 
 manager = BuildManager()
 
+
 def copy_files(step):
     # args: (BuildStep)
     log = step.get_logger()
@@ -34,6 +35,7 @@ def copy_files(step):
                 dest_parent.mkdir(parents=True)
             if f.is_file():
                 copy2(str(f), str(dest))
+
 
 @manager.cache(["requirements.txt"], ["lib/"], timeout=86400,
                cache_invalidation=[list(sys.version_info)])
@@ -64,6 +66,7 @@ def pip_install(step):
         if path.is_dir():
             log("Removing console-script folder: {}".format(path))
             rmtree(str(path))
+
 
 def build():
     parser = argparse.ArgumentParser()

@@ -144,7 +144,7 @@ class CliDiffTest(unittest.TestCase):
 
     def test_diff_no_common(self):
         with ksconf_cli:
-            ko = ksconf_cli("diff",  #"--comments",
+            ko = ksconf_cli("diff",  # "--comments",
                             static_data("savedsearches-sysdefault70.conf"),
                             static_data("inputs-ta-nix-default.conf"))
             #self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
@@ -169,10 +169,15 @@ class CliDiffTest(unittest.TestCase):
             ko = ksconf_cli("diff", conf1, conf2)
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
             diff_lines = re.split(r"[\r\n]+", ko.stdout)[2:]
-            self.assertIn("-EVAL-lease_end = lease_start+lease_duration", diff_lines)
-            self.assertIn("+EVAL-lease_end = lease_start + lease_duration", diff_lines)
-            self.assertIn("-EXTRACT-report-ack = ACK (?<dest_ip>[0-9.]+)/\d+ for (?<lease_duration>\d+)", diff_lines)
-            self.assertIn("+EXTRACT-report-ack = ACK (?<dest_ip>[0-9A-Fa-f.:]+)/\d+ for (?<lease_duration>\d+)", diff_lines)
+
+            expect_lines = [
+                "-EVAL-lease_end = lease_start+lease_duration",
+                "+EVAL-lease_end = lease_start + lease_duration",
+                r"-EXTRACT-report-ack = ACK (?<dest_ip>[0-9.]+)/\d+ for (?<lease_duration>\d+)",
+                r"+EXTRACT-report-ack = ACK (?<dest_ip>[0-9A-Fa-f.:]+)/\d+ for (?<lease_duration>\d+)",
+            ]
+            for line in expect_lines:
+                self.assertIn(line, diff_lines)
 
 
 if __name__ == '__main__':  # pragma: no cover

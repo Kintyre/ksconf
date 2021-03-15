@@ -92,7 +92,7 @@ class SortCmd(KsconfCmd):
                     #c = parse_conf(conf, profile=PARSECONF_STRICT)
                     data = c.data
                     smart_rc = c.dump(c.data, stanza_delim=stanza_delims, sort=True)
-                    #smart_rc = smart_write_conf(conf, data, stanza_delim=stanza_delims,
+                    # smart_rc = smart_write_conf(conf, data, stanza_delim=stanza_delims,
                     #                            sort=True)
                 except ConfParserException as e:
                     smart_rc = None

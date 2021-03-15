@@ -32,7 +32,7 @@ class CliSimpleTestCase(unittest.TestCase):
         with ksconf_cli:
 
             # A command that uses ConfFileType() with mode="load"
-            base_cmd = [ "rest-export" ]
+            base_cmd = ["rest-export"]
 
             ko = ksconf_cli(*base_cmd + [twd.get_path("a_non_existent_file.conf")])
             self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))

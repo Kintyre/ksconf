@@ -74,9 +74,9 @@ class PackageCmd(KsconfCmd):
                             help="Remove a pattern that was previously added to the blocklist.")
 
         player = parser.add_argument_group("Layer filtering",
-            "If the app being packaged includes multiple layers, these arguments can be used to "
-            "control which ones should be included in the final app file.  If no layer options "
-            "are specified, then all layers will be included.")
+                                           "If the app being packaged includes multiple layers, these arguments can be used to "
+                                           "control which ones should be included in the final app file.  If no layer options "
+                                           "are specified, then all layers will be included.")
 
         player.add_argument("--layer-method",
                             choices=["auto", "dir.d", "disable"],
@@ -176,7 +176,8 @@ class PackageCmd(KsconfCmd):
         dest = args.file or "{}.tgz".format(app_name.lower().replace("-", "_"))
         builder = AppPackager(args.source, app_name, output=self.stderr)
 
-        # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out for faster builds in simple scenarios
+        # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
+        #       for faster builds in simple scenarios
         with builder:
             builder.combine(args.source, args.layer_filter,
                             layer_method=args.layer_method,

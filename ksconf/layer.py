@@ -239,6 +239,7 @@ class DirectLayerRoot(LayerRootBase):
     given without any automatic detection mechanisms.  You can think of this as the legacy
     implementation.
     """
+
     def add_layer(self, path):
         Layer, File = self.Layer, self.File
         # Layer name should be considered arbitrary and unimportant here
@@ -294,9 +295,7 @@ A:  Multiple LayerRoots SHOULD be supported.
 """
 
 
-
-
-###  Q:  How do we mark "mount-points" in the directory structure to keep multiple layers from claiming the same files?????
+# Q:  How do we mark "mount-points" in the directory structure to keep multiple layers from claiming the same files?????
 class DotDLayerRoot(LayerRootBase):
 
     class Layer(LayerRootBase.Layer):
@@ -389,11 +388,6 @@ class DotDLayerRoot(LayerRootBase):
     def order_layers(self):
         # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
         self._layers.sort(key=lambda l: l.name)
-
-
-
-
-
 
 
 def run_oldshool(args):

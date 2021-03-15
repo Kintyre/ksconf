@@ -82,7 +82,6 @@ class CliMinimizeTest(unittest.TestCase):
             final_size = os.stat(conf).st_size
             self.assertTrue(orig_size > final_size)
 
-
     def test_missing_target(self):
         twd = TestWorkDir()
         local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")

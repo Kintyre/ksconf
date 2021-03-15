@@ -14,15 +14,16 @@ from __future__ import absolute_import, unicode_literals
 from collections import namedtuple, OrderedDict
 from importlib import import_module
 
-Ep = namedtuple("Ep", ("name", "module_name", "object_name")) #, "extras", "dist")
+Ep = namedtuple("Ep", ("name", "module_name", "object_name"))  # , "extras", "dist")
 
 
+# autopep8: off
 _entry_points = {
-    "console_scripts" : [
+    "console_scripts": [
         Ep("ksconf", "ksconf.__main__", "cli"),
     ],
     # Custom end_point for ksconf subcommand registration
-    "ksconf_cmd" : [
+    "ksconf_cmd": [
         Ep("check",     "ksconf.commands.check",    "CheckCmd"),
         Ep("combine",   "ksconf.commands.combine",  "CombineCmd"),
         Ep("diff",      "ksconf.commands.diff",     "DiffCmd"),
@@ -39,12 +40,13 @@ _entry_points = {
         Ep("xml-format","ksconf.commands.xmlformat","XmlFormatCmd"),
     ],
 }
+# autopep8: on
 
 
 def get_entrypoints_setup():
     setup = {}
     for (group, entries) in _entry_points.items():
-        setup[group] = [ "{0.name} = {0.module_name}:{0.object_name}".format(ep) for ep in entries ]
+        setup[group] = ["{0.name} = {0.module_name}:{0.object_name}".format(ep) for ep in entries]
     return setup
 
 
@@ -68,6 +70,8 @@ def get_entrypoints_fallback(group):
     for ep in _entry_points[group]:
         entry_points[ep.name] = LocalEntryPoint(ep)
     return entry_points
+
+
 def debug():
     # For debugging internally defined entrypoints
     print("Builtin entrypoints:")
@@ -76,6 +80,7 @@ def debug():
         for ep in entries:
             print("{0.name:15} = {0.module_name:30} : {0.object_name}".format(ep))
         print("")
+
 
 if __name__ == '__main__':
     debug()

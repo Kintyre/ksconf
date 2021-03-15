@@ -46,15 +46,15 @@ class AppPackager(object):
 
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
         # VERY HACKY FOR NOW:
-        args = [ "combine", src, "--target", self.app_dir,
-                 "--layer-method", layer_method,
-                 # Stuff we shouldn't have to do with a proper interface:
-                 "--banner", "",
-                 "--quiet",
-                 "--disable-marker" ]
+        args = ["combine", src, "--target", self.app_dir,
+                "--layer-method", layer_method,
+                # Stuff we shouldn't have to do with a proper interface:
+                "--banner", "",
+                "--quiet",
+                "--disable-marker"]
         if allow_symlink:
             args.append("--follow-symlink")
-        args += [ "--{}={}".format(action, path) for (action, path) in filters ]
+        args += ["--{}={}".format(action, path) for (action, path) in filters]
         from ksconf.__main__ import cli
 
         # Passing in _unittest because that swaps sys.exit() for return
@@ -139,7 +139,7 @@ class AppPackager(object):
     '''
 
     def make_archive(self, filename):
-        #if os.path.isfile(filename):
+        # if os.path.isfile(filename):
         #    raise ValueError("Destination file already exists:  {}".format(filename))
 
         # Doh:  version 3.2: Added support for the context management protocol.  (need to wait to use it)
@@ -183,7 +183,7 @@ class AppVarMagic(object):
             return "git-errorcode-{}".format(out.returncode)
         return out.stdout.strip()
 
-    ## START Variable fetching functions.  Be sure to add a docstring
+    # START Variable fetching functions.  Be sure to add a docstring
 
     def get_version(self):
         """ Splunk app version fetched from app.conf """
@@ -214,12 +214,12 @@ class AppVarMagic(object):
         """ Git HEAD rev abbreviated """
         return self.git_single_line("rev-parse", "--short", "HEAD")
 
-    ## END Variable fetching functions.
+    # END Variable fetching functions.
 
     def list_vars(self):
         """ Return a list of (variable, description) available in this class. """
         for name in dir(self):
-           if name.startswith("get_"):
+            if name.startswith("get_"):
                 var = name[4:]
                 doc = getattr(self, name).__doc__.strip()
                 yield (var, doc)

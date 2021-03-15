@@ -21,7 +21,6 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
         self._modsec_workdir = TestWorkDir(git_repo=True)
     '''
 
-
     @classmethod
     def setUpClass(cls):
         # Tell the VC/git module that unit testing is in progress and therefore don't run git
@@ -39,7 +38,7 @@ class CliKsconfUnarchiveTestCase(unittest.TestCase):
     def tearDown(self):
         env = os.environ
         for v in (
-        "GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
+                "GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
             del env[v]
 
     def test_modsec_install_upgrade(self):

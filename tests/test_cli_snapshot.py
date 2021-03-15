@@ -103,6 +103,5 @@ class CliKsconfSnapshotTest(unittest.TestCase):
             self.assertRegex(ko.stderr, r"No such file")
 
 
-
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

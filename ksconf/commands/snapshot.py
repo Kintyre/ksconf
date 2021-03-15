@@ -78,8 +78,8 @@ class ConfSnapshot(object):
             conf = record["conf"] = []
             for (stanza, stanza_data) in data.items():
                 rec = {
-                    "stanza" : stanza,
-                    "attributes" : stanza_data
+                    "stanza": stanza,
+                    "attributes": stanza_data
                 }
                 if stanza is GLOBAL_STANZA:
                     rec["stanza"] = "**GLOBAL_STANZA**"
@@ -102,11 +102,11 @@ class ConfSnapshot(object):
 
     def write_snapshot(self, stream, **kwargs):
         record = {
-            "schema_version" : self.schema_version,
-            "software" : {
-                "name" : "ksconf",
-                "version" : [ __version__, __vcs_info__ ],
-                "command" : sys.argv,
+            "schema_version": self.schema_version,
+            "software": {
+                "name": "ksconf",
+                "version": [__version__, __vcs_info__],
+                "command": sys.argv,
             },
         }
         record["records"] = self._data
@@ -143,8 +143,9 @@ class SnapshotCmd(KsconfCmd):
             Save the snapshot to the named files.  If not provided, the snapshot is written to
             standard output.""")
                             ).completer = FilesCompleter(allowednames=["*.json"])
-        parser.add_argument("--minimize", action="store_true", default=False, help=
-            "Reduce the size of the JSON output by removing whitespace.  Reduces readability.")
+        parser.add_argument("--minimize", action="store_true", default=False,
+                            help="Reduce the size of the JSON output by removing whitespace.  "
+                            "Reduces readability.")
 
     def run(self, args):
         ''' Snapshot multiple configuration files into a single json snapshot. '''

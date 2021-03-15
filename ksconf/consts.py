@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+import sys
+import re
+
 SMART_CREATE = "created"
 SMART_UPDATE = "updated"
 SMART_NOCHANGE = "unchanged"
@@ -45,21 +48,22 @@ EXIT_CODE_ENV_BUSTED = 120
 
 
 # This gets properly supported in Python 3.6, but until then....
-import re
 RegexType = type(re.compile(r'.'))
-del re
+
 
 # Environmental vars are treated as bytes in PY2, and unicode in PY3.  (This wouldn't be needed,
 # except that we import unicode_literals, which we need for other constant strings.)  UGH!
 # Oh the joys of supporting 2 + 3 at the same time!
 
 # PY2 - Six may be missing when 'setup.py' is first called.  (Breaks pre-commit)
-import sys
 PY2 = sys.version_info[0] == 2
-del sys
+
 
 if PY2:
     KSCONF_DEBUG = b"KSCONF_DEBUG"
 else:
     KSCONF_DEBUG = "KSCONF_DEBUG"
-del PY2
+
+
+# Cleanup namespace for wildcard imports
+del re, sys, PY2

@@ -15,23 +15,25 @@ from ksconf.ext.six import PY2
 project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, project_dir)
 
-from ksconf.util.file import ReluctantWriter
+from ksconf.util.file import ReluctantWriter  # nopep8
 
 PY_ENV = {
     "PYTHONWARNINGS": "ignore",
     "PYTHONIOENCODING": "utf-8",
-    "PYTHONHASHSEED" : "1",
+    "PYTHONHASHSEED": "1",
     "KSCONF_DISABLE_PLUGINS": "ksconf_cmd",
 }
 
 if PY2:
     # Convert to bytes for Python 2
-    PY_ENV = { k.encode("utf-8"): v.encode("utf-8") for (k,v) in PY_ENV.items() }
+    PY_ENV = {k.encode("utf-8"): v.encode("utf-8") for (k, v) in PY_ENV.items()}
+
 
 def cmd_output(*cmd):
     p = Popen(cmd, stdout=PIPE, env=PY_ENV)
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
+
 
 '''
 # Not sure how else to tell if environment variables should be bytes or string/unicode, so we try it and adjust from there....
@@ -112,16 +114,15 @@ def make_cli_docs(readme_file):
     return readme
 
 
-
 @show_changes
 def make_subcommands_table(csv_path):
     import csv
     from ksconf.commands import get_all_ksconf_cmds
 
     # Explicitly sort commands by name (no more random git diffs!)
-    commands = [ (ep.name, ep) for ep in get_all_ksconf_cmds() ]
+    commands = [(ep.name, ep) for ep in get_all_ksconf_cmds()]
     commands.sort()
-    commands = [ ep for (name, ep) in commands ]
+    commands = [ep for (name, ep) in commands]
 
     if PY2:
         table = ReluctantWriter(csv_path, "wb")
@@ -140,16 +141,17 @@ def make_subcommands_table(csv_path):
             ]
             # Workaround csv module not supporting unicode in PY2
             if PY2:
-                row = [ s.encode("utf-8") for s in row ]
+                row = [s.encode("utf-8") for s in row]
             csvwriter.writerow(row)
     return table
 
 
 if __name__ == '__main__':
-    dyn  = os.path.join(project_dir, "docs", "source", "dyn")
+    dyn = os.path.join(project_dir, "docs", "source", "dyn")
     if not os.path.isdir(dyn):
         os.makedirs(dyn)
-    docs_dir = lambda filename: os.path.join(dyn, filename)
+
+    def docs_dir(filename): return os.path.join(dyn, filename)  # nopep8
     changes = 0
 
     changes += make_cli_docs(docs_dir("cli.rst"))

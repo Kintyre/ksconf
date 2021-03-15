@@ -33,9 +33,9 @@ def np(p, nominal="/"):
         p = p.replace(nominal, os.path.sep)
     return p
 
+
 def npl(iterable, nominal="/"):
     return [np(i, nominal) for i in iterable]
-
 
 
 class HelperFunctionsTestCase(unittest.TestCase):
@@ -93,7 +93,6 @@ class DefaultLayerTestCase(unittest.TestCase):
 
     def common_data01(self):
         twd = TestWorkDir()
-
 
         twd.write_file("etc/apps/TA-myproduct/README.md", """
         My Product Add on
@@ -165,7 +164,6 @@ class DefaultLayerTestCase(unittest.TestCase):
         ]
         self.assertListEqual(sorted(dlr.list_files()), sorted(expect_files))
 
-
     def test_dotd_simple01(self):
         twd = self.common_data01()
         ta_path = twd.get_path("etc/apps/TA-myproduct")
@@ -174,7 +172,6 @@ class DefaultLayerTestCase(unittest.TestCase):
 
         layers = list([l.name for l in dlr.list_layers()])
         self.assertListEqual(layers, ["10-upstream", "20-corp", "60-dept"])
-
 
         self.maxDiff = 1000
         # Order doesn't matter for file names
@@ -187,19 +184,6 @@ class DefaultLayerTestCase(unittest.TestCase):
         ])
         expect_files = sorted([np(f) for f in expect_files])
         self.assertListEqual(sorted(dlr.list_files()), sorted(expect_files))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':  # pragma: no cover

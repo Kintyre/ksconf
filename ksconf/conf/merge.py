@@ -15,7 +15,7 @@ from ksconf.consts import SMART_UPDATE
 from ksconf.util.file import relwalk
 
 ####################################################################################################
-## Merging logic
+# Merging logic
 
 # TODO: Replace this with "<<DROP_STANZA>>" on ANY key.  Let's use just ONE mechanism for all of
 # these merge hints/customizations

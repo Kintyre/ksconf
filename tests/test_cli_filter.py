@@ -22,6 +22,7 @@ from ksconf.consts import *
 from tests.cli_helper import *
 from ksconf.conf.parser import PARSECONF_STRICT
 
+
 class CliKsconfFilter(unittest.TestCase):
 
     _sample01 = """\
@@ -154,7 +155,7 @@ class CliKsconfFilter(unittest.TestCase):
         sample01 = self.sample01
         with ksconf_cli:
             args = ["filter", sample01, "--match", "string",
-                     "--stanza", "MESSAGES by minute last 3 HOURS"]
+                    "--stanza", "MESSAGES by minute last 3 HOURS"]
             ko = ksconf_cli(*args)
             out = ko.get_conf()
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
@@ -293,7 +294,7 @@ class CliKsconfFilter(unittest.TestCase):
     def test_output_count(self):
         with ksconf_cli:
             ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-c")
-            self.assertEqual( int(ko.stdout), 2)
+            self.assertEqual(int(ko.stdout), 2)
 
     def test_output_brief(self):
         with ksconf_cli:
@@ -319,7 +320,6 @@ class CliKsconfFilter(unittest.TestCase):
                 out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
                 self.assertIn("Errors in the last hour", out)
 
-
     """ # This fails because it grabs the REAL STDIN and bypasses our FakeStdin context manager...
     @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
     def test_conf_via_dev_stdin(self):
@@ -333,7 +333,7 @@ class CliKsconfFilter(unittest.TestCase):
                 self.assertIn("Errors in the last hour", out)
     """
 
-    @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
+    @unittest.skipIf(sys.platform not in ("darwin", "linux"), "Only runs on NIX")
     def test_conf_via_dev_fd_mock(self):
         "Stream in an input file over explicit FD:   /dev/fd/xx to simulate a bash '<(cmd)' input."
         # We must tell the OS that "/dev/fd/xxx" is NOT a file, which technically it is for the
@@ -361,10 +361,11 @@ class CliKsconfFilter(unittest.TestCase):
                 f.close()
             del f
 
-    @unittest.skipIf(sys.platform not in("darwin", "linux"), "Only runs on NIX")
+    @unittest.skipIf(sys.platform not in ("darwin", "linux"), "Only runs on NIX")
     def test_conf_via_dev_fd_ext_cat(self):
         "Stream in an input file over pipe /dev/fd/xx.  Simulates a bash '<(cmd)' input"
-        ### XXX:  EXACT SAME TEST as test_conf_via_dev_fd_mock; long-term there's no need to keep both.  For now just testing if we see any issues on different OS-es
+        # XXX:  EXACT SAME TEST as test_conf_via_dev_fd_mock; long-term there's no need to keep both.
+        #       For now just testing if we see any issues on different OS-es
 
         # We're launching a subprocess "cat" to create a pipe for ksconf to read from.  If we just
         # do a plain file-open and try to use that descriptor, os.path.isfile() still detects that
@@ -384,10 +385,9 @@ class CliKsconfFilter(unittest.TestCase):
                 self.assertIn("Errors in the last hour", out)
         finally:
             # Do we need this?
-            # idk.  Calling p.communicate() seems weird here, but it causes all fd to  be closed, vs p.wait() gives causes unittest to give unclosed file warnings.
-            #p.wait()
+            # idk.  Calling p.communicate() seems weird here, but it causes all fd to be closed,
+            # vs p.wait() causes unittest to give unclosed file warnings.
             p.communicate()
-
 
     def test_has_attr(self):
         "Keep all stanzas with given attribute"
@@ -455,7 +455,7 @@ class CliKsconfFilter(unittest.TestCase):
             ko = ksconf_cli("filter", self.props03, "--keep-attrs", "SHOULD_LINEMERGE")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             out = ko.get_conf()
-            self.assertEqual(len(out["collectd_http"]),1)
+            self.assertEqual(len(out["collectd_http"]), 1)
             self.assertEqual(len(out["statsd"]), 1)
             self.assertEqual(len(out["kvstore"]), 1)
             self.assertEqual(list(out["kvstore"]), ["SHOULD_LINEMERGE"])
@@ -491,8 +491,6 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("ADD_EXTRA_TIME_FIELDS", keys)
             self.assertIn("DATETIME_CONFIG", keys)
             self.assertEqual(len(out["iis"]), 0)
-
-
 
 
 if __name__ == '__main__':  # pragma: no cover

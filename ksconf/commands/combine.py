@@ -75,12 +75,12 @@ class CombineCmd(KsconfCmd):
             The source directory where configuration files will be merged from.
             When multiple source directories are provided, start with the most general and end
             with the specific; later sources will override values from the earlier ones.
-            Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well."""
-                            )).completer = DirectoriesCompleter()
+            Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well.""")
+                            ).completer = DirectoriesCompleter()
         parser.add_argument("--target", "-t", help=dedent("""
             Directory where the merged files will be stored.
-            Typically either 'default' or 'local'"""
-                            )).completer = DirectoriesCompleter()
+            Typically either 'default' or 'local'""")
+                            ).completer = DirectoriesCompleter()
         parser.add_argument("-m", "--layer-method",
                             choices=["auto", "dir.d", "disable"],
                             default="auto",

@@ -3,20 +3,20 @@ from __future__ import absolute_import, unicode_literals
 import argparse
 import logging
 import os
+import re
 import sys
 import textwrap
-
+from collections import namedtuple
 from io import open
 from textwrap import dedent
 from warnings import warn
-from collections import namedtuple
 
 from ksconf import KsconfPluginWarning
-from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE
-from ksconf.conf.parser import parse_conf, smart_write_conf, write_conf, ConfParserException, \
-                               detect_by_bom
-from ksconf.consts import SMART_CREATE
-from ksconf.util import memoize, debug_traceback
+from ksconf.conf.parser import (ConfParserException, detect_by_bom, parse_conf,
+                                smart_write_conf, write_conf)
+from ksconf.consts import (EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE,
+                           SMART_CREATE)
+from ksconf.util import debug_traceback, memoize
 
 __all__ = [
     "KsconfCmd",
@@ -219,7 +219,7 @@ class ConfFileType(object):
         self._accept_dir = accept_dir
 
     def __call__(self, string):
-        from argparse import ArgumentTypeError
+        ArgumentTypeError = argparse.ArgumentTypeError
         # the special argument "-" means sys.std{in,out}
         if string == '-':
             if 'r' in self._mode:
@@ -275,12 +275,10 @@ class ConfFileType(object):
         return '%s(%s)' % (type(self).__name__, args_str)
 
 
-
 class DescriptionFormatterNoReST(argparse.HelpFormatter):
     @staticmethod
     def strip_simple_rest(s):
         # No handling of embedded backticks for now...  let's keep this simple
-        import re
         # Replace literals ``X`` with single quote version:  'X'
         s = re.sub(r'``([^`]*)``', r"'\1'", s)
         # Handle simple references and other named inline markups
@@ -308,7 +306,6 @@ class DescriptionHelpFormatterPreserveLayout(DescriptionFormatterNoReST):
         text = self.strip_simple_rest(text)
         # Looks like this one is ONLY used for the top-level description
         return ''.join([indent + line for line in text.splitlines(True)])
-
 
 
 class KsconfCmdReadConfException(Exception):
@@ -359,8 +356,8 @@ class KsconfCmd(object):
     def add_parser(self, subparser):
         # Passing in the object return by 'ArgumentParser.add_subparsers()'
         kwargs = {
-            "help" : self.help,
-            "description" : self.description,
+            "help": self.help,
+            "description": self.description,
         }
         if self.format == "manual":
             kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
@@ -413,7 +410,7 @@ class KsconfCmd(object):
         exc_info indicates failure. """
         pass
 
-    ### Helper functions
+    # Helper functions
 
     def _parse_conf(self, path, mode, profile):
         p = dict(self.parse_profile)
@@ -449,7 +446,6 @@ class KsconfCmd(object):
             self.stderr.write("Parser config error '{}': {}\n" % (path, e))
             # I guess bad conf file.... can't remember what this one is for.
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
-
 
 
 def add_splunkd_access_args(parser):
@@ -490,6 +486,7 @@ def _get_entrypoints_lib(group, name=None):
         return entrypoints.get_single(group, name)
     else:
         from collections import OrderedDict
+
         # Copied from 'get_group_named()' except that it preserves order
         result = OrderedDict()
         for ep in entrypoints.get_group_all(group):
@@ -526,13 +523,14 @@ def _get_fallback(group, name=None):
     else:
         return entrypoints[name]
 
+
 # Removed _get_pkgresources_lib as middle option
-__get_entity_resolvers = [ _get_entrypoints_lib, _get_fallback ]
+__get_entity_resolvers = [_get_entrypoints_lib, _get_fallback]
 
 if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):    # pragma: no cover
     # Only use the fallback built in mechanism.  This is helpful when unittesting and building docs
     # as we don't want to accidentally document/test code from other packages.
-    __get_entity_resolvers = [ _get_fallback ]
+    __get_entity_resolvers = [_get_fallback]
 
 
 # This caching is *mostly* beneficial for unittest CLI testing

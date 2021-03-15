@@ -19,6 +19,7 @@ class TermColor(object):
     Simple color setting helper class that's a context manager wrapper around a stream.
     This ensure that the color is always reset at the end of a session.
     """
+
     def __init__(self, stream):
         self.stream = stream
         if FORCE_TTY_COLOR or hasattr(stream, "isatty") and stream.isatty():

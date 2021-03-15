@@ -14,7 +14,7 @@ class KsconfUtilsTest(unittest.TestCase):
 
     def test_xarg_limit(self):
         from ksconf.util import _xargs
-        results = list(_xargs([ "%06x" % i for i in range(10000)]))
+        results = list(_xargs(["%06x" % i for i in range(10000)]))
         self.assertGreater(len(results), 1)
 
     def test_bwlist(self):
@@ -22,8 +22,6 @@ class KsconfUtilsTest(unittest.TestCase):
         bwlist = ["apple", "spoon", "hotdog", r"bak*"]
         self.assertTrue(match_bwlist("hotdog", bwlist))
         self.assertTrue(match_bwlist("bake", bwlist))
-
-
 
 
 class KsconfMiscIternalsTest(unittest.TestCase):

@@ -95,7 +95,7 @@ class DuplicateStanzaException(ConfParserException):
 
 
 ####################################################################################################
-## Core parsing / conf file writing logic
+# Core parsing / conf file writing logic
 
 
 def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
@@ -139,8 +139,8 @@ def _detect_lite(byte_str):
             ('utf-16', (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),
             ('utf-32', (codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE))):
         if any(byte_str.startswith(bom) for bom in boms):
-            return { "encoding" : enc }
-    return { "encoding" : default_encoding }
+            return {"encoding": enc}
+    return {"encoding": default_encoding}
 
 
 """ # Not ready for this approach yet!  (more testing scenarios required)
@@ -149,6 +149,7 @@ try:
 else:
     _detect_lite = detect
 """
+
 
 def detect_by_bom(path):
     with open(path, 'rb') as f:
@@ -243,9 +244,8 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
         raise ConfParserException("Encoding error encountered: {}".format(e))
 
 
-
 def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments=False,
-                dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
+                      dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
     if hasattr(stream, "name"):
         stream_name = stream.name
     else:

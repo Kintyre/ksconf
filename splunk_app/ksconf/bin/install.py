@@ -1,4 +1,4 @@
-## No shebang here.  Why?  Ask AppInspect  ;-(
+# No shebang here.  Why?  Ask AppInspect  ;-(
 import sys
 import os
 
@@ -34,7 +34,6 @@ if not splunk_home:
     sys.exit(1)
 
 
-
 def install_to(ksconf_home, bin_path, platform="nix"):
     bin_file = os.path.join(bin_path, "ksconf")
 
@@ -45,7 +44,7 @@ def install_to(ksconf_home, bin_path, platform="nix"):
         template = template_win
 
     d = {}
-    d["splunk_python"] = os.path.join(splunk_home, "bin", "python") # or python.exe
+    d["splunk_python"] = os.path.join(splunk_home, "bin", "python")  # or python.exe
     d["ksconf_home"] = ksconf_home
 
     print("Writing script {}".format(bin_file))
@@ -60,7 +59,6 @@ def check_path():
     # XXX:  Check to ensure that 'ksconf' (or ksconf.bat) is in $PATH
     # Careful not to get tripped up by the 'ksconf.py' in THIS directory.
     pass
-
 
 
 if __name__ == '__main__':

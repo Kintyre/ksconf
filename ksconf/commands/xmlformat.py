@@ -52,10 +52,10 @@ class XmlFormatCmd(KsconfCmd):
         parser.add_argument("xml", metavar="FILE", nargs="+", help=dedent("""\
             One or more XML files to check.
             If '-' is given, then a list of files is read from standard input""")
-                         ).completer = conf_files_completer
-        parser.add_argument("--indent", type=int, default=2, help=
-            "Number of spaces.  This is only used if indentation cannot be "
-            "guessed from the existing file.")
+                            ).completer = conf_files_completer
+        parser.add_argument("--indent", type=int, default=2,
+                            help="Number of spaces.  This is only used if indentation cannot be "
+                            "guessed from the existing file.")
         parser.add_argument("--quiet", "-q", default=False, action="store_true",
                             help="Reduce the volume of output.")
 

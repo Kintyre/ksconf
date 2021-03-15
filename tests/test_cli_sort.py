@@ -122,5 +122,6 @@ class CliSortTest(unittest.TestCase):
             self.assertNotRegex(ko.stderr, r"[\r\n]Skipping [^\r\n]+?[/\\]transforms.conf")
             self.assertNotRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
 
+
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

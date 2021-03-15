@@ -103,7 +103,7 @@ class CliRestExportTest(unittest.TestCase):
         [Meaning of life]
         search = * | head 100 | stats
         """)
-        for variations in [ (), ["--update"], ["--pretty-print"] ]:
+        for variations in [(), ["--update"], ["--pretty-print"]]:
             with ksconf_cli:
                 ko = ksconf_cli("rest-export", "--conf", "savedsearches", f, *variations)
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)

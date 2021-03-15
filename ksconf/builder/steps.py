@@ -172,11 +172,5 @@ def pip_install(step, requirements_file="requirements.txt", dest="lib",
         log("Dist info:  {}d {} directories".format(handle_dist_info, di_handled))
 
 
-
-
-
-
-
-
 # We use this for typing, but otherwise don't directly reference.  Keep this line to avoid automatic import removal
-BuildStep
+_ = BuildStep

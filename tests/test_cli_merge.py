@@ -13,9 +13,6 @@ from ksconf.consts import *
 from tests.cli_helper import *
 
 
-
-
-
 class CliMergeTest(unittest.TestCase):
     def test_merge_to_stdout(self):
         twd = TestWorkDir()
@@ -97,11 +94,10 @@ class CliMergeTest(unittest.TestCase):
     def test_utf8bom(self):
         twd = TestWorkDir()
         conf = twd.write_file("test.conf",
-                b'\xef\xbb\xbf\n[ui]\n\n[launcher]\n\n[package]\ncheck_for_updates = 0\n')
+                              b'\xef\xbb\xbf\n[ui]\n\n[launcher]\n\n[package]\ncheck_for_updates = 0\n')
         with ksconf_cli:
             ko = ksconf_cli("merge", conf)
             self.assertEqual(ko.returncode, 0)
-
 
 
 if __name__ == '__main__':  # pragma: no cover
