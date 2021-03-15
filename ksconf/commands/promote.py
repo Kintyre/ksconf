@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf promote <SOURCE> <TARGET>
+""" SUBCOMMAND:  ``ksconf promote <SOURCE> <TARGET>``
 
 Usage example:  Promote local props changes (made via the UI) to the 'default' folder
+
+.. code-block:: sh
 
     ksconf local/props.conf default/props.conf
 

@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf sort <CONF>
+""" SUBCOMMAND:  ``ksconf sort <CONF>``
 
 Usage example:  To recursively sort all files (in-place):
+
+.. code-block:: sh
 
     find . -name '*.conf' | xargs ksconf sort -i
 

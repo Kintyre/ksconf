@@ -80,7 +80,7 @@ User Guide
     known_issues
     install_advanced
     license
-    modules
+    api_ref
 
 
 

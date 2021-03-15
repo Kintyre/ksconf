@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf filter <CONF>
+""" SUBCOMMAND:  ``ksconf filter <CONF>``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf filter default/savedsearches.conf --stanza "My Special Search" -o my-special-search.conf
 

@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf unarchive <tarball>
+""" SUBCOMMAND:  ``ksconf unarchive <tarball>``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf unarchive splunk-add-on-for-amazon-web-services_111.tgz
 

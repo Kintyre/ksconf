@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-SUBCOMMAND:  ksconf rest-publish <ENDPOINT> <CONF>
+SUBCOMMAND:  ``ksconf rest-publish <ENDPOINT> <CONF>``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf rest-publish MyApp/local/props.conf
 

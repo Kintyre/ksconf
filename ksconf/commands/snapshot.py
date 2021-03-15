@@ -1,7 +1,9 @@
 """
-SUBCOMMAND:  ksconf snapshot --output=FILE.json <PATH> [ ... <PATH-n> ]
+SUBCOMMAND:  ``ksconf snapshot --output=FILE.json <PATH> [ ... <PATH-n> ]``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf snapshot --output=daily.json /opt/splunk/etc/app/
 

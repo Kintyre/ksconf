@@ -1,7 +1,9 @@
 """
-SUBCOMMAND:  ksconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]
+SUBCOMMAND:  ``ksconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf merge --target=master-props.conf /opt/splunk/etc/apps/*TA*/{default,local}/props.conf
 

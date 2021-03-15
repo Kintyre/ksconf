@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-""" SUBCOMMAND:  combine --target=<DIR> <SRC1> [ <SRC-n> ]
+""" SUBCOMMAND:  ``combine --target=<DIR> <SRC1> [ <SRC-n> ]``
 
 Usage example:
+
+.. code-block:: sh
 
     cd MY_APP
     ksconf combine default.d/* --target=default

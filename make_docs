@@ -50,6 +50,10 @@ fi
 echo "Make dynamics docs  (ignore errors)"
 $PY make_dyn_docs.py || true
 
+echo "Running the autodoc extension"
+rm -rf "docs/source/api"
+sphinx-apidoc -f -o "docs/source/api" ksconf 'ksconf/ext'
+
 echo "Building local html docs and opening browser window"
 # Or, something like:   make html
 sphinx-autobuild --port 9999 --watch ksconf docs/source docs/build/html --open-browser

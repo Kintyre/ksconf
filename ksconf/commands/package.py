@@ -1,15 +1,19 @@
-""" SUBCOMMAND:  ksconf package -f <SPL> <DIR>
+""" SUBCOMMAND:  ``ksconf package -f <SPL> <DIR>``
 
 Usage example:
 
-    ksconf package -f myapp.tgz MyApp/
+.. code-block:: sh
+
+   ksconf package -f myapp.tgz MyApp/
 
 
 Build system example:
 
-    ksconf package -f release/myapp-{{version}}.tgz \
-            --block-local \
-            --set-version=${git describe} \
+.. code-block:: sh
+
+    ksconf package -f release/myapp-{{version}}.tgz \\
+            --block-local \\
+            --set-version=${git describe} \\
             --set-build=${TRAVIS_BUILD_NUMBER:-0}
 
 

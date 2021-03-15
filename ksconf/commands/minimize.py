@@ -1,13 +1,15 @@
-""" SUBCOMMAND:  ksconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]
+""" SUBCOMMAND:  ``ksconf minimize --target=<CONF> <CONF> [ <CONF-n> ... ]``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf minimize --target=local/inputs.conf default/inputs.conf
 
 Example workflow:
-   1. cp default/props.conf local/props.conf
-   2. vi local/props.conf (edit JUST the lines you want to change)
-   3. ksconf minimize --target=local/props.conf default/props.conf
+   1. ``cp default/props.conf local/props.conf``
+   2. ``vi local/props.conf`` (edit JUST the lines you want to change)
+   3. ``ksconf minimize --target=local/props.conf default/props.conf``
       (You could take this a step further by appending "$SPLUNK_HOME/system/default/props.conf"
       and removing any SHOULD_LINEMERGE = true entries (for example)
 

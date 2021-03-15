@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf diff <CONF> <CONF>
+""" SUBCOMMAND:  ``ksconf diff <CONF> <CONF>``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf diff default/props.conf default/props.conf
 

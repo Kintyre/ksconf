@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-SUBCOMMAND:  ksconf rest-export --output=script.sh <CONF>
+SUBCOMMAND:  ``ksconf rest-export --output=script.sh <CONF>``
 
 Usage example:
+
+.. code-block:: sh
 
     ksconf rest-export --output=apply_props.sh /opt/splunk/etc/app/Splunk_TA_aws/local/props.conf
 

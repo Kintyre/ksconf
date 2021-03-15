@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf xml-format <XML>
+""" SUBCOMMAND:  ``ksconf xml-format <XML>``
 
 Usage example:   (Nice pre-commit script)
+
+.. code-block:: sh
 
     find default/data/ui -name '*.xml' | ksconf xml-format -
 

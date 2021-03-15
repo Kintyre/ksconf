@@ -1,6 +1,8 @@
-""" SUBCOMMAND:  ksconf check <CONF>
+""" SUBCOMMAND:  ``ksconf check <CONF>``
 
 Usage example:   (Nice pre-commit script)
+
+.. code-block:: sh
 
     find . -name '*.conf' | ksconf check -
 
