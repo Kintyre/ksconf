@@ -305,8 +305,6 @@ def write_conf(stream, conf, stanza_delim="\n", sort=True):
 
 
 def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
-    conf = dict(conf)
-
     if sort:
         sorter = sorted
     else:

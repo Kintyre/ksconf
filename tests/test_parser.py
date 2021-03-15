@@ -11,6 +11,7 @@ import unittest
 
 from io import StringIO
 from functools import partial
+from copy import deepcopy
 from collections import OrderedDict
 
 import ksconf.ext.six as six
@@ -24,7 +25,7 @@ from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
     DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
 from ksconf.conf.parser import DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
     DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
-    PARSECONF_MID, GLOBAL_STANZA
+    PARSECONF_MID, GLOBAL_STANZA, section_reader
 
 
 class ParserTestCase(unittest.TestCase):
@@ -356,20 +357,32 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(st["int2"], "0")
         self.assertEqual(st["none"], "")
 
+    def test_write_doesnt_modify_dict(self):
+        """ Ensure that calling write_conf(stream, conf) doesn't update conf in any way"""
+        d = {
+            GLOBAL_STANZA: {"a": 1, "b": 2},
+            "my_sourcetype": {"SHOULD_LINEMERGE": "false"},
+            "your_sourcetype": {"KV_MODE": "auto"},
+        }
+        d_copy = deepcopy(d)
+        self.assertEqual(d_copy, d)
+        write_conf(StringIO(), d)
+        self.assertEqual(d_copy, d, "Dictionary sent to write_conf has been modified!")
+
     def test_write_unsorted(self):
         d = OrderedDict()
         d["stanza3"] = {"added": "first"}
         d["stanza2"] = {"added": "second"}
+        d["a"] = {}
         tfile1 = StringIO()
         write_conf(tfile1, d, sort=False)
+        # Ensure that stanza order is preserved
+        sections = [s for s, _ in section_reader(tfile1.getvalue().splitlines()) if s]
+        self.assertEqual(sections, ["stanza3", "stanza2", "a"])
         tfile2 = StringIO()
         write_conf(tfile2, d, sort=True)
+        # Sorted version and non-sorted version SHOULD differ
         self.assertNotEqual(tfile1.getvalue(), tfile2.getvalue())
-        # XXX:  Confirm that stanza3 occurs before stanza2
-
-
-
-# @unittest.expectedFailure()
 
 
 class ConfigDiffTestCase(unittest.TestCase):
