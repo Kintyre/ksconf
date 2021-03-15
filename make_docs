@@ -52,4 +52,4 @@ $PY make_dyn_docs.py || true
 
 echo "Building local html docs and opening browser window"
 # Or, something like:   make html
-sphinx-autobuild -p 9999 -b html -z ksconf docs/source docs/build/html -B
+sphinx-autobuild --port 9999 --watch ksconf docs/source docs/build/html --open-browser

@@ -123,7 +123,7 @@ class CombineCmd(KsconfCmd):
 
     def run(self, args):
         # Note this case sensitive.  Don't be lazy, name your files correctly  :-)
-        conf_file_re = re.compile("([a-z]+\.conf|(default|local)\.meta)$")
+        conf_file_re = re.compile(r"([a-z]+\.conf|(default|local)\.meta)$")
         args.source = list(expand_glob_list(args.source, do_sort=True))
 
         config = LayerConfig()

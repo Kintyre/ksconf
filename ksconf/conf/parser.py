@@ -197,7 +197,8 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
     :param comments_re: Regular expression used to detect comments.
     :param keep_comments: Should comments be preserved in the output.  Defaults to `False`.
     :type keep_comments: bool, optional
-    :param strict: Should unknown content in the stanza stop processing. Defaults to `False` allowing "junk" to be silently ignored allowing for a best-effort parse.
+    :param strict: Should unknown content in the stanza stop processing.  Defaults to `False`
+                   allowing "junk" to be silently ignored for a best-effort parse.
     :type strict: bool, optional
     :return: iterable of (attribute,value) tuples
     """

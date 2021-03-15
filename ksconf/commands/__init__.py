@@ -387,7 +387,7 @@ class KsconfCmd(object):
         except BrokenPipeError as e:    # pragma: no cover
             try:
                 self.stderr.write("Broken pipe\n")
-            except:
+            except Exception:
                 pass
         except BaseException:     # pragma: no cover
             exc = sys.exc_info()
@@ -398,7 +398,8 @@ class KsconfCmd(object):
         return return_code
 
     def pre_run(self, args):
-        """ Pre-run hook.  Any exceptions or true return code, prevents run()/post_run() from being called. """
+        """ Optional pre-run hook.
+        Any exceptions or non-0 return code, will prevent run()/post_run() from being called. """
         pass
 
     def run(self, args):    # pragma: no cover
@@ -406,8 +407,8 @@ class KsconfCmd(object):
         raise NotImplementedError
 
     def post_run(self, args, exec_info=None):
-        """ Any custom clean up work that needs done.  Always called if run() was.  Presence of
-        exc_info indicates failure. """
+        """ Optional custom clean up method.
+        Always called if run() was.  The presence of exc_info indicates failure. """
         pass
 
     # Helper functions
@@ -428,7 +429,7 @@ class KsconfCmd(object):
         return cfp
 
     def parse_conf(self, path, mode="r", profile=None, raw_exec=False):
-        # type: (str, str, dict) -> ConfFileProxy
+        # type: (str, str, dict, bool) -> ConfFileProxy
         if raw_exec:
             return self._parse_conf(path, mode, profile)
         try:

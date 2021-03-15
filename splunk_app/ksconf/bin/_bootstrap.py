@@ -9,7 +9,7 @@ ksconf_app = os.path.dirname(this_module)
 ksconf_modules = os.path.join(ksconf_app, "lib")
 sys.path.insert(0, ksconf_modules)
 
-# Remove current working dir from the import path, so we can import 'ksconf' without importing ksconf.py in this directory
+# Remove current dir from path, so import 'ksconf' doesn't incorectly import ksconf.py
 for p in ("", ksconf_app):
     if p in sys.path:
         sys.path.remove(p)

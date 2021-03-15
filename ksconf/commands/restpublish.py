@@ -232,7 +232,7 @@ class RestPublishCmd(KsconfCmd):
             res["path"] = stz.path
             try:
                 res["updated"] = stz.state["updated"]
-            except:
+            except Exception:
                 pass
             # print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
