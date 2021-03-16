@@ -99,7 +99,7 @@ from ksconf.builder.core import BuildManager  # noqa
 def default_cli(build_manager, build_funct, argparse_parents=()):
     # args: (BuildManager, Callable[BuildStep, argparse.Namespace], List[argparse.ArgumentParser]
     """
-    This is the function you stick in the:  if __name__ == '__main__' section of your code :-)
+    This is the function you stick in the:  ``if __name__ == '__main__'`` section of your code :-)
 
     Pass in a BuildManager instance, and a callback function.  The callback function must accept
     (steps, args).  If you have need for custom arguments, you can add them to your own

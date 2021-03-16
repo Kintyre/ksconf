@@ -122,14 +122,18 @@ class AppPackager(object):
                 if value:
                     if stanza not in conf:
                         conf[stanza] = {}
-                    self.output.write("\tUpdate app.conf:  [{}] {} = {}\n".format(stanza, attr, value))
+                    self.output.write("\tUpdate app.conf:  [{}] {} = {}\n"
+                                      .format(stanza, attr, value))
                     conf[stanza][attr] = value
 
     def make_archive(self, filename):
+        """ Create a compressed tarball of the build directory.
+        """
+        # type: (str) -> None
         # if os.path.isfile(filename):
         #    raise ValueError("Destination file already exists:  {}".format(filename))
 
-        # Doh:  version 3.2: Added support for the context management protocol.  (need to wait to use it)
+        # Python 3.2+, use context manager
         spl = tarfile.open(filename, mode="w:gz")
         spl.add(self.app_dir, arcname=self.app_name)
         spl.close()

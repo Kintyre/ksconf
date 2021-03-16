@@ -22,8 +22,8 @@ class FileSet(object):
     Currently the fingerprint is only a SHA256 hash.
 
     Two constructore are provided for building an instance from either file that
-    live on the filesystem, via `:method:from_filesystem()` or from a persisted
-    cached record aviable from the `:method:from_cache()`.
+    live on the filesystem, via :py:meth:`from_filesystem` or from a persisted
+    cached record aviable from the :py:meth:`from_cache`.
     The filesystem version actively reads all inputs files at object creation
     time, so this can be costly, especially if repeated.
     """

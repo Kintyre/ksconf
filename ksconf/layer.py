@@ -116,7 +116,7 @@ class LayerConfig(object):
     def __init__(self):
         # Set defaults
         self.follow_symlink = False
-        self.blacklist_files = re.compile("\.(bak|swp)$")
+        self.blacklist_files = re.compile(r"\.(bak|swp)$")
         self.blacklist_dirs = {".git"}
 
 
@@ -328,8 +328,8 @@ class DotDLayerRoot(LayerRootBase):
             super(DotDLayerRoot.MountDotD, self).__init__(path)
     '''
 
-    mount_regex = re.compile("(?P<realname>[\w_.-]+)\.d$")
-    layer_regex = re.compile("(?P<layer>\d\d-[\w_.-]+)")
+    mount_regex = re.compile(r"(?P<realname>[\w_.-]+)\.d$")
+    layer_regex = re.compile(r"(?P<layer>\d\d-[\w_.-]+)")
 
     def __init__(self, config=None):
         super(DotDLayerRoot, self).__init__(config)
@@ -388,17 +388,3 @@ class DotDLayerRoot(LayerRootBase):
     def order_layers(self):
         # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
         self._layers.sort(key=lambda l: l.name)
-
-
-def run_oldshool(args):
-
-    combined19 = DirectLayerRoot()
-    # Take CLI args and apply to root
-    for src in args.source:
-        combined19.add_layer(src)
-
-    layers = list(combined19.list_layers())
-    print("Given layers:  {}".format(layers))
-
-    files = combined19.list_files()
-    print("Files:  {}", files)

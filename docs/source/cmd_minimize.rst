@@ -60,7 +60,7 @@ You can use :ref:`ksconf_cmd_merge` to reverse the effect of minimize by running
 
     ksconf merge default/inputs.conf local/inputs.conf
 
-..  Confirm this works before adversizing:  ksconf merge --target=local/inputs.conf default/inputs.conf local/inputs.conf
+..  Confirm this works before advertising:  ksconf merge --target=local/inputs.conf default/inputs.conf local/inputs.conf
 ..  It's unclear if we allow --target to be the same file as one of the inputs....  Most likely this currently causes things to melt...but it shouldn't
 
 Additional capabilities
@@ -70,7 +70,7 @@ For special cases, the ``--explode-default`` mode reduces duplication between en
 then additionally reduces duplication between individual stanzas and default entries.
 Typically you only need this mode if your dealing with a conf file that's been fully expanded to include all the layers,
 which doesn't happen under normal circumstances.
-This does happen anytime you download a stanza from a REST endpoint or munge together output from ``btool list``.
+This does happen anytime you download a stanza from a REST endpoint or munged together output from ``btool list``.
 If you've ever done this with ``savedsearches.conf`` stanzas, you'll be painfully aware of how massive they are!
 This is the exact use case that ``--explode-default`` was written for.
 
