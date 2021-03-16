@@ -137,17 +137,6 @@ class PackageCmd(KsconfCmd):
                                  "the archive is written.  "
                                  "This is useful in build scripts when the SPL contains variables "
                                  "so the final name may not be known ahead of time.")
-        ''' # A better option here is ksconf.builder.  Let's avoid creating 2 mechanisms for the
-            # same task (but technically this works)
-        pbuild.add_argument("--hook-script", metavar="COMMAND",
-                            action="append", default=[],
-                            help="Run the given command or script.  "
-                                 "This is run after all layer have been combined, and local "
-                                 "directory handling, but before blocklist cleanup.  "
-                                 "Therefore if this command produces any unwanted files they can "
-                                 "be removed with a ``--blocklist`` entry. "
-                                 "This can be used to install python packages, for example.")
-        '''
 
     @staticmethod
     def load_blocklist(path):
@@ -201,11 +190,6 @@ class PackageCmd(KsconfCmd):
                 pass
             else:   # pragma: no cover
                 raise ValueError("Unknown value for 'local': {}".format(args.local))
-
-            ''' # Disabling this for now.   Suggest using ksconf.builder.* instead
-            for script in args.hook_script:
-                builder.run_hook_script(script)
-            '''
 
             if args.blocklist:
                 self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))

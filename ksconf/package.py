@@ -125,21 +125,6 @@ class AppPackager(object):
                     self.output.write("\tUpdate app.conf:  [{}] {} = {}\n".format(stanza, attr, value))
                     conf[stanza][attr] = value
 
-    '''
-    def run_hook_script(self, script):
-        # XXX: Add environmental vars and such to make available to the script
-        from subprocess import Popen
-        if os.path.isfile(script):
-            self.output.write("Running external hook script: {}\n".format(script))
-            proc = Popen([script], cwd=self.app_dir, shell=False)
-        else:
-            self.output.write("Running external hook shell:  {}\n".format(script))
-            proc = Popen(script, cwd=self.app_dir, shell=True)
-        proc.wait()
-        if proc.returncode != 0:
-            raise Exception("Hook script returned non-0.  Aborting")
-    '''
-
     def make_archive(self, filename):
         # if os.path.isfile(filename):
         #    raise ValueError("Destination file already exists:  {}".format(filename))
