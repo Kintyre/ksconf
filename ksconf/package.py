@@ -107,6 +107,8 @@ class AppPackager(object):
             os.unlink(local_meta)
 
     def update_app_conf(self, version=None, build=None):
+        """ Update version and/or build in ``apps.conf`` """
+        # type: (str, str) -> None
         app_settings = [
             ("launcher", "version", version),
             ("install", "build", build),
@@ -170,12 +172,14 @@ class AppVarMagic(object):
         self.build_dir = build_dir
 
     def expand(self, value):
-        #  A very simple Jinja2 like {{VAR}} replacement mechanism.  Someday we may use Jinja2,
-        # but for now we just need var substitution.
+        """ A simple Jinja2 like {{VAR}} substitution mechanism. """
+        # type (str) -> str
         def replace(match_obj):
             var = match_obj.group(1)
             return self[var]
-        return re.sub(r"\{\{\s*([\w_]+)\s*\}\}", replace, value)
+        if value:
+            return re.sub(r"\{\{\s*([\w_]+)\s*\}\}", replace, value)
+        return value
 
     def git_single_line(self, *args):
         out = git_cmd(args, cwd=self.src_dir)
@@ -197,14 +201,14 @@ class AppVarMagic(object):
         """ Splunk app build fetched from app.conf """
         app_conf = get_merged_conf(self.build_dir, "app.conf")
         try:
-            return app_conf["launcher"]["version"]
+            return app_conf["install"]["build"]
         except KeyError:
             raise AppVarMagicException()
 
     def get_git_tag(self):
         """ Git version tag using the 'git describe --tags' command """
         tag = self.git_single_line("describe", "--tags", "--always", "--dirty")
-        return re.sub(r'^(v|release|version)-', "", tag)
+        return re.sub(r'^(v|release|version)-?', "", tag)
 
     def get_git_last_rev(self):
         """ Git abbreviated rev of the last change of the app.  This may not be the same as HEAD. """

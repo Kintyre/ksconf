@@ -214,10 +214,13 @@ ksconf package
                           [--release-file RELEASE_FILE]
                           SOURCE
     
-    Create a Splunk app or add on tarball (.spl) file from an app directory.
+    Create a Splunk app or add on tarball ('.spl') file from an app directory.
     'ksconf package' can do useful things like, exclude unwanted files, combine
     layers, set the application version and build number, drop or promote the
-    'local' directory into 'default'.
+    'local' directory into 'default'. Note that some arguments, like the 'FILE'
+    support special values that can be automatically evaluated at runtime. For
+    example the placeholders '{{version}}' or '{{git_tag}}' can be expanded into
+    the output tarball filename.
     
     positional arguments:
       SOURCE                Source directory for the Splunk app.
@@ -225,6 +228,8 @@ ksconf package
     optional arguments:
       -h, --help            show this help message and exit
       -f SPL, --file SPL    Name of splunk app file (tarball) to create.
+                            Placeholder variables in '{{var}}' syntax can be used
+                            here.
       --app-name APP_NAME   Specify the top-level app folder name. If this is not
                             given, the app folder name is automatically extracted
                             from the basename of SOURCE.
@@ -241,7 +246,8 @@ ksconf package
                             Symlinks to files are always followed.
       --set-version VERSION
                             Set application version. By default the application
-                            version is read from default/app.conf
+                            version is read from default/app.conf. Placeholder
+                            variables such as '{{git_tag}}' can be used here.
       --set-build BUILD     Set application build number.
       --allow-local         Allow the 'local' folder to be kept as-is WARNING:
                             This goes against Splunk packaging practices, and will

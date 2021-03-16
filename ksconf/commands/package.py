@@ -13,7 +13,7 @@ Build system example:
 
     ksconf package -f release/myapp-{{version}}.tgz \\
             --block-local \\
-            --set-version=${git describe} \\
+            --set-version={{git_tag}} \\
             --set-build=${TRAVIS_BUILD_NUMBER:-0}
 
 
@@ -31,10 +31,14 @@ from ksconf.package import AppPackager
 class PackageCmd(KsconfCmd):
     help = "Create a Splunk app .spl file from a source directory"
     description = dedent("""\
-    Create a Splunk app or add on tarball (.spl) file from an app directory.
+    Create a Splunk app or add on tarball (``.spl``) file from an app directory.
 
     ``ksconf package`` can do useful things like, exclude unwanted files, combine layers, set the
     application version and build number, drop or promote the ``local`` directory into ``default``.
+
+    Note that some arguments, like the ``FILE`` support special values that can be automatically
+    evaluated at runtime.  For example the placeholders ``{{version}}`` or ``{{git_tag}}`` can be
+    expanded into the output tarball filename.
     """)
     #format = "manual"
     maturity = "alpha"
@@ -57,7 +61,8 @@ class PackageCmd(KsconfCmd):
         parser.add_argument("source", metavar="SOURCE",
                             help="Source directory for the Splunk app.")
         parser.add_argument("-f", "--file", metavar="SPL",
-                            help="Name of splunk app file (tarball) to create.")
+                            help="Name of splunk app file (tarball) to create.  "
+                            "Placeholder variables in ``{{var}}`` syntax can be used here.")
 
         parser.add_argument("--app-name",
                             help="Specify the top-level app folder name.  "
@@ -101,7 +106,8 @@ class PackageCmd(KsconfCmd):
         # Set app version or extra app version.
         parser.add_argument("--set-version", metavar="VERSION",
                             help="Set application version.  By default the application version "
-                                 "is read from default/app.conf")
+                                 "is read from default/app.conf.  Placeholder variables such as "
+                                 "``{{git_tag}}`` can be used here.")
         parser.add_argument("--set-build", metavar="BUILD",
                             help="Set application build number.")
 
@@ -206,8 +212,9 @@ class PackageCmd(KsconfCmd):
                 builder.blocklist(args.blocklist)
 
             if args.set_build or args.set_version:
-                builder.update_app_conf(version=args.set_version,
-                                        build=args.set_build)
+                builder.update_app_conf(
+                    version=builder.var_magic.expand(args.set_version),
+                    build=args.set_build)
 
             # os.system("ls -lR {}".format(builder.app_dir))
 
