@@ -37,7 +37,7 @@ class CliMergeTest(unittest.TestCase):
         interval = 8675309
         """)
         newfile = twd.copy_static("inputs-ta-nix-local.conf", "input-new.conf")
-        #newfile = twd.get_path("input-new.conf")
+        # newfile = twd.get_path("input-new.conf")
         with ksconf_cli:
             ko = ksconf_cli("merge", conf1, conf2, "--target", newfile, "--dry-run")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)

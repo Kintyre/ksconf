@@ -7,8 +7,7 @@ import shutil
 import sys
 from glob import glob
 from io import open
-from pathlib import Path, PurePath
-
+from pathlib import PurePath
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, KSCONF_DEBUG
 from ksconf.util.compare import file_compare
@@ -107,7 +106,8 @@ def expand_glob_list(iterable, do_sort=False):
             yield item
 
 
-# This is a Splunk-style (props) stanza style glob:  where '* is a single path component, and '...' means any level of path
+# This is a Splunk-style (props) stanza style glob:
+# where '*' is a single path component, and '...' means any level of path
 _glob_to_regex = {
     r"\*": r"[^/\\]*",
     r"\?": r".",

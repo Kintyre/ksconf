@@ -10,8 +10,7 @@ Usage example:  To recursively sort all files (in-place):
 from __future__ import absolute_import, unicode_literals
 
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.conf.parser import parse_conf, PARSECONF_STRICT, smart_write_conf, write_conf, \
-    ConfParserException
+from ksconf.conf.parser import PARSECONF_STRICT, write_conf, ConfParserException
 from ksconf.consts import SMART_NOCHANGE, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED, \
     EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
@@ -91,7 +90,7 @@ class SortCmd(KsconfCmd):
                             self.stderr.write("Skipping no-sort file {}\n".format(conf))
                         continue
                     c = self.parse_conf(conf, mode='r+', raw_exec=True)
-                    #c = parse_conf(conf, profile=PARSECONF_STRICT)
+                    # c = parse_conf(conf, profile=PARSECONF_STRICT)
                     data = c.data
                     smart_rc = c.dump(c.data, stanza_delim=stanza_delims, sort=True)
                     # smart_rc = smart_write_conf(conf, data, stanza_delim=stanza_delims,

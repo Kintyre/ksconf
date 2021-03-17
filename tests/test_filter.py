@@ -6,8 +6,6 @@ import os
 import sys
 import unittest
 
-from io import open
-
 # Allow interactive execution from CLI,  cd tests; ./test_meta.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,10 +46,10 @@ class FilterTestCase(unittest.TestCase):
         self.assertEqual(res, ["ftp:exchange", "ftp:transfer", "ftp:debug", "http:exchange"])
 
     def test_regex(self):
-        fl, res = self.filter("regex", ("ftp:\w+",), self.sample01)
+        fl, res = self.filter("regex", (r"ftp:\w+",), self.sample01)
         self.assertEqual(res, ["ftp:exchange", "ftp:transfer", "ftp:auth", "ftp:debug"])
 
-        fl, res = self.filter("regex", ("\w+:auth",), self.sample01)
+        fl, res = self.filter("regex", (r"\w+:auth",), self.sample01)
         self.assertEqual(res, ["ftp:auth", "http:auth"])
 
     def test_wildcard(self):

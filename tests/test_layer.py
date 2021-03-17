@@ -11,11 +11,6 @@ import unittest
 
 from glob import glob
 
-from io import StringIO
-from functools import partial
-
-import ksconf.ext.six as six
-
 # Allow interactive execution from CLI,  cd tests; ./test_layer.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -63,7 +63,7 @@ class AppPackager(object):
             raise ValueError("Issue calling 'combine' internally during app build....")
 
     def blocklist(self, patterns):
-        # XXX:  Rewrite -- Had to hack the layers to explicitly blocklist '.git' dir, because '*.git' wasn't working here. :=(
+        # XXX: Rewrite explicitly blocklist '.git' dir, because '*.git' wasn't working here. :=(
 
         # For now we just delete files out the build directory.  Not sophisticated, but it works
         # Do we need relwalker here?  relwalk

@@ -228,7 +228,8 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
     :type stream: str, file
     :param profile: parsing configuration settings
     :param encoding: Defaults to the system default, "uft-8"
-    :return: a mapping of the stanza and attributes.  The resulting output is accessible as [stanaza][attribute] -> value
+    :return: a mapping of the stanza and attributes.
+             The resulting output is accessible as [stanaza][attribute] -> value
     :rtype: dict
     """
     try:

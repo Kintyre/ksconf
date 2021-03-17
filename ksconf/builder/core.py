@@ -4,20 +4,22 @@
 
 Cache build requirements:
 
-    * Caching mechanism should inspet 'inputs' (collect file hashes) to determine if any content has changed.  If input varies, then command should be re-run.
-    * Command (decorated function) should be generally unaware of all other details of build process, and it should *ONLY* be able to see files listed in "inputs"
+    * Caching mechanism should inspet 'inputs' (collect file hashes) to determine if any content has
+      changed.  If input varies, then command should be re-run.
+    * Command (decorated function) should be generally unaware of all other details of build process,
+      and it should *ONLY* be able to see files listed in "inputs"
     * Allow caching to be fully disabled (run in-place with no dir proxying) for CI/CD
     * Cache should have allow a timeout parameter
-
-
 
 
 decorator used to implement caching:
     * decorator args:
         * inputs:       list or glob
-        * outputs       (do we need this, can we just detect this??) --- Default to "." (everything)
+        * outputs       (do we need this, can we just detect this??)
+                        Default to "." (everything)
         * timeout=0     Seconds before cache should be considered stale
-        * name=None     If not given, default to the short name of the function.  (Cache "slot"), must be filesystem safe]
+        * name=None     If not given, default to the short name of the function.
+                        (Cache "slot"), must be filesystem safe]
 """
 
 from __future__ import absolute_import, unicode_literals
@@ -30,6 +32,11 @@ from shutil import copy2, rmtree
 from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
 from ksconf.builder.cache import CachedRun, FileSet
 from ksconf.ext.six import text_type
+
+try:
+    from typing import Callable, List, Any
+except ImportError:
+    Callable = List = Any = type
 
 try:
     from tempfile import TemporaryDirectory
@@ -166,7 +173,8 @@ class BuildManager(object):
                     except KeyError as e:
                         log("Cache invalided due to missing setting {}".format(e))
                         use_cache = False
-                # TODO: Check for cache tampering (confirm that existing files haven't been modified); user requestable
+                # TODO: Check for cache tampering (confirm that existing files haven't
+                #       been modified); user requestable
                 current_inputs = FileSet.from_filesystem(self.source_path, inputs)
                 # Determine if previous cache entry exists, and if the input files are the same
                 if not cache.exists:

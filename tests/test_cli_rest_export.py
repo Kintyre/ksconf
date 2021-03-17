@@ -23,7 +23,7 @@ class CliRestExportTest(unittest.TestCase):
 
     @property
     def transforms_sample1(self):
-        return self.twd.write_file("transforms.conf", """
+        return self.twd.write_file("transforms.conf", r"""
         [single_quote_kv]
         REGEX = ([^=\s]+)='([^']+)'
         FORMAT = $1::$2
@@ -32,7 +32,7 @@ class CliRestExportTest(unittest.TestCase):
 
     @property
     def props_sample1(self):
-        return self.twd.write_file("props.conf", """
+        return self.twd.write_file("props.conf", r"""
         [syslog]
         REPORT-single-quote = single_quote_kv
         REPORT-group2 = more_extract
@@ -72,12 +72,12 @@ class CliRestExportTest(unittest.TestCase):
             # Confirm that sample SPLUNKDAUTH template text is present
             ko = ksconf_cli("rest-export", self.transforms_sample1)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertRegex(ko.stdout, "SPLUNKDAUTH=\$\(")
+            self.assertRegex(ko.stdout, r"SPLUNKDAUTH=\$\(")
 
             # Confirm that sample SPLUNKDAUTH template text is removed upon request
             ko = ksconf_cli("rest-export", self.transforms_sample1, "--disable-auth-output")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            self.assertNotRegex(ko.stdout, "SPLUNKDAUTH=\$\(")
+            self.assertNotRegex(ko.stdout, r"SPLUNKDAUTH=\$\(")
 
     def test_warn_on_global_entry(self):
         f = self.twd.write_file("props.conf", """

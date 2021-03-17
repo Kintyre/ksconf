@@ -1,12 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
-import sys
 import os
 import re
 from fnmatch import fnmatch
 from collections import defaultdict
-
-import ksconf.ext.six as six
 
 from ksconf.util.file import relwalk
 
@@ -19,19 +16,23 @@ LayerRootBase has one or more 'Layer', each layer has one or more 'File's.
 LayerRoot methods:
 
     - list_files():   Return superset of all file names returned by all layers (order undefined)
-    - walk():         Return list_files() like content in a os.walk() (or relwalker) like way -- must consider directory order, useful for copying tree, for example.
-                      Assumption for now:  Don't return layer per file, just what files exist.  Ask about layers per file later.
+    - walk():         Return list_files() like content in a os.walk() (or relwalker) like way --
+                      must consider directory order, useful for copying tree, for example.
+                      Assumption for now:  Don't return layer per file, just what files exist.
+                      Ask about layers per file later.
     - list_layers():  Iterate over layer objects (metadata retrievable, on demand)
     - get_file():     Return files (in ranked layer order)
 
 
 Other possible methods:
-    list_dirs():      Return list of known directories?   Not sure how we want this part to work.  Perhaps walk() is good enough?
+    list_dirs():      Return list of known directories?   Not sure how we want this part to work.
+                      Perhaps walk() is good enough?
 
 
 dotD style layers:
 
-    LayerRootDotD has one or more 'LayerMount', each LayerMount has one or more Layer, which has one or more 'File's.
+    LayerRootDotD   has one or more 'LayerMount', each LayerMount has one or more Layer,
+                    which has one or more 'File's.
 
 
 
@@ -295,7 +296,8 @@ A:  Multiple LayerRoots SHOULD be supported.
 """
 
 
-# Q:  How do we mark "mount-points" in the directory structure to keep multiple layers from claiming the same files?????
+# Q:  How do we mark "mount-points" in the directory structure to keep multiple layers
+#     from claiming the same files?????
 class DotDLayerRoot(LayerRootBase):
 
     class Layer(LayerRootBase.Layer):
@@ -333,7 +335,7 @@ class DotDLayerRoot(LayerRootBase):
 
     def __init__(self, config=None):
         super(DotDLayerRoot, self).__init__(config)
-        #self.root = None
+        # self.root = None
         self._root_layer = None
         self._mount_points = defaultdict(list)
 

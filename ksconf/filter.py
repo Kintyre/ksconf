@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import fnmatch
 import re
 import sys
-
 from collections import Counter
 
 from ksconf.conf.parser import GLOBAL_STANZA
@@ -136,7 +134,6 @@ class FilteredListRegex(FilteredList):
     def _match(self, item):
         for name, pattern_re in self.rules:
             if pattern_re.match(item):
-                #self.counter[name] += 1
                 return name
         return False
 

@@ -210,9 +210,11 @@ class FilterCmd(KsconfCmd):
         ''' Filter configuration files. '''
         self.prep_filters(args)
 
-        # By allowing multiple input CONF files, this means that we could have duplicate stanzas (not detected by the parser)
+        # By allowing multiple input CONF files, this means that we could have duplicate stanzas
+        # (not detected by the parser)
         # so for now that just means duplicate stanzas on the output, but that may be problematic
-        # I guess this is really up to the invoker to know if they care about that or not... Still would be helpful for a quick "grep" of a large number of files
+        # I guess this is really up to the invoker to know if they care about that or not...
+        # Still would be helpful for a quick "grep" of a large number of files
 
         for conf in args.conf:
             conf.set_parser_option(keep_comments=args.comments)

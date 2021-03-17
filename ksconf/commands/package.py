@@ -40,7 +40,7 @@ class PackageCmd(KsconfCmd):
     evaluated at runtime.  For example the placeholders ``{{version}}`` or ``{{git_tag}}`` can be
     expanded into the output tarball filename.
     """)
-    #format = "manual"
+    # format = "manual"
     maturity = "alpha"
 
     default_blocklist = [
@@ -82,10 +82,11 @@ class PackageCmd(KsconfCmd):
                             action="append", default=[],
                             help="Remove a pattern that was previously added to the blocklist.")
 
-        player = parser.add_argument_group("Layer filtering",
-                                           "If the app being packaged includes multiple layers, these arguments can be used to "
-                                           "control which ones should be included in the final app file.  If no layer options "
-                                           "are specified, then all layers will be included.")
+        player = parser.add_argument_group(
+            "Layer filtering",
+            "If the app being packaged includes multiple layers, these arguments can be used to "
+            "control which ones should be included in the final app file.  If no layer options "
+            "are specified, then all layers will be included.")
 
         player.add_argument("--layer-method",
                             choices=["auto", "dir.d", "disable"],

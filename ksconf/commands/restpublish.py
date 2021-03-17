@@ -185,8 +185,8 @@ class RestPublishCmd(KsconfCmd):
                                                          action, len(info.get("delta", []))))
 
             update_time = info.get("updated", 0)
-            ###headers = (conf_proxy.name, "{}/{}".format(args.url, config_file.path))
-            #rest_header = DiffHeader("{}/{}".format(args.url, info.get("path", config_file.path), update_time))
+            # headers = (conf_proxy.name, "{}/{}".format(args.url, config_file.path))
+            # rest_header = DiffHeader("{}/{}".format(args.url, info.get("path", config_file.path), update_time))
             rest_header = DiffHeader(info.get("path", config_file.path), update_time)
             if action != "nochange" and "delta" in info:
                 show_diff(self.stdout, info["delta"], headers=(conf_proxy.name, rest_header))
@@ -224,8 +224,9 @@ class RestPublishCmd(KsconfCmd):
             stz = None
 
         if stz is not None:
-            ## print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
-            # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);  If meta is given and where these are different than the defaults on the CLI?...
+            # print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
+            # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);
+            # If meta is given and where these are different than the defaults on the CLI?...
             stz_data = stz.content
 
             # Diff printing really doesn't like 'None's...
@@ -238,10 +239,10 @@ class RestPublishCmd(KsconfCmd):
                 pass
             # print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
-            ## print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
+            # print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
             delta = res["delta"] = compare_stanzas(stanza_data, data, stanza_name)
             if is_equal(delta):
-                ## print("NO CHANGE NEEDED.")
+                # print("NO CHANGE NEEDED.")
                 res["delta"] = []
                 action = "nochange"
             else:
@@ -249,7 +250,7 @@ class RestPublishCmd(KsconfCmd):
                 # Any need to call .refresh() here to grab the state from the server?
                 action = "update"
         else:
-            ## print("Stanza {} new -- publishing!".format(stanza_name))
+            # print("Stanza {} new -- publishing!".format(stanza_name))
             stz = config_file.create(stanza_name, owner=owner, app=app, sharing=sharing, **stanza_data)
             res["delta"] = compare_stanzas({}, stanza_data, stanza_name)
             res["path"] = stz.path
@@ -316,7 +317,7 @@ class RestPublishCmd(KsconfCmd):
                 svc._abspath(stz.path + "acl",
                              owner=svc.namespace.owner, app=svc.namespace.app,
                              sharing=svc.namespace.sharing)
-            #logger.debug("request to do the ACL THING!  (Round trip debugging)")
+            # logger.debug("request to do the ACL THING!  (Round trip debugging)")
             response = svc.http.post(resource, all_headers, **final_meta)
 
             res["meta_response"] = response
@@ -342,7 +343,7 @@ class RestPublishCmd(KsconfCmd):
                 pass
 
             self.make_boolean(stz_data)
-            ## print("Found {}".format(stz_data))
+            # print("Found {}".format(stz_data))
             data = reduce_stanza(stz_data, stanza_data)
             config_file.delete(stanza_name)
             res["delta"] = compare_stanzas(data, {}, stanza_name)

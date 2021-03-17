@@ -16,7 +16,7 @@ from tests.cli_helper import *
 class CliKsconfCombineTestCase(unittest.TestCase):
 
     def build_test01(self, twd):
-        twd.write_file("etc/apps/Splunk_TA_aws/default.d/10-upstream/props.conf", """
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/10-upstream/props.conf", r"""
         [aws:config]
         SHOULD_LINEMERGE = false
         TRUNCATE = 8388608

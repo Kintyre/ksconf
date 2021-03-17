@@ -332,7 +332,7 @@ class ParserTestCase(unittest.TestCase):
         # This is copied from Splunk's system/default/props.conf file.  (We are CERTAINLY more
         # picky than splunk when it comes to parsing these files.
         # Whoops, semi-colons aren't comments!
-        t = """
+        t = r"""
         [sar]
         ; break on blanklines, clock-resets, or common headers attributes (/s, %, or alpha-)
         BREAK_ONLY_BEFORE = (?:^\s*$)|00:00:0|/s|%|[a-z]-

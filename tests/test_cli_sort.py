@@ -71,7 +71,7 @@ class CliSortTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stderr, "^Nothing to update")
 
-    ''' # Leaving this enabled makes too much noise...
+    r''' # Leaving this enabled makes too much noise...
     @unittest.expectedFailure
     def test_sort_glob(self):
         # Not yet implemented.  Currently relying on the shell to do this.

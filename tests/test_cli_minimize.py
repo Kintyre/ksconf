@@ -23,7 +23,7 @@ class CliMinimizeTest(unittest.TestCase):
         default = static_data("inputs-ta-nix-default.conf")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--dry-run", "--target", local, default)
-            self.assertRegex(ko.stdout, "[\r\n][ ]\[script://\./bin/ps\.sh\]")
+            self.assertRegex(ko.stdout, r"[\r\n][ ]\[script://\./bin/ps\.sh\]")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--output", twd.get_path("inputs-new.conf"),
                             "--target", local, default)
@@ -87,7 +87,7 @@ class CliMinimizeTest(unittest.TestCase):
         local = twd.copy_static("inputs-ta-nix-local.conf", "inputs.conf")
         default = static_data("inputs-ta-nix-default.conf")
         inputs_min = twd.get_path("inputs-new.conf")
-        rebuilt = twd.get_path("inputs-rebuild.conf")
+        # rebuilt = twd.get_path("inputs-rebuild.conf")
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--output", inputs_min, local, default)
             self.assertEqual(ko.returncode, EXIT_CODE_MISSING_ARG)

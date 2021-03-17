@@ -147,7 +147,7 @@ class CliDiffTest(unittest.TestCase):
             ko = ksconf_cli("diff",  # "--comments",
                             static_data("savedsearches-sysdefault70.conf"),
                             static_data("inputs-ta-nix-default.conf"))
-            #self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+            # self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
             self.assertRegex(ko.stderr, "No common stanzas")
 
     def test_diff_attribute_replacement(self):

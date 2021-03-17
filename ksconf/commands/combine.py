@@ -13,7 +13,6 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import re
-from collections import defaultdict
 
 from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.commands import ConfFileProxy
@@ -225,7 +224,8 @@ class CombineCmd(KsconfCmd):
 
             # Handle conf files (merge) and non-conf (copy-only) files separately
             if not conf_file_re.search(dest_fn) or len(sources) == 1:
-                # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  {1!r}\n".format(dest_fn, src_files[-1]))
+                # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  "
+                #                   "{1!r}\n".format(dest_fn, src_files[-1]))
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].physical_path
                 if args.dry_run:
@@ -253,7 +253,8 @@ class CombineCmd(KsconfCmd):
                     dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
                                          parse_profile=PARSECONF_MID)
                     srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
-                    # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n".format(dest_fn, src_files[0]))
+                    # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n"
+                    #                   .format(dest_fn, src_files[0]))
                     smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
                                                 banner_comment=args.banner)
                     if smart_rc != SMART_NOCHANGE:

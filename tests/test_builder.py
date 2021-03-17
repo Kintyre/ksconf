@@ -113,7 +113,7 @@ class BuilderTestCase(unittest.TestCase):
             with requirements_txt.open("w") as f:
                 f.write("Input modified.  This isn't allowed")
 
-        with self.assertRaises(BuildCacheException) as e:
+        with self.assertRaises(BuildCacheException):
             change_input(step)
         self.assertIn("Inputs changed", self.out_stream.getvalue())
 
@@ -122,7 +122,7 @@ class BuilderTestCase(unittest.TestCase):
             requirements_txt = build.build_path / "requirements.txt"
             requirements_txt.unlink()
 
-        with self.assertRaises(BuildCacheException) as e:
+        with self.assertRaises(BuildCacheException):
             del_input(step)
 
 

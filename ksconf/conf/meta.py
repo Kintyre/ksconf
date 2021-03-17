@@ -93,7 +93,7 @@ class MetaData(object):
         :return:  Expanded layer
         :rtype: dict
         """
-        # type: list(layers) -> dict
+        # type: (list(layers)) -> dict
         exp = {}
         for layer in layers:
             if layer:

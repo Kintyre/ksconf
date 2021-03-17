@@ -182,7 +182,7 @@ class RestExportCmd(KsconfCmd):
 
     def run(self, args):
         ''' Convert a conf file into a bunch of CURL commands'''
-        """
+        r"""
 
         Some inspiration in the form of CURL commands...
 

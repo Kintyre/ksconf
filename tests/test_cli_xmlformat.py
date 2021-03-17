@@ -120,7 +120,7 @@ class CliXmlFormatTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_FORMAT_APPLIED)
             self.assertRegex(ko.stderr, r"Replaced file [^\r\n]+sample.xml")
 
-        '''   unicode vs str issue occurring here -->
+        r'''   unicode vs str issue occurring here -->
 
         # Format again. Make sure there's no new changes
         with ksconf_cli:
@@ -158,7 +158,7 @@ class CliXmlFormatTest(unittest.TestCase):
             self.assertRegex(ko.stderr, r"Already formatted [^\r\n]+[/\\]sample\.xml")
 
     def test_promote_to_CDATA(self):
-        sample = self.twd.write_file("sample.xml", """
+        sample = self.twd.write_file("sample.xml", r"""
         <form>
            <search id="ftp">
               <query>index=main sourcetype=ftp | rex "^\S+ \S+ (?&lt;user&gt;\S+)"
@@ -173,7 +173,7 @@ class CliXmlFormatTest(unittest.TestCase):
             ko = ksconf_cli("xml-format", sample)
             self.assertEqual(ko.returncode, EXIT_CODE_FORMAT_APPLIED)
             sample_out = self.twd.read_file("sample.xml")
-            self.assertRegex(sample_out, self.cdata_regex("(?<user>\S+)", True))
+            self.assertRegex(sample_out, self.cdata_regex(r"(?<user>\S+)", True))
 
     def test_preserve_CDATA(self):
         """ <![CDATA[]]> blocks should be preserved, even if there's no special characters. """

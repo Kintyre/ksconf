@@ -10,6 +10,7 @@ Usage example:  Promote local props changes (made via the UI) to the 'default' f
 
 from __future__ import absolute_import, unicode_literals
 
+import argparse
 import os
 import shutil
 from copy import deepcopy
@@ -18,13 +19,13 @@ from ksconf.ext.six.moves import input
 
 from ksconf.commands import ConfDirProxy
 from ksconf.commands import KsconfCmd, dedent, ConfFileType
-from ksconf.filter import FilteredList, FilterListWildcard, create_filtered_list
+from ksconf.filter import FilteredList, create_filtered_list
 from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, summarize_cfg_diffs, show_diff, \
     DIFF_OP_EQUAL, DiffStanza, DiffStzKey, DIFF_OP_INSERT, DIFF_OP_REPLACE
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import PARSECONF_STRICT_NC, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_NOTHING_TO_DO, \
-    EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT, EXIT_CODE_FEAT_NOT_IMPLEMENTED
+    EXIT_CODE_USER_QUIT, EXIT_CODE_EXTERNAL_FILE_EDIT
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import _samefile, file_fingerprint
 

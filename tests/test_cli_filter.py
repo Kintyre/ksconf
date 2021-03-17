@@ -183,12 +183,12 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("Splunk errors last 24 hours", out)
 
     def test_no_match(self):
-        "No match (\w verbose) should be reported to stderr"
+        "No match (with verbose) should be reported to stderr"
         with ksconf_cli:
             ko = ksconf_cli("filter", self.sample01, "--stanza", "NOT A REAL STANZA", "--verbose")
             out = ko.get_conf()
             # Should the exit code be different here?
-            #self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            # self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertEqual(len(out), 0)
             self.assertRegex(ko.stderr, "No matching stanzas")
 
@@ -351,7 +351,7 @@ class CliKsconfFilter(unittest.TestCase):
         try:
             with mock.patch("ksconf.commands.os.path.isfile") as m, ksconf_cli:
                 m.return_value = False
-                #m.wraps = my_isfile
+                # m.wraps = my_isfile
                 ko = ksconf_cli("filter", fd_dev, "--stanza", "Errors in the last hour")
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
                 out = ko.get_conf(PARSECONF_STRICT)

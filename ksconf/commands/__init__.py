@@ -226,8 +226,7 @@ class ConfFileType(object):
                 cfp = ConfFileProxy("<stdin>", "r", stream=sys.stdin, is_file=False)
                 if self._action == "load":
                     try:
-                        d = cfp.data
-                        del d
+                        cfp.data  # noqa: F841
                     except ConfParserException as e:
                         raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
                 return cfp
@@ -255,8 +254,7 @@ class ConfFileType(object):
                                         parse_profile=self._parse_profile, is_file=False)
                 if self._action == "load":
                     # Force file to be parsed by accessing the 'data' property
-                    d = cfp.data
-                    del d
+                    cfp.data  # noqa: F841
                 return cfp
             except IOError as e:
                 message = "can't open '%s': %s"
@@ -368,7 +366,7 @@ class KsconfCmd(object):
         self.register_args(self.parser)
 
     def register_args(self, parser):        # pragma: no cover
-        # type: (ArgumentParser) -> None
+        # type: (argparse.ArgumentParser) -> None
         """ This function in passed the """
         raise NotImplementedError
 
@@ -384,7 +382,7 @@ class KsconfCmd(object):
             return_code = self.run(args)
         except KsconfCmdReadConfException as e:
             return_code = e.returncode
-        except BrokenPipeError as e:    # pragma: no cover
+        except BrokenPipeError:    # pragma: no cover
             try:
                 self.stderr.write("Broken pipe\n")
             except Exception:
@@ -542,7 +540,7 @@ def get_entrypoints(group, name=None):
         results = None
         try:
             results = resolver(group, name=name)
-        except ImportError as e:    # pragma: no cover
+        except ImportError:    # pragma: no cover
             __get_entity_resolvers.remove(resolver)
         if results:
             return results

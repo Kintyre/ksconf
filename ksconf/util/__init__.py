@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import sys
-import io
 
 from ksconf.ext.six import PY2, binary_type
 
@@ -28,6 +27,7 @@ def _xargs(iterable, cmd_len=1024):
 try:
     # Available in Python 3.2 and later.
     from functools import lru_cache
+
     # the LRU functionality is not really needed
     memoize = lru_cache(maxsize=None)
 except ImportError:

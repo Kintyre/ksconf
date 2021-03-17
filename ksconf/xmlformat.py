@@ -98,7 +98,7 @@ class SplunkSimpleXmlFormatter(object):
             source_lines = lines[lineno:lineno + 2]
             for line in source_lines:
                 if CDATA in line:
-                    #print("Found source line:  {}".format(line))
+                    # print("Found source line:  {}".format(line))
                     return True
             return False
 
@@ -110,7 +110,7 @@ class SplunkSimpleXmlFormatter(object):
                     if already_using_cdata(e):
                         pass
                     elif re.search(r'[<>&]', e.text):
-                        #print("SHOULD BE CDATA:   {}".format(e.text))
+                        # print("SHOULD BE CDATA:   {}".format(e.text))
                         # Convert text to CDATA
                         e.text = etree.CDATA(e.text)
 

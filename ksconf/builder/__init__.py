@@ -5,8 +5,12 @@ import inspect
 import os
 import re
 import sys
-from pathlib import Path
 from subprocess import Popen
+
+try:
+    from typing import Callable
+except ImportError:
+    Callable = type
 
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.ext.six import text_type
@@ -58,7 +62,7 @@ class BuildStep(object):
         return self.verbosity >= VERBOSE
 
     def get_logger(self, prefix=None):
-        # type: (str) -> typing.Callable[str, int]
+        # type: (str) -> Callable[str, int]
         if prefix is None:
             prefix = inspect.currentframe().f_back.f_code.co_name
         elif re.match(r'[\w_]+', prefix):

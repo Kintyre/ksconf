@@ -63,6 +63,7 @@ def check_py_sane():
     try:
         # There must be a more 'sane' way to check this.  But for now, this test works...
         from hashlib import md5
+        del md5
     except ImportError:
         return False
     return True
@@ -243,7 +244,8 @@ def check_py():
         # TODO: This should ALSO check to make sure this is a Splunk-based install, or this 'help' will be misguided.
         sys.stderr.write("Doh!  Environmental configuration issue found preventing 'ksconf' from running.\n")
         # TODO:  We should show the Windows equivalent, but primarily this is an issue on Linux.
-        # TODO:  If we're install as a splunk app, we should be able to give the real path to SPLUNK_HOME, which quite likely is ALSO not set.
+        # TODO:  If we're install as a splunk app, we should be able to give the real path to SPLUNK_HOME,
+        #        which quite likely is ALSO not set.
         sys.stderr.write("\n\n")  # Often there's crap on the console from warnings.  Whitespace!
         sys.stderr.write("Try running this command first:  source $SPLUNK_HOME/bin/setSplunkEnv\n")
         # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist

@@ -110,7 +110,7 @@ def merge_update_any_file(dest, sources, remove_source=False):
     # XXX: Set this up in a shared function somewhere, we have to figure this out multiple places
     remove = []
     if dest.endswith(".conf") or dest.endswith(".meta"):
-        #self.output.write("Merge   {} -> {}\n".format(local, default))
+        # self.output.write("Merge   {} -> {}\n".format(local, default))
         merge_update_conf_file(dest, sources, remove_source=remove_source)
         # merge_conf(default, local)
     else:
