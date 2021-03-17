@@ -85,7 +85,7 @@ class BuildStep(object):
         """
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
         executable = args[0]
-        self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args), VERBOSE))
+        self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args)), VERBOSE)
         process = Popen(args, cwd=self.build_path)
         process.wait()
         if process.returncode != 0:

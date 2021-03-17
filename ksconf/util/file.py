@@ -195,7 +195,7 @@ class ReluctantWriter(object):
         # Don't do anything, other than try to close/delete the file, if an error occurred.
         try:
             self._fp.close()
-        except:
+        except Exception:
             raise
         if exc_type:
             if KSCONF_DEBUG in os.environ:

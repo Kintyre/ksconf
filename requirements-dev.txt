@@ -1,5 +1,7 @@
 -r requirements.txt
 
+tox
+flake8
 coverage
 pre-commit
 gitlint

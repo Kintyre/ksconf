@@ -161,7 +161,7 @@ def build_cli_parser(do_formatter=False):
         if distro_name:
             version_info.append("\n  {}\n\n    Commands:".format(distro_name))
         else:
-            version_info.append("\n\n    Commands:".format(distro_name))
+            version_info.append("\n\n    Commands:")
         for (name, cmd_cls, error) in items:
             if cmd_cls is None:
                 m = "(?)"

@@ -444,7 +444,7 @@ class KsconfCmd(object):
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
         except TypeError as e:
             # debug_traceback()
-            self.stderr.write("Parser config error '{}': {}\n" % (path, e))
+            self.stderr.write("Parser config error '{}': {}\n".format(path, e))
             # I guess bad conf file.... can't remember what this one is for.
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
 
