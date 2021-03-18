@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
+
 import os
 import re
 import sys
-from subprocess import Popen, PIPE
 from functools import wraps
+from subprocess import PIPE, Popen
 
 from ksconf.ext.six import PY2
 
@@ -117,6 +116,7 @@ def make_cli_docs(readme_file):
 @show_changes
 def make_subcommands_table(csv_path):
     import csv
+
     from ksconf.commands import get_all_ksconf_cmds
 
     # Explicitly sort commands by name (no more random git diffs!)

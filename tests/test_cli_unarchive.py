@@ -9,9 +9,9 @@ import unittest
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_FAILED_SAFETY_CHECK
-from tests.cli_helper import TestWorkDir, static_data, ksconf_cli
+from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_SUCCESS
 from ksconf.vc.git import git_ls_files
+from tests.cli_helper import TestWorkDir, ksconf_cli, static_data
 
 
 class CliKsconfUnarchiveTestCase(unittest.TestCase):

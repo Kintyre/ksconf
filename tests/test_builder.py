@@ -19,7 +19,7 @@ if __package__ is None:
     sys.path.append(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.builder import BuildManager, BuildCacheException
+from ksconf.builder import BuildCacheException, BuildManager
 from tests.cli_helper import TestWorkDir
 
 
@@ -88,6 +88,7 @@ class BuilderTestCase(unittest.TestCase):
                 f.write("#!/bin/python\n# SIX!\n")
 
         from datetime import datetime, timedelta
+
         # Make system clock return a time from 10 hours ago
         with mock.patch("ksconf.builder.cache.datetime",
                         mock.Mock(now=lambda: datetime.now() - timedelta(hours=10))):

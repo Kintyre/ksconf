@@ -20,8 +20,9 @@ from __future__ import absolute_import, unicode_literals
 import re
 
 import ksconf.ext.six as six
-from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
 from ksconf.ext.six.moves.urllib.parse import quote, unquote
+
+from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
 
 """
 

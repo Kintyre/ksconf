@@ -9,10 +9,11 @@ from glob import glob
 from io import open
 from pathlib import PurePath
 
-from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, KSCONF_DEBUG
-from ksconf.util.compare import file_compare
 from ksconf.ext.six import text_type
 from ksconf.ext.six.moves import range
+
+from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ksconf.util.compare import file_compare
 
 
 def _path_to_str(p):

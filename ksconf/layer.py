@@ -2,11 +2,10 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import re
-from fnmatch import fnmatch
 from collections import defaultdict
+from fnmatch import fnmatch
 
 from ksconf.util.file import relwalk
-
 
 """
 

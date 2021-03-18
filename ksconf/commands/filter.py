@@ -20,7 +20,7 @@ from __future__ import absolute_import, unicode_literals
 import argparse
 import sys
 
-from ksconf.commands import KsconfCmd, dedent, ConfFileType
+from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.filter import FilteredList, FilterListWildcard, create_filtered_list

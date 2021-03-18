@@ -5,18 +5,15 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import unittest
-
 from io import open
 
 # Allow interactive execution from CLI,  cd tests; ./test_meta.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from ksconf.conf.delta import DIFF_OP_EQUAL, compare_cfgs
 from ksconf.conf.meta import MetaData
-
 from ksconf.conf.parser import parse_conf
-from ksconf.conf.delta import compare_cfgs, DIFF_OP_EQUAL
-
 from tests.cli_helper import TestWorkDir
 
 

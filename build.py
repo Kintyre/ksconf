@@ -1,10 +1,10 @@
 # Example app building script
 
+import argparse
 import sys
 from shutil import copy2, rmtree
-import argparse
 
-from ksconf.builder import BuildManager, VERBOSE, QUIET
+from ksconf.builder import QUIET, VERBOSE, BuildManager
 
 manager = BuildManager()
 

@@ -12,9 +12,9 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
-from ksconf.commands import KsconfCmd, dedent, ConfFileProxy, ConfFileType
+from ksconf.commands import ConfFileProxy, ConfFileType, KsconfCmd, dedent
 from ksconf.conf.merge import merge_conf_files
-from ksconf.conf.parser import PARSECONF_STRICT, PARSECONF_MID
+from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 

@@ -10,6 +10,7 @@ from subprocess import list2cmdline
 from textwrap import dedent
 
 import ksconf.ext.six as six
+
 from ksconf.__main__ import cli
 from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
                                 parse_conf_stream, write_conf)
@@ -17,7 +18,7 @@ from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
 # Some unittest fixup for various python versions
-import tests.compat as _  # nopep8
+import tests.compat as _  # noqa
 
 del _
 

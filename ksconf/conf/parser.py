@@ -18,11 +18,11 @@ from __future__ import absolute_import, unicode_literals
 import codecs
 import os
 import re
-from io import open, StringIO
+from io import StringIO, open
 
 import ksconf.ext.six as six
 
-from ..consts import SMART_NOCHANGE, SMART_UPDATE, SMART_CREATE
+from ..consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ..util.compare import fileobj_compare
 
 default_encoding = "utf-8"

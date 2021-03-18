@@ -4,8 +4,8 @@ import os
 import re
 from io import BytesIO
 
-
 from ksconf.ext.six import PY2
+
 from ksconf.util.file import ReluctantWriter
 
 etree = None

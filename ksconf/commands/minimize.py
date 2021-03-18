@@ -18,13 +18,14 @@ from __future__ import absolute_import, unicode_literals
 
 import ksconf.ext.six as six
 
-from ksconf.commands import KsconfCmd, dedent, ConfFileType
-from ksconf.conf.delta import compare_cfgs, DIFF_OP_DELETE, DIFF_OP_EQUAL, DiffStanza, \
-    DIFF_OP_INSERT, DIFF_OP_REPLACE, show_diff
-from ksconf.consts import EXIT_CODE_MISSING_ARG
+from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
+                               DIFF_OP_REPLACE, DiffStanza, compare_cfgs,
+                               show_diff)
 from ksconf.conf.merge import merge_conf_dicts
-from ksconf.conf.parser import GLOBAL_STANZA, _drop_stanza_comments
-from ksconf.conf.parser import PARSECONF_STRICT, PARSECONF_LOOSE
+from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_LOOSE,
+                                PARSECONF_STRICT, _drop_stanza_comments)
+from ksconf.consts import EXIT_CODE_MISSING_ARG
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import match_bwlist
 

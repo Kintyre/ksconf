@@ -29,12 +29,13 @@ from functools import wraps
 from pathlib import Path
 from shutil import copy2, rmtree
 
-from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
-from ksconf.builder.cache import CachedRun, FileSet
 from ksconf.ext.six import text_type
 
+from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
+from ksconf.builder.cache import CachedRun, FileSet
+
 try:
-    from typing import Callable, List, Any
+    from typing import Any, Callable, List
 except ImportError:
     Callable = List = Any = type
 

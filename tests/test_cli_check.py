@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function, unicode_literals
 
-import unittest
 import os
 import sys
-
+import unittest
 from io import StringIO
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py

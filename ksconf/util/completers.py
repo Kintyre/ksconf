@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 # Optional argcomplete library for CLI (BASH-based) tab completion
 try:
     from argcomplete import autocomplete
-    from argcomplete.completers import FilesCompleter, DirectoriesCompleter
+    from argcomplete.completers import DirectoriesCompleter, FilesCompleter
 except ImportError:
 
     def _argcomplete_noop(*args, **kwargs):

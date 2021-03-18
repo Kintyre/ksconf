@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
+
 import os
 import re
-from setuptools import setup
 from textwrap import dedent
+
+from setuptools import setup
 
 from ksconf.setup_entrypoints import get_entrypoints_setup
 

@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import namedtuple, Counter
-from subprocess import Popen, PIPE, list2cmdline, call
+from collections import Counter, namedtuple
+from subprocess import PIPE, Popen, call, list2cmdline
 
 from ksconf.util import _xargs, memoize
 

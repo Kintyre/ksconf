@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function, unicode_literals
+
 import os
 import sys
 
@@ -38,7 +39,7 @@ class KsconfMiscIternalsTest(unittest.TestCase):
             break
 
     def test_entrypoints(self):
-        from ksconf.commands import get_entrypoints, _get_fallback
+        from ksconf.commands import _get_fallback, get_entrypoints
         get_entrypoints("ksconf_cmd", "sort")
 
         # Just to exercise this (coverage and prevent regressions)

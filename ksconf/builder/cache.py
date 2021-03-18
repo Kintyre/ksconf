@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
 
-from ksconf.builder import BuildCacheException
 from ksconf.ext.six import PY2, text_type
+
+from ksconf.builder import BuildCacheException
 from ksconf.util.file import file_hash, pathlib_compat
 
 if sys.version_info < (3, 6):

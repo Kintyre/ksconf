@@ -14,17 +14,17 @@ from __future__ import absolute_import, unicode_literals
 import os
 import re
 
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
-from ksconf.commands import ConfFileProxy
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.commands import ConfFileProxy, KsconfCmd, dedent
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
-from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_COMBINE_MARKER_MISSING, SMART_NOCHANGE, \
-    EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_BAD_ARGS
+from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
+                           EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE,
+                           SMART_NOCHANGE)
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
-from ksconf.util.file import expand_glob_list, relwalk, _is_binary_file, smart_copy
+from ksconf.util.file import _is_binary_file, expand_glob_list, relwalk, smart_copy
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 

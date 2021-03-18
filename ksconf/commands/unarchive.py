@@ -15,16 +15,17 @@ import re
 from io import StringIO
 from subprocess import list2cmdline
 
-from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker, \
-    gen_arch_file_remapper
+from ksconf.archive import (extract_archive, gaf_filter_name_like,
+                            gen_arch_file_remapper, sanity_checker)
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.conf.parser import parse_conf, PARSECONF_LOOSE, ConfParserException, default_encoding
+from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, default_encoding, parse_conf
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
-from ksconf.util.file import file_hash, match_bwlist, dir_exists, relwalk
-from ksconf.vc.git import git_is_working_tree, git_ls_files, git_is_clean, git_status_ui, \
-    git_cmd_iterable, git_cmd, git_version
+from ksconf.util.file import dir_exists, file_hash, match_bwlist, relwalk
+from ksconf.vc.git import (git_cmd, git_cmd_iterable, git_is_clean,
+                           git_is_working_tree, git_ls_files, git_status_ui,
+                           git_version)
 
 allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 

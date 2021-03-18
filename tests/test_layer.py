@@ -8,7 +8,6 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import unittest
-
 from glob import glob
 
 # Allow interactive execution from CLI,  cd tests; ./test_layer.py
@@ -16,10 +15,9 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from tests.cli_helper import TestWorkDir
-
 # Stuff for testing
 from ksconf.layer import *
+from tests.cli_helper import TestWorkDir
 
 
 def np(p, nominal="/"):

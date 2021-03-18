@@ -13,8 +13,8 @@ import os
 from collections import Counter
 
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.conf.parser import parse_conf, PARSECONF_STRICT_NC, ConfParserException
-from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR
+from ksconf.conf.parser import PARSECONF_STRICT_NC, ConfParserException, parse_conf
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_SUCCESS
 from ksconf.util import debug_traceback
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import _stdin_iter, expand_glob_list

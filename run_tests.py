@@ -12,6 +12,7 @@ home = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, home)
 
 import ksconf  # nopep8
+
 print("Running all KSCONF unit tests.   KSCONF home:  {}".format(ksconf.__path__[0]))
 
 # Because this script is run from the 'pre-commit' hooks, and some of these

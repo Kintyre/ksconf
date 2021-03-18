@@ -14,8 +14,7 @@ from warnings import warn
 from ksconf import KsconfPluginWarning
 from ksconf.conf.parser import (ConfParserException, detect_by_bom, parse_conf,
                                 smart_write_conf, write_conf)
-from ksconf.consts import (EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE,
-                           SMART_CREATE)
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE
 from ksconf.util import debug_traceback, memoize
 
 __all__ = [

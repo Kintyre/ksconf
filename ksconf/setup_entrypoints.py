@@ -11,7 +11,8 @@ This is a silly hack that serves 2 purposes:
 """
 
 from __future__ import absolute_import, unicode_literals
-from collections import namedtuple, OrderedDict
+
+from collections import OrderedDict, namedtuple
 from importlib import import_module
 
 Ep = namedtuple("Ep", ("name", "module_name", "object_name"))  # , "extras", "dist")

@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import os
 import shutil
@@ -7,10 +6,11 @@ import sys
 from copy import deepcopy
 
 import ksconf.ext.six as six
+
 from ksconf.commands import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
-from ksconf.conf.parser import GLOBAL_STANZA, _extract_comments, inject_section_comments, \
-    parse_conf, write_conf
+from ksconf.conf.parser import (GLOBAL_STANZA, _extract_comments,
+                                inject_section_comments, parse_conf, write_conf)
 from ksconf.consts import SMART_UPDATE
 from ksconf.util.file import relwalk
 

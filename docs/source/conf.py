@@ -13,7 +13,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 #from recommonmark.parser import CommonMarkParser
 
 
@@ -22,7 +23,8 @@ sys.path.insert(0, os.path.abspath(os.path.join('..','..')))
 project = u'KSConf'
 copyright = u'2020, Kintyre Solutions'
 
-from ksconf import __version__ as release, __author__ as author
+from ksconf import __author__ as author  # noqa
+from ksconf import __version__ as release  # noqa
 
 # The short X.Y version
 version = ".".join(release.split(".")[:-1])
@@ -48,9 +50,9 @@ extensions = [
 templates_path = ['_templates']
 
 
-#source_parsers = {
+# source_parsers = {
 #    '.md' :  CommonMarkParser,
-#}
+# }
 
 
 # The suffix(es) of source filenames.
@@ -85,7 +87,7 @@ pygments_style = 'sphinx'
 #
 html_theme = 'alabaster'
 html_theme = 'classic'
-html_theme = os.environ.get("KSCONF_DOCS_THEME",'sphinx_rtd_theme')
+html_theme = os.environ.get("KSCONF_DOCS_THEME", 'sphinx_rtd_theme')
 
 print("Using theme:  {}".format(html_theme))
 
@@ -103,7 +105,7 @@ html_static_path = ['_static']
 html_context = {
     'css_files': [
         '_static/theme_overrides.css',  # override wide tables in RTD theme
-        ],
+    ],
 }
 
 # Custom sidebar templates, must be a dictionary that maps document names
@@ -128,13 +130,13 @@ htmlhelp_basename = 'KSConfdoc'
 
 # https://protips.readthedocs.io/pdf-font.html
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
+    # The paper size ('letterpaper' or 'a4paper').
     'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
+    # The font size ('10pt', '11pt' or '12pt').
     'pointsize': '11pt',
 
-# Additional stuff for the LaTeX preamble.
+    # Additional stuff for the LaTeX preamble.
     'preamble': r'''
         \usepackage{charter}
         \usepackage[defaultsans]{lato}

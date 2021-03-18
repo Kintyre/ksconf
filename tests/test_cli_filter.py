@@ -2,10 +2,9 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os
+import re
 import sys
 import unittest
-import re
-
 
 try:
     # Python 3.3+
@@ -18,9 +17,9 @@ except ImportError:
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from ksconf.conf.parser import PARSECONF_STRICT
 from ksconf.consts import *
 from tests.cli_helper import *
-from ksconf.conf.parser import PARSECONF_STRICT
 
 
 class CliKsconfFilter(unittest.TestCase):
@@ -373,7 +372,7 @@ class CliKsconfFilter(unittest.TestCase):
 
         # Another possible implementation is to use mock objects.  I started down that path and it
         # failed too.  (Also adding mock would require some new dependencies for py <3.3
-        from subprocess import Popen, PIPE
+        from subprocess import PIPE, Popen
         p = Popen(["cat", self.sample01], stdout=PIPE)
         fd = p.stdout.fileno()
         fd_dev = "/dev/fd/{}".format(fd)

@@ -11,8 +11,8 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from ksconf.filter import (FilteredList, create_filtered_list,
-                           FilteredListString, FilteredListRegex, FilterListWildcard)
+from ksconf.filter import (FilteredList, FilteredListRegex, FilteredListString,
+                           FilterListWildcard, create_filtered_list)
 
 
 class FilterTestCase(unittest.TestCase):

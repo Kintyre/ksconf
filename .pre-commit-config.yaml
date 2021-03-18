@@ -17,8 +17,14 @@ repos:
       args: [ '--fix=lf' ]
       exclude: (\.bat|\.csv)$
 
+- repo: https://github.com/PyCQA/isort.git
+  rev: 5.7.0
+  hooks:
+    - id: isort
+      exclude: (ksconf/ext/)
+
 - repo: https://github.com/pre-commit/mirrors-autopep8
-  rev: v1.5.4
+  rev: v1.5.6
   hooks:
     - id: autopep8
       exclude: (ksconf/ext/)

@@ -5,7 +5,6 @@ releases without having to deal with backports and such.
 """
 import unittest
 
-
 if not hasattr(unittest.TestCase, "assertRegex"):
     unittest.TestCase.assertRegex = unittest.TestCase.assertRegexpMatches
 

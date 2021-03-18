@@ -12,8 +12,9 @@ try:
 except ImportError:
     Callable = type
 
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.ext.six import text_type
+
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 
 if sys.version_info < (3, 6):
     from ksconf.util.file import pathlib_compat
@@ -141,6 +142,6 @@ def default_cli(build_manager, build_funct, argparse_parents=()):
         sys.exit(EXIT_CODE_INTERNAL_ERROR)
 
 
-# Used for type hints / avoid unused variable warnings moving to Python 3 only: # nopep8
+# Used for type hints / avoid unused variable warnings moving to Python 3 only: # noqa
 _ = BuildStep
 del _

@@ -2,14 +2,11 @@
 """
 from __future__ import absolute_import, unicode_literals
 
-
 import re
 import sys
-
-from ksconf.builder import BuildStep
-from ksconf.builder import VERBOSE, QUIET
 from shutil import copy2, rmtree
 
+from ksconf.builder import QUIET, VERBOSE, BuildStep
 
 if sys.version_info < (3, 6):
     # Allow these stdlib functions to work with pathlib

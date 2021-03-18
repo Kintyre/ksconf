@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
-import sys
 import re
+import sys
 
 SMART_CREATE = "created"
 SMART_UPDATE = "updated"

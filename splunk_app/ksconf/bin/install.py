@@ -1,6 +1,6 @@
 # No shebang here.  Why?  Ask AppInspect  ;-(
-import sys
 import os
+import sys
 
 import _bootstrap
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function, unicode_literals
+
 import os
 import sys
 
@@ -7,9 +8,10 @@ import sys
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests.cli_helper import ksconf_cli, TestWorkDir, FakeStdin
-from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_USER_QUIT
 import unittest
+
+from ksconf.consts import EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_SUCCESS, EXIT_CODE_USER_QUIT
+from tests.cli_helper import FakeStdin, TestWorkDir, ksconf_cli
 
 
 class CliSimpleTestCase(unittest.TestCase):

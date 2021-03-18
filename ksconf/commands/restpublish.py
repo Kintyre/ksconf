@@ -17,17 +17,16 @@ import sys
 from argparse import ArgumentParser
 
 import ksconf.ext.six as six
-
 from ksconf.ext.six.moves.urllib.parse import urlparse
 
-from ksconf.commands import KsconfCmd, dedent, ConfFileType, ConfFileProxy, \
-    add_splunkd_access_args, add_splunkd_namespace
-from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA, conf_attr_boolean
-from ksconf.conf.delta import compare_stanzas, show_diff, DiffHeader, reduce_stanza, is_equal
+from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
+                             add_splunkd_access_args, add_splunkd_namespace,
+                             dedent)
+from ksconf.conf.delta import DiffHeader, compare_stanzas, is_equal, reduce_stanza, show_diff
 from ksconf.conf.meta import MetaData
+from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE, conf_attr_boolean
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
-
 
 # Lazy loaded by _handle_imports()
 splunklib = None

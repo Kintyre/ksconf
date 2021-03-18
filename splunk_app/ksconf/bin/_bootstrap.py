@@ -1,8 +1,8 @@
 """
 KSCONF Boostrap shim to get the python path setup correctly.
 """
-import sys
 import os
+import sys
 
 this_module = os.path.abspath(__file__)
 ksconf_app = os.path.dirname(this_module)

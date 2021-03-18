@@ -24,7 +24,7 @@ import argparse
 import os
 
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_BAD_ARGS
+from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_SUCCESS
 from ksconf.package import AppPackager
 
 

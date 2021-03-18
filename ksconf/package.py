@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
-from ksconf.conf.parser import update_conf, parse_conf
+from ksconf.conf.parser import parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
 from ksconf.vc.git import git_cmd
 

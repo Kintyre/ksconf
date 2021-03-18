@@ -12,22 +12,19 @@ Install & register with:
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import argparse
-import sys
 import os
 import platform
-
+import sys
 from collections import defaultdict
 
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
+from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.util.completers import autocomplete
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_ENV_BUSTED, KSCONF_DEBUG
-
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
 # Someday need to re-evaluate this and see if it's reproducible on other machines....

@@ -25,11 +25,11 @@ from collections import OrderedDict
 
 from ksconf.ext.six.moves.urllib.parse import quote
 
-from ksconf.util.rest import build_rest_url
-from ksconf.commands import KsconfCmd, dedent, ConfFileType
-from ksconf.conf.parser import PARSECONF_LOOSE, GLOBAL_STANZA
+from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
+from ksconf.util.rest import build_rest_url
 
 
 class Literal(object):

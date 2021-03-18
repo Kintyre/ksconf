@@ -8,11 +8,10 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import unittest
-
-from io import StringIO
-from functools import partial
-from copy import deepcopy
 from collections import OrderedDict
+from copy import deepcopy
+from functools import partial
+from io import StringIO
 
 import ksconf.ext.six as six
 
@@ -20,12 +19,15 @@ import ksconf.ext.six as six
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
+                               DIFF_OP_REPLACE, compare_cfgs,
+                               summarize_cfg_diffs)
+from ksconf.conf.parser import (DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE,
+                                GLOBAL_STANZA, PARSECONF_MID,
+                                ConfParserException, DuplicateKeyException,
+                                DuplicateStanzaException, parse_conf,
+                                section_reader, write_conf)
 from tests.cli_helper import TestWorkDir, parse_string
-from ksconf.conf.delta import compare_cfgs, summarize_cfg_diffs, \
-    DIFF_OP_REPLACE, DIFF_OP_EQUAL, DIFF_OP_DELETE, DIFF_OP_INSERT
-from ksconf.conf.parser import DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE, \
-    DuplicateStanzaException, DuplicateKeyException, parse_conf, write_conf, ConfParserException, \
-    PARSECONF_MID, GLOBAL_STANZA, section_reader
 
 
 class ParserTestCase(unittest.TestCase):

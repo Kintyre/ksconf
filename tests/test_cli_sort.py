@@ -10,7 +10,7 @@ from glob import glob
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import EXIT_CODE_SORT_APPLIED, EXIT_CODE_SUCCESS, EXIT_CODE_BAD_CONF_FILE
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
 
 

@@ -9,7 +9,7 @@ import unittest
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import EXIT_CODE_SUCCESS, EXIT_CODE_FAILED_SAFETY_CHECK
+from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
 
 dummy_config = {
