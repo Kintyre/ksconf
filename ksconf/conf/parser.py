@@ -434,7 +434,22 @@ def conf_attr_boolean(value):
 
 class update_conf(object):
     """
-    Context manager that allows for simple in-place updates to conf files
+    Context manager that allows for simple in-place updates to conf files.
+    This provides a simple dict-like interface for easy updates.
+
+    Usage example:
+
+    ..  code-block:: py
+
+            with update_conf("app.conf") as conf:
+                conf["launcher"]["version"] = "1.0.2"
+                conf["install"]["build"] = 33
+
+    :param str conf_path: Path to ``.conf`` file to be edited.
+    :param dict profile:  Parsing settings and strictness profile.
+    :param str encoding:  encoding to use for file operations.
+    :param bool make_missing:  When true, a new blank configuration file will be created
+                               with the updates rather than raising an exception.
     """
 
     def __init__(self, conf_path, profile=PARSECONF_MID, encoding=None, make_missing=False):

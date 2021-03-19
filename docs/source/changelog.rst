@@ -3,36 +3,89 @@ Changelog
 
 .. note:: Changes in master, but not released yet are marked as *DRAFT*.
 
+Ksconf 0.8
+----------
 
-Ksconf 0.8.0
-------------
+**Highlights:**
 
-Adds automatic layer detection support to the core library that's usable within multiple commands.
-Removed the deprecated zipapp deployment method.
+*  New command :ref:`ksconf_cmd_package` is designed for both Splunk developers and admins
+*  New module :py:mod:`ksconf.builder` helps build Splunk apps using a pipeline; or when external Python libraries are bundled into an app
+*  Legit layer support with built-in layer filtering capabilities is available in several commands
+*  Python 3!  Head's up: We'll be dropping support for Python 2 in an upcoming release
+
+..  note::
+
+   Come chat about ksconf on `GitHub discussions <https://github.com/Kintyre/ksconf/discussions>`__ even if it's to say we should use some other forum to stay in touch.
+
+**What's new:**
+
+-  The **new ksconf package command** supports the creation of Splunk app ``.spl`` files from a source directory.
+   The ``package`` command can be used by admins to transfer apps around an organization, while keeping the ``local`` folder intact,
+   or by a developer who wants ``local`` to be automatically merged into ``default``.
+   The app version can be set based on the latest git tag by simply saying ``--set-version={{git_tag}}``.
+-  The **ksconf.builder Python module** is a API-only first for ksconf!
+   This build library allow caching of expensive deterministic build operations, and has out-of-the-box support for frequent build steps like adding Python modules locally using ``pip``.
+   As the first feature with no CLI support, I'm exceeded to get input from the broader community on this approach.
+   Of course this is just an experimental first release.
+   As always, feedback welcome!
+-  **Native support for layers!**
+   It's official, layers are now a proper ksconf feature, not just an abstract concept that you could throw together yourself given enough time and effort.
+   This does mean that ksconf has to be more opinionated, but the design allows switching between various layer methods,
+   which can be extended over time to support new different strategies as they emerge and are embraced by the community.
+   Supports layers filtering as a native feature.  This has always been technically possible, but awkward to implement yourself.
+   Layer support is currently available in :ref:`ksconf_cmd_combine` and :ref:`ksconf_cmd_package` commands.
+-  **Moving to Python 3 soon.**
+   In preparation for the move to Python 3, I've added additional backport libraries to be installed when running Python 2.
+   Support for Python 2 will be dropped in a future release, and anyone still on Splunk 7 who can't get a Python 3 access on the side will have to use an old version of ksconf.
+   Also note that when jumping to Python 3, we will likely be requiring Python 3.6 or newer right out of the gate.  (This means dropping Python 2.3, 3.4 and 3.5 all at the same time.)
+   Whoohoo for f-strings!
+-  **CLI option abbreviation has been disabled.**
+   This could be a breaking change for existing scripts.
+   Hopefully no one was relying on this already, but in order to prevent long-term CLI consistency issues as new CLI arguments are added, this feature has been disabled for all version of Python.
+   This feature is only available, and was enabled by default, starting in Python 3.5.
+-  **Removed insensitive language.**
+   Specifically the terms 'whitelist' and 'blacklist' have been replaced, where possible.
+   Fortunately, these terms were not used in any CLI arguments, so there should be no user-facing changes as a result of this.
+-  **Removed support for building a standalone executable (zipapp).**
+   This packaging option was added in v0.4.3, and deprecated in v0.6.0 once the Splunk app install option became available.
+   I'm pretty sure this won't be missed.
 
 
--   *CLI option abbreivation has been disabled.*
-    This could be a breaking change for existing scripts.
-    Hopefully no one was relying on this already, but in order to prevent long-term CLI consitency issues as new CLI arguments are added, this feature has been disabled for all version of Python.
-    This feature is only available, and was enabled by default, starting in Python 3.5.
+**API Changes**
+
+-  NEW API :py:mod:`ksconf.builder`
+   The documentation for this module needs work, and the whole API should be considered quite experimental.
+   The easiest way to get started is to look at the :doc:`Build Example <build_example>`.
+
+-  NEW Context manager :py:class:`~ksconf.conf.parser.update_conf`.
+   This enables super easy conf editing in Python with just a few lines of code.
+   See docs API docs for a usage example.
+
+**Developer changes:**
+
+-  Formatting via autopep8 and isort (enforced by pre-commit)
+-  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
 
 
-v0.8-beta2 (2020-04-24)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ksconf v0.8.0 (2021-03-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Removed support for building a standalone executable (zipapp).
-   This packaging option was added in v0.4.3, and deprecated in v0.6.0, once the Splunk app install option became available.
-   Yeah, I didn't use it much either!
+In addition to the 0.8 summary above, 0.8.0 specifically includes the following changes:
 
+-  Add automatic layer support.
+   Currently the two supported layer schemes are (1) explicit layers (really this will ``disable`` automatic layer detection), and (2) the ``dir.d`` format which uses the ``default.d/##-layer-name`` style directory support, which we previously promoted in the docs, but never really *fully* supported in a native way.
+   This new ``dir.d`` directory layout support also allows for multiple ``*.d`` folders in a single tree (so not just ``default.d``), and if your apps have different layer-points in different apps, it's all handled transparently.
+-  Layer selection support was added to the ``combine`` command.
+   This allows you to ``--include`` and ``--exclude`` layers as you see fit.
+   See the docs for more details and examples of this new functionality.
+   This works for both the new ``dir.d`` directories and the explicit layers, though moving to the ``dir.d`` format is highly encouraged.
+-  New cheatsheet example:  Using ``ksconf package`` and ``splunk install app`` together.
+-  Updated the combine behavior to optimize for the situation where there is only a single conf input file provided.
+   This behavior leaves any ``.conf`` or ``.meta`` file untouched so there's no sorting/normalizing or banner.
+   See `#64 <https://github.com/Kintyre/ksconf/issues/64>`__.
+-  Eliminated an "unknown command" error when one of the ksconf python modules has a SyntaxError.
+   The new behavior isn't perfect (you may still see "unrecognized arguments"), but overall it's still a step in the right direction.
 
-v0.8-beta1 (2020-04-24)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--   Add automatic layer support.  Currently the two supported layer schemes are (1) explicit layers (really this will ``disable`` automatic layer detection), and (2) the ``dir.d`` format which uses the ``default.d/##-layer-name`` style directory support, which we previously promoted in the docs, but never really *fully* supported in a native way.
-    This new ``dir.d`` directory layout support also allows for multiple ``*.d`` folders in a single tree (so not just ``default.d``), and if your apps have different layer-points in different apps, it's all handled transparently.  Currently support is limited to just the :ref:`ksconf_cmd_combine` command but support for ``unarchive`` hasn't been completed yet.  (This should be done before the 0.8.0 release.)
--   Layer selection support was added to the ``combine`` command.  This allows you to ``--include`` and ``--exclude`` layers as you see fit.
-    See the docs for more details and examples of this new functionality.
-    This works for both the new ``dir.d`` directories and the explicit layers, though moving to the ``dir.d`` format is highly encouraged.
 
 
 Ksconf 0.7.x
@@ -65,10 +118,10 @@ Release v0.7.8 (2020-06-19)
 -   Added a new summary output mode (``ksconf promote --summary``) that will provide a quick summary of what content could be promoted.
     This can be used along side the new ``--stanza`` filtering options to show the names of stanzas that can be promoted.
 -   Replaced insensitive terminology with race-neutral terms.  Specifically the terms 'blacklist' and 'whitelist' have been replaced.
-    NOTE:  This does *not* change any CLI attributes, but in a few cases the standard output terminology is slighly different.
+    NOTE:  This does *not* change any CLI attributes, but in a few cases the standard output terminology is slightly different.
     Also terminology in ``.conf`` files couldn't be updated as that's controlled by Splunk.
 -   Fixed bug in the ``unarchive`` command where a ``locale`` folder was blocked as a ``local`` folder and where a nested ``default`` folder (nested under a Python package, for example) could get renamed if ``--default-dir`` was used, now only the top-most ``default`` folder is updated.
-    Also fixed an unlikley bug triggered when ``default/app.conf`` is missing.
+    Also fixed an unlikely bug triggered when ``default/app.conf`` is missing.
 -   Fixed bug with ``minimize`` when the required ``--target`` argument is not given.  This now results in a reminder to the user rather than an unhandled exception.
 -   Splunk app packaging fix.  Write access to the app was previously not granted due to a spelling mistake in the metadata file.
 
@@ -358,7 +411,7 @@ Module layout
 
 -  ``ksconf.conf.*`` - Configuration file parsing, writing, comparing, and so on
 -  ``ksconf.util.*`` - Various helper functions
--  ``ksconf.archive`` - Support for uncompressing Splunk apps (tgz/zip files)
+-  ``ksconf.archive`` - Support for decompressing Splunk apps (tgz/zip files)
 -  ``ksconf.vc.git`` - Version control support. Git is the only VC tool supported for now. (Possibly ever)
 -  ``ksconf.commands.<CMD>`` - Modules for specific CLI functions. I may make this extendable, eventually.
 

@@ -13,7 +13,26 @@ API Reference
     Anything well-covered by the unit tests should be be fairly safe to build on top of, but again, :ref:`ping us <contact_us>`.
 
 
+..  commments
+
+    API Highlights
+    --------------
+
+    These things should be stable:
+
+    * ksconf.parser.parse_conf
+    * ksconf.parser.write_conf
+    * ksconf.parser.update_conf
+
+    (This is an incomplete list...  I need to figure out a better way to handle this, preferably with Sphinx.  If you know how, drop me a line!)
+    There's only so many hours in a day!
+
+
+KSCONF API
+----------
+
 ..  toctree::
     :maxdepth: 4
 
-    api/modules.rst
+    api/modules
+    build_example

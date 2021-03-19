@@ -32,6 +32,8 @@ allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
 # XXX:  Add a git status --ignored --porcelain APPNAME check to list out files/dirs that are excluded...
 
+# XXX:  Update code base to use ksconf.layer, as was done for the 'ksconf combine' command.
+
 
 DEFAULT_DIR = "default"
 

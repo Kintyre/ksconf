@@ -346,9 +346,10 @@ def show_text_diff(stream, a, b):
 
 def reduce_stanza(stanza, keep_attrs):
     """ Pre-process a stanzas so that only a common set of keys will be compared.
+
     :param stanza: Stanzas containing attributes and values
     :type stanza: dict
-    :param keep_attrs: Listing of
+    :param keep_attrs: Listing of attributes to preserve
     :type keep_attrs: (list, set, tuple, dict)
     :return: a reduced copy of ``stanza``.
     """

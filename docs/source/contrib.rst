@@ -102,7 +102,7 @@ File path                           Description / purpose
 ``docs/source/cmd_CMD.rst``         Command line documentation.  Make sure to include the `argparse` module
 ``ksconf/setup_entrypoints.py``     Addd a new entrypoint line here, or the new command won't be registered
 ``.pre-commit-hooks.yaml``          Only needed if the new command is a command is pre-commit hook
-``setup.py``                        Update if there are any new external dependancies
+``setup.py``                        Update if there are any new external dependencies
 ``requirements.txt``                Same as above
 ``make_splunk_app``                 If there's new dependencies that need to go into the Splunk app
 ================================    ==========================================================================
