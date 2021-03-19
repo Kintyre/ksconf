@@ -61,7 +61,7 @@ the autodoc extension by running the following command. Note that this may not r
 
 ..  code-block:: sh
 
-    sphinx-apidoc -o docs/source/ ksconf --force
+    sphinx-apidoc --force -o "docs/source/api" ksconf 'ksconf/ext'
 
 
 
