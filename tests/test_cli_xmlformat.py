@@ -95,8 +95,9 @@ class CliXmlFormatTest(unittest.TestCase):
         self.twd = TestWorkDir()
 
     def cdata_regex(self, content=".*?", escape_content=False):
-        prefix = re.escape("<![CDATA[")
-        suffix = re.escape("]]>")
+        # XXX PY36+: Switch to f-string, drop F841
+        prefix = re.escape("<![CDATA[")  # noqa: F841
+        suffix = re.escape("]]>")  # noqa: F841
         if escape_content:
             content = re.escape(content)
         return r"(?ms){prefix}.*?{content}.*?{suffix}".format(**vars())
