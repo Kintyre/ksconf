@@ -8,7 +8,7 @@ Ksconf 0.7.x
 
 New functionality, massive documentation improvements, metadata support, and Splunk app install fixes.
 
-Release v0.7.10 (DRAFT)
+Release v0.7.10 (2021-03-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Fixed bug where empty stanzas in the local file could result in deletion in default with ``ksconf promote``.
