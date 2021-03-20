@@ -9,6 +9,8 @@
 ksconf/_version.py
 zdist/
 build.cache
+.release_name
+.release_path
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -27,8 +29,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/

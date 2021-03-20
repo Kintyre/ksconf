@@ -2,14 +2,36 @@
 
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
-GIT_ROOT = Path(__file__).absolute().parent.parent
-sys.path.insert(0, str(GIT_ROOT))  # noqa
+APP_DIR = Path(__file__).absolute().parent
+GIT_ROOT = APP_DIR.parent
+
+# Run script from directory where this file lives
+os.chdir(APP_DIR)
+# sys.path.insert(0, str(GIT_ROOT))  # noqa
+
+# These safety checks are most likely to go wrong in my local dev, but just in case...
+try:
+    import wheel
+except ImportError:
+    print("Missing required 'wheel' package.  Please run:\n\n\t"
+          "python -m pip install --upgrade pip setuptools wheel")
+    sys.exit(1)
+
+try:
+    import ksconf.builder
+except ImportError:
+    print("You must have ksconf installed to run this script\n"
+          "Run this first:\n\n\t"
+          "python -m pip install .")
+    sys.exit(2)
 
 from ksconf.builder.steps import clean_build, copy_files, pip_install  # noqa
 from ksconf.builder import QUIET, VERBOSE, BuildManager, BuildStep, default_cli  # noqa
+
 
 manager = BuildManager()
 
@@ -25,14 +47,27 @@ def make_wheel(step):
     wheel = next(step.dist_path.glob("*.whl"))
     log("Wheel:  {}".format(wheel), VERBOSE)
     return wheel
-    # os.rename(wheel, step.dist_path / "kintyre_splunk_conf.whl")
+
+
+def make_docs(step):
+    log = step.get_logger()
+    log("Making html docs via Sphinx")
+    docs_dir = GIT_ROOT / "docs"
+    static_docs = "appserver/static/docs"
+    docs_build = step.build_path / static_docs
+    # Use the classic theme (~ 1Mb output vs 11+ mb, due to web fonts)
+    os.environ["KSCONF_DOCS_THEME"] = "classic"
+    step.run("make", "html", cwd=docs_dir)
+    log("Copying docs to {}".format(static_docs))
+    shutil.copytree(str(docs_dir / "build/html"),
+                    str(docs_build))
 
 
 def filter_requirements(step, src, re_block, extra):
     """ Copy a filtered version of requirements.txt """
     # type: (Buildstep)
     log = step.get_logger()
-    dest = step.source_path / src.name
+    dest = step.build_path / src.name
     log("Filtering requirements.txt:  {} --> {}".format(src, dest, re_block), VERBOSE)
     log("Filtering requirements.txt: filter={}".format(re_block))
     with open(src) as f_src, open(dest, "w") as f_dest:
@@ -43,18 +78,21 @@ def filter_requirements(step, src, re_block, extra):
                 continue
             if not line or line.startswith("#"):
                 continue
+            #  Remove any version specific specifiers
+            line = line.split(";", 1)[0]
             log("Keep entry: {}".format(line), VERBOSE * 2)
             f_dest.write(line + "\n")
+        log("Adding extra package: {}".format(extra), VERBOSE)
         f_dest.write("{}\n".format(extra))
 
 
-@manager.cache(["requirements.txt"], ["bin/lib/"], timeout=7200)
+# XXX: this breaks when cache is enabled.  Figured this out, some path handling is busted
+# @manager.cache(["requirements.txt"], ["bin/lib/"], timeout=7200)
 def python_packages(step):
     # Reuse shared function from ksconf.build.steps
     pip_install(step, "requirements.txt", "bin/lib",
                 handle_dist_info="rename",
-                dependencies=False,             # managing dependencies manually
-                python_path="python2.7")
+                dependencies=False)  # managing dependencies manually
 
 
 def package_spl(step):
@@ -62,9 +100,11 @@ def package_spl(step):
     release_path = top_dir / ".release_path"
     release_name = top_dir / ".release_name"
     step.run(sys.executable, "-m", "ksconf", "package",
-             "--file", step.dist_path / SPL_NAME,   # Path to created tarball
+             "--file", step.dist_path / SPL_NAME,
              "--set-version", "{{git_tag}}",
              "--set-build", os.environ.get("TRAVIS_BUILD_NUMBER", "0"),
+             "--blocklist", ".buildinfo",  # From build docs
+             "--blocklist", "requirements.txt",
              "--block-local",
              "--layer-method=disable",
              "--release-file", str(release_path),
@@ -77,13 +117,26 @@ def package_spl(step):
 
 def build(step, args):
     """ Build process """
+
+    # Cleanup build folder
     clean_build(step)
+
+    # build ksconf as a wheel
     ksconf_wheel = make_wheel(step)
+
+    # Copy splunk app template bits into build folder
     copy_files(step, ["**/*"])
-    filter_requirements(step, GIT_ROOT / "requirements.txt", r"^(lxml|mock)", ksconf_wheel)
+
+    # Re-write normal requirements file: Remove some, install all PY2 backports
+    filter_requirements(step, GIT_ROOT / "requirements.txt",
+                        r"^(lxml|mock)",    # Skip these packages
+                        ksconf_wheel)       # Install ksconf (from wheel)
 
     # Install Python package dependencies
     python_packages(step)
+
+    # Use Sphinx to build a copy of all the HTML docs (for app inclusion)
+    make_docs(step)
 
     # Make tarball
     package_spl(step)
@@ -91,7 +144,9 @@ def build(step, args):
 
 if __name__ == '__main__':
     # Tell build manager where stuff lives
-    manager.set_folders(SOURCE_DIR, "build", GIT_ROOT / "zdist")
+    manager.set_folders(source_path=SOURCE_DIR,
+                        build_path="build",
+                        dist_path=GIT_ROOT / "zdist")
 
     # Launch build CLI
     default_cli(manager, build)

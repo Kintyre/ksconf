@@ -34,7 +34,7 @@ def clean_build(step):
 
 def copy_files(step, patterns):
     """ Copy source files into the build folder that match given glob patterns """
-    # args: (BuildStep)
+    # args: (BuildStep, list(str))
     log = step.get_logger()
     log("Copying files into build folder")
     log("Copy src={} to build={}".format(step.source_path, step.build_path), VERBOSE * 2)
@@ -78,6 +78,7 @@ def _get_python_info_rename(path):
     a mess behind after app upgrades.  Or, sometime packages need access to entrypoints stored
     within these folders.   But whenever possible, just delete 'em.
     """
+    # args: (str) -> str
     if path.name.endswith(".egg-info"):
         f = "PKG-INFO"
     else:
@@ -102,8 +103,7 @@ def pip_install(step, requirements_file="requirements.txt", dest="lib",
                 python_path=None, isolated=True, dependencies=True,
                 handle_dist_info="remove",  # or 'rename'
                 remove_console_scripts=True):
-    # TODO:  Add support for removing or stripping versions from {dist,egg}-info folders
-
+    # args: (BuildStep, str, str, str, bool, bool, str, bool) -> None
     dist_info_options = ("remove", "rename", "keep")
     if handle_dist_info not in dist_info_options:
         raise ValueError("Expecting 'handle_dist_info' to be one of {}".format(dist_info_options))

@@ -114,7 +114,8 @@ class BuildManager(object):
     def cache(self, inputs, outputs, timeout=None, name=None,
               cache_invalidation=None):
         # type: (List[str], List[str], int, str, Any[dict,list,str]) -> None
-        """ function decorator
+        """ function decorator for caching build steps
+        Wrapped function must accept BuildStep instance as first parameters
 
         XXX:  Clearly document what things are good cache candidates and which are not.
 
@@ -146,7 +147,7 @@ class BuildManager(object):
 
             @wraps(f)
             def wrapper(build_step):
-                # args: BuildStep -> None
+                # args: (BuildStep) -> None
                 log = build_step.get_logger(name)
                 use_cache = True
                 cache = self.get_cache_info(name)
