@@ -1,0 +1,4 @@
+# Extra stuff that VS code sometimes complains about not having
+isort
+rstcheck
+-r requirements-dev.txt

@@ -30,14 +30,14 @@ Ksconf 0.8
    As always, feedback welcome!
 -  **Native support for layers!**
    It's official, layers are now a proper ksconf feature, not just an abstract concept that you could throw together yourself given enough time and effort.
-   This does mean that ksconf has to be more opinionated, but the design allows switching between various layer methods,
+   This does mean that ksconf has to be more opinionated, but the design supports switching layer methods,
    which can be extended over time to support new different strategies as they emerge and are embraced by the community.
    Supports layers filtering as a native feature.  This has always been technically possible, but awkward to implement yourself.
    Layer support is currently available in :ref:`ksconf_cmd_combine` and :ref:`ksconf_cmd_package` commands.
 -  **Moving to Python 3 soon.**
    In preparation for the move to Python 3, I've added additional backport libraries to be installed when running Python 2.
-   Support for Python 2 will be dropped in a future release, and anyone still on Splunk 7 who can't get a Python 3 access on the side will have to use an old version of ksconf.
-   Also note that when jumping to Python 3, we will likely be requiring Python 3.6 or newer right out of the gate.  (This means dropping Python 2.3, 3.4 and 3.5 all at the same time.)
+   Support for Python 2 will be dropped in a future release, and anyone still on Splunk 7 who can't get a Python 3 environment will have to use an older version of ksconf.
+   Also note that when jumping to Python 3, we will likely be requiring Python 3.6 or newer right out of the gate.  (This means dropping Python 2.7, 3.4 and 3.5 all at the same time.)
    Whoohoo for f-strings!
 -  **CLI option abbreviation has been disabled.**
    This could be a breaking change for existing scripts.
@@ -65,6 +65,13 @@ Ksconf 0.8
 
 -  Formatting via autopep8 and isort (enforced by pre-commit)
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
+
+
+Ksconf v0.8.1 (2021-03-20)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Fixed some build issues with the Splunk app.  (The splunk app is now built with ``ksconf package`` and the ``ksconf.builder``)
+-  Minor doc fix up; you know, the stuff typically found minutes after any new release :-)
 
 
 Ksconf v0.8.0 (2021-03-19)

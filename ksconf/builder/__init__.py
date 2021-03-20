@@ -15,6 +15,7 @@ except ImportError:
 from ksconf.ext.six import text_type
 
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
+from ksconf.util import handle_py3_kw_only_args
 
 if sys.version_info < (3, 6):
     from ksconf.util.file import pathlib_compat
@@ -84,12 +85,19 @@ class BuildStep(object):
             self._output.write(message)
             self._output.write("\n")
 
-    def run(self, *args, cwd=None):
+    def run(self, executable, *args, **kw_only):
         """ Execute an OS-level command regarding the build process.
         The process will run withing the working directory of the build folder.
+
+        :param str executable: Executable to launch for a build step.
+        :param str *args: Additional arguments for the new process.
+        :param str cwd:  Optional kw arg to change the working directory.  This
+                         defaults to the build folder.
         """
+        cwd = handle_py3_kw_only_args(kw_only, ("cwd", None))
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
-        executable = args[0]
+        args = args[:]
+        args.insert(0, executable)
         self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args)), VERBOSE)
         process = Popen(args, cwd=cwd or self.build_path)
         process.wait()

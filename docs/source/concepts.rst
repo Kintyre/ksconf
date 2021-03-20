@@ -42,7 +42,7 @@ Practically, this means it's no longer necessary to comb through commit logs ide
 While this doesn't completely remove the need for a person to review app upgrades, it does lower the
 overhead enough that updates can be pulled in more frequently, thus minimizing divergence.
 
-.. _minimizing_files:
+..  _minimizing_files:
 
 Minimizing files
 ----------------

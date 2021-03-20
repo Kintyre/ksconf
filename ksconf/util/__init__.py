@@ -63,3 +63,34 @@ def debug_traceback():  # pragma: no cover
             sys.stderr.write(exc_str)
         else:
             traceback.print_exc(level)
+
+
+def handle_py3_kw_only_args(kw, *args):
+    """ Python 2.7 workaround for Python 3 style kw arg after '*' arg.
+
+    Example Python 3 syntax:
+
+    ..  code-block:: py
+
+        def f(arg, *args, a=True, b=False): ...
+
+    Example Python 2 syntax:
+
+    ..  code-block:: py
+
+        def f(arg, *args, **kw_only):
+            a, b = handle_py3_kw_only_args(kw_only, ("a", True), ("b", False))
+    """
+    out = []
+    for arg_name, arg_default in args:
+        if arg_name in kw:
+            out.append(kw.pop(arg_name))
+        else:
+            out.append(arg_default)
+    if args:
+        import inspect
+        caller = inspect.currentframe().f_back.f_code.co_name
+        # Should all unexpected args be reported?  feels like this good enough
+        raise TypeError("{} got an unexpected keyword argument '{}'"
+                        .format(caller, args.keys()[0]))
+    return out
