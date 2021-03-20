@@ -84,14 +84,14 @@ class BuildStep(object):
             self._output.write(message)
             self._output.write("\n")
 
-    def run(self, *args):
+    def run(self, *args, cwd=None):
         """ Execute an OS-level command regarding the build process.
         The process will run withing the working directory of the build folder.
         """
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
         executable = args[0]
         self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args)), VERBOSE)
-        process = Popen(args, cwd=self.build_path)
+        process = Popen(args, cwd=cwd or self.build_path)
         process.wait()
         if process.returncode != 0:
             raise BuildExternalException("Exit code of {} while executing {}".format(
@@ -123,7 +123,8 @@ def default_cli(build_manager, build_funct, argparse_parents=()):
     args = parser.parse_args()
 
     verbosity = args.verbose - args.quiet
-    build_manager.set_folders(".", args.build)
+    if not build_manager.is_folders_set():
+        build_manager.set_folders(".", args.build)
     if args.no_cache:
         build_manager.disable_cache()
     if args.taint_cache:

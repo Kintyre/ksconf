@@ -73,6 +73,7 @@ class BuildManager(object):
         self.cache_path = None
         self._cache_enabled = True
         self._taint = False
+        self._folder_set = False
 
     def taint_cache(self):
         self._taint = True
@@ -88,6 +89,7 @@ class BuildManager(object):
         return step
 
     def set_folders(self, source_path, build_path, dist_path=None):
+        self._folder_set = True
         self.source_path = Path(source_path).absolute()
         self.build_path = Path(build_path).absolute()
         if dist_path:
@@ -96,6 +98,9 @@ class BuildManager(object):
             # Assume 'dist' lives along side 'build'
             self.dist_path = self.build_path.with_name("dist")
         self.cache_path = self.build_path.with_suffix(".cache")
+
+    def is_folders_set(self):
+        return self._folder_set
 
     def get_cache_info(self, name):
         path = self.cache_path / name

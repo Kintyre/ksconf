@@ -45,6 +45,7 @@ Design principles
 Common uses for Ksconf
 ~~~~~~~~~~~~~~~~~~~~~~
 
+- Build and package Splunk apps
 - Promote changes from :file:`local` to :file:`default`
 - Maintain multiple independent layers of configurations
 - Reduce duplicate settings in a local file

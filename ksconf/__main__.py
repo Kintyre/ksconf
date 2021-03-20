@@ -101,7 +101,7 @@ def build_cli_parser(do_formatter=False):
     parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 
-    # XXX: Lazyload version information. Notable a 'git' subshell is launched which is expensive.
+    # XXX: Lazyload version information; this launches 'git' which is expensive.
     version_info = []
 
     # XXX:  Check terminal size before picking a signature

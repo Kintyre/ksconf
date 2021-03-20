@@ -37,6 +37,7 @@ def copy_files(step, patterns):
     # args: (BuildStep)
     log = step.get_logger()
     log("Copying files into build folder")
+    log("Copy src={} to build={}".format(step.source_path, step.build_path), VERBOSE * 2)
     dirs = files = 0
     for pattern in patterns:
         # expect = "many"
@@ -121,10 +122,11 @@ def pip_install(step, requirements_file="requirements.txt", dest="lib",
 
     step.run(python_path, "-m", "pip",          # '-m pip' is reliable; avoids pip/pip2/pip3
              "install",                         # Install mode (no upgrade needed; fresh install)
+             "-r", requirements_file,           # File to read packages from
              "--target", target,                # Targeted (directory) mode
              "--disable-pip-version-check",     # Warnings aren't helpful here
              "--no-compile",                    # Avoid creating *.pyc files
-             "-r", requirements_file)           # File to read packages from
+             *extra_args)
 
     log("pip installation completed successfully", QUIET)
 

@@ -46,11 +46,14 @@ echo "Build wheel"
 wheel_dir=$(mktemp -d)
 python setup.py bdist_wheel -d "$wheel_dir"
 
+
 echo
 echo "Installing python package into splunk app"
 
 if [[ -d $PIP_TARGET ]]; then echo "Clean old $PIP_TARGET"; rm -rf "$PIP_TARGET"; fi
 mkdir -p "$PIP_TARGET"
+
+$PY2 -m pip --version
 
 echo "Installing packages...."
 # Note:  We disable dependencies checking and list them explicitly.  Specifically 'lxml' gets us
@@ -61,8 +64,7 @@ echo "Installing packages...."
 #
 # There is no way to simply block a single package:  https://github.com/pypa/pip/issues/3090
 $PY2 -m pip install --isolated --disable-pip-version-check --no-deps --target="$PIP_TARGET" \
-    "$wheel_dir"/*.whl entrypoints splunk-sdk
-
+    "$wheel_dir"/*.whl entrypoints splunk-sdk pathlib backports.tempfile backports.shutil_which
 
 # Remove all the console scripts (extra 'bin' folder) which are unusable on the target system
 rm -rf "${PIP_TARGET:?}/bin"

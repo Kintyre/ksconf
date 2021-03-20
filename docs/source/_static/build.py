@@ -2,7 +2,7 @@
 #
 # KSCONF Official example app building script
 #
-# NOTE:  Keep in mind that this is all very expimental and subject to change.
+# NOTE:  Keep in mind that this is all very experimental and subject to change.
 import sys
 from pathlib import Path
 

@@ -183,16 +183,16 @@ class AppVarMagic(object):
         app_conf = get_merged_conf(self.build_dir, "app.conf")
         try:
             return app_conf["launcher"]["version"]
-        except KeyError:
-            raise AppVarMagicException()
+        except KeyError as e:
+            raise AppVarMagicException(e)
 
     def get_build(self):
         """ Splunk app build fetched from app.conf """
         app_conf = get_merged_conf(self.build_dir, "app.conf")
         try:
             return app_conf["install"]["build"]
-        except KeyError:
-            raise AppVarMagicException()
+        except KeyError as e:
+            raise AppVarMagicException(e)
 
     def get_git_tag(self):
         """ Git version tag using the 'git describe --tags' command """

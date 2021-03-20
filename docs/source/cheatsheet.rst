@@ -134,9 +134,23 @@ By simply placing the latest release in a static location, this allows commonly 
     .. code-block:: sh
 
         cd my-apps
-        ksconf package kintyre_app_speedtest --release-file .release && $SPLUNK_HOME/bin/splunk install app $(<.release) -update 1
+        ksconf package --release-file .release kintyre_app_speedtest &&
+            "$SPLUNK_HOME/bin/splunk" install app "$(<.release)" -update 1
 
-To save time, I often put this command (along with a first-time install) command in a README or DEVELOPMENT file at the top-level of the app repo.
+To save time, I often put the one-line version of this command (along with a first-time install command) in a README or DEVELOPMENT file at the top-level of the app repo.
+
+A build process for the same page, where the version is defined by the latest git tag, would look something like this:
+
+    .. code-block:: sh
+
+        ksconf package -f "dist/kintyre_app_speedtest-{{version}}.tar.gz" \
+            --set-version="{{git_tag}}" \
+            --set-build=$TRAVIS_BUILD_NUMBER \
+            --release-file .release \
+            kintyre_app_speedtest
+        echo "Go upload $(<.release) to Splunkbase"
+
+
 
 Advanced usage
 ---------------
