@@ -24,6 +24,19 @@ class KsconfUtilsTest(unittest.TestCase):
         self.assertTrue(match_bwlist("hotdog", bwlist))
         self.assertTrue(match_bwlist("bake", bwlist))
 
+    def test_handle_p3koa(self):
+        from ksconf.util import handle_py3_kw_only_args
+        kw = {"a": 1, "b": 2}
+        a, b, c = handle_py3_kw_only_args(kw, ("a", None), ("b", 3), ("c", 99))
+        self.assertEqual(a, 1)
+        self.assertEqual(b, 2)
+        self.assertEqual(c, 99)
+
+        # Should raise 'unexpected argument' here because 'a' is not defined
+        kw = {a: 1}
+        with self.assertRaises(TypeError):
+            c = handle_py3_kw_only_args(kw, ("c", 99))
+
 
 class KsconfMiscIternalsTest(unittest.TestCase):
 

@@ -90,7 +90,7 @@ class BuildStep(object):
         The process will run withing the working directory of the build folder.
 
         :param str executable: Executable to launch for a build step.
-        :param str *args: Additional arguments for the new process.
+        :param str args: Additional argument(s) for the new process.
         :param str cwd:  Optional kw arg to change the working directory.  This
                          defaults to the build folder.
         """

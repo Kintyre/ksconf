@@ -65,32 +65,42 @@ def debug_traceback():  # pragma: no cover
             traceback.print_exc(level)
 
 
-def handle_py3_kw_only_args(kw, *args):
+def handle_py3_kw_only_args(kw, *default_args):
     """ Python 2.7 workaround for Python 3 style kw arg after '*' arg.
 
     Example Python 3 syntax:
 
     ..  code-block:: py
 
-        def f(arg, *args, a=True, b=False): ...
+        def f(arg, *args, a=True, b=False):
+            ...
 
-    Example Python 2 syntax:
+    Example Python 2 syntax with this helper function:
 
     ..  code-block:: py
 
         def f(arg, *args, **kw_only):
             a, b = handle_py3_kw_only_args(kw_only, ("a", True), ("b", False))
+            ...
+
+    :param dict kw: keyword arguments provided to the calling function. Be aware
+                    that this dict will be empty after this function is done.
+    :param tuple default_args: pairs of keyword argument to the caller function
+                               in argument (arg_name, default_value) order.
+    :raises TypeError: if ``kw`` contains any keys not defined in ``args``
+                       This mirrors Python's native behavior when an unexpected
+                       argument is passed to a function.
     """
     out = []
-    for arg_name, arg_default in args:
-        if arg_name in kw:
+    for arg_name, arg_default in default_args:
+        try:
             out.append(kw.pop(arg_name))
-        else:
+        except KeyError:
             out.append(arg_default)
-    if args:
+    if kw:
         import inspect
         caller = inspect.currentframe().f_back.f_code.co_name
         # Should all unexpected args be reported?  feels like this good enough
         raise TypeError("{} got an unexpected keyword argument '{}'"
-                        .format(caller, args.keys()[0]))
+                        .format(caller, list(kw)[0]))
     return out
