@@ -35,7 +35,7 @@ from ksconf.builder import QUIET, VERBOSE, BuildManager, BuildStep, default_cli 
 
 manager = BuildManager()
 
-SPL_NAME = "ksconf-{{version}}.tgz"
+SPL_NAME = "ksconf-app_for_splunk-{{version}}.tgz"
 SOURCE_DIR = "ksconf"
 
 
@@ -101,6 +101,7 @@ def package_spl(step):
     release_name = top_dir / ".release_name"
     step.run(sys.executable, "-m", "ksconf", "package",
              "--file", step.dist_path / SPL_NAME,
+             "--app-name", "ksconf",
              "--set-version", "{{git_tag}}",
              "--set-build", os.environ.get("TRAVIS_BUILD_NUMBER", "0"),
              "--blocklist", ".buildinfo",  # From build docs

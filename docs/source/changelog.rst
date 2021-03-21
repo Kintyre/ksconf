@@ -67,11 +67,12 @@ Ksconf 0.8
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
 
 
-Ksconf v0.8.1 (2021-03-20)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ksconf v0.8.1-3 (2021-03-20)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Fixed some build issues with the Splunk app.  (The splunk app is now built with ``ksconf package`` and the ``ksconf.builder``)
 -  Minor doc fix up; you know, the stuff typically found minutes after any new release :-)
+-  Ugh
 
 
 Ksconf v0.8.0 (2021-03-19)
