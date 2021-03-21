@@ -82,7 +82,7 @@ after_success:
   - '[[ $BUILD_SDIST == "true" ]] && coverage run -a -m make_cli_docs'
   - codecov
   - coveralls
-  - '[[ $BUILD_SDIST == "true" ]] && python -m pip install -r requirements-doc.txt && python splunk_app/build.py -vv'
+  - '[[ $BUILD_SDIST == "true" ]] && python -m pip install -r requirements-doc.txt && KSCONF_DEBUG=1 python splunk_app/build.py -vv'
   - '[[ $BUILD_SDIST == "true" ]] && ls -lsh zdist'
 deploy:
   - provider: releases

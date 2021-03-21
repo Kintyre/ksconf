@@ -35,7 +35,7 @@ class KsconfUtilsTest(unittest.TestCase):
         # Should raise 'unexpected argument' here because 'a' is not defined
         kw = {a: 1}
         with self.assertRaises(TypeError):
-            c = handle_py3_kw_only_args(kw, ("c", 99))
+            (c,) = handle_py3_kw_only_args(kw, ("c", 99))
 
 
 class KsconfMiscIternalsTest(unittest.TestCase):

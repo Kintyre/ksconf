@@ -94,12 +94,12 @@ class BuildStep(object):
         :param str cwd:  Optional kw arg to change the working directory.  This
                          defaults to the build folder.
         """
-        cwd = handle_py3_kw_only_args(kw_only, ("cwd", None))
+        (cwd,) = handle_py3_kw_only_args(kw_only, ("cwd", None))
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
-        args = args[:]
-        args.insert(0, executable)
-        self._log("EXEC:  {}".format(" ".join(text_type(s) for s in args)), VERBOSE)
-        process = Popen(args, cwd=cwd or self.build_path)
+        args = (executable,) + args
+        cwd = cwd or str(self.build_path)
+        self._log("EXEC:  {}  cwd={}".format(" ".join(text_type(s) for s in args), cwd), VERBOSE)
+        process = Popen(args, cwd=cwd)
         process.wait()
         if process.returncode != 0:
             raise BuildExternalException("Exit code of {} while executing {}".format(

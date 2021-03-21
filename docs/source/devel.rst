@@ -20,6 +20,9 @@ not to commit it.)
     # Install developer packages
     pip install -r requirements-dev.txt
 
+    # Install the ksconf package in '--editable' mode
+    pip install -e .
+
 Install ksconf
 --------------
 
