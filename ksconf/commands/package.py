@@ -174,19 +174,19 @@ class PackageCmd(KsconfCmd):
 
         app_name = args.app_name or os.path.basename(args.source)
         dest = args.file or "{}.tgz".format(app_name.lower().replace("-", "_"))
-        builder = AppPackager(args.source, app_name, output=self.stderr)
+        packager = AppPackager(args.source, app_name, output=self.stderr)
 
         # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
         #       for faster builds in simple scenarios
-        with builder:
-            builder.combine(args.source, args.layer_filter,
-                            layer_method=args.layer_method,
-                            allow_symlink=args.follow_symlink)
+        with packager:
+            packager.combine(args.source, args.layer_filter,
+                             layer_method=args.layer_method,
+                             allow_symlink=args.follow_symlink)
             # Handle local files
             if args.local == "merge":
-                builder.merge_local()
+                packager.merge_local()
             elif args.local == "block":
-                builder.block_local()
+                packager.block_local()
             elif args.local == "preserve":
                 pass
             else:   # pragma: no cover
@@ -194,18 +194,18 @@ class PackageCmd(KsconfCmd):
 
             if args.blocklist:
                 self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))
-                builder.blocklist(args.blocklist)
+                packager.blocklist(args.blocklist)
 
             if args.set_build or args.set_version:
-                builder.update_app_conf(
-                    version=builder.var_magic.expand(args.set_version),
+                packager.update_app_conf(
+                    version=packager.var_magic.expand(args.set_version),
                     build=args.set_build)
 
-            # os.system("ls -lR {}".format(builder.app_dir))
+            # os.system("ls -lR {}".format(packager.app_dir))
 
-            dest = builder.var_magic.expand(dest)
+            dest = packager.var_magic.expand(dest)
             self.stderr.write("Creating archive:  {}\n".format(dest))
-            builder.make_archive(dest)
+            packager.make_archive(dest)
 
             if args.release_file:
                 # Should this be expanded to be an absolute path?
