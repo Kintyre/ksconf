@@ -63,7 +63,7 @@ class CliPackageCmdTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
 
         tarball = twd.read_file("release_file")
-        self.assertTrue(tarball.endswith("my_app_on_splunkbase-0.0.1.tgz"))
+        self.assertTrue(os.path.basename(tarball), "my_app_on_splunkbase-0.0.1.tgz")
         self.assertTrue(os.path.isfile(tarball))
         tf = tarfile.open(tarball, r":gz")
 
@@ -85,7 +85,7 @@ class CliPackageCmdTest(unittest.TestCase):
 
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
         tarball = twd.read_file(".rf")
-        self.assertTrue(tarball.endswith("my_app_on_splunkbase-1.2.3.spl"))
+        self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase-1.2.3.spl")
         self.assertTrue(os.path.isfile(tarball))
 
         tf = tarfile.open(tarball, r":gz")
@@ -97,6 +97,43 @@ class CliPackageCmdTest(unittest.TestCase):
         self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
         self.assertNotIn("my_app_on_splunkbase/metadata/local.meta", names)
         # self.assertRegex(ko.stdout, r"^diff ", "Missing diff header line")
+
+    def test_package_simple_no_appname(self):
+        """ automatically detect the correct appname of the input folder """
+        twd = TestWorkDir()
+        self.build_basic_app_01(twd, "my_app_on_splunkbase/default")
+        with ksconf_cli:
+            ko = ksconf_cli("package", twd.get_path("my_app_on_splunkbase"),
+                            "--layer-method", "disable",
+                            "--release-file", twd.get_path("release_file"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+
+        tarball = twd.read_file("release_file")
+        self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase.tgz")
+        self.assertTrue(os.path.isfile(tarball))
+        tf = tarfile.open(tarball, r":gz")
+        names = tf.getnames()
+        self.assertIn("my_app_on_splunkbase/default/app.conf", names)
+        self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
+
+    @unittest.expectedFailure
+    def test_package_simple_hidden_appname(self):
+        """ app name is NOT given:  Extract from app/[package]/id """
+        twd = TestWorkDir()
+        self.build_basic_app_01(twd, "default")
+        with ksconf_cli:
+            ko = ksconf_cli("package", twd.get_path("."),
+                            "--layer-method", "disable",
+                            "--release-file", twd.get_path(".release"))
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+        tarball = twd.read_file(".release")
+        print("Tarball name: ", tarball)
+        self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase-0.0.1.tgz")
+        self.assertTrue(os.path.isfile(tarball))
+        tf = tarfile.open(tarball, r":gz")
+        names = tf.getnames()
+        self.assertIn("my_app_on_splunkbase/default/app.conf", names)
+        self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
 
 
 if __name__ == '__main__':  # pragma: no cover
