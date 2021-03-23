@@ -194,8 +194,16 @@ class AppVarMagic(object):
         except KeyError as e:
             raise AppVarMagicException(e)
 
+    def get_app_id(self):
+        """ Splunk app package id from app.conf """
+        app_conf = get_merged_conf(self.build_dir, "app.conf")
+        try:
+            return app_conf["package"]["id"]
+        except KeyError as e:
+            raise AppVarMagicException(e)
+
     def get_git_tag(self):
-        """ Git version tag using the 'git describe --tags' command """
+        """ Git version tag using the ``git describe --tags`` command """
         tag = self.git_single_line("describe", "--tags", "--always", "--dirty")
         return re.sub(r'^(v|release|version)-?', "", tag)
 

@@ -24,9 +24,10 @@ Supported Variables
     ==================  =========   ============================================================
     Variable            Source      Notes
     ==================  =========   ============================================================
+    ``app_id``          app.conf    Get ``id`` from ``[package]`` in ``app.conf``.  This must be the app folder name for any app published to Splunkbase.
     ``build``           app.conf    Get ``build`` from ``[install]`` in ``app.conf``
     ``version``         app.conf    Get ``version`` from ``[launcher]`` in ``app.conf``
-    ``git_tag``         git         Run ``git describe --tags --always --dirty``
+    ``git_tag``         git         Run ``git describe --tags --always --dirty``.  Common prefixes are removed such as ``v`` or ``release-`` from the tag name.
     ``git_latest_rev``  git         Run ``git log -n1 --pretty=format:%h -- .``
     ``git_head``        git         Run ``git rev-parse --short HEAD``
     ==================  =========   ============================================================
