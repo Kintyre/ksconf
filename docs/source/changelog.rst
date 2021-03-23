@@ -70,6 +70,13 @@ Ksconf 0.8
 Ksconf v0.8.4 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  **CLI change**: Replaced short option for ``--allowlist`` to be ``-a``, before it was ``-w``.
+   I assume this was left over early development where the argument was initial called ``--whitelist``, but at this point ``-w`` is just confusing.
+   Normally, I'd keep ``-w`` for a period of time and issue a deprecation warning.
+   However, given that 0.8.0 was released less than a week ago, and that ksconf package is an "alpha" feature,
+   I'm going to make this change without prior warning.
+-  Add some safety checks to the package command to check for app naming issues (where the app folder doesn't match ``[[package] id`` value in ``app.conf``), and hidden files and directories.
+-  Add new ``{{app_id}}`` variable that's usable with the ksconf package command.
 -  Added a new optional argument to :py:func:`~ksconf.builder.steps.copy_files` called ``target`` for additional control over the destination path of artifacts copied into the build folder.
 -  Minor tweak to unhandled exceptions.  The name of the exception class is now show, and may be helpful in some situations.
 -  When using ``make_missing`` in :py:class:`~ksconf.conf.parser.update_conf`, missing directories will now be created too.

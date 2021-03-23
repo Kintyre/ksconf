@@ -67,7 +67,8 @@ class PackageCmd(KsconfCmd):
         parser.add_argument("--app-name",
                             help="Specify the top-level app folder name.  "
                                  "If this is not given, the app folder name is automatically "
-                                 "extracted from the basename of SOURCE.")
+                                 "extracted from the basename of SOURCE.  "
+                                 "Placeholder variables, such as ``{{app_id}}`` can be used here.")
         parser.add_argument("--blocklist", "-b",
                             action="append",
                             default=self.default_blocklist,
@@ -78,7 +79,7 @@ class PackageCmd(KsconfCmd):
                             .format(", ".join("``{}``".format(i) for i in self.default_blocklist)))
 
         # XXX: This should be smarter; stacked like we support for layers -- where order matters.
-        parser.add_argument("--allowlist", "-w",
+        parser.add_argument("--allowlist", "-a",
                             action="append", default=[],
                             help="Remove a pattern that was previously added to the blocklist.")
 
@@ -169,15 +170,27 @@ class PackageCmd(KsconfCmd):
         ''' Create a Splunk app/add-on .spl file from a directory '''
 
         # Just call combine (writing to a temporary directory) and the tar it up.  At some point
-        # we could do it all in memory, but for now this good enough.  And if we want the options of
-        # interjecting a build script, then a build folder is necessary.
+        # we should do it all in memory, but for now this good enough.  For more sophisticated
+        # builds use a temp build directory.  This is what ksconf's BuildManager does.
 
-        app_name = args.app_name or os.path.basename(args.source)
-        dest = args.file or "{}.tgz".format(app_name.lower().replace("-", "_"))
+        app_name = args.app_name
+        app_name_source = "set via commandline"
+        if not app_name:
+            app_name = os.path.basename(args.source)
+            app_name_source = "taken from source directory"
+            '''
+            if os.path.basename(args.source) == ".":
+                app_name = os.path.basename(os.getcwd())
+                app_name_source = "extracted from working directory"
+            else:
+                app_name = os.path.basename(args.source)
+                app_name_source = "extracted from source directory"
+        '''
+        self.stdout.write("Packaging {}   (App name {})\n".format(app_name, app_name_source))
         packager = AppPackager(args.source, app_name, output=self.stderr)
 
         # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
-        #       for faster builds in simple scenarios
+        #       for faster packaging in simple scenarios (this may not matter once this is done in memory)
         with packager:
             packager.combine(args.source, args.layer_filter,
                              layer_method=args.layer_method,
@@ -198,18 +211,20 @@ class PackageCmd(KsconfCmd):
 
             if args.set_build or args.set_version:
                 packager.update_app_conf(
-                    version=packager.var_magic.expand(args.set_version),
+                    version=args.set_version,
                     build=args.set_build)
 
+            packager.check()
             # os.system("ls -lR {}".format(packager.app_dir))
 
-            dest = packager.var_magic.expand(dest)
-            self.stderr.write("Creating archive:  {}\n".format(dest))
-            packager.make_archive(dest)
+            dest = args.file or "{}-{{{{version}}}}.tgz".format(packager.app_name.lower().replace("-", "_"))
+            archive_path = packager.make_archive(dest)
+            self.stderr.write("Archive created:  file={} size={:.2f}Kb\n".format(
+                os.path.basename(archive_path), os.stat(archive_path).st_size / 1024.0))
 
             if args.release_file:
                 # Should this be expanded to be an absolute path?
                 with open(args.release_file, "w") as f:
-                    f.write(dest)
+                    f.write(archive_path)
 
         return EXIT_CODE_SUCCESS

@@ -232,14 +232,15 @@ ksconf package
                             here.
       --app-name APP_NAME   Specify the top-level app folder name. If this is not
                             given, the app folder name is automatically extracted
-                            from the basename of SOURCE.
+                            from the basename of SOURCE. Placeholder variables,
+                            such as '{{app_id}}' can be used here.
       --blocklist BLOCKLIST, -b BLOCKLIST
                             Pattern for files/directories to exclude. Can be given
                             multiple times. You can load multiple exclusions from
                             disk by using 'file://path' which can be used with
                             '.gitignore' for example. (Default includes: '.git*',
                             '*.py[co]', '__pycache__', '.DS_Store')
-      --allowlist ALLOWLIST, -w ALLOWLIST
+      --allowlist ALLOWLIST, -a ALLOWLIST
                             Remove a pattern that was previously added to the
                             blocklist.
       --follow-symlink, -l  Follow symbolic links pointing to directories.

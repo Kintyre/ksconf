@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
-from ksconf.conf.parser import parse_conf, update_conf
+from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
 from ksconf.vc.git import git_cmd
 
@@ -30,6 +30,10 @@ def get_merged_conf(app_dir, conf, *layers):
     return merge_conf_dicts(*confs)
 
 
+class PackagingException(Exception):
+    pass
+
+
 class AppPackager(object):
 
     def __init__(self, src_path, app_name, output):
@@ -38,11 +42,31 @@ class AppPackager(object):
         self.build_dir = None
         self.app_dir = None
         self.output = output
-        self.var_magic = None
+        self._var_magic = None
 
     def cleanup(self):
         # Do we need  https://stackoverflow.com/a/21263493/315892  (Windows): -- See tests/cli_helper
         shutil.rmtree(self.build_dir)
+        self.build_dir = None
+
+    def expand_var(self, value):
+        """ Expand a variable, if present
+
+        :param str value:  String that main contain ``{{variable}}`` substitution.
+        :return: Expanded value
+        :rtype: str
+        """
+        return self._var_magic.expand(value)
+
+    def expand_new_only(self, value):
+        """ Expand a variable but return None if no substitution occurred
+
+        :param str value:  String that main contain ``{{variable}}`` substitution.
+        :return:  Expanded value if variables were expanded, else False
+        :rtype: str
+        """
+        new_value = self._var_magic.expand(value)
+        return new_value if new_value != value else False
 
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
         # VERY HACKY FOR NOW:
@@ -60,7 +84,7 @@ class AppPackager(object):
         # Passing in _unittest because that swaps sys.exit() for return
         rc = cli(args, _unittest=True)
         if rc != 0:
-            raise ValueError("Issue calling 'combine' internally during app build....")
+            raise PackagingException("Issue calling 'combine' internally during app build....")
 
     def blocklist(self, patterns):
         # XXX: Rewrite explicitly blocklist '.git' dir, because '*.git' wasn't working here. :=(
@@ -119,29 +143,88 @@ class AppPackager(object):
         self.output.write("Updating app.conf file:  {}\n".format(appconf_file))
         with update_conf(appconf_file, make_missing=True) as conf:
             for (stanza, attr, value) in app_settings:
+                new_value = self.expand_new_only(value)
                 if value:
                     if stanza not in conf:
                         conf[stanza] = {}
-                    self.output.write("\tUpdate app.conf:  [{}] {} = {}\n"
-                                      .format(stanza, attr, value))
+                    if new_value:
+                        self.output.write("\tUpdate app.conf:  [{}] {} = {}  (From {})\n"
+                                          .format(stanza, attr, new_value, value))
+                        value = new_value
+                    else:
+                        self.output.write("\tUpdate app.conf:  [{}] {} = {}\n"
+                                          .format(stanza, attr, value))
                     conf[stanza][attr] = value
+
+    def check(self):
+        """ Run safety checks prior to building archive:
+
+        1.  Set app name based on app.conf [package] id, if set.  Otherwise confirm that the package
+            id and top-level folder names align.
+        2.  Check for files or directories starting with ``.``, makes AppInspect very grumpy!
+        """
+        app_conf = get_merged_conf(self.app_dir, "app.conf")
+        try:
+            package_id = app_conf["package"]["id"]
+            target_splunkbase = conf_attr_boolean(app_conf["package"]
+                                                  .get("check_for_updates", "false"))
+        except KeyError:
+            self.output.write("Skipped folder and package id check due to missing app.conf entry\n")
+            package_id = None
+
+        if package_id:
+            if not self.app_name or self.app_name == ".":
+                self.output.write("Set app name from app.conf:  {}\n".format(self.app_name))
+                self.app_name = package_id
+            elif package_id != self.app_name:
+                self.output.write("Top-level folder does not match the package id:  folder: {} "
+                                  "package id: {}\n".format(self.app_name, package_id))
+                if target_splunkbase:
+                    raise PackagingException("Aborting build due to app name and package id "
+                                             "discrepancy for public app")
+
+        for root, dirs, files in os.walk(self.app_dir):
+            for items, t in [(dirs, "directory"), (files, "file")]:
+                for name in items:
+                    if name[0] == ".":
+                        self.output.write("Found hidden {}:  {}/{}\n".format(t, root, name))
 
     def make_archive(self, filename):
         """ Create a compressed tarball of the build directory.
         """
-        # type: (str) -> None
+        # type: (str) -> str
         # if os.path.isfile(filename):
         #    raise ValueError("Destination file already exists:  {}".format(filename))
 
         # Python 3.2+, use context manager
+        app_name = self.expand_var(self.app_name)
+        if app_name != self.app_name:
+            self.output.write("Expanding template {} to final app name: {}\n"
+                              .format(self.app_name, app_name))
+
+        new_filename = self.expand_new_only(filename)
+        if new_filename:
+            self.output.write("Creating archive:  {}  (Expanded from '{}'\n"
+                              .format(new_filename, os.path.basename(filename)))
+            filename = new_filename
+        else:
+            self.output.write("Creating archive:  {}\n".format(filename))
+
         spl = tarfile.open(filename, mode="w:gz")
-        spl.add(self.app_dir, arcname=self.app_name)
-        spl.close()
+        try:
+            spl.add(self.app_dir, arcname=self.app_name)
+        finally:
+            spl.close()
+        return filename
 
     def __enter__(self):
         self.build_dir = tempfile.mkdtemp("-ksconf-package-build")
-        self.app_dir = os.path.join(self.build_dir, self.app_name)
-        self.var_magic = AppVarMagic(self.src_path, self.app_dir)
+        if self.app_name == "." or "{{" in self.app_name:
+            # Use a placehold app name, specifically as "." causes build_dir == app_dir
+            self.app_dir = os.path.join(self.build_dir, "app")
+        else:
+            self.app_dir = os.path.join(self.build_dir, self.app_name)
+        self._var_magic = AppVarMagic(self.src_path, self.app_dir)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
