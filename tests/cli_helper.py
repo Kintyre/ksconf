@@ -178,8 +178,12 @@ class FakeStdin(object):
 
 class TestWorkDir(object):
     """ Create a temporary working directory to create app-like structures and other supporting
-    file system artifacts necessary for many CLI tests.  Cleanup is done automatically. """
+    file system artifacts necessary for many CLI tests.  Cleanup is done automatically.
 
+
+    Can also be used as context manager (``with``) to temporarily change the directory and restore
+    the working directory upon completion.
+    """
     encoding = "utf-8"
 
     def __init__(self, git_repo=False):
@@ -189,9 +193,18 @@ class TestWorkDir(object):
         else:
             self._path = tempfile.mkdtemp("-ksconftest")
         self.git_repo = git_repo
+        self._working_dir = None
 
     def __del__(self):
         self.clean()
+
+    def __enter__(self):
+        self._working_dir = os.getcwd()
+        os.chdir(self._path)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self._working_dir)
+        self._working_dir = None
 
     def clean(self, force=False):
         """ Explicitly clean/wipe the working directory. """

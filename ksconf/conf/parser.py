@@ -470,6 +470,10 @@ class update_conf(object):
         if exc_type:
             # No update since an exception was raised
             return
+        if self.make_missing:
+            parent = os.path.dirname(self.path)
+            if not os.path.isdir(parent):
+                os.makedirs(parent)
         smart_write_conf(self.path, self._data, sort=True)
 
     def __getitem__(self, item):

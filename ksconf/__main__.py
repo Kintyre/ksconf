@@ -226,7 +226,7 @@ def cli(argv=None, _unittest=False):
         if _unittest:
             from ksconf.consts import KSCONF_DEBUG
             os.environ[KSCONF_DEBUG] = "1"
-        sys.stderr.write("Unhandled top-level exception.  {0}\n".format(e))
+        sys.stderr.write("Unhandled top-level exception ({}):  {}\n".format(type(e).__name__, e))
         ksconf.util.debug_traceback()
         return_code = EXIT_CODE_INTERNAL_ERROR
 

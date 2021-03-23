@@ -67,13 +67,28 @@ Ksconf 0.8
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
 
 
-Ksconf v0.8.1-3 (2021-03-20)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ksconf v0.8.4 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Added a new optional argument to :py:func:`~ksconf.builder.steps.copy_files` called ``target`` for additional control over the destination path of artifacts copied into the build folder.
+-  Minor tweak to unhandled exceptions.  The name of the exception class is now show, and may be helpful in some situations.
+-  When using ``make_missing`` in :py:class:`~ksconf.conf.parser.update_conf`, missing directories will now be created too.
+-  Additional fixes to Splunk App ``build.py`` script:  Now explicitly creating a top-level ``ksconf`` folder.
+   It's likely that this was the root cause of several other issues.
+
+
+Ksconf v0.8.3 (2021-03-20)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Fixed bugs created by v0.8.2 (yanked on pypi)
+-  Properly resolved issues with Splunk app building process.
+-  Open issue uncovered where ``ksconf package`` can produce a tarball that's unusable by Splunkbase.
+
+Ksconf v0.8.1 (2021-03-20)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Fixed some build issues with the Splunk app.  (The splunk app is now built with ``ksconf package`` and the ``ksconf.builder``)
 -  Minor doc fix up; you know, the stuff typically found minutes after any new release :-)
--  Ugh
-
 
 Ksconf v0.8.0 (2021-03-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
