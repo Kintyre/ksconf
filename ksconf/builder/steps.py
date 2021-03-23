@@ -32,15 +32,17 @@ def clean_build(step):
         step.dist_path.mkdir()
 
 
-def copy_files(step, patterns):
+def copy_files(step, patterns, target=None):
     """ Copy source files into the build folder that match given glob patterns """
-    # args: (BuildStep, list(str))
+    # args: (BuildStep, list(str), str)
     log = step.get_logger()
-    log("Copying files into build folder")
-    log("Copy src={} to build={}".format(step.source_path, step.build_path), VERBOSE * 2)
+    if target:
+        log("Copying files into build folder under {}".format(target))
+    else:
+        log("Copying files into build folder")
+    log("Copy src={} to build={} target={}".format(step.source_path, step.build_path, target), VERBOSE * 2)
     dirs = files = 0
     for pattern in patterns:
-        # expect = "many"
         if pattern.endswith("/"):
             log("Looking for all files under '{}'".format(pattern), VERBOSE * 3)
             pattern += "**/*"
@@ -48,11 +50,13 @@ def copy_files(step, patterns):
             log("Looking for all files matching '{}'".format(pattern), VERBOSE * 3)
         else:
             log("Looking for files named '{}'".format(pattern), VERBOSE * 3)
-            # expect = 1
         file_per_pattern = 0
         for f in step.source_path.glob(pattern):
             relative = f.relative_to(step.source_path)
-            dest = step.build_path / relative
+            if target:
+                dest = step.build_path / target / relative
+            else:
+                dest = step.build_path / relative
 
             dest_parent = dest.parent
             if not dest_parent.is_dir():

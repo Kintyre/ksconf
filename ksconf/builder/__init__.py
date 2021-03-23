@@ -81,7 +81,7 @@ class BuildStep(object):
              0 = default
             +1 verbose
         """
-        if verbosity <= self.verbosity:
+        if int(verbosity) <= self.verbosity:
             self._output.write(message)
             self._output.write("\n")
 
