@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 
 APP_DIR = Path(__file__).absolute().parent
 GIT_ROOT = APP_DIR.parent
@@ -16,6 +16,7 @@ os.chdir(APP_DIR)
 # These safety checks are most likely to go wrong in my local dev, but just in case...
 try:
     import wheel
+    del wheel
 except ImportError:
     print("Missing required 'wheel' package.  Please run:\n\n\t"
           "python -m pip install --upgrade pip setuptools wheel")
@@ -23,6 +24,7 @@ except ImportError:
 
 try:
     import ksconf.builder
+    del ksconf.builder
 except ImportError:
     print("You must have ksconf installed to run this script\n"
           "Run this first:\n\n\t"
@@ -35,8 +37,8 @@ from ksconf.builder import QUIET, VERBOSE, BuildManager, BuildStep, default_cli 
 
 manager = BuildManager()
 
+APP_FOLDER = PurePath("ksconf")
 SPL_NAME = "ksconf-app_for_splunk-{{version}}.tgz"
-SOURCE_DIR = "ksconf"
 
 
 def make_wheel(step):
@@ -53,7 +55,7 @@ def make_docs(step):
     log = step.get_logger()
     log("Making html docs via Sphinx")
     docs_dir = GIT_ROOT / "docs"
-    static_docs = "appserver/static/docs"
+    static_docs = APP_FOLDER / "appserver/static/docs"
     docs_build = step.build_path / static_docs
     # Use the classic theme (~ 1Mb output vs 11+ mb, due to web fonts)
     os.environ["KSCONF_DOCS_THEME"] = "classic"
@@ -65,7 +67,7 @@ def make_docs(step):
 
 def filter_requirements(step, src, re_block, extra):
     """ Copy a filtered version of requirements.txt """
-    # type: (Buildstep)
+    # type: (BuildStep, str, str, str)
     log = step.get_logger()
     dest = step.build_path / src.name
     log("Filtering requirements.txt:  {} --> {}".format(src, dest, re_block), VERBOSE)
@@ -90,7 +92,7 @@ def filter_requirements(step, src, re_block, extra):
 # @manager.cache(["requirements.txt"], ["bin/lib/"], timeout=7200)
 def python_packages(step):
     # Reuse shared function from ksconf.build.steps
-    pip_install(step, "requirements.txt", "bin/lib",
+    pip_install(step, "requirements.txt", APP_FOLDER / "bin/lib",
                 handle_dist_info="rename",
                 dependencies=False)  # managing dependencies manually
 
@@ -101,7 +103,6 @@ def package_spl(step):
     release_name = top_dir / ".release_name"
     step.run(sys.executable, "-m", "ksconf", "package",
              "--file", step.dist_path / SPL_NAME,
-             "--app-name", "ksconf",
              "--set-version", "{{git_tag}}",
              "--set-build", os.environ.get("TRAVIS_BUILD_NUMBER", "0"),
              "--blocklist", ".buildinfo",  # From build docs
@@ -109,7 +110,7 @@ def package_spl(step):
              "--block-local",
              "--layer-method=disable",
              "--release-file", str(release_path),
-             ".")
+             APP_FOLDER)
     # Provide the dist file as a short name too (used by some CI/CD tools)
     path = release_path.read_text()
     short_name = Path(path).name
@@ -126,7 +127,7 @@ def build(step, args):
     ksconf_wheel = make_wheel(step)
 
     # Copy splunk app template bits into build folder
-    copy_files(step, ["**/*"])
+    copy_files(step, ["{}/".format(APP_FOLDER)])
 
     # Re-write normal requirements file: Remove some, install all PY2 backports
     filter_requirements(step, GIT_ROOT / "requirements.txt",
@@ -145,7 +146,7 @@ def build(step, args):
 
 if __name__ == '__main__':
     # Tell build manager where stuff lives
-    manager.set_folders(source_path=SOURCE_DIR,
+    manager.set_folders(source_path=".",
                         build_path="build",
                         dist_path=GIT_ROOT / "zdist")
 
