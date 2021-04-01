@@ -52,6 +52,90 @@ class CliMinimizeTest(unittest.TestCase):
             ko = ksconf_cli("diff", static_data("inputs-ta-nix-local.conf"), rebuilt)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
 
+    def test_remove_empty_stanza(self):
+        twd = TestWorkDir()
+        conf1 = twd.write_file("props1.conf", """\
+        [stanza1]
+        a = 99
+        z = 34
+        x = apple
+
+        [stanza2]
+        a = 99
+
+        [stanza3]
+
+        [stanza4]
+        """)
+        conf2 = twd.write_file("props2.conf", """\
+        [stanza1]
+        a = 99
+        z = 34
+        x = apple
+
+        [stanza2]
+        # Keep this one, even with NO overlap
+        b = friendly bear
+
+        [stanza3]
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--target", conf1, conf2)
+            d = twd.read_conf("props1.conf")
+            self.assertEqual(d["stanza2"]["a"], "99")
+            self.assertNotIn("b", d["stanza2"])
+            self.assertNotIn("stanza1", d)
+            self.assertNotIn("stanza3", d)  # Empty in both, therefore identical, so remove it
+            self.assertIn("stanza4", d)  # Unique to props1, so preserve!
+
+    @unittest.expectedFailure
+    def test_remove_with_comments(self):
+        twd = TestWorkDir()
+        conf1 = twd.write_file("props1.conf", """\
+        [no_comments]
+        a = 1
+
+        [comments_in_1]
+        # Yes I DO!
+        a = 1
+
+        [comments_in_2]
+        a = 1
+
+        [comments_in_both]
+        # Comments
+
+        [fav_color]
+        # seafoam
+        """)
+        conf2 = twd.write_file("props2.conf", """\
+        [no_comments]
+        a = 1
+
+        [comments_in_1]
+        a = 1
+
+        [comments_in_2]
+        # her are comments, as promised!
+        a = 1
+
+        [comments_in_both]
+        # Comments
+
+        [fav_color]
+        # aqua
+        """)
+        with ksconf_cli:
+            ko = ksconf_cli("minimize", "--target", conf1, conf2)
+            d = twd.read_conf("props1.conf")
+            self.assertNotIn("no_comments", d)
+            self.assertNotIn("comments_in_1", d)
+            self.assertNotIn("comments_in_2", d)
+
+            # These are currently failing:
+            self.assertNotIn("comments_in_both", d)
+            self.assertNotIn("fav_color", d)
+
     def test_minimize_explode_defaults(self):
         twd = TestWorkDir()
         conf = twd.write_file("savedsearches.conf", """\
