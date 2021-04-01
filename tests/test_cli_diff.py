@@ -10,8 +10,8 @@ import unittest
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import *
-from tests.cli_helper import *
+from ksconf.consts import EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_EQUAL
+from tests.cli_helper import TestWorkDir, ksconf_cli, static_data
 
 
 class CliDiffTest(unittest.TestCase):

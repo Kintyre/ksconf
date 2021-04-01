@@ -18,8 +18,8 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ksconf.conf.parser import PARSECONF_STRICT
-from ksconf.consts import *
-from tests.cli_helper import *
+from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_SUCCESS
+from tests.cli_helper import FakeStdin, TestWorkDir, ksconf_cli
 
 
 class CliKsconfFilter(unittest.TestCase):

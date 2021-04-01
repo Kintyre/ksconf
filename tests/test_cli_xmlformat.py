@@ -12,8 +12,8 @@ from io import StringIO
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import *
-from tests.cli_helper import *
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_FORMAT_APPLIED, EXIT_CODE_SUCCESS
+from tests.cli_helper import FakeStdin, TestWorkDir, ksconf_cli
 
 # Something weird with LXML and PYPY:
 #   bBaseException.__new__(XMLSyntaxError) is not safe, use XMLSyntaxError.__new__()

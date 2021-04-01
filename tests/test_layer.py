@@ -16,7 +16,7 @@ if __package__ is None:
 
 
 # Stuff for testing
-from ksconf.layer import *
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, path_in_layer
 from tests.cli_helper import TestWorkDir
 
 

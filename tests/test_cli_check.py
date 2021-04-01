@@ -10,8 +10,8 @@ from io import StringIO
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.consts import *
-from tests.cli_helper import *
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SUCCESS
+from tests.cli_helper import GLOBAL_STANZA, FakeStdin, TestWorkDir, ksconf_cli
 
 
 class CliCheckTest(unittest.TestCase):

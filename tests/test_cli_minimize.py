@@ -10,8 +10,8 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from ksconf.consts import *
-from tests.cli_helper import *
+from ksconf.consts import EXIT_CODE_MISSING_ARG, EXIT_CODE_SUCCESS
+from tests.cli_helper import TestWorkDir, ksconf_cli, static_data
 
 
 class CliMinimizeTest(unittest.TestCase):
@@ -81,6 +81,7 @@ class CliMinimizeTest(unittest.TestCase):
         """)
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--target", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             d = twd.read_conf("props1.conf")
             self.assertEqual(d["stanza2"]["a"], "99")
             self.assertNotIn("b", d["stanza2"])
@@ -127,6 +128,7 @@ class CliMinimizeTest(unittest.TestCase):
         """)
         with ksconf_cli:
             ko = ksconf_cli("minimize", "--target", conf1, conf2)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             d = twd.read_conf("props1.conf")
             self.assertNotIn("no_comments", d)
             self.assertNotIn("comments_in_1", d)
