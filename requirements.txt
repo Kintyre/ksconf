@@ -6,5 +6,5 @@ backports.tempfile; python_version < '3.4'
 backports.shutil_which; python_version < '3.6'
 
 # Use old version of 'lxml' to keep 3.4 support for a bit longer (not strictly required)
-lxml; python_version !='3.4'
+lxml>=4.6.3; python_version !='3.4'
 lxml>=4.3,<4.4; python_version=='3.4.*'
