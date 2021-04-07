@@ -9,6 +9,8 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/kintyre-splunk-conf.svg)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Snyk Score](https://snyk.io/advisor/python/kintyre-splunk-conf/badge.svg)](https://snyk.io/advisor/python/kintyre-splunk-conf)
+[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
 
 
 ![Ksconf logo][logo]
