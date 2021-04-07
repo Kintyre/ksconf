@@ -8,8 +8,7 @@ Ksconf 0.8
 
 **Highlights:**
 
-*  New command :ref:`ksconf_cmd_package` is designed for both Splunk developers and admins
-*  New module :py:mod:`ksconf.builder` helps build Splunk apps using a pipeline; or when external Python libraries are bundled into an app
+*  New command :ref:`ksconf_cmd_package` is designed for both Splunk developers and admins *  New module :py:mod:`ksconf.builder` helps build Splunk apps using a pipeline; or when external Python libraries are bundled into an app
 *  Legit layer support with built-in layer filtering capabilities is available in several commands
 *  Python 3!  Head's up: We'll be dropping support for Python 2 in an upcoming release
 
@@ -66,6 +65,10 @@ Ksconf 0.8
 -  Formatting via autopep8 and isort (enforced by pre-commit)
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
 
+Ksconf v0.8.5 (2020-04-07)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+-   Fixed packaging issue where external dependencies were missing.
+    This doesn't impact the Splunk package install, or anyone running Python 3.6 or later.
 
 Ksconf v0.8.4 (2020-03-22)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
