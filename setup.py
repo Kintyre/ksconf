@@ -122,6 +122,9 @@ setup(name="kintyre-splunk-conf",
       install_requires=[
           "entrypoints",
           "lxml",         # Added as a hard requirement to allow pre-commit to work out of the box
+          "pathlib; python_version<'3.4'",
+          "backports.tempfile; python_version < '3.4'",
+          "backports.shutil_which; python_version < '3.6'",
       ],
       # Wacky reason for this explained in ksconf/setup_entrypoints.py
       entry_points=get_entrypoints_setup(),
