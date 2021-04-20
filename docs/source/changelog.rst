@@ -67,10 +67,9 @@ Ksconf 0.8
 
 Ksconf v0.8.6 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
--   Fixed ``install.py`` Splunk app CLI install helper script to support referencing a specific version of Python.  This is needed on Splunk 8.0 if you'd like to use Python 3 (or Splunk 8.1 if you want to use Python 2.7, but please don't.)
+-   Fixed ``install.py`` Splunk app CLI install helper script to support referencing a specific version of Python.  This is needed on Splunk 8.0 if you'd like to use Python 3 (or Splunk 8.1 if you want to use Python 2.7, but please don't.)  I suppose this would also work with using a custom Python interpreter other than the ones Splunk ships with, but then why not install with ``pip``, right?  (Thanks to guilhem.marchand for bringing this issue to my attention.)
 -   Updated docs regarding changes to the use of ``install.py`` and fixed a bunch of spelling mistakes and other minor doc/comment tweaks.
 -   Fixed ASCII art issue.
-
 
 Ksconf v0.8.5 (2020-04-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

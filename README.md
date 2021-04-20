@@ -27,7 +27,7 @@ more than one layer of "default" are all supported tasks which are not native to
 **Splunk:**
 
  1. Download and install [KSCONF App for Splunk](https://splunkbase.splunk.com/app/4383/)
- 2. Run the command:  `splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py`
+ 2. Run the command:  `splunk cmd python3 $SPLUNK_HOME/etc/apps/ksconf/bin/install.py`
 
 **Python:**
 
