@@ -11,18 +11,22 @@
         <h2>KSCONF App for Splunk</h2>
 
         <h3>So where's all the stuff?</h3>
-        The <b>ksconf</b> app is not a traditional Splunk app in the sense that it's typically used to manage other Splunk apps.  KSCONF was born as a CLI (command line interface) tool and that's always were it will remain the most powerful.  While we do plan on adding some Splunk UI feature to this app, and most likely some custom search commmands, it's all very limited right now.
+        The <b>ksconf</b> app is not a traditional Splunk app in the sense that it's typically used to manage other Splunk apps.  KSCONF was born as a CLI (command line interface) tool and that's always were it will remain the most powerful.  While we do plan on adding some Splunk UI feature to this app, and most likely some custom search commands, it's CLI-only right now.
 
         <h3>Planned UI features</h3>
         <ul>
-          <li><b>Local "REST"</b> - Add a <tt>rest</tt>-like command that gives the user visibility into both the local and default folders.  Splunk's built-in command merges these things together, which is typicaly nice, but sometimes figuring out what "overrides" and what are the defaults that shipped with an app is an important, yet difficult question to answer.</li>
+          <li><b>Local "REST"</b> - Add a <tt>rest</tt>-like command that gives the user visibility into both the local and default folders.  Splunk's built-in command merges these things together, which is typically nice, but sometimes figuring out what "overrides" and what are the defaults that shipped with an app is an important, yet difficult question to answer.</li>
           <li><b>Snapshots</b> - Take a snapshot of local and default configs with the intention of saving of state at specific point in time.   This would be combined with the ability to "diff" the snapshots and determine changes over time.  It's possible this could work without the need for a git repo.</li>
-          <li><b>Promotion</b> - Support configuration promotion (moving stuff from 'local' to 'default' and allowing git commits to.  However we need to find a way to do this safely, and restict this type of activity to certain users with the approrpiate level of acccess control.  (This is a long-term goal)</li>
+          <li><b>Promotion</b> - Support configuration promotion (moving stuff from 'local' to 'default' and allowing git commits to.  However we need to find a way to do this safely, and restrict this type of activity to certain users with the appropriate level of access control.  (This is a long-term goal)</li>
         </ul>
-        Right now EVERYTHING about this app is read-only.  The <tt>ksconf</tt> command line tool can make changes to your filesystem, but only after you've opened a shell session, at which point you already have full access anywayss.
+        Right now EVERYTHING about this app is read-only.  The <tt>ksconf</tt> command line tool can make changes to your filesystem, but only after you've opened a shell session, at which point you already have full access anyways.
 
         <h3>Why we made this app</h3>
-        So, if this app doesn't really do much from the UI, why bother making it?  Well, simply put, it's an easier distribution model than dealing with all the python enviromental variations that currently exists across various flavors of OSes.  So once you've install this app, you can easily make the <tt>ksconf</tt> CLI tool available from the console.  Run the <tt>install.py</tt> script to help you do this in the <tt>bin</tt> folder of this app.  More details are in the docs below.
+        So, if this app doesn't really do much from the UI, why bother making it?  Well, simply put, it's an easier distribution model than dealing with all the python environmental variations that currently exists across various flavors of OSes.  So once you've install this app, you can easily make the <tt>ksconf</tt> CLI tool available from the console.  Run the <tt>install.py</tt> script to help you do this in the <tt>bin</tt> folder of this app.  More details are in the docs below.  Most people can simply run:
+
+        <p>
+          <tt>$SPLUNK_HOME/bin/splunk cmd python3 $SPLUNK_HOME/etc/apps/ksconf/bin/install.py</tt>
+        </p>
 
         <h2>Learn more</h2>
         To stay up-to-date or help guide future developments, check us out on <a href="https://github.com/Kintyre/ksconf">GitHub</a>.

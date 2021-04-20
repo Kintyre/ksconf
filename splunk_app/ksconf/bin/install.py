@@ -23,7 +23,7 @@ if __name__ == '__main__':
 template_win = """\
 @echo off
 set PYTHONPATH=%PYTHONPATH%;{0[ksconf_home]}
-call python -m ksconf "%*"
+call {0[splunk_python]} -m ksconf "%*"
 """
 
 
@@ -43,8 +43,11 @@ def install_to(ksconf_home, bin_path, platform="nix"):
         bin_file = bin_file + ".bat"
         template = template_win
 
+    python_cmd = sys.executable
+    print("Configuring ksconf to use Python:  {}  ({})".format(
+        python_cmd, sys.version.splitlines()[0]))
     d = {}
-    d["splunk_python"] = os.path.join(splunk_home, "bin", "python")  # or python.exe
+    d["splunk_python"] = python_cmd
     d["ksconf_home"] = ksconf_home
 
     print("Writing script {}".format(bin_file))

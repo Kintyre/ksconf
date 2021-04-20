@@ -67,14 +67,19 @@ account and run this one-time bootstrap command.
 
 .. code-block:: sh
 
-   splunk cmd python $SPLUNK_HOME/etc/apps/ksconf/bin/install.py
+   splunk cmd python3 $SPLUNK_HOME/etc/apps/ksconf/bin/install.py
 
 On Windows, open a terminal as Administrator and type:
 
 .. code-block:: batch
 
     cd "C:\Program Files\Splunk"
-    bin\splunk.exe cmd python etc\apps\ksconf\bin\install.py
+    bin\splunk.exe cmd python3 etc\apps\ksconf\bin\install.py
+
+.. note:: Splunk 7 vs Splunk 8
+
+    The above command will use Python 3 which will shortly be the only version supported.
+    If you're stuck on Splunk 7 or earlier, please replace ``python3`` with ``python`` in the command above.
 
 
 This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
