@@ -91,6 +91,7 @@ class CliMinimizeTest(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_remove_with_comments(self):
+        # Comments are currently lost.  Not 100% what the correct behavior should be
         twd = TestWorkDir()
         conf1 = twd.write_file("props1.conf", """\
         [no_comments]
@@ -117,7 +118,7 @@ class CliMinimizeTest(unittest.TestCase):
         a = 1
 
         [comments_in_2]
-        # her are comments, as promised!
+        # here are comments, as promised!
         a = 1
 
         [comments_in_both]

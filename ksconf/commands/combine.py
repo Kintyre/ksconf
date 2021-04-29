@@ -13,6 +13,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import re
+from io import open
 
 from ksconf.commands import ConfFileProxy, KsconfCmd, dedent
 from ksconf.conf.delta import show_text_diff
@@ -20,7 +21,7 @@ from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE,
-                           SMART_NOCHANGE)
+                           SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE)
 from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
@@ -125,6 +126,7 @@ class CombineCmd(KsconfCmd):
     def run(self, args):
         # Note this is case sensitive.  Don't be lazy, name your files correctly  :-)
         conf_file_re = re.compile(r"([a-z_-]+\.conf|(default|local)\.meta)$")
+        spec_file_re = re.compile(r"\.conf\.spec$")
         args.source = list(expand_glob_list(args.source, do_sort=True))
 
         config = LayerConfig()
@@ -222,8 +224,19 @@ class CombineCmd(KsconfCmd):
             if not os.path.isdir(dest_dir) and not args.dry_run:
                 os.makedirs(dest_dir)
 
-            # Handle conf files (merge) and non-conf (copy-only) files separately
-            if not conf_file_re.search(dest_fn) or len(sources) == 1:
+            # Determine handling method based on source count and filename pattern
+            if len(sources) == 1:
+                # Copy only file (most common case)
+                method = "copy"
+            elif spec_file_re.search(dest_fn):
+                method = "concatenate"
+            elif conf_file_re.search(dest_fn):
+                method = "merge"
+            else:
+                # Copy highest precedence
+                method = "copy"
+
+            if method == "copy":
                 # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  "
                 #                   "{1!r}\n".format(dest_fn, src_files[-1]))
                 # Always use the last file in the list (since last directory always wins)
@@ -247,10 +260,12 @@ class CombineCmd(KsconfCmd):
                     if not args.quiet:
                         self.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(
                             smart_rc, dest_path, src_file))
-            else:
+                del src_file
+
+            elif method == "merge":
                 try:
                     # Handle merging conf files
-                    dest = ConfFileProxy(os.path.join(args.target, dest_fn), "r+",
+                    dest = ConfFileProxy(dest_path, "r+",
                                          parse_profile=PARSECONF_MID)
                     srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
                     # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n"
@@ -266,6 +281,40 @@ class CombineCmd(KsconfCmd):
                     dest.close()
                     for src in srcs:
                         src.close()
+                    del srcs, dest
+
+            elif method == "concatenate":
+                combined_content = ""
+                for src in src_files:
+                    with open(src, "r") as stream:
+                        # Q: Should we check and add a \n between each file?.   Wait and see if that's needed
+                        content = stream.read()
+                        if not content.endswith("\n"):
+                            content += "\n"
+                        combined_content += content
+                        del content
+                smart_rc = SMART_CREATE
+                if os.path.isfile(dest_path):
+                    with open(dest) as stream:
+                        dest_content = stream.read()
+                    if dest_content == combined_content:
+                        smart_rc = SMART_NOCHANGE
+                    else:
+                        smart_rc = SMART_UPDATE
+                    del dest_content
+
+                if not args.dry_run:
+                    with open(dest_path, "w") as stream:
+                        stream.write(combined_content)
+
+                if smart_rc != SMART_NOCHANGE:
+                    if not args.quiet:
+                        self.stderr.write("Concatenate <{0}>   {1:50}  from {2!r}\n".format(
+                            smart_rc, dest_path, src_files))
+
+                del combined_content
+            else:
+                raise AssertionError("Internal implementation error.  Unknown method={}".format(method))
 
         # Todo: Allow for cleanup to be disabled via CLI
         if True and target_extra_files:

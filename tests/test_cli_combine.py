@@ -9,7 +9,7 @@ import unittest
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.conf.parser import parse_conf
+from ksconf.conf.parser import PARSECONF_LOOSE, parse_conf
 from ksconf.consts import EXIT_CODE_COMBINE_MARKER_MISSING, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
 
@@ -169,6 +169,37 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertIn("aws_sns_modular_alert", alert_action)
             self.assertEqual(alert_action["aws_sns_modular_alert"]["param.account"], "DeptAwsAccount")  # layer 10
             self.assertEqual(alert_action["aws_sns_modular_alert"]["label"], "AWS SNS Alert")  # layer 60
+
+    def test_combine_conf_spec(self):
+        twd = TestWorkDir()
+        self.build_test01(twd)
+
+        twd.write_file("etc/apps/Splunk_TA_aws/README.d/10-upstream/custom_config.conf.spec", r"""
+            [<stanza_type1>]
+            important_field = <str>
+            * Some notes about the important field.
+            * Required!
+            disabled = <bool>
+            """)
+        twd.write_file("etc/apps/Splunk_TA_aws/README.d/60-dept/custom_config.conf.spec", r"""
+            [bookmark::<prefixed_stanza_type>]
+            resource = <url>
+            category = <str>
+            * Label for organization
+            disabled = <bool>
+            """)
+
+        default = twd.get_path("etc/apps/Splunk_TA_aws")
+        target = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT")
+        with ksconf_cli:
+            ko = ksconf_cli("combine", "--layer-method", "dir.d", "--target", target, default)
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+
+            spec_file = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT/README/custom_config.conf.spec")
+            spec = parse_conf(spec_file, profile=PARSECONF_LOOSE)
+
+            self.assertIn("bookmark::<prefixed_stanza_type>", spec)
+            self.assertIn("<stanza_type1>", spec)
 
     def test_require_arg(self):
         with ksconf_cli:
