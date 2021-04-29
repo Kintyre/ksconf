@@ -62,6 +62,20 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         # Our config is bigger than yours!
         TRUNCATE = 9999999
         """)
+
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/10-upstream/alert_actions.conf", """
+        [aws_sns_modular_alert]
+        is_custom = 1
+        label = AWS SNS Alert
+        description = Publish search result to AWS SNS
+        payload_format = json
+        icon_path = appIcon.png
+        """)
+        twd.write_file("etc/apps/Splunk_TA_aws/default.d/60-dept/alert_actions.conf", """
+        [aws_sns_modular_alert]
+        param.account = DeptAwsAccount
+        """)
+
         twd.write_file("etc/apps/Splunk_TA_aws/default.d/60-dept/data/ui/nav/default.xml", """
         <nav search_view="search" color="#65A637">
 
@@ -150,6 +164,11 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertEqual(cfg["aws:config"]["TRUNCATE"], '9999999')
             nav_content = twd.read_file("etc/apps/Splunk_TA_aws-OUTPUT/default/data/ui/nav/default.xml")
             self.assertIn("My custom view", nav_content)
+
+            alert_action = twd.read_conf("etc/apps/Splunk_TA_aws-OUTPUT/default/alert_actions.conf")
+            self.assertIn("aws_sns_modular_alert", alert_action)
+            self.assertEqual(alert_action["aws_sns_modular_alert"]["param.account"], "DeptAwsAccount")  # layer 10
+            self.assertEqual(alert_action["aws_sns_modular_alert"]["label"], "AWS SNS Alert")  # layer 60
 
     def test_require_arg(self):
         with ksconf_cli:
