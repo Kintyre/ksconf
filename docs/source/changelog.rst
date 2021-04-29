@@ -68,6 +68,8 @@ Ksconf 0.8
 Ksconf v0.8.7 (2020-04-29)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 -  Support combining ``*.conf.spec`` files in ``ksconf combine``, thus allowing ``README.d`` to be it's own layer.
+-  Fixed potential ``unarchive`` issue with older version of git where ``git add --all DIR`` is more explicit, but equivelant to the modern day, ``git add DIR``.
+
 Ksconf v0.8.6 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 -   Fixed ``install.py`` Splunk app CLI install helper script to support referencing a specific version of Python.  This is needed on Splunk 8.0 if you'd like to use Python 3 (or Splunk 8.1 if you want to use Python 2.7, but please don't.)  I suppose this would also work with using a custom Python interpreter other than the ones Splunk ships with, but then why not install with ``pip``, right?  (Thanks to guilhem.marchand for bringing this issue to my attention.)

@@ -389,7 +389,7 @@ class UnarchiveCmd(KsconfCmd):
 
         if is_git:
             if args.git_mode in ("stage", "commit"):
-                git_cmd(["add", os.path.basename(dest_app)], cwd=os.path.dirname(dest_app))
+                git_cmd(["add", "--all", os.path.basename(dest_app)], cwd=os.path.dirname(dest_app))
                 # self.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
             '''
             else:
