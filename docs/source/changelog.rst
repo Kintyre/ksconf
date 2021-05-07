@@ -65,10 +65,16 @@ Ksconf 0.8
 -  Formatting via autopep8 and isort (enforced by pre-commit)
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
 
+Ksconf v0.8.8 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
+
+
 Ksconf v0.8.7 (2020-04-29)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 -  Support combining ``*.conf.spec`` files in ``ksconf combine``, thus allowing ``README.d`` to be it's own layer.
--  Fixed potential ``unarchive`` issue with older version of git where ``git add --all DIR`` is more explicit, but equivelant to the modern day, ``git add DIR``.
+-  Fixed potential ``unarchive`` issue with older version of git where ``git add --all DIR`` is more explicit, but equivalent to the modern day, ``git add DIR``.
 
 Ksconf v0.8.6 (2020-04-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

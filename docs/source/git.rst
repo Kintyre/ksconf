@@ -1,6 +1,10 @@
 Git tips & tricks
 =================
 
+These tips & tricks are based on prior Splunk, git, and ksconf experience.
+None of this content is an endorsement of a particular approach or tool.
+Read the docs, and take responsibility.  As always, your millage may vary.
+
 .. _ksconf_pre_commit:
 
 Pre-commit hooks
@@ -218,6 +222,28 @@ Edit :file:`~/.config/git/attributes` and add:
        git config diff.conf.xfuncname
 
 
+Git tricks
+----------
 
+Avoid replicating the .git folder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Version controlling certain directories, like ``master-apps`` or ``shcluster`` can result in the entire ``.git`` folder being replicated to other Splunk instances.
+This can be problematic because (1) this folder can be quite large, and (2) it can cause confusion on the receiving side leaving an admin to believe that the destination folder is version controlled.
+Splunk doesn't provide a way to block the ``.git`` folder from being replicated.
+
+Generally, there may be other more appropriate way to control content of these folders, but when faced with this situation, a simple workaround is to move the real ``.git`` folder to a secondary location (outside of the replicated folder) and instead us a ``.git`` file with a ``gitdir:`` pointer to the real git folder.
+This is may sound complicated, but it's quite easy in practice.
+Here's an example with a ``master-apps`` folder:
+
+..  code-block:: sh
+
+    cd $SPLUNK_HOME/etc/master-apps
+    mv -v "${PWD}/.git" "${PWD}.git"
+    echo "gitdir: ${PWD}.git" > "$PWD/.git"
+
+After running the above commands, the ``.git`` folder is now named ``master-apps.git``, and ``master-apps/.git`` is now just a small file referencing the new location of the git repository folder.  Splunk deployment/synchronization operations now just copy a small file, rather than the ``.git`` folder.
+
+More information is available at `gitrepository-layout <https://git-scm.com/docs/gitrepository-layout#_description>`_.
 
 ..  include:: common
