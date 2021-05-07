@@ -15,10 +15,22 @@ from ksconf.ext.six.moves import range
 from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
 
+if sys.version_info >= (3, 6):
+    from os import fspath
+else:
+    def fspath(path):
+        # type: (PurePath) -> str
+        """ Mimic os.fspath() for backwards compatibility. """
+        # duck typing
+        if hasattr(path, "__fspath__"):
+            return path.__fspath__()
+        else:
+            return text_type(path)
+
 
 def _path_to_str(p):
     if isinstance(p, PurePath):
-        return text_type(p)
+        return fspath(p)
     if isinstance(p, tuple):
         return tuple(_path_to_str(i) for i in p)
     if isinstance(p, list):
