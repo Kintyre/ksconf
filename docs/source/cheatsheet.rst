@@ -89,6 +89,14 @@ To see just to the schedule and scheduler status of scheduled searches, run:
             --keep-attrs enableSched
             --keep-attrs disabled
 
+List apps configured in the deployment server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. code-block:: sh
+
+        ksconf filter -b serverclass.conf --stanza 'serverClass:*:app:*' | \
+            cut -d: -f4 | sort | uniq
+
 
 Cleaning up
 -----------
