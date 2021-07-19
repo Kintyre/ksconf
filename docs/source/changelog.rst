@@ -68,7 +68,10 @@ Ksconf 0.8
 Ksconf v0.8.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  Fixed layer detection bug for ``dir.d`` mode for layers existing beyond a symlink in the ``ksconf combine`` command.
+   For example, if an app pointed to a symlink to another folder in a git repository, then all layers in that app would be ignored.
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
+-  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
 
 
 Ksconf v0.8.7 (2020-04-29)
