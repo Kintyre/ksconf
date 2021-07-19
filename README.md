@@ -1,6 +1,6 @@
 # Kintyre's Splunk CONFiguration tool
 
-[![Travis](https://img.shields.io/travis/Kintyre/ksconf/master.svg)](https://travis-ci.org/Kintyre/ksconf/builds)
+[![Travis](https://img.shields.io/travis/Kintyre/ksconf/master.svg)](https://travis-ci.com/Kintyre/ksconf/builds)
 [![PyPI](https://img.shields.io/pypi/v/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
