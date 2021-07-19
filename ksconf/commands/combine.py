@@ -156,7 +156,7 @@ class CombineCmd(KsconfCmd):
                 return EXIT_CODE_BAD_ARGS
 
             layer_root = DotDLayerRoot(config=config)
-            layer_root.set_root(args.source[0])
+            layer_root.set_root(args.source[0], follow_symlinks=args.follow_symlink)
             for (dir, layers) in layer_root._mount_points.items():
                 self.stderr.write("Found layer parent folder:  {}  with layers {}\n"
                                   .format(dir, ", ".join(layers)))

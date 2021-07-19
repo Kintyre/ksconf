@@ -344,14 +344,14 @@ class DotDLayerRoot(LayerRootBase):
             return l is self._root_layer or layer_filter(l)
         return super(DotDLayerRoot, self).apply_filter(fltr)
 
-    def set_root(self, root):
+    def set_root(self, root, follow_symlinks=False):
         """ Set a root path, and auto discover all '.d' directories.
 
         Note:  We currently only support '.d/<layer>' directories, so something like
         `default.d/10-props.conf` won't be handled here.
         """
         Layer, File = self.Layer, self.File
-        for (top, dirs, files) in relwalk(root, topdown=False):
+        for (top, dirs, files) in relwalk(root, topdown=False, followlinks=follow_symlinks):
             del files
             mount_mo = self.mount_regex.match(top)
             if mount_mo:
