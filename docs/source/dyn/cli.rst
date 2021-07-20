@@ -96,7 +96,7 @@ ksconf combine
 
     usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
                           [-I PATTERN] [-E PATTERN] [--dry-run] [--follow-symlink]
-                          [--banner BANNER] [--disable-marker]
+                          [--banner BANNER] [-K KEEP_EXISTING] [--disable-marker]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -159,6 +159,9 @@ ksconf combine
                             A banner or warning comment added to the top of the
                             TARGET file. Used to discourage Splunk admins from
                             editing an auto-generated file.
+      -K KEEP_EXISTING, --keep-existing KEEP_EXISTING
+                            Existing file(s) to preserve in the TARGET folder.
+                            This argument may be used multiple times.
       --disable-marker      Prevents the creation of or checking for the
                             '.ksconf_controlled' marker file safety check. This
                             file is typically used indicate that the destination

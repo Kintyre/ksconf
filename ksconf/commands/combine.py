@@ -25,7 +25,7 @@ from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
 from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
-from ksconf.util.file import _is_binary_file, expand_glob_list, relwalk, smart_copy
+from ksconf.util.file import _is_binary_file, expand_glob_list, match_bwlist, relwalk, smart_copy
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 
@@ -117,6 +117,9 @@ class CombineCmd(KsconfCmd):
                             help="A banner or warning comment added to the top of the TARGET file. "
                                  "Used to discourage Splunk admins from editing an auto-generated "
                                  "file.")
+        parser.add_argument("-K", "--keep-existing", action="append", default=[],
+                            help="Existing file(s) to preserve in the TARGET folder.  "
+                            "This argument may be used multiple times.")
         parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent("""
             Prevents the creation of or checking for the ``{}`` marker file safety check.
             This file is typically used indicate that the destination folder is managed by ksconf.
@@ -188,8 +191,13 @@ class CombineCmd(KsconfCmd):
             self.stderr.write(
                 "Skipping creating destination directory {0} (dry-run)\n".format(args.target))
         else:
-            self.stderr.write("Creating destination directory {0}\n".format(args.target))
-            os.mkdir(args.target)
+            try:
+                os.mkdir(args.target)
+            except OSError as e:
+                self.stderr.write("Unable to create destination directory {}.  {}\n".
+                                  format(args.target, e))
+                return EXIT_CODE_NO_SUCH_FILE
+            self.stderr.write("Created destination directory {0}\n".format(args.target))
             if not args.disable_marker:
                 with open(marker_file, "w") as f:
                     f.write("This directory is managed by KSCONF.  Don't touch\n")
@@ -318,8 +326,11 @@ class CombineCmd(KsconfCmd):
 
         # Todo: Allow for cleanup to be disabled via CLI
         if True and target_extra_files:
-            self.stderr.write("Cleaning up extra files not part of source tree(s):  {0} files.\n".
+            self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
                               format(len(target_extra_files)))
             for dest_fn in target_extra_files:
+                if match_bwlist(dest_fn, args.keep_existing):
+                    self.stderr.write("Preserving file {0}\n".format(dest_fn))
+                    continue
                 self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
                 os.unlink(os.path.join(args.target, dest_fn))

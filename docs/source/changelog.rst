@@ -68,6 +68,8 @@ Ksconf 0.8
 Ksconf v0.8.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
+   This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
 -  Fixed layer detection bug for ``dir.d`` mode for layers existing beyond a symlink in the ``ksconf combine`` command.
    For example, if an app pointed to a symlink to another folder in a git repository, then all layers in that app would be ignored.
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.

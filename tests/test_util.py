@@ -23,6 +23,8 @@ class KsconfUtilsTest(unittest.TestCase):
         bwlist = ["apple", "spoon", "hotdog", r"bak*"]
         self.assertTrue(match_bwlist("hotdog", bwlist))
         self.assertTrue(match_bwlist("bake", bwlist))
+        self.assertFalse(match_bwlist("egg", bwlist))
+        self.assertFalse(match_bwlist("theapplejack", bwlist))
 
     def test_handle_p3koa(self):
         from ksconf.util import handle_py3_kw_only_args
