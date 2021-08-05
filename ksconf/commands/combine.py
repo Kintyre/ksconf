@@ -326,10 +326,17 @@ class CombineCmd(KsconfCmd):
 
         # Todo: Allow for cleanup to be disabled via CLI
         if True and target_extra_files:
+
+            def fix_path(f):
+                """ Normalize to unix style paths """
+                if os.path.sep != "/":
+                    f = f.replace(os.path.sep, "/")
+                return f
+
             self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
                               format(len(target_extra_files)))
             for dest_fn in target_extra_files:
-                if match_bwlist(dest_fn, args.keep_existing):
+                if match_bwlist(fix_path(dest_fn), args.keep_existing):
                     self.stderr.write("Preserving file {0}\n".format(dest_fn))
                     continue
                 self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
