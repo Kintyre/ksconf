@@ -344,7 +344,7 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(c["sar"]["MAX_EVENTS"], "1000")
 
     def test_write_nonstr(self):
-        """ Make sure that other python primitive types are writen out correctly.  """
+        """ Make sure that other python primitive types are written out correctly.  """
         # Note:  Types will not be preserved, but values should not be lost
         d = {"stanza": {"boolean1": True, "boolean2": False, "int1": 99, "int2": 0,
                         "none": None}}
