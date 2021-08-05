@@ -120,23 +120,33 @@ def expand_glob_list(iterable, do_sort=False):
 
 
 # This is a Splunk-style (props) stanza style glob:
-# where '*' is a single path component, and '...' means any level of path
-_glob_to_regex = {
-    r"\*": r"[^/\\]*",
-    r"\?": r".",
-    r"\.\.\.": r".*",
-}
-_is_glob_re = re.compile("({})".format("|".join(list(_glob_to_regex.keys()))))
+# where '*' is a single path component, and '...' or '**' means any depth
+_glob_to_regex = [
+    ("**", r".*"),
+    ("*", r"[^/\\]*"),
+    ("?", r"."),
+    ("...", r".*"),
+    (".", r"\."),
+]
+_glob_to_regex_find = "({})".format("|".join(re.escape(r) for r, _ in _glob_to_regex))
 
 
-def match_bwlist(value, bwlist, escape=True):
+def splglob_to_regex(pattern):
+    glob_to_regex = dict(_glob_to_regex)
+    regex = re.sub(_glob_to_regex_find, lambda m: glob_to_regex[m.group()], pattern)
+    # If NO anchors have been explicitly given, then assume full-match mode:
+    if not re.search(r'(?<![\[\\])[$^]', regex):
+        regex = "^{}$".format(regex)
+    return re.compile(regex)
+
+
+def match_bwlist(value, bwlist):
     """
     Determine if ``value`` matches patterns contained with ``bwlist``.
+    Supports typical '*' and '?' glob-like patterns, '...' and '**' for any-depth
+    base paths and it allows other regex expressions to be passed through as well.
     :param value str: path or conf attribute name
     :param bwlist list: List of patterns to be matched against.
-    :param escape bool: Determines if the pattern list should allow regular
-                        expressions or not.  By default, all characters are
-                        escaped and therefore treated as literals).
     :return: match result
     :rtype: bool
     """
@@ -145,16 +155,9 @@ def match_bwlist(value, bwlist, escape=True):
         return True
     # Now see if anything in the bwlist contains a glob pattern
     for pattern in bwlist:
-        if _is_glob_re.search(pattern):
-            # Escape all characters.  And then replace the escaped "*" with a ".*"
-            if escape:
-                regex = re.escape(pattern)
-            else:
-                regex = pattern
-            for (find, replace) in _glob_to_regex.items():
-                regex = regex.replace(find, replace)
-            if re.match(regex, value):
-                return True
+        regex = splglob_to_regex(pattern)
+        if regex.match(value):
+            return True
     return False
 
 

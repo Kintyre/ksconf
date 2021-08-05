@@ -291,14 +291,6 @@ class UnarchiveCmd(KsconfCmd):
         # PREP ARCHIVE EXTRACTION
         installed_files = set()
         excludes = list(args.exclude)
-        '''
-        for pattern in args.exclude:
-            # If a pattern like 'default.meta' or '*.bak' is provided, assume it's a basename match.
-            if "/" not in pattern:
-                excludes.append(".../" + pattern)
-            else:
-                excludes.append(pattern)
-        '''
         if not args.allow_local:
             for pattern in local_files:
                 excludes.append("./" + pattern)
@@ -321,7 +313,7 @@ class UnarchiveCmd(KsconfCmd):
 
         self.stdout.write("Extracting app now...\n")
         for gaf in files_iter:
-            if match_bwlist(gaf.path, excludes, escape=False):
+            if match_bwlist(gaf.path, excludes):
                 self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
@@ -357,7 +349,7 @@ class UnarchiveCmd(KsconfCmd):
         files_to_delete = []
         files_to_keep = []
         for fn in files_del:
-            if match_bwlist(fn, keep_list, escape=False):
+            if match_bwlist(fn, keep_list):
                 # How to handle a keep of "default.d/..." when we DO want to cleanup the default
                 # redirect folder of "default.d/10-upstream"?
                 # This may be an academic question since most apps will continue to send

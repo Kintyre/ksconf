@@ -34,6 +34,7 @@ class KsconfUtilsTest(unittest.TestCase):
             "....png",
             "prefix/*/suffix",
             "prefix2/.../suffix2",
+            "prefix3/**/suffix3",
         ]
         self.assertTrue(match_bwlist("keep/me", bwlist))
         self.assertFalse(match_bwlist("nested/keep/me", bwlist))
@@ -56,6 +57,10 @@ class KsconfUtilsTest(unittest.TestCase):
         self.assertTrue(match_bwlist("prefix2/blah/suffix2", bwlist))
         self.assertTrue(match_bwlist("prefix2/b/l/a/h/suffix2", bwlist))
         self.assertFalse(match_bwlist("prefix2/suffix2", bwlist))
+
+        self.assertTrue(match_bwlist("prefix3/blah/suffix3", bwlist))
+        self.assertTrue(match_bwlist("prefix3/b/l/a/h/suffix3", bwlist))
+        self.assertFalse(match_bwlist("prefix3/suffix3", bwlist))
 
     def test_handle_p3koa(self):
         from ksconf.util import handle_py3_kw_only_args
