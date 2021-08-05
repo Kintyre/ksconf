@@ -204,7 +204,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             ko = ksconf_cli("combine", "--keep-existing", "local/app.conf",
                             "--target", target, src)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            cfg = parse_conf(target + "/default/app.conf")
+            cfg = parse_conf(os.path.join(target, "default/app.conf"))
             self.assertIn("install", cfg)
             self.assertEqual(cfg["launcher"]["version"], "7.0.0")
 
