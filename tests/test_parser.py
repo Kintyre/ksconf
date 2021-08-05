@@ -20,7 +20,7 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
-                               DIFF_OP_REPLACE, compare_cfgs,
+                               DIFF_OP_REPLACE, compare_cfgs, show_diff,
                                summarize_cfg_diffs)
 from ksconf.conf.parser import (DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE,
                                 GLOBAL_STANZA, PARSECONF_MID,
@@ -518,7 +518,7 @@ class ConfigDiffTestCase(unittest.TestCase):
 
         [in_b_only]
         """)
-        delta = compare_cfgs(a, b, preserve_empty=True)
+        delta = compare_cfgs(a, b)
         delta_search = partial(self.find_op_by_location, delta)
         self.assertEqual(delta_search("stanza", stanza="common").tag, DIFF_OP_EQUAL)
         self.assertEqual(delta_search("stanza", stanza="in_a_only").tag, DIFF_OP_DELETE)
@@ -531,6 +531,11 @@ class ConfigDiffTestCase(unittest.TestCase):
         op = delta_search("stanza", stanza="in_a1")
         self.assertEqual(op.tag, DIFF_OP_DELETE)
         self.assertEqual(op.a["live_in"], "a")
+
+        # Tack on a test for issue #91: diff dies on empty stanza
+        out = StringIO()
+        # Ensure that show diff doesn't die when trying to display a missing stanza
+        show_diff(out, delta)
 
     def test_attribute_replace(self):
         props1 = parse_string(r"""

@@ -68,6 +68,9 @@ Ksconf 0.8
 Ksconf v0.8.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+-  Fixed `#91 <https://github.com/Kintyre/ksconf/issues/91>`__. where ``ksconf diff`` wouldn't correctly handle empty stanzas in the second input file.
+   (Reversing the order would sometimes worked to avoid the issue).
+   This was resolved by enabling some improved empty stanza handling in the conf comparison algorithms that were updated back in 0.7.10, but never globally applied.  This has been resolved.
 -  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
    This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
 -  Fixed layer detection bug for ``dir.d`` mode for layers existing beyond a symlink in the ``ksconf combine`` command.

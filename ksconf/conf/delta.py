@@ -49,20 +49,13 @@ class DiffHeader(object):
         return "{0:50} {1}".format(self.name, ts)
 
 
-def compare_stanzas(a, b, stanza_name, preserve_empty=False):
-    if preserve_empty:
-        def is_empty(v):
-            return v is None
-    else:
-        def is_empty(v):
-            return not v
-
+def compare_stanzas(a, b, stanza_name):
     if a == b:
         return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)]
-    elif is_empty(b):
+    elif b is None:
         # A only
         return [DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None)]
-    elif is_empty(a):
+    elif a is None:
         # B only
         return [DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b)]
     else:
@@ -91,7 +84,7 @@ def _compare_stanzas(a, b, stanza_name):
             yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
 
 
-def compare_cfgs(a, b, allow_level0=True, preserve_empty=False):
+def compare_cfgs(a, b, allow_level0=True):
     '''
     Return list of 5-tuples describing how to turn a into b.
 
@@ -127,8 +120,8 @@ def compare_cfgs(a, b, allow_level0=True, preserve_empty=False):
     Possible alternatives:
 
     https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
-
     '''
+    # Note:  The 'preserve_empty' argument was silly and has been removed in v0.8.8
 
     delta = []
 
@@ -154,7 +147,7 @@ def compare_cfgs(a, b, allow_level0=True, preserve_empty=False):
         all_stanzas = list(all_stanzas)
     all_stanzas = sorted(all_stanzas)
     for stanza in all_stanzas:
-        delta.extend(compare_stanzas(a.get(stanza), b.get(stanza), stanza, preserve_empty))
+        delta.extend(compare_stanzas(a.get(stanza), b.get(stanza), stanza))
     return delta
 
 
