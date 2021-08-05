@@ -443,7 +443,7 @@ class PromoteCmd(KsconfCmd):
         diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
         for op in diff:
-            if self.stanza_filters.match(op.location.stanza) ^ args.invert_match:
+            if self.stanza_filters.match_stanza(op.location.stanza) ^ args.invert_match:
                 if args.verbose:
                     show_diff(self.stdout, [op])
                 if isinstance(op.location, DiffStanza):

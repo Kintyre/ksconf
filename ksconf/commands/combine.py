@@ -22,10 +22,11 @@ from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE,
                            SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE)
+from ksconf.filter import create_filtered_list
 from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
 from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
-from ksconf.util.file import _is_binary_file, expand_glob_list, match_bwlist, relwalk, smart_copy
+from ksconf.util.file import _is_binary_file, expand_glob_list, relwalk, smart_copy, splglob_simple
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
 
@@ -125,6 +126,9 @@ class CombineCmd(KsconfCmd):
             This file is typically used indicate that the destination folder is managed by ksconf.
             This option should be reserved for well-controlled batch processing scenarios.
             """.format(CONTROLLED_DIR_MARKER)))
+        parser.add_argument("--disable-cleanup", action="store_true", default=False,
+                            help="Disable all file removal operations.  Skip the cleanup phase "
+                            "that typically removes files in TARGET that no longer exist in SOURCE")
 
     def run(self, args):
         # Note this is case sensitive.  Don't be lazy, name your files correctly  :-)
@@ -324,19 +328,19 @@ class CombineCmd(KsconfCmd):
             else:
                 raise AssertionError("Internal implementation error.  Unknown method={}".format(method))
 
-        # Todo: Allow for cleanup to be disabled via CLI
-        if True and target_extra_files:
-
-            def fix_path(f):
-                """ Normalize to unix style paths """
-                if os.path.sep != "/":
-                    f = f.replace(os.path.sep, "/")
-                return f
+        if target_extra_files:
+            if args.disable_cleanup:
+                self.stderr.write("Cleanup operations disabled by user.\n")
+                return
 
             self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
                               format(len(target_extra_files)))
+
+            keep_existing = create_filtered_list("splunk", default=False)
+            # splglob_simple:  Either full paths, or simple file-only match
+            keep_existing.feedall(args.keep_existing, filter=splglob_simple)
             for dest_fn in target_extra_files:
-                if match_bwlist(fix_path(dest_fn), args.keep_existing):
+                if keep_existing.match_path(dest_fn):
                     self.stderr.write("Preserving file {0}\n".format(dest_fn))
                     continue
                 self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))

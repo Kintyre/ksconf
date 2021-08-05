@@ -20,9 +20,10 @@ from ksconf.archive import (extract_archive, gaf_filter_name_like,
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, default_encoding, parse_conf
 from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG
+from ksconf.filter import create_filtered_list
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
-from ksconf.util.file import dir_exists, file_hash, match_bwlist, relwalk
+from ksconf.util.file import dir_exists, file_hash, relwalk
 from ksconf.vc.git import (git_cmd, git_cmd_iterable, git_is_clean,
                            git_is_working_tree, git_ls_files, git_status_ui,
                            git_version)
@@ -296,6 +297,10 @@ class UnarchiveCmd(KsconfCmd):
                 excludes.append("./" + pattern)
         excludes = fixup_pattern_bw(excludes, app_basename)
         self.stderr.write("Extraction exclude patterns:  {!r}\n".format(excludes))
+        exclude_filter = create_filtered_list("splunk", default=False)
+        exclude_filter.feedall(excludes)
+
+        # Calculate path rewrite operations
         path_rewrites = []
         files_iter = extract_archive(args.tarball)
         if True:
@@ -311,9 +316,10 @@ class UnarchiveCmd(KsconfCmd):
         if path_rewrites:
             files_iter = gen_arch_file_remapper(files_iter, path_rewrites)
 
+        # Filer out "removed" files; and let us keep some based on a keep-allowlist
         self.stdout.write("Extracting app now...\n")
         for gaf in files_iter:
-            if match_bwlist(gaf.path, excludes):
+            if exclude_filter.match(gaf.path):
                 self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
@@ -346,10 +352,13 @@ class UnarchiveCmd(KsconfCmd):
         keep_list = fixup_pattern_bw(keep_list)
         self.stderr.write("Keep file patterns:  {!r}\n".format(keep_list))
 
+        keep_filter = create_filtered_list("splunk", default=False)
+        keep_filter.feedall(keep_list)
+
         files_to_delete = []
         files_to_keep = []
         for fn in files_del:
-            if match_bwlist(fn, keep_list):
+            if keep_filter.match(fn):
                 # How to handle a keep of "default.d/..." when we DO want to cleanup the default
                 # redirect folder of "default.d/10-upstream"?
                 # This may be an academic question since most apps will continue to send

@@ -140,6 +140,16 @@ def splglob_to_regex(pattern, re_flags=None):
     return re.compile(regex, flags=re_flags)
 
 
+def splglob_simple(pattern):
+    """ Return a splglob that either matches a full path or match a simple file """
+    if "/" not in pattern:
+        # Assume we've been given a simple file name:   app.conf, *.tgz
+        pattern = "^.../{}$".format(pattern)
+    else:
+        pattern = "^{}$".format(pattern)
+    return pattern
+
+
 def match_bwlist(value, bwlist):
     """
     Determine if ``value`` matches patterns contained with ``bwlist``.

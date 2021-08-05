@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import fnmatch
+import os
 import re
 import sys
 from collections import Counter
@@ -35,20 +36,23 @@ class FilteredList(object):
             sys.stderr.write("Loaded {} patterns from {}\n".format(len(items), path))
         return items
 
-    def feed(self, item):
+    def feed(self, item, filter=None):
         if item.startswith("file://"):
             # File ingestion mode
             filename = item[7:]
-            self.data.extend(self._feed_from_file(filename))
+            for item in self._feed_from_file(filename):
+                self.feed(item, filter)
         else:
+            if filter:
+                item = filter(item)
             self.data.append(item)
         # New items added.  Mark prep-work as incomplete
         self._prep = False
 
-    def feedall(self, iterable):
+    def feedall(self, iterable, filter=None):
         if iterable:
             for i in iterable:
-                self.feed(i)
+                self.feed(i, filter)
         return self
 
     def _pre_match(self):  # pragma: no cover
@@ -61,10 +65,6 @@ class FilteredList(object):
                 self._pre_match()
                 self.reset_counters()
                 self._prep = True
-
-            # Q:  Is this the best way to handle global entries?
-            if item is GLOBAL_STANZA:
-                item = "default"
 
             ret = self._match(item)
             if ret:
@@ -80,6 +80,17 @@ class FilteredList(object):
             return not result
         else:
             return result
+
+    def match_path(self, path):
+        if os.path.sep != "/":
+            path = path.replace(os.path.sep, "/")
+        return self.match(path)
+
+    def match_stanza(self, stanza):
+        """ Same as match(), but handle GLOBAL_STANZA gracefully. """
+        if stanza is GLOBAL_STANZA:
+            stanza = "default"
+        return self.match(stanza)
 
     def reset_counters(self):
         # Set all the counters to 0, so the caller can know which filters had 0 hits

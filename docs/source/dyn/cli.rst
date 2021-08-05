@@ -97,6 +97,7 @@ ksconf combine
     usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
                           [-I PATTERN] [-E PATTERN] [--dry-run] [--follow-symlink]
                           [--banner BANNER] [-K KEEP_EXISTING] [--disable-marker]
+                          [--disable-cleanup]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -168,6 +169,9 @@ ksconf combine
                             folder is managed by ksconf. This option should be
                             reserved for well-controlled batch processing
                             scenarios.
+      --disable-cleanup     Disable all file removal operations. Skip the cleanup
+                            phase that typically removes files in TARGET that no
+                            longer exist in SOURCE
 
 
 

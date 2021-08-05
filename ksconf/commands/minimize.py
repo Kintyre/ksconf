@@ -26,8 +26,8 @@ from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_LOOSE,
                                 PARSECONF_STRICT, _drop_stanza_comments)
 from ksconf.consts import EXIT_CODE_MISSING_ARG
+from ksconf.filter import create_filtered_list
 from ksconf.util.completers import conf_files_completer
-from ksconf.util.file import match_bwlist
 
 
 def explode_default_stanza(conf, default_stanza=None):
@@ -119,6 +119,9 @@ class MinimizeCmd(KsconfCmd):
 
         diffs = compare_cfgs(default_cfg, local_cfg, allow_level0=False)
 
+        preserve_attributes = create_filtered_list("splunk", default=False)
+        preserve_attributes.feedall(args.preserve_key)
+
         for op in diffs:
             if op.tag == DIFF_OP_DELETE:
                 # This is normal.  Don't expect all default content to be mirrored into local
@@ -128,7 +131,7 @@ class MinimizeCmd(KsconfCmd):
                     del minz_cfg[op.location.stanza]
                 else:
                     # Todo: Only preserve keys for stanzas where at least 1 key has been modified
-                    if match_bwlist(op.location.key, args.preserve_key):
+                    if preserve_attributes.match(op.location.key):
                         '''
                         self.stderr.write("Skipping key [PRESERVED]  [{0}] key={1} value={2!r}\n"
                                      "".format(op.location.stanza, op.location.key, op.a))

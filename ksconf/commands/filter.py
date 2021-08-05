@@ -161,7 +161,7 @@ class FilterCmd(KsconfCmd):
             self.filter_attrs = lambda x: x
 
     def _test_stanza(self, stanza, attributes):
-        if self.stanza_filters.match(stanza):
+        if self.stanza_filters.match_stanza(stanza):
             # If there are no attribute level filters, automatically keep (preserves empty stanzas)
             if not self.attr_presence_filters.has_rules:
                 return True
