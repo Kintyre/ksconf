@@ -132,7 +132,7 @@ _is_glob_re = re.compile("({})".format("|".join(list(_glob_to_regex.keys()))))
 def match_bwlist(value, bwlist, escape=True):
     """
     Determine if ``value`` matches patterns contained with ``bwlist``.
-    :param value str: Filename or directory to test
+    :param value str: path or conf attribute name
     :param bwlist list: List of patterns to be matched against.
     :param escape bool: Determines if the pattern list should allow regular
                         expressions or not.  By default, all characters are

@@ -26,6 +26,37 @@ class KsconfUtilsTest(unittest.TestCase):
         self.assertFalse(match_bwlist("egg", bwlist))
         self.assertFalse(match_bwlist("theapplejack", bwlist))
 
+    def test_bwlist_wildcards(self):
+        from ksconf.util.file import match_bwlist
+        bwlist = [
+            "keep/me",
+            ".../*.jpg",
+            "....png",
+            "prefix/*/suffix",
+            "prefix2/.../suffix2",
+        ]
+        self.assertTrue(match_bwlist("keep/me", bwlist))
+        self.assertFalse(match_bwlist("nested/keep/me", bwlist))
+        self.assertFalse(match_bwlist("keep/me/nope", bwlist))
+
+        self.assertTrue(match_bwlist("/some/nested/pict.jpg", bwlist))
+        self.assertTrue(match_bwlist("/very/ver/ve/v/nested/pict.jpg", bwlist))
+        self.assertTrue(match_bwlist("/very/ver/ve/v/nested/pict.png", bwlist))
+
+        self.assertFalse(match_bwlist("image.jpg", bwlist))  # Must have at least one '/'
+        self.assertTrue(match_bwlist("image.png", bwlist))  # No prefix required
+
+        # match_bwlist() assumes that 'value' is normalized first
+        self.assertFalse(match_bwlist("\\not\\supported\\pict.jpg", bwlist))
+        self.assertTrue(match_bwlist("\\this\\is\\supported\\pict.png", bwlist))
+
+        self.assertTrue(match_bwlist("prefix/blah/suffix", bwlist))
+        self.assertFalse(match_bwlist("prefix/b/l/a/h/suffix", bwlist))
+
+        self.assertTrue(match_bwlist("prefix2/blah/suffix2", bwlist))
+        self.assertTrue(match_bwlist("prefix2/b/l/a/h/suffix2", bwlist))
+        self.assertFalse(match_bwlist("prefix2/suffix2", bwlist))
+
     def test_handle_p3koa(self):
         from ksconf.util import handle_py3_kw_only_args
         kw = {"a": 1, "b": 2}
