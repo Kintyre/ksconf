@@ -6,6 +6,7 @@ import sys
 from collections import Counter
 
 from ksconf.conf.parser import GLOBAL_STANZA
+from ksconf.util.file import splglob_to_regex
 
 
 class FilteredList(object):
@@ -13,12 +14,14 @@ class FilteredList(object):
     INVERT = 2
     VERBOSE = 4
 
-    def __init__(self, flags=0):
+    def __init__(self, flags=0, default=True):
         self.data = []
         self.rules = None
         self.counter = Counter()
         self.flags = flags
         self._prep = True
+        #  If no patterns defined, return default.  (True => match everything)
+        self.default = default
 
     def _feed_from_file(self, path):
         items = []
@@ -71,8 +74,8 @@ class FilteredList(object):
                 result = False
 
         else:
-            #  No patterns defined.  No filter rule(s) => allow all through
-            return True
+            #  No patterns defined, use default
+            return self.default
         if self.flags & self.INVERT:
             return not result
         else:
@@ -142,7 +145,7 @@ class FilteredListRegex(FilteredList):
         self.counter.update({i[0]: 0 for i in self.rules})
 
 
-class FilterListWildcard(FilteredListRegex):
+class FilteredListWildcard(FilteredListRegex):
     """ Wildcard support (handling '*' and ?')
     Technically fnmatch also supports [] and [!] character ranges, but we don't advertise that
     """
@@ -153,12 +156,28 @@ class FilterListWildcard(FilteredListRegex):
         self.rules = [(wc, re.compile(fnmatch.translate(wc), re_flags)) for wc in self.data]
 
 
-def create_filtered_list(match_mode, flags=0):
-    if match_mode == "string":
-        return FilteredListString(flags)
-    elif match_mode == "wildcard":
-        return FilterListWildcard(flags)
-    elif match_mode == "regex":
-        return FilteredListRegex(flags)
-    else:
+class FilteredListSplunkGlob(FilteredListRegex):
+    """ Classic wildcard support ('*' and ?') plus '...' or '**' for multiple-path components with
+    some (non-advertised) pass-through regex behavior
+    """
+
+    def _pre_match(self):
+        # Use splglob_to_regex to translate wildcard expression to a regex, and compile regex
+        re_flags = self.calc_regex_flags()
+        self.rules = [(wc, splglob_to_regex(wc, re_flags)) for wc in self.data]
+
+
+class_mapping = {
+    "string": FilteredListString,
+    "wildcard": FilteredListWildcard,
+    "regex": FilteredListRegex,
+    "splunk": FilteredListSplunkGlob,
+}
+
+
+def create_filtered_list(match_mode, flags=0, default=True):
+    try:
+        class_ = class_mapping[match_mode]
+    except KeyError:
         raise NotImplementedError("Matching mode {!r} undefined".format(match_mode))
+    return class_(flags, default)

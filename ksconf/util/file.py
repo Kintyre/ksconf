@@ -131,13 +131,13 @@ _glob_to_regex = [
 _glob_to_regex_find = "({})".format("|".join(re.escape(r) for r, _ in _glob_to_regex))
 
 
-def splglob_to_regex(pattern):
+def splglob_to_regex(pattern, re_flags=None):
     glob_to_regex = dict(_glob_to_regex)
     regex = re.sub(_glob_to_regex_find, lambda m: glob_to_regex[m.group()], pattern)
     # If NO anchors have been explicitly given, then assume full-match mode:
     if not re.search(r'(?<![\[\\])[$^]', regex):
         regex = "^{}$".format(regex)
-    return re.compile(regex)
+    return re.compile(regex, flags=re_flags)
 
 
 def match_bwlist(value, bwlist):
@@ -154,11 +154,14 @@ def match_bwlist(value, bwlist):
     if value in bwlist:
         return True
     # Now see if anything in the bwlist contains a glob pattern
-    for pattern in bwlist:
-        regex = splglob_to_regex(pattern)
-        if regex.match(value):
-            return True
-    return False
+
+    # NOTE:  This is very inefficient; but that's not new.  Consider using
+    #        FilterLists directly to avoid recompiling that matching rules.
+    from ksconf.filter import create_filtered_list
+    fl = create_filtered_list("splunk")
+    fl.default = False
+    fl.feedall(bwlist)
+    return fl.match(value)
 
 
 def relwalk(top, topdown=True, onerror=None, followlinks=False):

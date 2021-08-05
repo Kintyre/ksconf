@@ -11,8 +11,9 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from ksconf.filter import (FilteredList, FilteredListRegex, FilteredListString,
-                           FilterListWildcard, create_filtered_list)
+from ksconf.filter import (FilteredList, FilteredListRegex,
+                           FilteredListSplunkGlob, FilteredListString,
+                           FilteredListWildcard, create_filtered_list)
 
 
 class FilterTestCase(unittest.TestCase):
@@ -29,7 +30,8 @@ class FilterTestCase(unittest.TestCase):
     def test_helper_function(self):
         self.assertIsInstance(create_filtered_list("string"), FilteredListString)
         self.assertIsInstance(create_filtered_list("regex"), FilteredListRegex)
-        self.assertIsInstance(create_filtered_list("wildcard"), FilterListWildcard)
+        self.assertIsInstance(create_filtered_list("wildcard"), FilteredListWildcard)
+        self.assertIsInstance(create_filtered_list("splunk"), FilteredListSplunkGlob)
 
     def filter(self, filter_type, filters, items, flags=0):
         fl = create_filtered_list(filter_type, flags)

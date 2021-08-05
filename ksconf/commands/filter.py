@@ -23,7 +23,7 @@ import sys
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
 from ksconf.consts import EXIT_CODE_SUCCESS
-from ksconf.filter import FilteredList, FilterListWildcard, create_filtered_list
+from ksconf.filter import FilteredList, FilteredListWildcard, create_filtered_list
 from ksconf.util.completers import conf_files_completer
 
 
@@ -150,10 +150,10 @@ class FilterCmd(KsconfCmd):
         self.attr_presence_filters.feedall(args.attr_present)
 
         if args.keep_attrs or args.reject_attrs:
-            self.attrs_keep_filter = FilterListWildcard(flags)
+            self.attrs_keep_filter = FilteredListWildcard(flags)
             for attrs in args.keep_attrs:
                 self.attrs_keep_filter.feedall(attrs.split(" "))
-            self.attrs_reject_filter = FilterListWildcard(FilteredList.INVERT | flags)
+            self.attrs_reject_filter = FilteredListWildcard(FilteredList.INVERT | flags)
             for attrs in args.reject_attrs:
                 self.attrs_reject_filter.feedall(attrs.split(" "))
         else:
