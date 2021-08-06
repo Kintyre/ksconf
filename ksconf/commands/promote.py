@@ -242,14 +242,14 @@ class PromoteCmd(KsconfCmd):
         # Prep filters and determine if there's any automatic work that can be done
         if self.prep_filters(args):
             # Run filter and then return control back
-            cfg_src, cfg_tgt = self._do_promote_list(cfg_src, cfg_tgt, args)
+            delta, cfg_src, cfg_tgt = self._do_promote_list(cfg_src, cfg_tgt, args)
+        else:
+            delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+            delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
 
         if args.mode in ("ask", "summary"):
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
-            delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
-            delta = [op for op in self.apply_filters(delta, args.invert_match)
-                     if op.tag != DIFF_OP_DELETE]
             summarize_cfg_diffs(delta, self.stderr)
             if args.mode == "summary":
                 return
@@ -446,9 +446,10 @@ class PromoteCmd(KsconfCmd):
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+        diff = [op for op in self.apply_filters(diff, args.invert_match)
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
-        for op in self.apply_filters(diff, args.invert_match):
+        for op in diff:
             if args.verbose:
                 show_diff(self.stdout, [op])
             if isinstance(op.location, DiffStanza):
@@ -462,4 +463,4 @@ class PromoteCmd(KsconfCmd):
                 # If last remaining key in the src stanza?  Then delete the entire stanza
                 if not out_src[op.location.stanza]:
                     del out_src[op.location.stanza]
-        return (out_src, out_cfg)
+        return (diff, out_src, out_cfg)
