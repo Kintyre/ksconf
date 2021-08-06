@@ -247,7 +247,7 @@ class PromoteCmd(KsconfCmd):
         if args.mode in ("ask", "summary"):
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
-            delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+            delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
             delta = [op for op in self.apply_filters(delta, args.invert_match)
                      if op.tag != DIFF_OP_DELETE]
             summarize_cfg_diffs(delta, self.stderr)
@@ -396,7 +396,7 @@ class PromoteCmd(KsconfCmd):
         # Todo:  IMPLEMENT A MANUAL MERGE/DIFF HERE:
         # What ever is migrated, move it OUT of cfg_src, and into cfg_tgt
 
-        diff = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
         for op in diff:
             if op.tag == DIFF_OP_DELETE:
                 # This is normal.   Only changed attributes are copied & updated in local.
@@ -446,7 +446,7 @@ class PromoteCmd(KsconfCmd):
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
+        diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
         for op in self.apply_filters(diff, args.invert_match):
             if args.verbose:

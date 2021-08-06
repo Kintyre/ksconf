@@ -49,7 +49,12 @@ class DiffHeader(object):
         return "{0:50} {1}".format(self.name, ts)
 
 
-def compare_stanzas(a, b, stanza_name):
+def compare_stanzas(a, b, stanza_name, replace_level="global"):
+    """
+    :param replace_level: If a and b have no common keys, is a single stanza-level
+                      'replace' is issue unless ``replace_level="key"``
+    :type replace_level: bool
+    """
     if a == b:
         return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)]
     elif b is None:
@@ -59,13 +64,13 @@ def compare_stanzas(a, b, stanza_name):
         # B only
         return [DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b)]
     else:
-        return list(_compare_stanzas(a, b, stanza_name))
+        return list(_compare_stanzas(a, b, stanza_name, replace_level))
 
 
-def _compare_stanzas(a, b, stanza_name):
+def _compare_stanzas(a, b, stanza_name, replace_level):
     kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
 
-    if not kv_common:
+    if replace_level in ("global", "stanza") and not kv_common:
         # No keys in common, just swap
         yield DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza_name), a, b)
         return
@@ -84,14 +89,34 @@ def _compare_stanzas(a, b, stanza_name):
             yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
 
 
-def compare_cfgs(a, b, allow_level0=True):
+def compare_cfgs(a, b, replace_level="global"):
     '''
-    Return list of 5-tuples describing how to turn a into b.
+    Calculate a set of deltas which describes how to transform a into b.
 
-    .. note:: The `Opcode` tags borrowed from :class:`SequenceMatcher` class in the :mod:`difflib`
-              standard Python module.
+    :param a: the first/original configuration entity
+    :type a: dict
+    :param b: the second/target configuration entity
+    :type b: dict
+    :param replace_level: The highest level 'replace' event that can be returned.
+        Acceptable values are ``global``, ``stanza``, and ``key``.
+        These examples may help:
+            *   Using 'global' with identical inputs will report a single global-level equal op.
+            *   Using 'stanza' with identical inputs will return all stanzas as equal.
+            *   Using 'key' will ensure that two stanzas with no common keys will be reported in
+                terms of key changes.  Whereas 'global' or 'stanza' would result in a single giant replace op.
 
-    Each tuple takes the form:
+    :type replace_level: str: ``global``, ``stanza``, or ``key``
+    :return: a sequence of differences in tuples
+    :rtype: [DiffOp]
+
+    .. note:: The :py:class:`DiffOp` output idea was borrowed from
+              :class:`SequenceMatcher` class in the :mod:`difflib`
+              in the standard Python module.
+
+    This function returns a sequence of 5 element tuples describing the
+    transformation based on the detail level specified in `replace_level`.
+
+    Each :py:class:`DiffOp` (named tuple) takes the form:
 
         (tag, location, a, b)
 
@@ -106,27 +131,38 @@ def compare_cfgs(a, b, allow_level0=True):
     'equal'	    same values in both
     =========   ============================================
 
-    *location* is a tuple that can take the following forms:
+    *location* is a namedtuple that can take the following forms:
 
-    ===================  ===============================================================
-    Tuple form           Description
-    ===================  ===============================================================
-    `(0)`                Global file level context (e.g., both files are the same)
-    `(1, stanza)`        Stanzas are the same, or completely different (no shared keys)
-    `(2, stanza, key)`   Key level, indicating
-    ===================  ===============================================================
+    ====================== ========== ==============================================================
+    Tuple form             Type       Description
+    ====================== ========== ==============================================================
+    `("global")`           DiffGlobal Global file level context (e.g., both files are the same)
+    `("stanza", stanza)`   DiffStanza Stanzas are the same, or completely different (no shared keys)
+    `("key", stanza, key)` DiffStzKey Key level change
+    ====================== ========== ==============================================================
 
+    .. versionchanged:: v0.8.8
+        The ``preserve_empty`` argument was origionally introduced to preserve backwards
+        compatibility, but it ended up introducing new bugs.
+        Additionally, no use cases were found where better to automatically discarding empty stanzas.
 
-    Possible alternatives:
+    .. versionchanged:: v0.8.8
+        The ``allow_level0`` argument was replaced with ``replace_level``.
+        Instead of using ``allow_level0=False`` use ``replace_level="stanza"``.
+        At the same time an new feature was added to support ``replace_level="key"``.
+        The default behavior remains the same.
 
-    https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
     '''
-    # Note:  The 'preserve_empty' argument was silly and has been removed in v0.8.8
+    # Possible alternatives:
+    # https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
+
+    if replace_level not in ("global", "stanza", "key"):
+        raise TypeError("Invalid value given for 'replace_level'. Choose 'global', 'stanza', or 'key'")
 
     delta = []
 
     # Level 0 - Compare entire file
-    if allow_level0:
+    if replace_level == "global":
         stanza_a, stanza_common, stanza_b = _cmp_sets(list(a.keys()), list(b.keys()))
         if a == b:
             return [DiffOp(DIFF_OP_EQUAL, DiffGlobal("global"), a, b)]

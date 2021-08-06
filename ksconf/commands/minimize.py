@@ -117,7 +117,7 @@ class MinimizeCmd(KsconfCmd):
         # and local [Upstream] stanza line up, but [Upstream] in our default file does not.
         # XXX:  Add a unit test!
 
-        diffs = compare_cfgs(default_cfg, local_cfg, allow_level0=False)
+        diffs = compare_cfgs(default_cfg, local_cfg, replace_level="stanza")
 
         preserve_attributes = create_filtered_list("splunk", default=False)
         preserve_attributes.feedall(args.preserve_key)

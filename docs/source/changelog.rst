@@ -63,7 +63,10 @@ Ksconf 0.8
 -  Removed :py:func:`~ksconf.util.file.match_bwlist`
    :py:class:`~ksconf.filter.FilteredList` and derived classes should be used instead.
 
--  Remove ``preserve_empty`` parameter on :py:class:`~ksconf.conf.delta.compare_cfgs` and :py:class:`~ksconf.conf.delta.compare_stanzas`.
+-  Updated interface for :py:class:`~ksconf.conf.delta.compare_cfgs` and :py:class:`~ksconf.conf.delta.compare_stanzas`.
+   (1) Removed the ``preserve_empty`` parameter and
+   (2) Replaced the awkwardly named ``allow_level0`` parameter with a new ``replace_level`` attribute that can be set to ``global``, ``stanza`` or ``key``.
+   This new option can be used to control the level of detail in the output.
 
 **Developer changes:**
 
