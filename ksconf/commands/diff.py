@@ -41,6 +41,9 @@ class DiffCmd(KsconfCmd):
         parser.add_argument("-o", "--output", metavar="FILE",
                             type=argparse.FileType('w'), default=self.stdout,
                             help="File where difference is stored.  Defaults to standard out.")
+        parser.add_argument("--detail", "-d",
+                            choices=["global", "stanza", "key"], default="global",
+                            help="Control the highest level for which 'replace' events may occur.")
         parser.add_argument("--comments", "-C",
                             action="store_true", default=False,
                             help="Enable comparison of comments.  (Unlikely to work consistently)")
@@ -53,7 +56,8 @@ class DiffCmd(KsconfCmd):
         cfg1 = args.conf1.data
         cfg2 = args.conf2.data
 
-        diffs = compare_cfgs(cfg1, cfg2)
+        diffs = compare_cfgs(cfg1, cfg2, replace_level=args.detail)
+
         rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
         if rc == EXIT_CODE_DIFF_EQUAL:
             self.stderr.write("Files are the same.\n")

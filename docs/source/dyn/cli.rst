@@ -182,7 +182,8 @@ ksconf diff
 
  .. code-block:: none
 
-    usage: ksconf diff [-h] [-o FILE] [--comments] CONF1 CONF2
+    usage: ksconf diff [-h] [-o FILE] [--detail {global,stanza,key}] [--comments]
+                       CONF1 CONF2
     
     Compares the content differences of two .conf files
     
@@ -200,6 +201,9 @@ ksconf diff
       -o FILE, --output FILE
                             File where difference is stored. Defaults to standard
                             out.
+      --detail {global,stanza,key}, -d {global,stanza,key}
+                            Control the highest level for which 'replace' events
+                            may occur.
       --comments, -C        Enable comparison of comments. (Unlikely to work
                             consistently)
 
