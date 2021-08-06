@@ -248,7 +248,7 @@ class PromoteCmd(KsconfCmd):
             # Run filter and then return control back
             delta, cfg_src, cfg_tgt = self._do_promote_list(cfg_src, cfg_tgt, args)
         else:
-            delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+            delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="key")
             delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
 
         if args.mode == "diff":
@@ -405,7 +405,7 @@ class PromoteCmd(KsconfCmd):
         # Todo:  IMPLEMENT A MANUAL MERGE/DIFF HERE:
         # What ever is migrated, move it OUT of cfg_src, and into cfg_tgt
 
-        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="key")
         for op in diff:
             if op.tag == DIFF_OP_DELETE:
                 # This is normal.   Only changed attributes are copied & updated in local.
@@ -455,7 +455,7 @@ class PromoteCmd(KsconfCmd):
     def _do_promote_list(self, cfg_src, cfg_tgt, args):
         out_src = deepcopy(cfg_src)
         out_cfg = deepcopy(cfg_tgt)
-        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
+        diff = compare_cfgs(cfg_tgt, cfg_src, replace_level="key")
         diff = [op for op in self.apply_filters(diff, args.invert_match)
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
         for op in diff:
