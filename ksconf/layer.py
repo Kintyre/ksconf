@@ -116,8 +116,8 @@ class LayerConfig(object):
     def __init__(self):
         # Set defaults
         self.follow_symlink = False
-        self.blacklist_files = re.compile(r"\.(bak|swp)$")
-        self.blacklist_dirs = {".git"}
+        self.block_files = re.compile(r"\.(bak|swp)$")
+        self.block_dirs = {".git"}
 
 
 class LayerRootBase(object):
@@ -157,9 +157,9 @@ class LayerRootBase(object):
             # In the simple case, this is good enough.   Some subclasses will need to override
             for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
                                                followlinks=self.config.follow_symlink):
-                files = [f for f in files if not self.config.blacklist_files.search(f)]
+                files = [f for f in files if not self.config.block_files.search(f)]
                 for d in list(dirs):
-                    if d in self.config.blacklist_dirs:
+                    if d in self.config.block_dirs:
                         dirs.remove(d)
                 yield (root, dirs, files)
 

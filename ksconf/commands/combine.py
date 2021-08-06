@@ -215,7 +215,7 @@ class CombineCmd(KsconfCmd):
             for fn in files:
                 tgt_file = os.path.join(root, fn)
                 if tgt_file not in src_file_listing:
-                    if fn == CONTROLLED_DIR_MARKER or config.blacklist_files.search(fn):
+                    if fn == CONTROLLED_DIR_MARKER or config.block_files.search(fn):
                         continue  # pragma: no cover (peephole optimization)
                     target_extra_files.add(tgt_file)
 
