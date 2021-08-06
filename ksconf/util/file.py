@@ -150,30 +150,6 @@ def splglob_simple(pattern):
     return pattern
 
 
-def match_bwlist(value, bwlist):
-    """
-    Determine if ``value`` matches patterns contained with ``bwlist``.
-    Supports typical '*' and '?' glob-like patterns, '...' and '**' for any-depth
-    base paths and it allows other regex expressions to be passed through as well.
-    :param value str: path or conf attribute name
-    :param bwlist list: List of patterns to be matched against.
-    :return: match result
-    :rtype: bool
-    """
-    # Return direct matches first  (most efficient)
-    if value in bwlist:
-        return True
-    # Now see if anything in the bwlist contains a glob pattern
-
-    # NOTE:  This is very inefficient; but that's not new.  Consider using
-    #        FilterLists directly to avoid recompiling that matching rules.
-    from ksconf.filter import create_filtered_list
-    fl = create_filtered_list("splunk")
-    fl.default = False
-    fl.feedall(bwlist)
-    return fl.match(value)
-
-
 def relwalk(top, topdown=True, onerror=None, followlinks=False):
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.

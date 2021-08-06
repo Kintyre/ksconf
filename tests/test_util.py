@@ -10,6 +10,8 @@ if __package__ is None:
 
 import unittest
 
+from ksconf.filter import FilteredListSplunkGlob
+
 
 class KsconfUtilsTest(unittest.TestCase):
 
@@ -18,49 +20,54 @@ class KsconfUtilsTest(unittest.TestCase):
         results = list(_xargs(["%06x" % i for i in range(10000)]))
         self.assertGreater(len(results), 1)
 
-    def test_bwlist(self):
-        from ksconf.util.file import match_bwlist
-        bwlist = ["apple", "spoon", "hotdog", r"bak*"]
-        self.assertTrue(match_bwlist("hotdog", bwlist))
-        self.assertTrue(match_bwlist("bake", bwlist))
-        self.assertFalse(match_bwlist("egg", bwlist))
-        self.assertFalse(match_bwlist("theapplejack", bwlist))
+    def test_splglob_simple(self):
+        fl = FilteredListSplunkGlob(default=False)
+        fl.feedall(["apple", "spoon", "hotdog", r"bak*"])
+        self.assertTrue(fl.match("hotdog"))
+        self.assertTrue(fl.match("bake"))
+        self.assertFalse(fl.match("egg"))
+        self.assertFalse(fl.match("theapplejack"))
 
-    def test_bwlist_wildcards(self):
-        from ksconf.util.file import match_bwlist
-        bwlist = [
+    def test_splglob_wildcards(self):
+        fl = FilteredListSplunkGlob()
+        fl.feedall([
             "keep/me",
             ".../*.jpg",
             "....png",
             "prefix/*/suffix",
             "prefix2/.../suffix2",
             "prefix3/**/suffix3",
-        ]
-        self.assertTrue(match_bwlist("keep/me", bwlist))
-        self.assertFalse(match_bwlist("nested/keep/me", bwlist))
-        self.assertFalse(match_bwlist("keep/me/nope", bwlist))
+        ])
 
-        self.assertTrue(match_bwlist("/some/nested/pict.jpg", bwlist))
-        self.assertTrue(match_bwlist("/very/ver/ve/v/nested/pict.jpg", bwlist))
-        self.assertTrue(match_bwlist("/very/ver/ve/v/nested/pict.png", bwlist))
+        self.assertTrue(fl.match("keep/me"))
+        self.assertFalse(fl.match("nested/keep/me"))
+        self.assertFalse(fl.match("keep/me/nope"))
 
-        self.assertFalse(match_bwlist("image.jpg", bwlist))  # Must have at least one '/'
-        self.assertTrue(match_bwlist("image.png", bwlist))  # No prefix required
+        self.assertTrue(fl.match("/some/nested/pict.jpg"))
+        self.assertTrue(fl.match("/very/ver/ve/v/nested/pict.jpg"))
+        self.assertTrue(fl.match("/very/ver/ve/v/nested/pict.png"))
 
-        # match_bwlist() assumes that 'value' is normalized first
-        self.assertFalse(match_bwlist("\\not\\supported\\pict.jpg", bwlist))
-        self.assertTrue(match_bwlist("\\this\\is\\supported\\pict.png", bwlist))
+        self.assertFalse(fl.match("image.jpg"))  # Must have at least one '/'
+        self.assertTrue(fl.match("image.png"))  # No prefix required
 
-        self.assertTrue(match_bwlist("prefix/blah/suffix", bwlist))
-        self.assertFalse(match_bwlist("prefix/b/l/a/h/suffix", bwlist))
+        # match() assumes that 'value' is normalized first
+        self.assertFalse(fl.match("\\not\\supported\\pict.jpg"))
+        self.assertTrue(fl.match("\\this\\is\\supported\\pict.png"))
 
-        self.assertTrue(match_bwlist("prefix2/blah/suffix2", bwlist))
-        self.assertTrue(match_bwlist("prefix2/b/l/a/h/suffix2", bwlist))
-        self.assertFalse(match_bwlist("prefix2/suffix2", bwlist))
+        # Using match_path() handles dos->unix (*if running on Windows)
+        if sys.platform.startswith("win"):
+            self.assertTrue(fl.match_path("\\not\\supported\\pict.jpg"))
 
-        self.assertTrue(match_bwlist("prefix3/blah/suffix3", bwlist))
-        self.assertTrue(match_bwlist("prefix3/b/l/a/h/suffix3", bwlist))
-        self.assertFalse(match_bwlist("prefix3/suffix3", bwlist))
+        self.assertTrue(fl.match("prefix/blah/suffix"))
+        self.assertFalse(fl.match("prefix/b/l/a/h/suffix"))
+
+        self.assertTrue(fl.match("prefix2/blah/suffix2"))
+        self.assertTrue(fl.match("prefix2/b/l/a/h/suffix2"))
+        self.assertFalse(fl.match("prefix2/suffix2"))
+
+        self.assertTrue(fl.match("prefix3/blah/suffix3"))
+        self.assertTrue(fl.match("prefix3/b/l/a/h/suffix3"))
+        self.assertFalse(fl.match("prefix3/suffix3"))
 
     def test_handle_p3koa(self):
         from ksconf.util import handle_py3_kw_only_args
