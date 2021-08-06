@@ -183,7 +183,7 @@ def compare_cfgs(a, b, replace_level="global"):
         all_stanzas = list(all_stanzas)
     all_stanzas = sorted(all_stanzas)
     for stanza in all_stanzas:
-        delta.extend(compare_stanzas(a.get(stanza), b.get(stanza), stanza))
+        delta.extend(compare_stanzas(a.get(stanza), b.get(stanza), stanza, replace_level))
     return delta
 
 
