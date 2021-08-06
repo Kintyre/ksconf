@@ -280,7 +280,6 @@ def show_diff(stream, diffs, headers=None):
                     stream.write("{0}[{1}]\n".format(prefix_, stanza_))
                 for x, y in sorted(six.iteritems(value)):
                     write_key(x, y, prefix_)
-                stream.write("\n")
             else:
                 write_key(key, value, prefix_)
 
@@ -326,12 +325,6 @@ def show_diff(stream, diffs, headers=None):
 
     last_stanza = None
     for op in diffs:
-        if isinstance(op.location, DiffStanza):
-            if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
-                show_value(op.a, op.location.stanza, None, "-")
-            if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
-                show_value(op.b, op.location.stanza, None, "+")
-            continue  # pragma: no cover  (peephole optimization)
 
         if op.location.stanza != last_stanza:
             if last_stanza is not None:
@@ -341,6 +334,13 @@ def show_diff(stream, diffs, headers=None):
             if op.location.stanza is not GLOBAL_STANZA:
                 stream.write(" [{0}]\n".format(op.location.stanza))
             last_stanza = op.location.stanza
+
+        if isinstance(op.location, DiffStanza):
+            if op.tag in (DIFF_OP_DELETE, DIFF_OP_REPLACE):
+                show_value(op.a, op.location.stanza, None, "-")
+            if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE):
+                show_value(op.b, op.location.stanza, None, "+")
+            continue
 
         if op.tag == DIFF_OP_INSERT:
             show_value(op.b, op.location.stanza, op.location.key, "+")
