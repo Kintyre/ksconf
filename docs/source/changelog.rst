@@ -77,6 +77,7 @@ Ksconf v0.8.8 (DRAFT)
       (1) Layers that weren't immediately under the source directory were not detected, and
       (2) layers existing beyond a symlink were not detected.
    This change targeted for ``ksconf combine`` but may fix other similar issues.
+-  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--sumary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
 -  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
 

@@ -248,7 +248,8 @@ class PromoteCmd(KsconfCmd):
             # Show a summary of how many new stanzas would be copied across; how many key changes.
             # And either accept all (batch) or pick selectively (batch)
             delta = compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
-            delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
+            delta = [op for op in self.apply_filters(delta, args.invert_match)
+                     if op.tag != DIFF_OP_DELETE]
             summarize_cfg_diffs(delta, self.stderr)
             if args.mode == "summary":
                 return
@@ -311,6 +312,11 @@ class PromoteCmd(KsconfCmd):
         self.stanza_filters = create_filtered_list(args.match, flags).feedall(args.stanza)
         if args.stanza:
             return True
+
+    def apply_filters(self, delta, invert_match=False):
+        for op in delta:
+            if self.stanza_filters.match_stanza(op.location.stanza) ^ invert_match:
+                yield op
 
     @staticmethod
     def combine_stanza(a, b):
@@ -442,19 +448,18 @@ class PromoteCmd(KsconfCmd):
         out_cfg = deepcopy(cfg_tgt)
         diff = [op for op in compare_cfgs(cfg_tgt, cfg_src, allow_level0=False)
                 if op.tag in (DIFF_OP_INSERT, DIFF_OP_REPLACE)]
-        for op in diff:
-            if self.stanza_filters.match_stanza(op.location.stanza) ^ args.invert_match:
-                if args.verbose:
-                    show_diff(self.stdout, [op])
-                if isinstance(op.location, DiffStanza):
-                    # Move entire stanza
-                    out_cfg[op.location.stanza] = self.combine_stanza(op.a, op.b)
+        for op in self.apply_filters(diff, args.invert_match):
+            if args.verbose:
+                show_diff(self.stdout, [op])
+            if isinstance(op.location, DiffStanza):
+                # Move entire stanza
+                out_cfg[op.location.stanza] = self.combine_stanza(op.a, op.b)
+                del out_src[op.location.stanza]
+            else:
+                # Move key
+                out_cfg[op.location.stanza][op.location.key] = op.b
+                del out_src[op.location.stanza][op.location.key]
+                # If last remaining key in the src stanza?  Then delete the entire stanza
+                if not out_src[op.location.stanza]:
                     del out_src[op.location.stanza]
-                else:
-                    # Move key
-                    out_cfg[op.location.stanza][op.location.key] = op.b
-                    del out_src[op.location.stanza][op.location.key]
-                    # If last remaining key in the src stanza?  Then delete the entire stanza
-                    if not out_src[op.location.stanza]:
-                        del out_src[op.location.stanza]
         return (out_src, out_cfg)
