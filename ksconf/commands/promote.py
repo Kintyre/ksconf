@@ -125,6 +125,10 @@ class PromoteCmd(KsconfCmd):
                           action="store_const",
                           dest="mode", const="summary",
                           help="Summarize content that could be promoted.")
+        grp1.add_argument("--diff", "-d",
+                          action="store_const",
+                          dest="mode", const="diff",
+                          help="Show the diff of what would be promoted.")
 
         parser.add_argument("--verbose", action="store_true", default=False,
                             help="Enable additional output.")
@@ -216,7 +220,7 @@ class PromoteCmd(KsconfCmd):
             # Allow local.meta -> default.meta without --force or a warning message
             pass
         elif bn_source != bn_target:
-            if args.mode == "summary":
+            if args.mode in ("summary", "diff"):
                 pass
             # Todo: Allow for interactive prompting when in interactive but not force mode.
             elif args.force:
@@ -246,6 +250,11 @@ class PromoteCmd(KsconfCmd):
         else:
             delta = compare_cfgs(cfg_tgt, cfg_src, replace_level="stanza")
             delta = [op for op in delta if op.tag != DIFF_OP_DELETE]
+
+        if args.mode == "diff":
+            self.stderr.write("\n")
+            show_diff(self.stderr, delta)
+            return
 
         if args.mode in ("ask", "summary"):
             # Show a summary of how many new stanzas would be copied across; how many key changes.

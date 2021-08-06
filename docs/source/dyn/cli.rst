@@ -376,10 +376,10 @@ ksconf promote
 
  .. code-block:: none
 
-    usage: ksconf promote [-h] [--batch | --interactive | --summary] [--verbose]
-                          [--match {regex,wildcard,string}] [--ignore-case]
-                          [--invert-match] [--stanza PATTERN] [--force] [--keep]
-                          [--keep-empty]
+    usage: ksconf promote [-h] [--batch | --interactive | --summary | --diff]
+                          [--verbose] [--match {regex,wildcard,string}]
+                          [--ignore-case] [--invert-match] [--stanza PATTERN]
+                          [--force] [--keep] [--keep-empty]
                           SOURCE TARGET
     
     Propagate .conf settings applied in one file to another.  Typically this is used
@@ -410,6 +410,7 @@ ksconf promote
                             and attributes. The user will be able to apply, skip,
                             or edit the changes being promoted.
       --summary, -s         Summarize content that could be promoted.
+      --diff, -d            Show the diff of what would be promoted.
       --verbose             Enable additional output.
       --force, -f           Disable safety checks. Don't check to see if SOURCE
                             and TARGET share the same basename.
