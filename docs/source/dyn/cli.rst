@@ -11,7 +11,7 @@ ksconf
 
  .. code-block:: none
 
-    usage: ksconf [-h] [--version] [--force-color]
+    usage: ksconf [-h] [--version] [--force-color] [--disable-color]
                   {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
@@ -61,6 +61,8 @@ ksconf
       --version             show program's version number and exit
       --force-color         Force TTY color mode on. Useful if piping the output a
                             color-aware pager, like 'less -R'
+      --disable-color       Disable TTY color mode. This can also be setup as
+                            environmental variable: 'export KSCONF_TTY_COLOR=off'
 
 
 

@@ -6,12 +6,7 @@ ANSI_RED = 31
 ANSI_GREEN = 32
 ANSI_YELLOW = 33
 ANSI_RESET = 0
-FORCE_TTY_COLOR = False
-
-
-def tty_color(stream, *codes):
-    if codes and FORCE_TTY_COLOR or hasattr(stream, "isatty") and stream.isatty():
-        stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
+TTY_COLOR_MODE = "auto"
 
 
 class TermColor(object):
@@ -22,7 +17,11 @@ class TermColor(object):
 
     def __init__(self, stream):
         self.stream = stream
-        if FORCE_TTY_COLOR or hasattr(stream, "isatty") and stream.isatty():
+
+        mode = TTY_COLOR_MODE.lower()
+        if mode in ("off", "no", "disable"):
+            self.color_enabled = False
+        elif mode in ("on", "force") or (hasattr(stream, "isatty") and stream.isatty()):
             self.color_enabled = True
         else:
             self.color_enabled = False

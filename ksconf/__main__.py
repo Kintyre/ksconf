@@ -192,9 +192,13 @@ def build_cli_parser(do_formatter=False):
                              "duplicate keys are found.")
     '''
     parser.add_argument('--version', action='version', version="\n".join(version_info))
-    parser.add_argument("--force-color", action="store_true", default=False,
+    parser.add_argument("--force-color", dest="tty_mode", const="force", action="store_const",
+                        default=os.environ.get("KSCONF_TTY_COLOR", "auto"),
                         help="Force TTY color mode on.  Useful if piping the output a color-aware "
                              "pager, like 'less -R'")
+    parser.add_argument("--disable-color", dest="tty_mode", const="off", action="store_const",
+                        help="Disable TTY color mode.  This can also be setup as environmental variable: "
+                        "``export KSCONF_TTY_COLOR=off``")
 
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
@@ -212,7 +216,7 @@ def cli(argv=None, _unittest=False):
 
     args = parser.parse_args(argv)
 
-    ksconf.util.terminal.FORCE_TTY_COLOR = args.force_color
+    ksconf.util.terminal.TTY_COLOR_MODE = args.tty_mode
 
     # This becomes a thing in Python 3.6
     if not hasattr(args, "funct") or args.funct is None:
