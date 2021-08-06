@@ -344,16 +344,22 @@ class DotDLayerRoot(LayerRootBase):
             return l is self._root_layer or layer_filter(l)
         return super(DotDLayerRoot, self).apply_filter(fltr)
 
-    def set_root(self, root, follow_symlinks=False):
+    def set_root(self, root, follow_symlinks=None):
         """ Set a root path, and auto discover all '.d' directories.
 
-        Note:  We currently only support '.d/<layer>' directories, so something like
+        Note:  We currently only support '.d/<layer>' directories, a file like
         `default.d/10-props.conf` won't be handled here.
         """
         Layer, File = self.Layer, self.File
+        if follow_symlinks is None:
+            follow_symlinks = self.config.follow_symlink
+
         for (top, dirs, files) in relwalk(root, topdown=False, followlinks=follow_symlinks):
             del files
-            mount_mo = self.mount_regex.match(top)
+
+            top_dirname, top_basename = os.path.split(top)
+            mount_mo = self.mount_regex.match(top_basename)
+
             if mount_mo:
                 for dir_ in dirs:
                     dir_mo = self.layer_regex.match(dir_)
@@ -361,16 +367,25 @@ class DotDLayerRoot(LayerRootBase):
                         # XXX: Nested layers breakage, must substitute multiple ".d" folders in `top`
                         layer = Layer(dir_mo.group("layer"),
                                       root,
-                                      physical=os.path.join(os.path.basename(top), dir_),
-                                      logical=mount_mo.group("realname"),
+                                      physical=os.path.join(top, dir_),
+                                      logical=os.path.join(top_dirname, mount_mo.group("realname")),
                                       config=self.config,
                                       file_cls=File)
                         self.add_layer(layer)
                         self._mount_points[top].append(dir_)
                     else:
-                        # XXX: Give the use the option of logging the near-matches (could indicate a
+                        # XXX: Give the user the option of logging the near-matches (could indicate a
                         # problem in the config, or could be some other legit directory structure)
+                        '''
+                        print("LAYER NEAR MISS:  {} looks like a mount point, but {} doesn't "
+                              "follow the expected convention".format(top, dir_))
+                        '''
                         pass
+            elif top.endswith(".d"):
+                '''
+                print("MOUNT NEAR MISS:  {}".format(top))
+                '''
+                pass
 
         # XXX: Adding <root> should be skipped if (and only if) root itself if a '.d' folder
         # Very last operation, add the top directory as the final layer (lowest rank)
