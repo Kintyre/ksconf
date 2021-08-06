@@ -331,7 +331,7 @@ def show_diff(stream, diffs, headers=None):
                 # Line break after last stanza
                 stream.write("\n")
                 stream.flush()
-            if op.location.stanza is not GLOBAL_STANZA:
+            if op.location.stanza is not GLOBAL_STANZA and not isinstance(op.location, DiffStanza):
                 stream.write(" [{0}]\n".format(op.location.stanza))
             last_stanza = op.location.stanza
 
@@ -383,3 +383,39 @@ def reduce_stanza(stanza, keep_attrs):
     :return: a reduced copy of ``stanza``.
     """
     return {attr: value for attr, value in six.iteritems(stanza) if attr in keep_attrs}
+
+
+def write_diff_as_json(delta, stream, **dump_args):
+    # XXX: Eventually support reversing this to import a json "patch"; and add an apply/reverse command.
+    import json
+    import sys
+
+    from ksconf import __vcs_info__, __version__
+    record = {
+        "schema_version": 1,
+        "software": {
+            "name": "ksconf",
+            "version": [__version__, __vcs_info__],
+            "command": sys.argv,
+            "cwd": os.getcwd(),
+        }
+    }
+    record["records"] = [diff_obj_json_format(op) for op in delta]
+    json.dump(record, stream, **dump_args)
+
+
+def diff_obj_json_format(o):
+    if isinstance(o, DiffOp):
+        o = {
+            "tag": o.tag,
+            "location": diff_obj_json_format(o.location),
+            "a": o.a,
+            "b": o.b,
+        }
+    elif isinstance(o, DiffGlobal):
+        o = {"type": o.type}
+    elif isinstance(o, DiffStanza):
+        o = {"type": o.type, "stanza": o.stanza}
+    elif isinstance(o, DiffStzKey):
+        o = {"type": o.type, "stanza": o.stanza, "key": o.key}
+    return o

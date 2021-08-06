@@ -12,7 +12,7 @@ from __future__ import absolute_import, unicode_literals
 import argparse
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
-from ksconf.conf.delta import compare_cfgs, show_diff
+from ksconf.conf.delta import compare_cfgs, show_diff, write_diff_as_json
 from ksconf.conf.parser import PARSECONF_MID_NC
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.completers import conf_files_completer
@@ -47,6 +47,10 @@ class DiffCmd(KsconfCmd):
         parser.add_argument("--comments", "-C",
                             action="store_true", default=False,
                             help="Enable comparison of comments.  (Unlikely to work consistently)")
+        parser.add_argument("--format", "-f",
+                            choices=["diff", "json"], default="diff",
+                            help="Output file format to produce.  'diff' the the classic format used by default. "
+                            "'json' is helpful when trying to review changes programatically .")
 
     def run(self, args):
         ''' Compare two configuration files. '''
@@ -58,9 +62,13 @@ class DiffCmd(KsconfCmd):
 
         diffs = compare_cfgs(cfg1, cfg2, replace_level=args.detail)
 
-        rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
-        if rc == EXIT_CODE_DIFF_EQUAL:
-            self.stderr.write("Files are the same.\n")
-        elif rc == EXIT_CODE_DIFF_NO_COMMON:
-            self.stderr.write("No common stanzas between files.\n")
-        return rc
+        if args.format == "diff":
+            rc = show_diff(args.output, diffs, headers=(args.conf1.name, args.conf2.name))
+            if rc == EXIT_CODE_DIFF_EQUAL:
+                self.stderr.write("Files are the same.\n")
+            elif rc == EXIT_CODE_DIFF_NO_COMMON:
+                self.stderr.write("No common stanzas between files.\n")
+            return rc
+        elif args.format == "json":
+            # XXX: Refactor show_diff() to separate the do-we-have-a-change logic
+            write_diff_as_json(diffs, args.output, indent=4)

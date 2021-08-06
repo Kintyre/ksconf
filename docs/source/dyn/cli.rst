@@ -183,6 +183,7 @@ ksconf diff
  .. code-block:: none
 
     usage: ksconf diff [-h] [-o FILE] [--detail {global,stanza,key}] [--comments]
+                       [--format {diff,json}]
                        CONF1 CONF2
     
     Compares the content differences of two .conf files
@@ -206,6 +207,10 @@ ksconf diff
                             may occur.
       --comments, -C        Enable comparison of comments. (Unlikely to work
                             consistently)
+      --format {diff,json}, -f {diff,json}
+                            Output file format to produce. 'diff' the the classic
+                            format used by default. 'json' is helpful when trying
+                            to review changes programatically .
 
 
 

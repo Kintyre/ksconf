@@ -86,6 +86,7 @@ Ksconf v0.8.8 (DRAFT)
    (2) layers existing beyond a symlink were not detected.
    This change targeted for ``ksconf combine`` but may fix other similar issues.
 -  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
+-  New CLI args for ``ksconf diff``.   (1) New ``--detail`` option to specify how to handle certain 'replace' levels which impacts the way certain changes are represented.  (2) New ``--format json``.  More work to be done here, for not don't consider this format stable.  Feedback welcome on where we could take this.
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
 -  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
 -  Replaced use of ``match_bwlist()`` with the :py:class:`~ksconf.filter.FiltedListSplunkGlob` class, which allows old code to be cleaned up and technically, there's some expanded capabilities because of this (like many filters now supporting ``file://filter.txt`` type syntax, but this hasn't been documented and may be left as an Easter egg; because who reads changelogs?)
