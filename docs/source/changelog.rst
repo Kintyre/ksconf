@@ -60,6 +60,11 @@ Ksconf 0.8
    This enables super easy conf editing in Python with just a few lines of code.
    See docs API docs for a usage example.
 
+-  Removed :py:func:`~ksconf.util.file.match_bwlist`
+   :py:class:`~ksconf.filter.FilteredList` and derived classes should be used instead.
+
+-  Remove ``preserve_empty`` parameter on :py:class:`~ksconf.conf.delta.compare_cfgs` and :py:class:`~ksconf.conf.delta.compare_stanzas`.
+
 **Developer changes:**
 
 -  Formatting via autopep8 and isort (enforced by pre-commit)
@@ -68,19 +73,21 @@ Ksconf 0.8
 Ksconf v0.8.8 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Fixed `#91 <https://github.com/Kintyre/ksconf/issues/91>`__. where ``ksconf diff`` wouldn't correctly handle empty stanzas in the second input file.
+-  Fixed `#91 <https://github.com/Kintyre/ksconf/issues/91>`__. where ``ksconf diff`` wouldn't correctly handle empty stanzas in the second input file
    (Reversing the order would sometimes worked to avoid the issue).
    This was resolved by enabling some improved empty stanza handling in the conf comparison algorithms that were updated back in 0.7.10, but never globally applied.  This has been resolved.
 -  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
    This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
 -  Fixed layer detection bugs for ``dir.d`` mode for layers:
+
       (1) Layers that weren't immediately under the source directory were not detected, and
       (2) layers existing beyond a symlink were not detected.
+
    This change targeted for ``ksconf combine`` but may fix other similar issues.
 -  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--sumary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
 -  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
-
+-  Replaced use of ``match_bwlist()`` with the :py:class:`~ksconf.filter.FiltedListSplunkGlob` class, which allows old code to be cleaned up and technically, there's some expanded capabilities because of this (like many filters now supporting ``file://filter.txt`` type syntax, but this hasn't been documented and may be left as an Easter egg; because who reads changelogs?)
 
 Ksconf v0.8.7 (2020-04-29)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

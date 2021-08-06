@@ -9,6 +9,10 @@ from collections import Counter
 from ksconf.conf.parser import GLOBAL_STANZA
 from ksconf.util.file import splglob_to_regex
 
+# It seems like each item on the list should be capability of having it's own type and flags (which could be inherited, at may not be known at the time the rules are first initialized)
+# The should still be some phase that each "Rule" goes though (1) creation to set core attributes, (2) prep where things can be compiled, syntax checked, and any default flags should be available by this time, and (3) evalute against a specific value for true/false.
+# This would allow things like a special prefix to lazy-switch modes (for example:  ~regex~, or only do fnmatching if there's a wildcard otherwise stick with simple string matching, ...)
+
 
 class FilteredList(object):
     IGNORECASE = 1
