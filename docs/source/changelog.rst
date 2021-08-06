@@ -78,13 +78,11 @@ Ksconf v0.8.8 (DRAFT)
    This was resolved by enabling some improved empty stanza handling in the conf comparison algorithms that were updated back in 0.7.10, but never globally applied.  This has been resolved.
 -  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
    This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
--  Fixed layer detection bugs for ``dir.d`` mode for layers:
-
-      (1) Layers that weren't immediately under the source directory were not detected, and
-      (2) layers existing beyond a symlink were not detected.
-
+-  Fixed layer detection bugs for ``dir.d`` mode for layers.
+   (1) Layers that weren't immediately under the source directory were not detected, and
+   (2) layers existing beyond a symlink were not detected.
    This change targeted for ``ksconf combine`` but may fix other similar issues.
--  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--sumary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
+-  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
 -  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
 -  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
 -  Replaced use of ``match_bwlist()`` with the :py:class:`~ksconf.filter.FiltedListSplunkGlob` class, which allows old code to be cleaned up and technically, there's some expanded capabilities because of this (like many filters now supporting ``file://filter.txt`` type syntax, but this hasn't been documented and may be left as an Easter egg; because who reads changelogs?)

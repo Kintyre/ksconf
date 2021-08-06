@@ -64,7 +64,10 @@ def _get_function_sourcecode_hash(f):
 
 
 class BuildManager(object):
-    """ Management of individual build steps """
+    """ Management of individual build steps
+
+    .. versionadded:: v0.8.0
+    """
 
     def __init__(self):
         self.source_path = None

@@ -227,7 +227,7 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
     :param stream: the path to a configuration file or open file-like object to be parsed
     :type stream: str, file
     :param profile: parsing configuration settings
-    :param encoding: Defaults to the system default, "uft-8"
+    :param encoding: Defaults to the system default, (Often "utf-8")
     :return: a mapping of the stanza and attributes.
              The resulting output is accessible as [stanaza][attribute] -> value
     :rtype: dict
