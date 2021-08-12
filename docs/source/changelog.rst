@@ -1,7 +1,60 @@
 Changelog
 =========
 
-.. note:: Changes in master, but not released yet are marked as *DRAFT*.
+.. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
+
+Ksconf 0.9
+----------
+
+**Highlights:**
+
+*  Last version to support Python 2!  It's time.
+
+
+**API Changes**
+
+-  Removed :py:func:`~ksconf.util.file.match_bwlist`
+   :py:class:`~ksconf.filter.FilteredList` and derived classes should be used instead.
+-  Updated interface for :py:class:`~ksconf.conf.delta.compare_cfgs` and :py:class:`~ksconf.conf.delta.compare_stanzas`.
+   (1) Removed the ``preserve_empty`` parameter and
+   (2) Replaced the awkwardly named ``allow_level0`` parameter with a new ``replace_level`` attribute that can be set to ``global``, ``stanza`` or ``key``.
+   This new option can be used to control the level of detail in the output.
+
+Ksconf v0.9.0 (2021-08-12)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Features & Enhancements:
+
+-  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
+   Similiarly the new ``--disable-cleanup`` option will prevent any files from being removed.
+   This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
+   These new options can be used together; for example, one useful pattern is to use ``--disable-cleanup`` to block all removal while perfecting/testing ``--keep-existing`` patterns.
+-  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
+-  New CLI args for ``ksconf diff``.
+   (1) New ``--detail`` option to specify how to handle certain 'replace' levels which impacts the way certain changes are represented.
+   (2) New ``--format json`` for a more parseable output format.
+   Note:  This json format shouldn't be considered stable at this time.  If you have ideas about how this could be used, please reach out.
+-  Allow enabling/disabling TTY colors via environmental variable.   The new ``--disable-color`` option will disable color, or to disable more widely, add something like ``export KSCONF_TTY_COLOR=off`` to your bashrc profile or Windows environment variables.
+
+Bug fixes:
+
+-  Fixed layer detection bugs for ``dir.d`` mode for layers.   (1) Layers that weren't immediately under the source directory were not detected, and
+   (2) layers existing beyond a symlink were not detected.
+   This change targeted for ``ksconf combine`` but may fix other similar issues.
+-  Fixed `#91 <https://github.com/Kintyre/ksconf/issues/91>`__. where ``ksconf diff`` wouldn't correctly handle empty stanzas in the second input file
+   (Reversing the order would sometimes worked to avoid the issue).
+   This was resolved by enabling some improved empty stanza handling in the conf comparison algorithms that were updated back in 0.7.10, but never globally applied.  This has been resolved.
+
+Documentation improvements
+
+-  New git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
+-  Additional quick use case in the cheatsheet page.
+   Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
+
+API Change:
+
+-  Replaced use of ``match_bwlist()`` with the :py:class:`~ksconf.filter.FiltedListSplunkGlob` class, which allows old code to be cleaned up and technically, there's some expanded capabilities because of this (like many filters now supporting ``file://filter.txt`` type syntax, but this hasn't been documented and may be left as an Easter egg; because who reads changelogs?)
+-  Dropped ``tty_color()`` which had already been replaced with the ``TermColor`` class.
 
 Ksconf 0.8
 ----------
@@ -60,37 +113,10 @@ Ksconf 0.8
    This enables super easy conf editing in Python with just a few lines of code.
    See docs API docs for a usage example.
 
--  Removed :py:func:`~ksconf.util.file.match_bwlist`
-   :py:class:`~ksconf.filter.FilteredList` and derived classes should be used instead.
-
--  Updated interface for :py:class:`~ksconf.conf.delta.compare_cfgs` and :py:class:`~ksconf.conf.delta.compare_stanzas`.
-   (1) Removed the ``preserve_empty`` parameter and
-   (2) Replaced the awkwardly named ``allow_level0`` parameter with a new ``replace_level`` attribute that can be set to ``global``, ``stanza`` or ``key``.
-   This new option can be used to control the level of detail in the output.
-
 **Developer changes:**
 
 -  Formatting via autopep8 and isort (enforced by pre-commit)
 -  Better flake8 integration for bulk checking  (run via:  ``tox -e flake8,flake8-unittest``)
-
-Ksconf v0.8.8 (DRAFT)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--  Fixed `#91 <https://github.com/Kintyre/ksconf/issues/91>`__. where ``ksconf diff`` wouldn't correctly handle empty stanzas in the second input file
-   (Reversing the order would sometimes worked to avoid the issue).
-   This was resolved by enabling some improved empty stanza handling in the conf comparison algorithms that were updated back in 0.7.10, but never globally applied.  This has been resolved.
--  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
-   This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
--  Fixed layer detection bugs for ``dir.d`` mode for layers.
-   (1) Layers that weren't immediately under the source directory were not detected, and
-   (2) layers existing beyond a symlink were not detected.
-   This change targeted for ``ksconf combine`` but may fix other similar issues.
--  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
--  New CLI args for ``ksconf diff``.   (1) New ``--detail`` option to specify how to handle certain 'replace' levels which impacts the way certain changes are represented.  (2) New ``--format json``.  More work to be done here, for not don't consider this format stable.  Feedback welcome on where we could take this.
--  Document new git tip:  Use a ``gitdir:`` pointer to relocate the ``.git`` dir to avoid replicating it when a directory like ``master-apps`` is a git working copy.
--  Document additional quick use case in the cheatsheet page.  Demonstrate how ksconf could be used to list all "apps" present on a deployment server from the ``serverclass.conf`` file.
--  Replaced use of ``match_bwlist()`` with the :py:class:`~ksconf.filter.FiltedListSplunkGlob` class, which allows old code to be cleaned up and technically, there's some expanded capabilities because of this (like many filters now supporting ``file://filter.txt`` type syntax, but this hasn't been documented and may be left as an Easter egg; because who reads changelogs?)
--  Allow enabling/disabling TTY colors via environmental variable.   The new ``--disable-color`` option will disable color, or to disable more widely, add something like ``export KSCONF_TTY_COLOR=off`` to your bashrc profile or Windows environment variables.
 
 Ksconf v0.8.7 (2020-04-29)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,7 +473,7 @@ Release v0.4.8 (2018-06-05)
 -  Using the classic ‘read-the-docs’ Sphinx theme.
 -  Added additional PyPi badges to README (GitHub home page).
 
-Release v0.4.4-v0.4.1 (2018-06-04)
+Release v0.4.4-v0.4.7 (2018-06-04)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Deployment and install fixes (It’s difficult to troubleshoot/test without making a new release!)
