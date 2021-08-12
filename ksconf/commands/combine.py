@@ -331,17 +331,18 @@ class CombineCmd(KsconfCmd):
         if target_extra_files:
             if args.disable_cleanup:
                 self.stderr.write("Cleanup operations disabled by user.\n")
-                return
-
-            self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
-                              format(len(target_extra_files)))
+            else:
+                self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
+                                  format(len(target_extra_files)))
 
             keep_existing = create_filtered_list("splunk", default=False)
             # splglob_simple:  Either full paths, or simple file-only match
             keep_existing.feedall(args.keep_existing, filter=splglob_simple)
             for dest_fn in target_extra_files:
                 if keep_existing.match_path(dest_fn):
-                    self.stderr.write("Preserving file {0}\n".format(dest_fn))
-                    continue
-                self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
-                os.unlink(os.path.join(args.target, dest_fn))
+                    self.stderr.write("Keep existing file {0}\n".format(dest_fn))
+                elif args.disable_cleanup:
+                    self.stderr.write("Skip cleanup of unwanted file {0}\n".format(dest_fn))
+                else:
+                    self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
+                    os.unlink(os.path.join(args.target, dest_fn))
