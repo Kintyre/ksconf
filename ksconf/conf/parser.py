@@ -271,6 +271,8 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
                                                                  stream_name))
             elif dup_stanza == DUP_MERGE:
                 s = sections[section]
+            else:
+                raise TypeError(f"Unknown value '{dup_stanza}' for dup_stanza")
         else:
             s = sections[section] = {}
         local_stanza = {}
@@ -288,6 +290,7 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
             else:
                 local_stanza[key] = value
                 s[key] = value
+        del s
     # If the global entry is just a blank line, drop it
     if GLOBAL_STANZA in sections:
         g = sections[GLOBAL_STANZA]
@@ -374,8 +377,7 @@ def _format_stanza(stanza):
         return stanza
 
 
-def _extract_comments(section):
-    "Return a sequential list of comments REMOVED from a section dictionary"
+    """ Return a sequential list of comments REMOVED from a section dict """
     comments = []
     for key, value in sorted(section.items()):
         if key.startswith("#-"):
@@ -430,7 +432,7 @@ def conf_attr_boolean(value):
             return False
         elif value == 1:
             # Technically any non-0 is true; but that's unusual in typical config files.
-            # Lets keep the logic the same as how stings are handled:  Only '1' as true.
+            # Let's keep the logic the same as how stings are handled:  Only '1' as true.
             return True
         else:
             raise ValueError("Can't convert {!r} to a boolean.".format(value))
