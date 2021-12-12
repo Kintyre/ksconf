@@ -22,8 +22,7 @@ import shlex
 import sys
 from argparse import ArgumentParser, FileType
 from collections import OrderedDict
-
-from ksconf.ext.six.moves.urllib.parse import quote
+from urllib.parse import quote
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE

@@ -9,8 +9,6 @@ from io import StringIO, open
 from subprocess import list2cmdline
 from textwrap import dedent
 
-import ksconf.ext.six as six
-
 from ksconf.__main__ import cli
 from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
                                 parse_conf_stream, write_conf)
@@ -159,7 +157,7 @@ ksconf_cli = _KsconfCli()
 
 class FakeStdin:
     def __init__(self, content):
-        if isinstance(content, six.string_types):
+        if isinstance(content, str):
             content = StringIO(content)
         self.stream = content
 

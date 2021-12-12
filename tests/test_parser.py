@@ -13,8 +13,6 @@ from copy import deepcopy
 from functools import partial
 from io import StringIO
 
-import ksconf.ext.six as six
-
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -425,7 +423,7 @@ class ConfigDiffTestCase(unittest.TestCase):
         for op in diffs:
             if op.location.type == DiffLevel(type):
                 match = True
-                for (attr, value) in six.iteritems(kwargs):
+                for (attr, value) in kwargs.items():
                     if getattr(op.location, attr, None) != value:
                         match = False
                         break

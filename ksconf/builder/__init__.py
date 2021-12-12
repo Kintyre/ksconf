@@ -6,14 +6,7 @@ import os
 import re
 import sys
 from subprocess import Popen
-from typing import List
-
-try:
-    from typing import Callable
-except ImportError:
-    Callable = type
-
-from ksconf.ext.six import text_type
+from typing import Callable, List
 
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.util import handle_py3_kw_only_args

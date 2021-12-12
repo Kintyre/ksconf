@@ -18,9 +18,7 @@ LEVELS:
 from __future__ import absolute_import, unicode_literals
 
 import re
-
-import ksconf.ext.six as six
-from ksconf.ext.six.moves.urllib.parse import quote, unquote
+from urllib.parse import quote, unquote
 
 from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
 
@@ -61,7 +59,7 @@ class MetaLayer:
         if self._data:
             yield _prefix
         if self._children:
-            for child_name, child in six.iteritems(self._children):
+            for child_name, child in self._children.items():
                 yield from child.walk(_prefix=_prefix + (child_name,))
 
     def items(self, prefix=None):
@@ -71,7 +69,7 @@ class MetaLayer:
         if self._data:
             yield prefix, self._data
         if self._children:
-            for child_name, child in six.iteritems(self._children):
+            for child_name, child in self._children.items():
                 yield from child.items(prefix=prefix + (child_name,))
 
 

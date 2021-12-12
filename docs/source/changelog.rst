@@ -8,6 +8,7 @@ Ksconf v0.10.0 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 **Python 3 ONLY**
+*  Remove ``six`` built-in dependency.
 
 
 Ksconf 0.9
