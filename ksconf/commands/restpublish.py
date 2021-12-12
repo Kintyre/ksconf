@@ -15,9 +15,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from argparse import ArgumentParser
-
-import ksconf.ext.six as six
-from ksconf.ext.six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
                              add_splunkd_access_args, add_splunkd_namespace,
@@ -148,7 +146,7 @@ class RestPublishCmd(KsconfCmd):
         else:
             conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-        if isinstance(conf_type, six.text_type):
+        if isinstance(conf_type, str):
             conf_type = conf_type.encode("utf-8")
 
         try:
@@ -228,7 +226,7 @@ class RestPublishCmd(KsconfCmd):
             stz_data = stz.content
 
             # Diff printing really doesn't like 'None's...
-            stz_data = {k: v or "" for k, v in six.iteritems(stz_data)}
+            stz_data = {k: v or "" for k, v in stz_data.items()}
             self.make_boolean(stz_data)
             res["path"] = stz.path
             try:

@@ -16,8 +16,6 @@ Example workflow:
 """
 from __future__ import absolute_import, unicode_literals
 
-import ksconf.ext.six as six
-
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
                                DIFF_OP_REPLACE, DiffStanza, compare_cfgs,
@@ -39,7 +37,7 @@ def explode_default_stanza(conf, default_stanza=None):
             return conf
     default_stanza = _drop_stanza_comments(default_stanza)
     n = {}
-    for (stanza, content) in six.iteritems(conf):
+    for (stanza, content) in conf.items():
         new_content = dict(default_stanza)
         new_content.update(content)
         n[stanza] = new_content

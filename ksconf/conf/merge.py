@@ -6,8 +6,6 @@ import sys
 from copy import deepcopy
 from typing import List
 
-import ksconf.ext.six as six
-
 from ksconf.commands import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import (GLOBAL_STANZA, ConfType, _extract_comments,
@@ -27,7 +25,7 @@ STANZA_OP_DROP = "<<DROP>>"
 def _merge_conf_dicts(base, new_layer):
     """ Merge new_layer on top of base.  It's up to the caller to deal with any necessary object
     copying to avoid odd referencing between the base and new_layer"""
-    for (section, items) in six.iteritems(new_layer):
+    for (section, items) in new_layer.items():
         if STANZA_MAGIC_KEY in items:
             magic_op = items[STANZA_MAGIC_KEY]
             if STANZA_OP_DROP in magic_op:
