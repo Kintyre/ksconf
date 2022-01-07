@@ -12,10 +12,15 @@ This is a silly hack that serves 2 purposes:
 
 from __future__ import absolute_import, unicode_literals
 
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from importlib import import_module
+from typing import NamedTuple
 
-Ep = namedtuple("Ep", ("name", "module_name", "object_name"))  # , "extras", "dist")
+
+class Ep(NamedTuple):
+    name: str
+    module_name: str
+    object_name: str
 
 
 # autopep8: off
@@ -47,7 +52,7 @@ _entry_points = {
 def get_entrypoints_setup():
     setup = {}
     for (group, entries) in _entry_points.items():
-        setup[group] = ["{0.name} = {0.module_name}:{0.object_name}".format(ep) for ep in entries]
+        setup[group] = [f"{ep.name} = {ep.module_name}:{ep.object_name}" for ep in entries]
     return setup
 
 
@@ -76,10 +81,10 @@ def get_entrypoints_fallback(group):
 def debug():
     # For debugging internally defined entrypoints
     print("Builtin entrypoints:")
-    for (group, entries) in _entry_points.items():
+    for (_, entries) in _entry_points.items():
         print("[group]")
         for ep in entries:
-            print("{0.name:15} = {0.module_name:30} : {0.object_name}".format(ep))
+            print(f"{ep.name:15} = {ep.module_name:30} : {ep.object_name}")
         print("")
 
 

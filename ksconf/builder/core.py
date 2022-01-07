@@ -205,7 +205,7 @@ class BuildManager:
                         # Collect inputs from the source directory and copy them to the temporary directory
                         fs_inputs = FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
-                        log(f"Copied {len(fs_inputs)} input files".format(), VERBOSE * 2)
+                        log(f"Copied {len(fs_inputs)} input files", VERBOSE * 2)
                         log(f"Copied input files: {', '.join(str(p) for p in fs_inputs)}", VERBOSE * 3)
                         try:
                             # Run wrapped function
