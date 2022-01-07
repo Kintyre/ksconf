@@ -220,7 +220,6 @@ def cli(argv=None, _unittest=False):
 
     ksconf.util.terminal.TTY_COLOR_MODE = args.tty_mode
 
-    # This becomes a thing in Python 3.6
     if not hasattr(args, "funct") or args.funct is None:
         sys.stderr.write(parser.format_usage())
         sys.exit(1)
