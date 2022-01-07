@@ -73,14 +73,14 @@ def handle_cmd_failed(subparser, ep):
     # when the subcommand silently disappears.  (Visible from ksconf --version, but still...
     # It's confusing, even if *just* during development)
     marker = "*" * 80
-    description = "{0}\n***   {1}\n{0}".format(marker, ep.error)
+    description = f"{marker}\n***   {ep.error}\n{marker}"
     badparser = subparser.add_parser(ep.name, description=description,
-                                     help="****** {} ******".format(ep.error),
+                                     help=f"****** {ep.error} ******",
                                      formatter_class=DescriptionHelpFormatterPreserveLayout)
 
     def handler(args):
-        sys.stderr.write("Unable to process due to internal error in '{}'\n{}\n"
-                         .format(ep.name, ep.error))
+        sys.stderr.write("Unable to process due to internal error in "
+                         f"{ep.name}'\n{ep.error}\n")
         return EXIT_CODE_INTERNAL_ERROR
     badparser.set_defaults(funct=handler)
     # Consume all remaining args.  But if params are passed first sometimes the user still sees
@@ -107,29 +107,30 @@ def build_cli_parser(do_formatter=False):
     # XXX:  Check terminal size before picking a signature
     version_info.append(choice(ksconf.__ascii_sigs__))
 
-    verbuild = "%(prog)s {}".format(ksconf.__version__)
+    verbuild = f"%(prog)s {ksconf.__version__}"
     if ksconf.__build__:
-        verbuild += "  (Build {})".format(ksconf.__build__)
+        verbuild += f"  (Build {ksconf.__build__})"
     version_info.append(verbuild)
-    version_info.append("Python: {}  ({})".format(sys.version.split()[0], sys.executable))
+    version_info.append(f"Python: {sys.version.split()[0]}  ({sys.executable})")
     if ksconf.__vcs_info__:
         version_info.append(ksconf.__vcs_info__)
-    version_info.append("Installed at: {}".format(os.path.dirname(os.path.abspath(ksconf.__file__))))
-    version_info.append("Platform:  {}".format(platform.version()))
+    install_location = os.path.dirname(os.path.abspath(ksconf.__file__))
+    version_info.append(f"Installed at: {install_location}")
+    version_info.append(f"Platform:  {platform.version()}")
     try:
         from ksconf.vc.git import git_version
         git_ver = git_version()
         if git_ver:
-            version_info.append("Git support:  ({}) {}".format(git_ver["path"], git_ver["version"]))
+            version_info.append(f"Git support:  ({git_ver['path']}) {git_ver['version']}")
         else:
             version_info.append("Git support:  'git' not found in PATH")
     except Exception as e:
         # Shouldn't happen, but we really don't blowup!
-        version_info.append("Git support:  Detection failed!  {}".format(e))
+        version_info.append(f"Git support:  Detection failed!  {e}")
     # XXX:  Grab splunk version and home, if running as a splunk app
-    version_info.append("Written by {}.".format(ksconf.__author__))
-    version_info.append("Copyright {}, all rights reserved.".format(ksconf.__copyright__))
-    version_info.append("Licensed under {}".format(ksconf.__license__))
+    version_info.append(f"Written by {ksconf.__author__}.")
+    version_info.append(f"Copyright {ksconf.__copyright__}, all rights reserved.")
+    version_info.append(f"Licensed under {ksconf.__license__}")
 
     # Add entry-point subcommands
     subcommands = defaultdict(list)
@@ -142,10 +143,10 @@ def build_cli_parser(do_formatter=False):
         if hasattr(dist, "version"):
             if hasattr(dist, "name"):
                 # entrypoints (required by ksconf)
-                distro = "{}  ({})".format(dist.name, ep.entry.dist.version)
+                distro = f"{dist.name}  ({ep.entry.dist.version})"
             elif hasattr(dist, "location") and hasattr(dist, "project_name"):   # pragma: no cover
                 # Attributes per pkg_resource  (currently disabled)
-                distro = "{}  ({})  @{}".format(dist.project_name, dist.version, dist.location)
+                distro = f"{dist.project_name}  ({dist.version})  @{dist.location}"
 
         subcommands[distro].append((ep.name, ep.cmd_cls, ep.error))
         if ep.cmd_cls:
@@ -157,20 +158,20 @@ def build_cli_parser(do_formatter=False):
 
     for distro_name, items in sorted(subcommands.items()):
         if distro_name:
-            version_info.append("\n  {}\n\n    Commands:".format(distro_name))
+            version_info.append(f"\n  {distro_name}\n\n    Commands:")
         else:
             version_info.append("\n\n    Commands:")
         for (name, cmd_cls, error) in items:
             if cmd_cls is None:
                 m = "(?)"
             else:
-                m = "({})".format(cmd_cls.maturity)
+                m = f"({cmd_cls.maturity})"
             if error:
-                version_info.append("      {:15} {:10}  {}".format(name, m, error))
+                version_info.append(f"      {name:15} {m:10}  {error}")
             else:
-                info = "      {:15} {:10}  OK".format(name, m)
+                info = f"      {name:15} {m:10}  OK"
                 if cmd_cls.version_extra:
-                    info = "{}   ({})".format(info, cmd_cls.version_extra)
+                    info = f"{info}   ({cmd_cls.version_extra})"
                 version_info.append(info)
 
     # Common settings
@@ -231,7 +232,7 @@ def cli(argv=None, _unittest=False):
         if _unittest:
             from ksconf.consts import KSCONF_DEBUG
             os.environ[KSCONF_DEBUG] = "1"
-        sys.stderr.write("Unhandled top-level exception ({}):  {}\n".format(type(e).__name__, e))
+        sys.stderr.write(f"Unhandled top-level exception ({type(e).__name__}):  {e}\n")
         ksconf.util.debug_traceback()
         return_code = EXIT_CODE_INTERNAL_ERROR
 

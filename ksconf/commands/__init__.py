@@ -549,17 +549,17 @@ def get_all_ksconf_cmds(on_error="warn"):
             cmd_cls = entry.load()
         except (ImportError, NameError, SyntaxError) as e:
             if on_error == "warn":
-                warn("Unable to load entrypoint for {}.  Disabling.\n"
-                     "Base exception {}.".format(name, e), KsconfPluginWarning)
+                warn(f"Unable to load entrypoint for {name}.  Disabling.\n"
+                     f"Base exception {e}.", KsconfPluginWarning)
             elif on_error == "return":
-                error = "Internal error:  {}".format(e)
+                error = f"Internal error:  {e}"
                 yield KsconfCmdEntryPoint(name, entry, None, error)
             else:
                 raise e
             continue
         if not issubclass(cmd_cls, KsconfCmd):
             msg = "Issue loading class for entrypoint:  Disabling.\n" \
-                  "{!r} is not derived from KsconfCmd.  ".format(entry)
+                  f"{entry!r} is not derived from KsconfCmd.  "
             if on_error == "warn":
                 warn(msg, KsconfPluginWarning)
             elif on_error == "return":
@@ -575,10 +575,10 @@ def get_all_ksconf_cmds(on_error="warn"):
             else:
                 module = e
             if on_error == "warn":
-                warn("Unable to load external modules for {}.  Disabling.  "
-                     "{}.".format(name, module), KsconfPluginWarning)
+                warn(f"Unable to load external modules for {name}.  Disabling.  "
+                     f"{module}.", KsconfPluginWarning)
             elif on_error == "return":
-                error = "Missing 3rd party module:  {}".format(module)
+                error = f"Missing 3rd party module:  {module}"
                 yield KsconfCmdEntryPoint(name, entry, cmd_cls, error)
             else:
                 raise e

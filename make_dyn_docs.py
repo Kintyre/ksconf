@@ -59,14 +59,14 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     out = list(cmd_output(*args))
     heading = " ".join([cmd_name] + subcmds)
     ref = "_".join(["", cmd_name, "cli"] + subcmds)
-    stream.write(".. {}:\n\n{}\n".format(ref, restructured_header(heading, level)))
+    stream.write(f".. {ref}:\n\n{restructured_header(heading, level)}\n")
     stream.write(" .. code-block:: none\n\n")
     for line in prefix(out):
         stream.write(line + "\n")
     stream.write("\n\n\n")
     for subcmd in parse_subcommand(out):
         sc = subcmds + [subcmd]
-        print("  Subcmd docs for {} {}".format(cmd_name, " ".join(sc)))
+        print(f"  Subcmd docs for {cmd_name} {' '.join(sc)}")
         write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
@@ -75,11 +75,11 @@ def show_changes(f):
     def wrapper(path):
         rw = f(path)
         if rw.result == "created":
-            print("Make fresh {}".format(path))
+            print(f"Make fresh {path}")
         elif rw.result == "unchanged":
-            print("No changes made to {}.".format(path))
+            print(f"No changes made to {path}.")
         elif rw.result == "updated":
-            print("{} updated".format(path))
+            print(f"{path} updated")
         if rw.change_needed:
             return 1
         return 0
@@ -106,14 +106,14 @@ def make_subcommands_table(csv_path):
     # Explicitly sort commands by name (no more random git diffs!)
     commands = [(ep.name, ep) for ep in get_all_ksconf_cmds()]
     commands.sort()
-    commands = [ep for (name, ep) in commands]
+    commands = [ep for (_, ep) in commands]
 
     table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
         for ep in commands:
             # Pros/conf links to the doc vs 'ref'?
-            #ref_template = ":doc:`cmd_{}`"
+            # ref_template = ":doc:`cmd_{}`"
             ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
             row = [
                 ref_template.format(ep.name),
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     if not os.path.isdir(dyn):
         os.makedirs(dyn)
 
-    def docs_dir(filename): return os.path.join(dyn, filename)  # nopep8
+    def docs_dir(filename): return os.path.join(dyn, filename)  # noqa
     changes = 0
 
     changes += make_cli_docs(docs_dir("cli.rst"))
