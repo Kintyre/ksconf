@@ -20,10 +20,10 @@ jobs:
         os:
           - ubuntu-18.04
         python-version:
-          # - '2.7'
           - '3.7'
           - '3.8'
-          #- '3.9'
+          - '3.9'
+          - '3.10'
         include:
           - os: ubuntu-18.04
             python-version: 3.9
@@ -31,8 +31,6 @@ jobs:
           - os: ubuntu-18.04
             python-version: 3.8
             extra_packages: argcomplete
-          - os: macos-latest
-            python-version: 2.7.18
           - os: macos-latest
             python-version: 3.7.12
     steps:

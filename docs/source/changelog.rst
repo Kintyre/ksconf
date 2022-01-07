@@ -8,6 +8,7 @@ Ksconf v0.10.0 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 **Python 3 ONLY**
+*  Ksconf v0.10 and later requires Python 3.7 or newer.
 *  Remove ``six`` built-in dependency.
 
 

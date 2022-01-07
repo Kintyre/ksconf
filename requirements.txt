@@ -1,8 +1,4 @@
 entrypoints
-mock; python_version < '3.3'
 splunk-sdk
-pathlib; python_version < '3.4'
-backports.tempfile; python_version < '3.4'
-backports.shutil_which; python_version < '3.6'
 
 lxml>=4.6.5
