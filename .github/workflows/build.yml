@@ -3,6 +3,8 @@
 name: Build python package and splunk app
 on:
   push:
+    tags:
+      - 'v*'
     branches:
       - master
       - devel
