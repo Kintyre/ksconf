@@ -83,14 +83,12 @@ jobs:
       - run: pip install $EXTRA_PKGS -r requirements-ci.txt
       - name: Install ksconf python package
         run: pip install .
-      - run: >-
-          echo "Build $GITHUB_RUN_NUMBER BRANCH=$GITHUB_BASE_REF
-          TAG=$GITHUB_REF"
+      - run: echo "Build $GITHUB_RUN_NUMBER BRANCH=$GITHUB_BASE_REF TAG=$GITHUB_REF"
       - run: pip list --format=columns
       - run: >
           export DO_RELEASE=True
           echo DO_RELEASE=$DO_RELEASE
-        if: matrix.build_sdist
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist
       - run: ksconf --version
       - run: coverage run -m unittest discover -s tests
 
@@ -120,7 +118,7 @@ jobs:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish to PyPI
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -130,8 +128,8 @@ jobs:
 
       - name: Build Splunk app
         id: buildpkg
-        if: ${{ matrix.build_sdist == true }}
-        run: >-
+        if: matrix.build_sdist
+        run: |
           python -m pip install -r requirements-doc.txt
           python splunk_app/build.py -vv
           set +x
@@ -143,7 +141,7 @@ jobs:
       - name: Create GitHub Release
         uses: actions/create-release@v1
         id: create_release
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -155,7 +153,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         id: upload-release-asset
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
