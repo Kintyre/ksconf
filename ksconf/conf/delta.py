@@ -100,6 +100,7 @@ def compare_cfgs(a, b, replace_level="global"):
     :param replace_level: The highest level 'replace' event that can be returned.
         Acceptable values are ``global``, ``stanza``, and ``key``.
         These examples may help:
+
             *   Using 'global' with identical inputs will report a single global-level equal op.
             *   Using 'stanza' with identical inputs will return all stanzas as equal.
             *   Using 'key' will ensure that two stanzas with no common keys will be reported in
