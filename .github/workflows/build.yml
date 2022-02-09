@@ -127,7 +127,7 @@ jobs:
         run: |
           echo "::group::Pip install"
           pip install twine
-          echo "::endgroup::
+          echo "::endgroup::"
 
           echo "::group::Run setup.py"
           python setup.py sdist bdist_wheel
