@@ -29,10 +29,10 @@ jobs:
           - os: ubuntu-18.04
             python-version: 3.8
             extra_packages: argcomplete
-          # - os: macos-latest
-          #  python-version: 2.7
-          # - os: macos-latest
-          #   python-version: 3.7
+          - os: macos-latest
+            python-version: 2.7.18
+          - os: macos-latest
+            python-version: 3.7.12
     steps:
       - name: Job details
         env:
@@ -73,6 +73,8 @@ jobs:
               # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
               if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
           fi
+        env:
+          PYENV_VERSION: ${{matrix.python-version}}
       - name: Upgrade pip
         run: python -m pip install -U pip wheel
       - run: pip install $EXTRA_PKGS -r requirements-ci.txt
