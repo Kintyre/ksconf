@@ -101,10 +101,13 @@ def package_spl(step):
     top_dir = step.dist_path.parent
     release_path = top_dir / ".release_path"
     release_name = top_dir / ".release_name"
+    build_no = 0
+    if "GITHUB_RUN_NUMBER" in os.environ:
+        build_no = 1000 + int(os.environ["GITHUB_RUN_NUMBER"])
     step.run(sys.executable, "-m", "ksconf", "package",
              "--file", step.dist_path / SPL_NAME,
              "--set-version", "{{git_tag}}",
-             "--set-build", os.environ.get("TRAVIS_BUILD_NUMBER", "0"),
+             "--set-build", build_no,
              "--blocklist", ".buildinfo",  # From build docs
              "--blocklist", "requirements.txt",
              "--block-local",

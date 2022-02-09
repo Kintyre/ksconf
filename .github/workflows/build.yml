@@ -51,6 +51,7 @@ jobs:
             $HOME/.pyenv
           key: '${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles(''requirements.txt'') }}'
       - uses: actions/checkout@v2
+
       - name: MacOS pyenv setup
         run: |
           if [ ! -e "$HOME/.pyenv/.git" ]; then
@@ -72,7 +73,7 @@ jobs:
           pip install wheel
           # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
           if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
-        if: matrix.os == 'macOS'
+        if: ${{ matrix.os == 'macOS' }}
         env:
           PYENV_VERSION: ${{matrix.python-version}}
       - name: Upgrade pip & install packaging tools
@@ -89,7 +90,7 @@ jobs:
       - run: >
           export DO_RELEASE=True
           echo DO_RELEASE=$DO_RELEASE
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        if: matrix.build_sdist
       - run: ksconf --version
       - run: coverage run -m unittest discover -s tests
 
@@ -118,12 +119,47 @@ jobs:
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build and publish to PyPI
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
+
       - name: Build Splunk app
+        id: buildpkg
+        if: ${{ matrix.build_sdist == true }}
         run: >-
-          python -m pip install -r requirements-doc.txt && python splunk_app/build.py -vv
-        if: matrix.build_sdist == 'true'
+          python -m pip install -r requirements-doc.txt
+          python splunk_app/build.py -vv
+          set +x
+          echo "##[set-output name=path;]$(cat .release_path)"
+          echo "##[set-output name=name;]$(cat .release_name)"
         env:
           KSCONF_DEBUG: 1
-      - name: List distribution files
-        run: ls -lsh zdist'
-        if: matrix.build_sdist == 'true'
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        id: upload-release-asset
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.buildpkg.outputs.path }}
+          asset_name: ${{ steps.buildpkg.outputs.name }}
+          asset_content_type: application/tar+gzip

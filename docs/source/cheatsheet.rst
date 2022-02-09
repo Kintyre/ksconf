@@ -153,7 +153,7 @@ A build process for the same page, where the version is defined by the latest gi
 
         ksconf package -f "dist/kintyre_app_speedtest-{{version}}.tar.gz" \
             --set-version="{{git_tag}}" \
-            --set-build=$TRAVIS_BUILD_NUMBER \
+            --set-build=$GITHUB_RUN_NUMBER \
             --release-file .release \
             kintyre_app_speedtest
         echo "Go upload $(<.release) to Splunkbase"
