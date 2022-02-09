@@ -1,6 +1,6 @@
 # Kintyre's Splunk CONFiguration tool
 
-[![Travis](https://img.shields.io/travis/Kintyre/ksconf/master.svg)](https://travis-ci.com/Kintyre/ksconf/builds)
+[![Build](https://github.com/Kintyre/ksconf/actions/workflows/build.yml/badge.svg)](https://github.com/Kintyre/ksconf/actions/workflows/build.yml)
 [![PyPI](https://img.shields.io/pypi/v/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
@@ -63,9 +63,13 @@ Get involved:
 
 Presentations:
 
+* About ksconf:
   * [The joys and pitfalls of managing your Splunk deployment with Git](http://kintyre.rocks/70d87) Philly Splunk Meetup - June 6, 2018
   * [Managing Splunk Deployments With Git and KSCONF](https://youtu.be/-NIME9XRqlo) ![YouTube Video Likes](https://img.shields.io/youtube/likes/-NIME9XRqlo?logo=youtube&style=flat-square)
     ([slides](https://kintyre.rocks/ksconf18)) Splunk .conf bsides talk - Oct 2, 2018
+
+* Honorable mentions:
+  * DEV1132B - How To Become the Best SPL Reviewer ([slides](https://conf.splunk.com/files/2021/slides/DEV1132B.pdf) | [video](https://conf.splunk.com/files/2021/recordings/DEV1132B.mp4) ) - Splunk .conf 2021, Samsung Electronics  (slides 10-19)
 
 
 [logo]: docs/images/logo.png

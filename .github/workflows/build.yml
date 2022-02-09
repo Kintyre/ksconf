@@ -125,6 +125,7 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
+          echo $GITHUB_REF
           echo "::group::Pip install"
           pip install twine
           echo "::endgroup::"
