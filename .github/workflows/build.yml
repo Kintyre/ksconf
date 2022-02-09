@@ -1,0 +1,125 @@
+# Converted from Travis CI using https://akx.github.io/travis-to-github-actions/
+
+name: Build python package and splunk app
+on:
+  push:
+    branches:
+      - master
+      - devel
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+        python-version:
+          # - '2.7'
+          - '3.7'
+          - '3.8'
+          #- '3.9'
+        include:
+          - os: ubuntu-18.04
+            python-version: 3.9
+            build_sdist: true
+          - os: ubuntu-18.04
+            python-version: 3.8
+            extra_packages: argcomplete
+          # - os: macos-latest
+          #  python-version: 2.7
+          # - os: macos-latest
+          #   python-version: 3.7
+    steps:
+      - name: Job details
+        env:
+          BUILD_SDIST: ${{matrix.build_sdist}}
+          EXTRA_PKGS: ${{matrix.extra_packages}}
+        run: echo BUILD_SDIST=$BUILD_SDIST
+      - name: 'Set up Python ${{ matrix.python-version }}'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '${{ matrix.python-version }}'
+      - name: Cache multiple paths
+        uses: actions/cache@v2
+        with:
+          path: |-
+            $HOME/.cache/pip
+            $HOME/.pyenv
+          key: '${{ runner.os }}-${{ hashFiles(''TODO'') }}'
+      - uses: actions/checkout@v2
+      - run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+              if [ ! -e "$HOME/.pyenv/.git" ]; then
+                  if [ -e "$HOME/.pyenv" ]; then
+                      rm -rf ~/.pyenv
+                  fi
+                  git clone https://github.com/pyenv/pyenv.git ~/.pyenv --depth 10
+              else
+                  (cd ~/.pyenv; git pull)
+              fi
+              PYENV_ROOT="$HOME/.pyenv"
+              PATH="$PYENV_ROOT/bin:$PATH"
+              hash -r
+              eval "$(pyenv init -)"
+              hash -r
+              pyenv install --list
+              pyenv install -s $PYENV_VERSION
+              pyenv rehash
+              pip install wheel
+              # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
+              if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
+          fi
+      - name: Upgrade pip
+        run: python -m pip install -U pip wheel
+      - run: pip install $EXTRA_PKGS -r requirements-ci.txt
+      - name: Install ksconf python package
+        run: pip install .
+      - run: >-
+          echo "Build $GITHUB_RUN_NUMBER BRANCH=$GITHUB_BASE_REF
+          TAG=$GITHUB_REF"
+      - run: pip list --format=columns
+      - run: >
+          export DO_RELEASE=True
+          echo DO_RELEASE=$DO_RELEASE
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == 'true'
+      - run: ksconf --version
+      - run: coverage run -m unittest discover -s tests
+
+      # - run: coverage run -a -m make_cli_docs
+      - run: coverage xml
+
+      - name: Submit to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          verbose: true
+
+      ###############################################################
+      # This isn't working for some reason....
+      #   Using lcov file: ./coverage/lcov.info
+      #   Error: Lcov file not found.
+      # - name: Coveralls
+      #
+      #  uses: coverallsapp/github-action@master
+      #  with:
+      #      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      ###############################################################
+      #  This fails with:     requests.exceptions.HTTPError: 422 Client Error: Unprocessable Entity for url: https://coveralls.io/api/v1/jobs
+      #- run: coveralls
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Splunk app
+        run: >-
+          python -m pip install -r requirements-doc.txt && python splunk_app/build.py -vv
+        if: matrix.build_sdist == 'true'
+        env:
+          KSCONF_DEBUG: 1
+      - name: List distribution files
+        run: ls -lsh zdist'
+        if: matrix.build_sdist == 'true'
