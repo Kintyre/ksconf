@@ -49,34 +49,36 @@ jobs:
           path: |-
             $HOME/.cache/pip
             $HOME/.pyenv
-          key: '${{ runner.os }}-${{ hashFiles(''TODO'') }}'
+          key: '${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles(''requirements.txt'') }}'
       - uses: actions/checkout@v2
-      - run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-              if [ ! -e "$HOME/.pyenv/.git" ]; then
-                  if [ -e "$HOME/.pyenv" ]; then
-                      rm -rf ~/.pyenv
-                  fi
-                  git clone https://github.com/pyenv/pyenv.git ~/.pyenv --depth 10
-              else
-                  (cd ~/.pyenv; git pull)
+      - name: MacOS pyenv setup
+        run: |
+          if [ ! -e "$HOME/.pyenv/.git" ]; then
+              if [ -e "$HOME/.pyenv" ]; then
+                  rm -rf ~/.pyenv
               fi
-              PYENV_ROOT="$HOME/.pyenv"
-              PATH="$PYENV_ROOT/bin:$PATH"
-              hash -r
-              eval "$(pyenv init -)"
-              hash -r
-              pyenv install --list
-              pyenv install -s $PYENV_VERSION
-              pyenv rehash
-              pip install wheel
-              # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
-              if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
+              git clone https://github.com/pyenv/pyenv.git ~/.pyenv --depth 10
+          else
+              (cd ~/.pyenv; git pull)
           fi
+          PYENV_ROOT="$HOME/.pyenv"
+          PATH="$PYENV_ROOT/bin:$PATH"
+          hash -r
+          eval "$(pyenv init -)"
+          hash -r
+          pyenv install --list
+          pyenv install -s $PYENV_VERSION
+          pyenv rehash
+          pip install wheel
+          # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
+          if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
+        if: matrix.os == 'macOS'
         env:
           PYENV_VERSION: ${{matrix.python-version}}
-      - name: Upgrade pip
-        run: python -m pip install -U pip wheel
+      - name: Upgrade pip & install packaging tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
       - run: pip install $EXTRA_PKGS -r requirements-ci.txt
       - name: Install ksconf python package
         run: pip install .
