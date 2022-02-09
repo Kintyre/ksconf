@@ -30,6 +30,20 @@ def get_merged_conf(app_dir, conf, *layers):
     return merge_conf_dicts(*confs)
 
 
+def normalize_directory_mtime(path):
+    """ Walk a tree and update the directory modification times to match the
+    newest time of the children.  This results in a more predictable behavior
+    over multiple executions.
+    """
+    for (root, dirs, files) in os.walk(path, topdown=False):
+        nodes = dirs + files
+        if not nodes:
+            # Empty directories are somewhat unlikely.  We'll see
+            continue
+        mtime = max(os.stat(os.path.join(root, n)).st_mtime for n in nodes)
+        os.utime(root, (mtime, mtime))
+
+
 class PackagingException(Exception):
     pass
 
@@ -211,6 +225,7 @@ class AppPackager(object):
         else:
             self.output.write("Creating archive:  {}\n".format(filename))
 
+        normalize_directory_mtime(self.app_dir)
         spl = tarfile.open(filename, mode="w:gz")
         try:
             spl.add(self.app_dir, arcname=self.app_name)

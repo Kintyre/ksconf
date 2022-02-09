@@ -7,6 +7,12 @@ from fnmatch import fnmatch
 
 from ksconf.util.file import relwalk
 
+try:
+    # PY3 with no-op fallback for older versions
+    from os import PathLike
+except ImportError:
+    PathLike = object
+
 """
 
 LayerRootBase has one or more 'Layer', each layer has one or more 'File's.
@@ -123,14 +129,17 @@ class LayerConfig(object):
 class LayerRootBase(object):
     """ All 'path's here are relative to the ROOT. """
 
-    class File(object):
-        __slots__ = ["layer", "relative_path", "size", "mtime", "_cache"]
+    class File(PathLike):
+        __slots__ = ["layer", "relative_path", "_stat"]
 
-        def __init__(self, layer, relative_path, size=None, mtime=None):
+        def __init__(self, layer, relative_path, stat=None):
             self.layer = layer
             self.relative_path = relative_path
-            self.size = size
-            self.mtime = mtime
+            self._stat = stat
+
+        def __fspath__(self):
+            # type: () -> str
+            return self.physical_path
 
         @property
         def physical_path(self):
@@ -139,6 +148,20 @@ class LayerRootBase(object):
         @property
         def logical_path(self):
             return _path_join(self.layer.logical_path, self.relative_path)
+
+        @property
+        def stat(self):
+            if self._stat is None:
+                self._stat = os.stat(self.physical_path)
+            return self._stat
+
+        @property
+        def size(self):
+            return self.stat.st_size
+
+        @property
+        def mtime(self):
+            return self.stat.st_mtime
 
     class Layer(object):
         """ Basic layer Container:   Connects logical and physical paths. """

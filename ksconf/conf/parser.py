@@ -297,11 +297,13 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     return sections
 
 
-def write_conf(stream, conf, stanza_delim="\n", sort=True):
+def write_conf(stream, conf, stanza_delim="\n", sort=True, mtime=None):
     if not hasattr(stream, "write"):
         # Assume it's a filename
         with open(stream, "w", encoding=default_encoding) as stream:
             write_conf_stream(stream, conf, stanza_delim, sort)
+            if mtime:
+                os.utime(stream, (mtime, mtime))
     else:
         write_conf_stream(stream, conf, stanza_delim, sort)
 
@@ -337,7 +339,7 @@ def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
             stream.write(stanza_delim)
 
 
-def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix=".tmp"):
+def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix=".tmp", mtime=None):
     if os.path.isfile(filename):
         temp = StringIO()
         write_conf_stream(temp, conf, stanza_delim, sort)
@@ -349,6 +351,8 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
             tempfile = filename + temp_suffix
             with open(tempfile, "w", encoding=default_encoding) as dest:
                 dest.write(temp.getvalue())
+            if mtime:
+                os.utime(tempfile, (mtime, mtime))
             os.unlink(filename)
             os.rename(tempfile, filename)
             return SMART_UPDATE
@@ -356,6 +360,8 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
         tempfile = filename + temp_suffix
         with open(tempfile, "w", encoding=default_encoding) as dest:
             write_conf_stream(dest, conf, stanza_delim, sort)
+        if mtime:
+            os.utime(tempfile, (mtime, mtime))
         os.rename(tempfile, filename)
         return SMART_CREATE
 

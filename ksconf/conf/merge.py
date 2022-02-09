@@ -63,6 +63,7 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
     # type: (ConfFileProxy, list[ConfFileProxy], bool, str) -> dict
     # Parse all config files
     cfgs = [conf.data for conf in configs]
+    newest_mtime = max(conf.mtime for conf in configs) if configs else None
     # Merge all config files:
     merged_cfg = merge_conf_dicts(*cfgs)
     if banner_comment:
@@ -79,7 +80,7 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
         show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
                   headers=(dest.name, dest.name + "-new"))
         return SMART_UPDATE
-    return dest.dump(merged_cfg)
+    return dest.dump(merged_cfg, mtime=newest_mtime)
 
 
 def merge_update_conf_file(dest, sources, remove_source=False):
@@ -88,18 +89,25 @@ def merge_update_conf_file(dest, sources, remove_source=False):
     """
     # XXX:  If dest is missing/empty, and only one non-empty source, use file move
     # XXX:  If dest is present and no sources are present/non-empty, no-op
+    # XXX:  Should there be a 'preserve_mtime=True' option?  Any reason to skip this?
     remove = []
     confs = []
+    mtimes = []
+
     if os.path.isfile(dest):
         confs.append(parse_conf(dest))
+        mtimes.append(os.stat(dest).st_mtime)
     for source in sources:
         if os.path.isfile(source):
             confs.append(parse_conf(source))
+            mtimes.append(os.stat(source).st_mtime)
             remove.append(source)
     if confs:
         # Put in correct order.  (Last read has highest priority)
         confs.reverse()
         write_conf(dest, merge_conf_dicts(*confs))
+        mtime = max(mtimes)
+        os.utime(dest, (mtime, mtime))
 
     if remove_source:
         for name in remove:

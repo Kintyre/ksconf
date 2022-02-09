@@ -222,7 +222,6 @@ class CombineCmd(KsconfCmd):
         for src_file in sorted(src_file_listing):
             # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
             sources = list(layer_root.get_file(src_file))
-            src_files = [src.physical_path for src in sources]
             try:
                 dest_fn = sources[0].logical_path
             except IndexError:
@@ -250,7 +249,7 @@ class CombineCmd(KsconfCmd):
 
             if method == "copy":
                 # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  "
-                #                   "{1!r}\n".format(dest_fn, src_files[-1]))
+                #                   "{1!r}\n".format(dest_fn, sources[-1].physical_path))
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].physical_path
                 if args.dry_run:
@@ -279,15 +278,16 @@ class CombineCmd(KsconfCmd):
                     # Handle merging conf files
                     dest = ConfFileProxy(dest_path, "r+",
                                          parse_profile=PARSECONF_MID)
-                    srcs = [ConfFileProxy(sf, "r", parse_profile=PARSECONF_STRICT) for sf in src_files]
+                    srcs = [ConfFileProxy(s.physical_path, "r",
+                                          parse_profile=PARSECONF_STRICT) for s in sources]
                     # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n"
-                    #                   .format(dest_fn, src_files[0]))
+                    #                   .format(dest_fn, sources[0].physical_path))
                     smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
                                                 banner_comment=args.banner)
                     if smart_rc != SMART_NOCHANGE:
                         if not args.quiet:
                             self.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(
-                                smart_rc, dest_path, src_files))
+                                smart_rc, dest_path, [s.physical_path for s in sources]))
                 finally:
                     # Protect against any dangling open files:  (ResourceWarning: unclosed file)
                     dest.close()
@@ -297,8 +297,10 @@ class CombineCmd(KsconfCmd):
 
             elif method == "concatenate":
                 combined_content = ""
-                for src in src_files:
-                    with open(src, "r") as stream:
+                last_mtime = max(src.mtime for src in sources)
+                for src in sources:
+                    # PY3:  Just open(src) is fine
+                    with open(src.physical_path, "r") as stream:
                         content = stream.read()
                         if not content.endswith("\n"):
                             content += "\n"
@@ -321,8 +323,8 @@ class CombineCmd(KsconfCmd):
                 if smart_rc != SMART_NOCHANGE:
                     if not args.quiet:
                         self.stderr.write("Concatenate <{0}>   {1:50}  from {2!r}\n".format(
-                            smart_rc, dest_path, src_files))
-
+                            smart_rc, dest_path, [s.physical_path for s in sources]))
+                os.utime(dest_path, (last_mtime, last_mtime))
                 del combined_content
             else:
                 raise AssertionError("Internal implementation error.  Unknown method={}".format(method))

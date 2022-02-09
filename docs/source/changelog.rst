@@ -20,6 +20,12 @@ Ksconf 0.9
    (2) Replaced the awkwardly named ``allow_level0`` parameter with a new ``replace_level`` attribute that can be set to ``global``, ``stanza`` or ``key``.
    This new option can be used to control the level of detail in the output.
 
+
+Ksconf v0.9.1 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+-  Ksconf now tries harder to preserve file modification times.  This is supported in ``merge``, ``combine``` and ``pacakge`` commands.  Specifically, merged ``.conf`` files and concatenated files will keep the most recent modification time in the destination.  This should make the output of ``combine`` and ``package`` (by extention) more predictable in many scenarios.
+
+
 Ksconf v0.9.0 (2021-08-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

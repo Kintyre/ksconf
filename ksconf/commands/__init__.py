@@ -134,6 +134,10 @@ class ConfFileProxy(object):
             self._data = self.load()
         return self._data
 
+    @property
+    def mtime(self):
+        return os.stat(self.name).st_mtime
+
     def load(self, profile=None):
         if not self.readable():
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
