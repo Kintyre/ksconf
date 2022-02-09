@@ -299,7 +299,6 @@ class CombineCmd(KsconfCmd):
                 combined_content = ""
                 for src in src_files:
                     with open(src, "r") as stream:
-                        # Q: Should we check and add a \n between each file?.   Wait and see if that's needed
                         content = stream.read()
                         if not content.endswith("\n"):
                             content += "\n"

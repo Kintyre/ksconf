@@ -60,7 +60,7 @@ def merge_conf_dicts(*dicts):
 
 
 def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
-    # type: (str, ConfFileProxy, bool, str, bool) -> dict
+    # type: (ConfFileProxy, list[ConfFileProxy], bool, str) -> dict
     # Parse all config files
     cfgs = [conf.data for conf in configs]
     # Merge all config files:
@@ -144,7 +144,7 @@ def merge_app_local(app_folder, cleanup=True):
 
     # Handle 'local/', recursively, if present  (assume that symlinks have already been handled)
     if os.path.isdir(local_dir):
-        for (root, dirs, files) in relwalk(local_dir):
+        for (root, _, files) in relwalk(local_dir):
             default_d = os.path.join(default_dir, root)
             if not os.path.isdir(default_d):
                 os.mkdir(default_d)

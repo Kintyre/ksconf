@@ -59,7 +59,7 @@ class AppPackager(object):
         return self._var_magic.expand(value)
 
     def expand_new_only(self, value):
-        """ Expand a variable but return None if no substitution occurred
+        """ Expand a variable but return False if no substitution occurred
 
         :param str value:  String that main contain ``{{variable}}`` substitution.
         :return:  Expanded value if variables were expanded, else False
@@ -87,7 +87,7 @@ class AppPackager(object):
             raise PackagingException("Issue calling 'combine' internally during app build....")
 
     def blocklist(self, patterns):
-        # XXX: Rewrite explicitly blocklist '.git' dir, because '*.git' wasn't working here. :=(
+        # XXX: Rewrite explicitly blocklist '.git' dir, because '.git*' wasn't working here. :=(
 
         # For now we just delete files out the build directory.  Not sophisticated, but it works
         # Do we need relwalker here?  relwalk
@@ -110,6 +110,7 @@ class AppPackager(object):
                         break
 
     def merge_local(self):
+        # XXX:  Rename this "promote_local()" ?
         """
         Find everything in local, if it has a corresponding file in default, merge.
         """

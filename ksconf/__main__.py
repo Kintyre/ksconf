@@ -207,6 +207,7 @@ def build_cli_parser(do_formatter=False):
 
 
 def cli(argv=None, _unittest=False):
+    # TODO:  Rename '_unitest' to something more appropriate, maybe _exit=True?
     if check_py is not None:
         check_py()
 
@@ -252,7 +253,7 @@ def check_py():
         # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist
         if KSCONF_DEBUG not in os.environ:
             sys.exit(EXIT_CODE_ENV_BUSTED)
-    # Okay, now NEVER call this code again....   (helpful for unit-testing)
+    # Okay, now NEVER call this code again....   (helpful for unit-testing & nested calls)
     globals()["check_py"] = None
 
 
