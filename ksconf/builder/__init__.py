@@ -96,7 +96,7 @@ class BuildStep(object):
         """
         (cwd,) = handle_py3_kw_only_args(kw_only, ("cwd", None))
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
-        args = (executable,) + args
+        args = [executable] + [text_type(s) for s in args]
         cwd = cwd or str(self.build_path)
         self._log("EXEC:  {}  cwd={}".format(" ".join(text_type(s) for s in args), cwd), VERBOSE)
         process = Popen(args, cwd=cwd)
