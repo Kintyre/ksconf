@@ -1,3 +1,3 @@
-Git and Splunk don't always fit together perfectly.  Introducing KSCONF, a tool written to alleviate arduos tasks associated with managing Splunk apps in a git repository.  This open source tool supports many functions to help both admins and developers manage Splunk content in git in a simple way without getting stuck in the details.
+Git and Splunk don't always fit together perfectly.  Introducing KSCONF, a tool written to alleviate arduous tasks associated with managing Splunk apps in a git repository.  This open source tool supports many functions to help both admins and developers manage Splunk content in git in a simple way without getting stuck in the details.
 
 https://github.com/Kintyre/ksconf
