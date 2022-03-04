@@ -313,7 +313,7 @@ ksconf filter
                          [--match {regex,wildcard,string}] [--ignore-case]
                          [--invert-match] [--files-with-matches]
                          [--count | --brief] [--stanza PATTERN]
-                         [--attr-present ATTR] [--keep-attrs WC-ATTR]
+                         [--attr-present ATTR] [-e | -d] [--keep-attrs WC-ATTR]
                          [--reject-attrs WC-ATTR]
                          CONF [CONF ...]
     
@@ -364,6 +364,11 @@ ksconf filter
       --attr-present ATTR   Match any stanza that includes the ATTR attribute.
                             ATTR supports bulk attribute patterns via the
                             'file://' prefix.
+      -e, --enabled-only    Keep only enabled stanzas. Any stanza containing
+                            'disabled = 1' will be removed. The value of
+                            'disabled' is assumed to be false by default.
+      -d, --disabled-only   Keep disabled stanzas only. The value of the
+                            `disabled` attribute is interpreted as a boolean.
     
     Attribute selection:
       Include or exclude attributes passed through. By default, all attributes

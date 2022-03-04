@@ -21,10 +21,15 @@ import argparse
 import sys
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
-from ksconf.conf.parser import PARSECONF_MID_NC, write_conf_stream
+from ksconf.conf.parser import PARSECONF_MID_NC, conf_attr_boolean, write_conf_stream
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.filter import FilteredList, FilteredListWildcard, create_filtered_list
 from ksconf.util.completers import conf_files_completer
+
+
+def is_disabled(attributes):
+    # type: (dict) -> bool
+    return conf_attr_boolean(attributes.get("disabled", False))
 
 
 class FilterCmd(KsconfCmd):
@@ -121,6 +126,18 @@ class FilterCmd(KsconfCmd):
             PATTERN supports the special ``file://`` syntax.""")
         '''
 
+        pg_eod = pg_sel.add_mutually_exclusive_group()
+        pg_eod.add_argument("-e", "--enabled-only", action="store_true",
+                            help=dedent("""
+            Keep only enabled stanzas.  Any stanza containing ``disabled = 1`` will be removed.
+            The value of ``disabled`` is assumed to be false by default.
+            """))
+
+        pg_eod.add_argument("-d", "--disabled-only", action="store_true",
+                            help=dedent("""
+            Keep disabled stanzas only.
+            The value of the `disabled` attribute is interpreted as a boolean. """))
+
         pg_con = parser.add_argument_group("Attribute selection", dedent("""\
             Include or exclude attributes passed through.
             By default, all attributes are preserved.
@@ -149,6 +166,13 @@ class FilterCmd(KsconfCmd):
         self.attr_presence_filters = create_filtered_list(args.match, flags)
         self.attr_presence_filters.feedall(args.attr_present)
 
+        if args.enabled_only:
+            self.disabled_filter = lambda attrs: not is_disabled(attrs)
+        elif args.disabled_only:
+            self.disabled_filter = is_disabled
+        else:
+            self.disabled_filter = lambda attrs: True
+
         if args.keep_attrs or args.reject_attrs:
             self.attrs_keep_filter = FilteredListWildcard(flags)
             for attrs in args.keep_attrs:
@@ -162,6 +186,10 @@ class FilterCmd(KsconfCmd):
 
     def _test_stanza(self, stanza, attributes):
         if self.stanza_filters.match_stanza(stanza):
+            # Exclude based on value of 'disabled' attribute
+            if not self.disabled_filter(attributes):
+                return False
+
             # If there are no attribute level filters, automatically keep (preserves empty stanzas)
             if not self.attr_presence_filters.has_rules:
                 return True

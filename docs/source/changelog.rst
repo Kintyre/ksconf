@@ -21,9 +21,16 @@ Ksconf 0.9
    This new option can be used to control the level of detail in the output.
 
 
+Ksconf v0.9.2 (2022-03-04)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+-  The ``filter`` command can now include/exclude stanzas based on the boolean value of ``disabled`` using the new ``--enabled-only`` or ``--disabled-only`` arguments.
+   The default behavior remains the same, that is, the ``disabled`` attribute is compleelty ignored.
+   Thanks to John B Splunker for inspiring this feature!
+
+
 Ksconf v0.9.1 (2022-03-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
--  Ksconf now tries harder to preserve file modification times.  This is supported in ``merge``, ``combine``` and ``pacakge`` commands.
+-  Ksconf now tries harder to preserve file modification times.  This is supported in ``merge``, ``combine``` and ``package`` commands.
    Specifically, merged ``.conf`` files and concatenated files will keep the most recent modification time in the destination.
    This should make the output of ``combine`` and ``package`` (by extention) more deterministic in many scenarios.
 
