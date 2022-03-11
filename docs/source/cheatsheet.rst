@@ -275,7 +275,7 @@ Say you need to build a single TA containing all the index-time settings for you
     .. code-block:: sh
 
         ksconf merge etc/apps/*TA*/{default,local}/props.conf \
-            | ksconf filter --output=TA-for-indexers/default/props.conf \
+            | ksconf filter - --output=TA-for-indexers/default/props.conf \
               --include-attr 'TRANSFORMS*' \
               --include-attr 'TIME_*' \
               --include-attr 'MUST_BREAK*' \
