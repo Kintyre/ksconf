@@ -210,8 +210,6 @@ class AppPackager(object):
         # type: (str) -> str
         # if os.path.isfile(filename):
         #    raise ValueError("Destination file already exists:  {}".format(filename))
-
-        # Python 3.2+, use context manager
         app_name = self.expand_var(self.app_name)
         if app_name != self.app_name:
             self.output.write("Expanding template {} to final app name: {}\n"
@@ -226,11 +224,8 @@ class AppPackager(object):
             self.output.write("Creating archive:  {}\n".format(filename))
 
         normalize_directory_mtime(self.app_dir)
-        spl = tarfile.open(filename, mode="w:gz")
-        try:
+        with tarfile.open(filename, mode="w:gz") as spl:
             spl.add(self.app_dir, arcname=self.app_name)
-        finally:
-            spl.close()
         return filename
 
     def __enter__(self):

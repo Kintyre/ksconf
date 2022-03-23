@@ -3,6 +3,13 @@ Changelog
 
 .. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
 
+
+Ksconf v0.10.0 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Python 3 ONLY**
+
+
 Ksconf 0.9
 ----------
 

@@ -17,12 +17,6 @@ from ksconf.ext.six import text_type
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
 from ksconf.util import handle_py3_kw_only_args
 
-if sys.version_info < (3, 6):
-    from ksconf.util.file import pathlib_compat
-    Popen = pathlib_compat(Popen)
-    del pathlib_compat
-
-
 QUIET = -1
 NORMAL = 0
 VERBOSE = 1
@@ -86,6 +80,7 @@ class BuildStep(object):
             self._output.write("\n")
 
     def run(self, executable, *args, **kw_only):
+        # PY38 signature:  run(self, executable, /, *args, cwd=None)
         """ Execute an OS-level command regarding the build process.
         The process will run withing the working directory of the build folder.
 
@@ -96,7 +91,7 @@ class BuildStep(object):
         """
         (cwd,) = handle_py3_kw_only_args(kw_only, ("cwd", None))
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
-        args = [executable] + [text_type(s) for s in args]
+        args = [executable] + [str(s) for s in args]
         cwd = cwd or str(self.build_path)
         self._log("EXEC:  {}  cwd={}".format(" ".join(text_type(s) for s in args), cwd), VERBOSE)
         process = Popen(args, cwd=cwd)
@@ -149,8 +144,3 @@ def default_cli(build_manager, build_funct, argparse_parents=()):
             raise
         sys.stderr.write("Unhandled exception in build process:  {}\n".format(e))
         sys.exit(EXIT_CODE_INTERNAL_ERROR)
-
-
-# Used for type hints / avoid unused variable warnings moving to Python 3 only: # noqa
-_ = BuildStep
-del _

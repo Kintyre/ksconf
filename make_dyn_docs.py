@@ -8,8 +8,6 @@ import sys
 from functools import wraps
 from subprocess import PIPE, Popen
 
-from ksconf.ext.six import PY2
-
 # Prevent installed (likely older) version of ksconf from taking over
 project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, project_dir)
@@ -23,25 +21,11 @@ PY_ENV = {
     "KSCONF_DISABLE_PLUGINS": "ksconf_cmd",
 }
 
-if PY2:
-    # Convert to bytes for Python 2
-    PY_ENV = {k.encode("utf-8"): v.encode("utf-8") for (k, v) in PY_ENV.items()}
-
 
 def cmd_output(*cmd):
     p = Popen(cmd, stdout=PIPE, env=PY_ENV)
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
-
-
-'''
-# Not sure how else to tell if environment variables should be bytes or string/unicode, so we try it and adjust from there....
-# Seems to be different based on Python version and OS
-try:
-    cmd_output("-m", "ksconf", "--version")
-except TypeError:
-    print("Falling back to unicode strings for envvars")
-'''
 
 
 def parse_subcommand(lines):
@@ -124,10 +108,7 @@ def make_subcommands_table(csv_path):
     commands.sort()
     commands = [ep for (name, ep) in commands]
 
-    if PY2:
-        table = ReluctantWriter(csv_path, "wb")
-    else:
-        table = ReluctantWriter(csv_path, "w", encoding="utf-8")
+    table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
         for ep in commands:
@@ -139,9 +120,6 @@ def make_subcommands_table(csv_path):
                 ep.cmd_cls.maturity,
                 ep.cmd_cls.help.replace("\n", " "),
             ]
-            # Workaround csv module not supporting unicode in PY2
-            if PY2:
-                row = [s.encode("utf-8") for s in row]
             csvwriter.writerow(row)
     return table
 
