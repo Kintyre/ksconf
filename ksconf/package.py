@@ -145,9 +145,8 @@ class AppPackager(object):
                 self.output.write("Removing local.meta\n")
             os.unlink(local_meta)
 
-    def update_app_conf(self, version=None, build=None):
+    def update_app_conf(self, version: str = None, build: str = None):
         """ Update version and/or build in ``apps.conf`` """
-        # type: (str, str) -> None
         app_settings = [
             ("launcher", "version", version),
             ("install", "build", build),

@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from subprocess import Popen
+from typing import List
 
 try:
     from typing import Callable
@@ -57,8 +58,7 @@ class BuildStep(object):
     def is_verbose(self):
         return self.verbosity >= VERBOSE
 
-    def get_logger(self, prefix=None):
-        # type: (str) -> Callable[str, int]
+    def get_logger(self, prefix: str = None) -> Callable:
         if prefix is None:
             prefix = inspect.currentframe().f_back.f_code.co_name
         elif re.match(r'[\w_]+', prefix):
@@ -104,8 +104,9 @@ class BuildStep(object):
 from ksconf.builder.core import BuildManager  # noqa
 
 
-def default_cli(build_manager, build_funct, argparse_parents=()):
-    # args: (BuildManager, Callable[BuildStep, argparse.Namespace], List[argparse.ArgumentParser]
+def default_cli(build_manager: BuildManager,
+                build_funct: Callable,
+                argparse_parents: List[argparse.ArgumentParser] = ()):
     """
     This is the function you stick in the:  ``if __name__ == '__main__'`` section of your code :-)
 

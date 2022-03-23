@@ -1,9 +1,10 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import os
 import re
 from collections import defaultdict
 from fnmatch import fnmatch
+from typing import Type
 
 from ksconf.util.file import relwalk
 
@@ -105,8 +106,7 @@ class LayerFilter(object):
             self._rules.append(first_filter)
         self._rules.append((action, pattern))
 
-    def evaluate(self, layer):
-        # type: (LayerRootBase.Layer) -> bool
+    def evaluate(self, layer: "LayerRootBase.Layer") -> bool:
         response = True
         layer_name = layer.name
         for rule_action, rule_pattern in self._rules:
@@ -137,8 +137,7 @@ class LayerRootBase(object):
             self.relative_path = relative_path
             self._stat = stat
 
-        def __fspath__(self):
-            # type: () -> str
+        def __fspath__(self) -> str:
             return self.physical_path
 
         @property
@@ -167,8 +166,8 @@ class LayerRootBase(object):
         """ Basic layer Container:   Connects logical and physical paths. """
         __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_cls"]
 
-        def __init__(self, name, root, physical, logical, config, file_cls):
-            # type: (str, str, str, str, LayerConfig, type) -> None
+        def __init__(self, name: str, root: str, physical: str, logical: str,
+                     config: LayerConfig, file_cls: Type):
             self.name = name
             self.root = root
             self.physical_path = physical

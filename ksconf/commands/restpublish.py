@@ -59,7 +59,7 @@ class RestPublishCmd(KsconfCmd):
     def __init__(self, *args, **kwargs):
         super(RestPublishCmd, self).__init__(*args, **kwargs)
         self._service = None
-        self.meta = None        # type: MetaData
+        self.meta: MetaData = None
 
     @classmethod
     def _handle_imports(cls):
@@ -71,8 +71,7 @@ class RestPublishCmd(KsconfCmd):
         import splunklib
         cls.version_extra = "splunk-sdk {}".format(splunklib.__version__)
 
-    def register_args(self, parser):
-        # type: (ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                             help="Configuration file(s) to export settings from."

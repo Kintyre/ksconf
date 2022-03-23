@@ -65,9 +65,8 @@ def make_docs(step):
                     str(docs_build))
 
 
-def filter_requirements(step, src, re_block, extra):
+def filter_requirements(step: BuildStep, src: str, re_block: str, extra: str):
     """ Copy a filtered version of requirements.txt """
-    # type: (BuildStep, str, str, str)
     log = step.get_logger()
     dest = step.build_path / src.name
     log("Filtering requirements.txt:  {} --> {}".format(src, dest, re_block), VERBOSE)
