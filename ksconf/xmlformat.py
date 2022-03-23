@@ -1,10 +1,17 @@
 import os
 import re
 from io import BytesIO
+from typing import TYPE_CHECKING, Any, List
 
 from ksconf.util.file import ReluctantWriter
 
 etree = None
+
+
+if TYPE_CHECKING:
+    from lxml.etree import ElementTree
+else:
+    ElementTree = Any
 
 
 def _import_etree():
@@ -41,7 +48,7 @@ class FileReadlinesCache(object):
             return stream.readlines()
 
 
-class SplunkSimpleXmlFormatter(object):
+class SplunkSimpleXmlFormatter:
     keep_tags = {"latest", "earliest", "set", "label", "fieldset", "default", "search", "option"}
 
     def __init__(self):
@@ -49,7 +56,7 @@ class SplunkSimpleXmlFormatter(object):
             _import_etree()
 
     @classmethod
-    def indent_tree(cls, elem, level=0, indent=2):
+    def indent_tree(cls, elem: ElementTree, level=0, indent=2):
         # Copied from http://effbot.org/zone/element-lib.htm#prettyprint
         itxt = " " * indent
         i = "\n" + level * itxt
@@ -67,9 +74,8 @@ class SplunkSimpleXmlFormatter(object):
                 elem.tail = i
 
     @classmethod
-    def expand_tags(cls, elem, tags):
+    def expand_tags(cls, elem: ElementTree, tags: set):
         """Keep <elem></elem> instead of shortening to <elem/>"""
-        # type:  (etree.ElementTree, set)
         if elem.tag in tags and elem.text is None:
             # By setting this to an empty string (vs None), the trailing tag is kept
             elem.text = ""
@@ -77,7 +83,7 @@ class SplunkSimpleXmlFormatter(object):
             cls.expand_tags(c, tags)
 
     @staticmethod
-    def cdata_tags(elem, tags):
+    def cdata_tags(elem: ElementTree, tags: List[str]):
         """ Expand text to CDATA, if it isn't already. """
         cache = FileReadlinesCache()
         CDATA = "<![CDATA["
@@ -111,7 +117,7 @@ class SplunkSimpleXmlFormatter(object):
                         e.text = etree.CDATA(e.text)
 
     @staticmethod
-    def guess_indent(elem, default=2):
+    def guess_indent(elem: ElementTree, default=2):
         if elem.text:
             prefix = elem.text.strip("\r\n")
             indent = len(prefix) or default

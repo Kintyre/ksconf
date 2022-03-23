@@ -4,12 +4,13 @@ import os
 import shutil
 import sys
 from copy import deepcopy
+from typing import List
 
 import ksconf.ext.six as six
 
 from ksconf.commands import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
-from ksconf.conf.parser import (GLOBAL_STANZA, _extract_comments,
+from ksconf.conf.parser import (GLOBAL_STANZA, ConfType, _extract_comments,
                                 inject_section_comments, parse_conf, write_conf)
 from ksconf.consts import SMART_UPDATE
 from ksconf.util.file import relwalk
@@ -59,8 +60,10 @@ def merge_conf_dicts(*dicts):
     return result
 
 
-def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
-    # type: (ConfFileProxy, list[ConfFileProxy], bool, str) -> dict
+def merge_conf_files(dest: ConfFileProxy,
+                     configs: List[ConfFileProxy],
+                     dry_run: bool = False,
+                     banner_comment: str = None) -> ConfType:
     # Parse all config files
     cfgs = [conf.data for conf in configs]
     newest_mtime = max(conf.mtime for conf in configs) if configs else None
@@ -83,8 +86,9 @@ def merge_conf_files(dest, configs, dry_run=False, banner_comment=None):
     return dest.dump(merged_cfg, mtime=newest_mtime)
 
 
-def merge_update_conf_file(dest, sources, remove_source=False):
-    # args: (str, list(str), bool
+def merge_update_conf_file(dest: str,
+                           sources: List[str],
+                           remove_source: bool = False) -> None:
     """ Dest is treated as both the output, and the highest priority source.
     """
     # XXX:  If dest is missing/empty, and only one non-empty source, use file move
@@ -114,7 +118,9 @@ def merge_update_conf_file(dest, sources, remove_source=False):
             os.unlink(name)
 
 
-def merge_update_any_file(dest, sources, remove_source=False):
+def merge_update_any_file(dest: str,
+                          sources: List[str],
+                          remove_source: bool = False) -> None:
     # XXX: Set this up in a shared function somewhere, we have to figure this out multiple places
     remove = []
     if dest.endswith(".conf") or dest.endswith(".meta"):
@@ -140,7 +146,7 @@ def merge_update_any_file(dest, sources, remove_source=False):
             os.unlink(name)
 
 
-def merge_app_local(app_folder, cleanup=True):
+def merge_app_local(app_folder: str, cleanup: bool = True) -> None:
     """
     Find everything in local, if it has a corresponding file in default, merge.
     This function assumes standard Splunk app path names.

@@ -111,8 +111,7 @@ class RestExportCmd(KsconfCmd):
     format = "manual"
     maturity = "beta"
 
-    def register_args(self, parser):
-        # type: (ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                             help="Configuration file(s) to export settings from."
