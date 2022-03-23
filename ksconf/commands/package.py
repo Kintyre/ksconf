@@ -18,7 +18,6 @@ Build system example:
 
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import argparse
 import os
@@ -50,9 +49,7 @@ class PackageCmd(KsconfCmd):
         ".DS_Store"
     ]
 
-    def register_args(self, parser):
-        # type: (argparse.ArgumentParser) -> None
-
+    def register_args(self, parser: argparse.ArgumentParser):
         def wb_type(action):
             def f(pattern):
                 return action, pattern

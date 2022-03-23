@@ -22,36 +22,15 @@ decorator used to implement caching:
                         (Cache "slot"), must be filesystem safe]
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import sys
 from functools import wraps
 from pathlib import Path
 from shutil import copy2, rmtree
-
-from ksconf.ext.six import text_type
+from tempfile import TemporaryDirectory
+from typing import Callable, List, Union
 
 from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
 from ksconf.builder.cache import CachedRun, FileSet
-
-try:
-    from typing import Any, Callable, List
-except ImportError:
-    Callable = List = Any = type
-
-try:
-    from tempfile import TemporaryDirectory
-except ImportError:
-    from backports.tempfile import TemporaryDirectory
-
-
-if sys.version_info < (3, 6):
-    # Allow these stdlib functions to work with pathlib
-    from ksconf.util.file import pathlib_compat
-    copy2 = pathlib_compat(copy2)
-    rmtree = pathlib_compat(rmtree)
-    TemporaryDirectory = pathlib_compat(TemporaryDirectory)
-    del pathlib_compat
 
 
 def _get_function_sourcecode_hash(f):
@@ -114,9 +93,10 @@ class BuildManager(object):
             cache_info.disable()
         return cache_info
 
-    def cache(self, inputs, outputs, timeout=None, name=None,
-              cache_invalidation=None):
-        # type: (List[str], List[str], int, str, Any[dict,list,str]) -> None
+    def cache(self, inputs: List[str], outputs: int,
+              timeout: int = None,
+              name: str = None,
+              cache_invalidation: Union[dict, list, str] = None) -> None:
         """ function decorator for caching build steps
         Wrapped function must accept BuildStep instance as first parameters
 
@@ -149,8 +129,7 @@ class BuildManager(object):
             cache_settings["function_code_hash"] = f_source_hash
 
             @wraps(f)
-            def wrapper(build_step):
-                # args: (BuildStep) -> None
+            def wrapper(build_step: BuildStep) -> None:
                 log = build_step.get_logger(name)
                 use_cache = True
                 cache = self.get_cache_info(name)
@@ -227,7 +206,7 @@ class BuildManager(object):
                         fs_inputs = FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
                         log("Copied {} input files".format(len(fs_inputs)), VERBOSE * 2)
-                        log("Copied input files: {}".format(", ".join(text_type(p) for p in fs_inputs)), VERBOSE * 3)
+                        log("Copied input files: {}".format(", ".join(str(p) for p in fs_inputs)), VERBOSE * 3)
                         try:
                             # Run wrapped function
                             ret = f(alt_bs)

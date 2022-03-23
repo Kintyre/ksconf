@@ -6,14 +6,16 @@ import os
 import re
 import sys
 import textwrap
+from argparse import ArgumentParser, ArgumentTypeError, FileType
 from collections import namedtuple
 from io import open
 from textwrap import dedent
 from warnings import warn
 
 from ksconf import KsconfPluginWarning
-from ksconf.conf.parser import (ConfParserException, detect_by_bom, parse_conf,
-                                smart_write_conf, write_conf)
+from ksconf.conf.parser import (ConfParserException, ParserConfig,
+                                detect_by_bom, parse_conf, smart_write_conf,
+                                write_conf)
 from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE
 from ksconf.util import debug_traceback, memoize
 
@@ -30,15 +32,7 @@ __all__ = [
 ]
 
 
-try:
-    BrokenPipeError
-except NameError:
-    # Ugh?!  Close enough.  Dropping Python 2 ASAP!
-    import socket
-    BrokenPipeError = socket.error
-
-
-class ConfDirProxy(object):
+class ConfDirProxy:
     def __init__(self, name, mode, parse_profile=None):
         self.name = name
         self._mode = mode
@@ -49,7 +43,7 @@ class ConfDirProxy(object):
         return ConfFileProxy(path, self._mode, parse_profile=self._parse_profile, is_file=True)
 
 
-class ConfFileProxy(object):
+class ConfFileProxy:
     def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
         self.name = name
         self._mode = mode
@@ -180,10 +174,10 @@ class ConfFileProxy(object):
     '''
 
 
-class ConfFileType(object):
+class ConfFileType:
     """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
 
-    Started from argparse.FileType() and then changed everything.   With our use case, it's often
+    Started from FileType() and then changed everything.   With our use case, it's often
     necessary to delay writing, or read before writing to a conf file (depending on whether or not
     --dry-run mode is enabled, for example.)
 
@@ -215,14 +209,15 @@ class ConfFileType(object):
     :class:`ConfDirProxy` object if a directory is passed in via the CLI.
     """
 
-    def __init__(self, mode='r', action="open", parse_profile=None, accept_dir=False):
+    def __init__(self, mode='r', action="open",
+                 parse_profile: ParserConfig = None,
+                 accept_dir: bool = False):
         self._mode = mode
         self._action = action
         self._parse_profile = parse_profile or {}
         self._accept_dir = accept_dir
 
     def __call__(self, string):
-        ArgumentTypeError = argparse.ArgumentTypeError
         # the special argument "-" means sys.std{in,out}
         if string == '-':
             if 'r' in self._mode:
@@ -314,7 +309,7 @@ class KsconfCmdReadConfException(Exception):
         self.returncode = rc
 
 
-class KsconfCmd(object):
+class KsconfCmd:
     """ Ksconf command specification base class. """
     help = None
     description = None
@@ -368,8 +363,7 @@ class KsconfCmd(object):
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
 
-    def register_args(self, parser):        # pragma: no cover
-        # type: (argparse.ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):        # pragma: no cover
         """ This function in passed the """
         raise NotImplementedError
 
@@ -429,8 +423,9 @@ class KsconfCmd(object):
         del d
         return cfp
 
-    def parse_conf(self, path, mode="r", profile=None, raw_exec=False):
-        # type: (str, str, dict, bool) -> ConfFileProxy
+    def parse_conf(self, path: str, mode: str = "r",
+                   profile: ParserConfig = None,
+                   raw_exec: bool = False) -> ConfFileProxy:
         if raw_exec:
             return self._parse_conf(path, mode, profile)
         try:
@@ -450,8 +445,7 @@ class KsconfCmd(object):
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
 
 
-def add_splunkd_access_args(parser):
-    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+def add_splunkd_access_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--url", default="https://localhost:8089",
                         help="URL of Splunkd.  Default:  %(default)s")
     parser.add_argument("--user", default="admin",
@@ -466,8 +460,7 @@ def add_splunkd_access_args(parser):
     return parser
 
 
-def add_splunkd_namespace(parser):
-    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+def add_splunkd_namespace(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--app", default="$SPLUNK_APP",
                         help="Set the namespace (app name) for the endpoint")
     parser.add_argument("--owner", default="nobody",

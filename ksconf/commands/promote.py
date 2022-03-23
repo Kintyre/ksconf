@@ -93,8 +93,7 @@ class PromoteCmd(KsconfCmd):
     format = "manual"
     maturity = "beta"
 
-    def register_args(self, parser):
-        # type: (argparse.ArgumentParser) -> None
+    def register_args(self, parser: argparse.ArgumentParser):
         parser.set_defaults(mode="ask")
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),

@@ -19,6 +19,7 @@ from __future__ import absolute_import, unicode_literals
 
 import argparse
 import sys
+from argparse import ArgumentParser
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_MID_NC, conf_attr_boolean, write_conf_stream
@@ -49,8 +50,7 @@ class FilterCmd(KsconfCmd):
         self.stanza_filters = None
         self.attr_presence_filters = None
 
-    def register_args(self, parser):
-        # type: (argparse.ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", help="Input conf file", nargs="+",
                             type=ConfFileType("r", parse_profile=PARSECONF_MID_NC)
                             ).completer = conf_files_completer
