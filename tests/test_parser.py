@@ -20,8 +20,8 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
-                               DIFF_OP_REPLACE, compare_cfgs, show_diff,
-                               summarize_cfg_diffs)
+                               DIFF_OP_REPLACE, DiffLevel, compare_cfgs,
+                               show_diff, summarize_cfg_diffs)
 from ksconf.conf.parser import (DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE,
                                 GLOBAL_STANZA, PARSECONF_MID,
                                 ConfParserException, DuplicateKeyException,
@@ -423,7 +423,7 @@ class ConfigDiffTestCase(unittest.TestCase):
     @staticmethod
     def find_op_by_location(diffs, type, **kwargs):
         for op in diffs:
-            if op.location.type == type:
+            if op.location.type == DiffLevel(type):
                 match = True
                 for (attr, value) in six.iteritems(kwargs):
                     if getattr(op.location, attr, None) != value:
@@ -457,7 +457,7 @@ class ConfigDiffTestCase(unittest.TestCase):
         self.assertIsNone(op.a)
         self.assertIsNotNone(op.b)
 
-    def test_imballanced_stanas(self):
+    def test_imbalanced_stanzas(self):
         """ Imbalanced stanzas """
         a = parse_string("""
         [s0]

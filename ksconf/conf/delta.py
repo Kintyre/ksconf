@@ -1,33 +1,85 @@
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import difflib
 import os
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from enum import Enum
 from io import open
+from os import PathLike
+from typing import List, NamedTuple, Sequence, TextIO, Union
 
-import ksconf.ext.six as six
-
-from ksconf.conf.parser import GLOBAL_STANZA, _format_stanza, default_encoding
+from ksconf.conf.parser import GLOBAL_STANZA, ConfType, StanzaType, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.terminal import ANSI_BOLD, ANSI_GREEN, ANSI_RED, ANSI_RESET, ANSI_YELLOW, TermColor
 
 ####################################################################################################
-# Diff logic
-
-DIFF_OP_INSERT = "insert"
-DIFF_OP_DELETE = "delete"
-DIFF_OP_REPLACE = "replace"
-DIFF_OP_EQUAL = "equal"
-
-DiffOp = namedtuple("DiffOp", ("tag", "location", "a", "b"))
-DiffGlobal = namedtuple("DiffGlobal", ("type",))
-DiffStanza = namedtuple("DiffStanza", ("type", "stanza"))
-DiffStzKey = namedtuple("DiffStzKey", ("type", "stanza", "key"))
+# DiffVerb logic
 
 
-class DiffHeader(object):
+class DiffVerb(Enum):
+    INSERT = "insert"
+    DELETE = "delete"
+    REPLACE = "replace"
+    EQUAL = "equal"
+
+    # Allow sorting
+    def __gt__(self, other):
+        return self.value > other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
+# Legacy names
+DIFF_OP_INSERT = DiffVerb.INSERT
+DIFF_OP_DELETE = DiffVerb.DELETE
+DIFF_OP_REPLACE = DiffVerb.REPLACE
+DIFF_OP_EQUAL = DiffVerb.EQUAL
+
+
+'''
+from typing import NamedTuple
+DiffOp = NamedTuple("DiffOp", (["tag", DiffVerb], ["location", Union[DiffGlobal, DiffStanza, DiffStzKey]], ["a", Union[ConfType, StanzaType, str]], ["b", Union[ConfType, StanzaType, str]]))
+DiffGlobal = NamedTuple("DiffGlobal", (["type", str],))
+DiffStanza = NamedTuple("DiffStanza", (["type", str], ["stanza", str]))
+DiffStzKey = NamedTuple("DiffStzKey", (["type", str], ["stanza", str], ["key", str]))
+'''
+
+
+class DiffLevel(Enum):
+    GLOBAL = "global"
+    STANZA = "stanza"
+    KEY = "key"
+
+
+class DiffGlobal(NamedTuple):
+    type: DiffLevel
+
+
+class DiffStanza(NamedTuple):
+    type: DiffLevel
+    stanza: str
+
+
+class DiffStzKey(NamedTuple):
+    type: DiffLevel
+    stanza: str
+    key: str
+
+
+class DiffOp(NamedTuple):
+    tag: DiffVerb
+    location: Union[DiffGlobal, DiffStanza, DiffStzKey]
+    a: Union[ConfType, StanzaType, str, None]
+    b: Union[ConfType, StanzaType, str, None]
+
+
+@dataclass
+class DiffHeader:
+    name: str
+    mtime: float = None
+
     def __init__(self, name, mtime=None):
         self.name = name
         if mtime:
@@ -49,48 +101,55 @@ class DiffHeader(object):
         return "{0:50} {1}".format(self.name, ts)
 
 
-def compare_stanzas(a, b, stanza_name, replace_level="global"):
+def compare_stanzas(a: StanzaType, b: StanzaType,
+                    stanza_name: str,
+                    replace_level: DiffLevel = DiffLevel.GLOBAL
+                    ) -> List[DiffOp]:
     """
     :param replace_level: If a and b have no common keys, is a single stanza-level
                       'replace' is issue unless ``replace_level="key"``
     :type replace_level: bool
     """
     if a == b:
-        return [DiffOp(DIFF_OP_EQUAL, DiffStanza("stanza", stanza_name), a, b)]
+        return [DiffOp(DiffVerb.EQUAL, DiffStanza(DiffLevel.STANZA, stanza_name), a, b)]
     elif b is None:
         # A only
-        return [DiffOp(DIFF_OP_DELETE, DiffStanza("stanza", stanza_name), a, None)]
+        return [DiffOp(DiffVerb.DELETE, DiffStanza(DiffLevel.STANZA, stanza_name), a, None)]
     elif a is None:
         # B only
-        return [DiffOp(DIFF_OP_INSERT, DiffStanza("stanza", stanza_name), None, b)]
+        return [DiffOp(DiffVerb.INSERT, DiffStanza(DiffLevel.STANZA, stanza_name), None, b)]
     else:
         return list(_compare_stanzas(a, b, stanza_name, replace_level))
 
 
-def _compare_stanzas(a, b, stanza_name, replace_level):
+def _compare_stanzas(a: StanzaType, b: StanzaType,
+                     stanza_name: str,
+                     replace_level: DiffLevel) -> List[DiffOp]:
     kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
 
-    if replace_level in ("global", "stanza") and not kv_common:
+    if replace_level in (DiffLevel.GLOBAL, DiffLevel.STANZA) and not kv_common:
         # No keys in common, just swap
-        yield DiffOp(DIFF_OP_REPLACE, DiffStanza("stanza", stanza_name), a, b)
+        yield DiffOp(DiffVerb.REPLACE, DiffStanza(DiffLevel.STANZA, stanza_name), a, b)
         return
 
     # Level 2 - Key comparisons
     for key in kv_a:
-        yield DiffOp(DIFF_OP_DELETE, DiffStzKey("key", stanza_name, key), a[key], None)
+        yield DiffOp(DIFF_OP_DELETE, DiffStzKey(DiffLevel.KEY, stanza_name, key), a[key], None)
     for key in kv_b:
-        yield DiffOp(DIFF_OP_INSERT, DiffStzKey("key", stanza_name, key), None, b[key])
+        yield DiffOp(DIFF_OP_INSERT, DiffStzKey(DiffLevel.KEY, stanza_name, key), None, b[key])
     for key in kv_common:
         a_ = a[key]
         b_ = b[key]
         if a_ == b_:
-            yield DiffOp(DIFF_OP_EQUAL, DiffStzKey("key", stanza_name, key), a_, b_)
+            yield DiffOp(DiffVerb.EQUAL, DiffStzKey(DiffLevel.KEY, stanza_name, key), a_, b_)
         else:
-            yield DiffOp(DIFF_OP_REPLACE, DiffStzKey("key", stanza_name, key), a_, b_)
+            yield DiffOp(DiffVerb.REPLACE, DiffStzKey(DiffLevel.KEY, stanza_name, key), a_, b_)
 
 
-def compare_cfgs(a, b, replace_level="global"):
-    '''
+def compare_cfgs(a: ConfType, b: ConfType,
+                 replace_level: DiffLevel = DiffLevel.GLOBAL
+                 ) -> List[DiffOp]:
+    """
     Calculate a set of deltas which describes how to transform a into b.
 
     :param a: the first/original configuration entity
@@ -150,28 +209,32 @@ def compare_cfgs(a, b, replace_level="global"):
     .. versionchanged:: v0.8.8
         The ``allow_level0`` argument was replaced with ``replace_level``.
         Instead of using ``allow_level0=False`` use ``replace_level="stanza"``.
-        At the same time an new feature was added to support ``replace_level="key"``.
+        At the same time a new feature was added to support ``replace_level="key"``.
         The default behavior remains the same.
 
-    '''
+    """
     # Possible alternatives:
     # https://dictdiffer.readthedocs.io/en/latest/#dictdiffer.patch
 
-    if replace_level not in ("global", "stanza", "key"):
-        raise TypeError("Invalid value given for 'replace_level'. Choose 'global', 'stanza', or 'key'")
+    if replace_level not in (DiffLevel.GLOBAL, DiffLevel.STANZA, DiffLevel.KEY):
+        if isinstance(replace_level, str):
+            replace_level = DiffLevel(replace_level)
+        else:
+            raise TypeError(f"Invalid value '{replace_level}' given for "
+                            f"replace_level.  Choose 'global', 'stanza', or 'key'")
 
     delta = []
 
     # Level 0 - Compare entire file
-    if replace_level == "global":
+    if replace_level == DiffLevel.GLOBAL:
         stanza_a, stanza_common, stanza_b = _cmp_sets(list(a.keys()), list(b.keys()))
         if a == b:
-            return [DiffOp(DIFF_OP_EQUAL, DiffGlobal("global"), a, b)]
+            return [DiffOp(DiffVerb.EQUAL, DiffGlobal(DiffLevel.GLOBAL), a, b)]
         if not stanza_common:
             # Q:  Does this specific output make the consumer's job more difficult?
             # Nothing in common between these two files
             # Note:  Stanza renames are not detected and are out of scope.
-            return [DiffOp(DIFF_OP_REPLACE, DiffGlobal("global"), a, b)]
+            return [DiffOp(DiffVerb.REPLACE, DiffGlobal(DiffLevel.GLOBAL), a, b)]
 
     # Level 1 - Compare stanzas
 
@@ -188,8 +251,8 @@ def compare_cfgs(a, b, replace_level="global"):
     return delta
 
 
-def summarize_cfg_diffs(delta, stream):
-    """ Summarize a delta into a human readable format.   The input `delta` is in the format
+def summarize_cfg_diffs(delta: List[DiffOp], stream: TextIO):
+    """ Summarize a delta into a human-readable format.   The input `delta` is in the format
     produced by the compare_cfgs() function.
     """
     stanza_stats = defaultdict(set)
@@ -212,10 +275,9 @@ def summarize_cfg_diffs(delta, stream):
         stream.write("\n")
 
 
-def is_equal(delta):
+def is_equal(delta: List[DiffOp]) -> bool:
     """ Is the delta output show that the compared objects are identical """
-    # type: (list(DiffOp)) -> bool
-    return len(delta) == 1 and delta[0].tag == DIFF_OP_EQUAL
+    return len(delta) == 1 and delta[0].tag == DiffVerb.EQUAL
 
 
 # Color mapping
@@ -226,7 +288,9 @@ _diff_color_mapping = {
 }
 
 
-def _show_diff_header(stream, files, diff_line=None):
+def _show_diff_header(stream: TextIO,
+                      files: List[Union[DiffHeader, str]],
+                      diff_line: Union[str, None] = None):
     headers = []
 
     for f in files:
@@ -238,13 +302,13 @@ def _show_diff_header(stream, files, diff_line=None):
     with TermColor(stream) as tc:
         tc.color(ANSI_YELLOW, ANSI_BOLD)
         if diff_line:
-            stream.write("diff {} {} {}\n".format(diff_line, headers[0].name, headers[1].name))
+            stream.write(f"diff {diff_line} {headers[0].name} {headers[1].name}\n")
         tc.reset()
-        stream.write("--- {0}\n".format(headers[0]))
-        stream.write("+++ {0}\n".format(headers[1]))
+        stream.write(f"--- {headers[0]}\n")
+        stream.write(f"+++ {headers[1]}\n")
 
 
-def show_diff(stream, diffs, headers=None):
+def show_diff(stream: TextIO, diffs: List[DiffOp], headers=None) -> int:
     tc = TermColor(stream)
 
     def is_multiline(v):
@@ -260,33 +324,33 @@ def show_diff(stream, diffs, headers=None):
             with tc:
                 tc.color(_diff_color_mapping.get(prefix_))
                 if key.startswith("#-"):
-                    template = "{0}{2}\n"
+                    line = value
                 else:
-                    template = "{0}{1} = {2}\n"
-                stream.write(template.format(prefix_, key, value))
+                    line = f"{key} = {value}"
+                stream.write(f"{prefix_}{line}\n")
 
     def write_multiline_key(key, value, prefix_=" "):
         with tc:
             lines = value.replace("\n", "\\\n").split("\n")
             tc.color(_diff_color_mapping.get(prefix_))
-            stream.write("{0}{1} = {2}\n".format(prefix_, key, lines.pop(0)))
+            stream.write(f"{prefix_}{key} = {lines.pop(0)}\n")
             for line in lines:
-                stream.write("{0}{1}\n".format(prefix_, line))
+                stream.write(f"{prefix_}{line}\n")
 
     def show_value(value, stanza_, key, prefix_=""):
         with tc:
             tc.color(_diff_color_mapping.get(prefix_))
             if isinstance(value, dict):
                 if stanza_ is not GLOBAL_STANZA:
-                    stream.write("{0}[{1}]\n".format(prefix_, stanza_))
-                for x, y in sorted(six.iteritems(value)):
+                    stream.write(f"{prefix_}[{stanza_}]\n")
+                for x, y in sorted(value.items()):
                     write_key(x, y, prefix_)
             else:
                 write_key(key, value, prefix_)
 
     def show_multiline_diff(value_a, value_b, key):
         def f(v):
-            r = "{0} = {1}".format(key, v)
+            r = f"{key} = {v}"
             r = r.replace("\n", "\\\n")
             return r.splitlines()
 
@@ -299,9 +363,11 @@ def show_diff(stream, diffs, headers=None):
                 # previous (one or two) lines.  (Google and see if somebody else solved this one already)
                 # https://stackoverflow.com/questions/774316/python-difflib-highlighting-differences-inline
                 tc.color(_diff_color_mapping.get(d[0], 0))
+                ''' # Attempt to keep this disabled for Python 3
                 # Differences in how difflib returns bytes/unicode?
-                if not isinstance(d, six.text_type):
+                if isinstance(d, bytes):
                     d = d.decode(default_encoding)
+                '''
                 stream.write(d)
                 tc.reset()
                 stream.write("\n")
@@ -309,7 +375,7 @@ def show_diff(stream, diffs, headers=None):
     # Global result:  no changes between files or no commonality between files
     if len(diffs) == 1 and isinstance(diffs[0].location, DiffGlobal):
         op = diffs[0]
-        if op.tag == DIFF_OP_EQUAL:
+        if op.tag == DiffVerb.EQUAL:
             return EXIT_CODE_DIFF_EQUAL
         else:
             if headers:
@@ -326,14 +392,13 @@ def show_diff(stream, diffs, headers=None):
 
     last_stanza = None
     for op in diffs:
-
         if op.location.stanza != last_stanza:
             if last_stanza is not None:
                 # Line break after last stanza
                 stream.write("\n")
                 stream.flush()
             if op.location.stanza is not GLOBAL_STANZA and not isinstance(op.location, DiffStanza):
-                stream.write(" [{0}]\n".format(op.location.stanza))
+                stream.write(f" [{op.location.stanza}]\n")
             last_stanza = op.location.stanza
 
         if isinstance(op.location, DiffStanza):
@@ -359,7 +424,7 @@ def show_diff(stream, diffs, headers=None):
     return EXIT_CODE_DIFF_CHANGE
 
 
-def show_text_diff(stream, a, b):
+def show_text_diff(stream: TextIO, a: PathLike, b: PathLike):
     _show_diff_header(stream, (a, b), "--text")
     differ = difflib.Differ()
     lines_a = open(a, "r", encoding=default_encoding).readlines()
@@ -374,7 +439,7 @@ def show_text_diff(stream, a, b):
             tc.reset()
 
 
-def reduce_stanza(stanza, keep_attrs):
+def reduce_stanza(stanza: StanzaType, keep_attrs: Sequence) -> dict:
     """ Pre-process a stanzas so that only a common set of keys will be compared.
 
     :param stanza: Stanzas containing attributes and values
@@ -383,10 +448,10 @@ def reduce_stanza(stanza, keep_attrs):
     :type keep_attrs: (list, set, tuple, dict)
     :return: a reduced copy of ``stanza``.
     """
-    return {attr: value for attr, value in six.iteritems(stanza) if attr in keep_attrs}
+    return {attr: value for attr, value in stanza.items() if attr in keep_attrs}
 
 
-def write_diff_as_json(delta, stream, **dump_args):
+def write_diff_as_json(delta: List[DiffOp], stream, **dump_args):
     # XXX: Eventually support reversing this to import a json "patch"; and add an apply/reverse command.
     import json
     import sys
@@ -406,6 +471,7 @@ def write_diff_as_json(delta, stream, **dump_args):
 
 
 def diff_obj_json_format(o):
+    # Q: PY3 move.  Do any of the new fancy classes above help with this? (dataclass/NamedTuple)
     if isinstance(o, DiffOp):
         o = {
             "tag": o.tag,
