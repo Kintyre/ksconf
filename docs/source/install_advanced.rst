@@ -177,21 +177,6 @@ Offline pip install:
     pip install ~/Downloads/kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl
 
 
-Install with Splunk's Python
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-..  deprecated:: 0.6.0
-
-    Don't do this anymore. Please use the `KSCONF App for Splunk`_ instead.
-
-Splunk Enterprise 6.x and later installs an embedded Python 2.7 environment.
-However, Splunk does not provide packing tools (such as ``pip`` or the ``distutils`` standard library
-which is required to bootstrap install ``pip``). For these reasons, it's typically easier and cleaner
-to install ``ksconf`` with the system provided Python. However, sometimes the system-provided Python
-environment is the wrong version, is missing (like on Windows), or security restrictions prevent the
-installation of additional packages. In such cases, Splunk's embedded Python becomes a beacon of
-hope.
-
 On Linux or Mac
 ^^^^^^^^^^^^^^^
 

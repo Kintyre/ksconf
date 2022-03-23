@@ -5,14 +5,7 @@ import os
 import sys
 import unittest
 from io import StringIO
-
-try:
-    # Python 3.3+
-    from unittest import mock
-except ImportError:
-    # Add on for earlier versions
-    import mock
-
+from unittest import mock
 
 # Allow interactive execution from CLI,  cd tests; ./test_builder.py
 if __package__ is None:
