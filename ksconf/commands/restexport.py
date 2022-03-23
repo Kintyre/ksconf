@@ -93,12 +93,8 @@ class CurlCommand(object):
         return " ".join(cmd)
 
     def extend_args(self, args):
-        # Use shlex parsing to handle embedded quotes
-        # Work around some of the known unicode limitations in shlex prior to Python 3.
-        # Technically, this does more than just parse quotes, but should be a good enough handler
+        # Use shlex parsing to handle embedded quotess
         for s in shlex.split(args):
-            if hasattr(s, "decode"):
-                s = s.decode("utf8")
             self.post_args.append(s)
 
 

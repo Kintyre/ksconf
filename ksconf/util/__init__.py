@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 
 import sys
-
-from ksconf.ext.six import PY2, binary_type
+from functools import lru_cache
 
 from ksconf.consts import KSCONF_DEBUG
 
@@ -24,29 +23,8 @@ def _xargs(iterable, cmd_len=1024):
         yield buf
 
 
-try:
-    # Available in Python 3.2 and later.
-    from functools import lru_cache
-
-    # the LRU functionality is not really needed
-    memoize = lru_cache(maxsize=None)
-except ImportError:
-    # Modified from http://book.pythontips.com/en/latest/function_caching.html
-    from functools import wraps
-
-    def memoize(function):
-        memo = {}
-
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-            key = (args, tuple(sorted(kwargs.items())))
-            if key in memo:
-                return memo[key]
-            else:
-                rv = function(*args, **kwargs)
-                memo[key] = rv
-                return rv
-        return wrapper
+# the LRU functionality is not really needed
+memoize = lru_cache(maxsize=None)
 
 
 def debug_traceback():  # pragma: no cover
@@ -56,26 +34,20 @@ def debug_traceback():  # pragma: no cover
     if KSCONF_DEBUG in environ:
         # TODO:  Pop one off the top of the stack to hide THIS function
         import traceback
-        if PY2:
-            exc_str = traceback.format_exc(level)
-            if isinstance(exc_str, binary_type):
-                exc_str = exc_str.decode('utf-8')
-            sys.stderr.write(exc_str)
-        else:
-            traceback.print_exc(level)
+        traceback.print_exc(level)
 
 
 def handle_py3_kw_only_args(kw, *default_args):
-    """ Python 2.7 workaround for Python 3 style kw arg after '*' arg.
+    """ Fake support for Python 3.8+ style keyword-only style arguments, or ``*`` arg syntax.
 
-    Example Python 3 syntax:
+    Example Python 3.8+ syntax:
 
     ..  code-block:: py
 
         def f(arg, *args, a=True, b=False):
             ...
 
-    Example Python 2 syntax with this helper function:
+    Example Python 3.7 (and earlier) syntax with this helper function:
 
     ..  code-block:: py
 

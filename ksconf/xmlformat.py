@@ -1,10 +1,6 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import re
 from io import BytesIO
-
-from ksconf.ext.six import PY2
 
 from ksconf.util.file import ReluctantWriter
 
@@ -139,11 +135,6 @@ class SplunkSimpleXmlFormatter(object):
         document.write(b, pretty_print=True, encoding='utf-8')
         writer = ReluctantWriter(dest, "wb")
         with writer as f:
-            if PY2:
-                f.write(b.getvalue().strip("\r\n"))
-                # Single newline
-                f.write("\n")
-            else:
-                f.write(b.getvalue().strip(b"\r\n"))
-                f.write(b"\n")
+            f.write(b.getvalue().strip(b"\r\n"))
+            f.write(b"\n")
         return writer.change_needed

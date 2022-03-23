@@ -5,13 +5,7 @@ import os
 import re
 import sys
 import unittest
-
-try:
-    # Python 3.3+
-    from unittest import mock
-except ImportError:
-    # Add on for earlier versions
-    import mock
+from unittest import mock
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:

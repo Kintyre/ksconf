@@ -1,20 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
 
-from ksconf.ext.six import PY2, text_type
-
 from ksconf.builder import BuildCacheException
-from ksconf.util.file import file_hash, pathlib_compat
-
-if sys.version_info < (3, 6):
-    # Allow these stdlib functions to work with pathlib
-    copy2 = pathlib_compat(copy2)
-    rmtree = pathlib_compat(rmtree)
+from ksconf.util.file import file_hash
 
 
 class FileSet(object):
@@ -198,8 +190,8 @@ class CachedRun(object):
 
     def dump(self):
         def map_keys(d):
-            return {text_type(k): v for k, v in d.items()}
-        mode = "wb" if PY2 else "w"
+            return {str(k): v for k, v in d.items()}
+        mode = "w"
         meta = dict(self._info)
         inputs = meta.pop("inputs")
         outputs = meta.pop("outputs")

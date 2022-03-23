@@ -36,9 +36,6 @@ def _extract_tar(path, extract_filter=None, encoding="utf-8"):
                 '''
                 continue
             mode = ti.mode & 0o777
-            # PY2 doesn't return unicode file names
-            if hasattr(ti.name, "decode"):
-                ti.name = ti.name.decode(encoding)
             if extract_filter is None or \
                     extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
                 tar_file_fp = tar.extractfile(ti)
