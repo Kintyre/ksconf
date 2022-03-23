@@ -13,22 +13,32 @@ https://docs.splunk.com/Documentation/Splunk/7.2.3/Admin/Howtoeditaconfiguration
 
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import codecs
 import os
 import re
+from enum import Enum
 from io import StringIO, open
+from os import PathLike
+from typing import Dict, Generator, Iterable, List, TextIO, Tuple, Union
 
-import ksconf.ext.six as six
-
-from ..consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ..consts import SmartEnum
 from ..util.compare import fileobj_compare
 
 default_encoding = "utf-8"
 
 
-class Token(object):
+# Type definitions
+
+StanzaType = Dict[str, str]
+ConfType = Dict[str, StanzaType]
+PathType = Union[PathLike, str]
+_StreamInput = Union[TextIO, Iterable[str]]
+_StreamOutput = Union[PathType, TextIO]
+_StreamNameFile = Union[PathType, _StreamInput]
+ParserConfig = Dict
+
+
+class Token:
     """ Immutable token object.  deepcopy returns the same object """
 
     def __deepcopy__(self, memo):
@@ -37,20 +47,27 @@ class Token(object):
 
     # Always sort to the top of the list (should only ever be GLOBAL stanza)
     def __lt__(self, other):
-        return isinstance(other, six.text_type)
+        return isinstance(other, str)
 
     def __gt__(self, other):
-        return not isinstance(other, six.text_type)
+        return not isinstance(other, str)
 
 
-DUP_OVERWRITE = "overwrite"
-DUP_MERGE = "merge"
+class DuplicateEnum(Enum):
+    OVERWRITE = "overwrite"
+    MERGE = "merge"
+    EXCEPTION = "exception"
+
+
+# Legacy names
+DUP_OVERWRITE = DuplicateEnum.OVERWRITE
+DUP_MERGE = DuplicateEnum.MERGE
+DUP_EXCEPTION = DuplicateEnum.EXCEPTION
 
 GLOBAL_STANZA = Token()
 
 # Parsing configuration profiles
 
-DUP_EXCEPTION = "exception"
 PARSECONF_MID = dict(
     keep_comments=True,
     dup_stanza=DUP_EXCEPTION,
@@ -98,7 +115,9 @@ class DuplicateStanzaException(ConfParserException):
 # Core parsing / conf file writing logic
 
 
-def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
+def section_reader(stream: Iterable[str],
+                   section_re: re.Pattern = re.compile(r'^[\s\t]*\[(.*)\]\s*$')
+                   ) -> Generator[Tuple[str, List[str]], None, None]:
     """
     This generator break a configuration file stream into sections.  Each section contains a name
     and a list of text lines held within that section.
@@ -127,7 +146,7 @@ def section_reader(stream, section_re=re.compile(r'^[\s\t]*\[(.*)\]\s*$')):
         yield section, buf
 
 
-def _detect_lite(byte_str):
+def _detect_lite(byte_str: bytes) -> Dict[str, str]:
     """ A super simple drop-in replacement for chardet.detect(byte_str) that ONLY looks for BOM or
     assumes "utf-8".
     If someday the full chardet features are needed, we could use this for optional (opportunistic)
@@ -151,14 +170,17 @@ else:
 """
 
 
-def detect_by_bom(path):
+def detect_by_bom(path: PathType) -> str:
     with open(path, 'rb') as f:
         raw = f.read(4)    # will read less if the file is smaller
     encoding = _detect_lite(raw)
     return encoding["encoding"]
 
 
-def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
+def cont_handler(iterable: Iterable[str],
+                 continue_re: re.Pattern = re.compile(r"^(.*)\\$"),
+                 breaker: str = "\n"
+                 ) -> Generator[str, None, None]:
     r"""
     Look for trailing backslashes ("`\\`") which indicate a value for an attribute is split across
     multiple lines.  This function will group such lines together, and pass all other lines through
@@ -188,7 +210,11 @@ def cont_handler(iterable, continue_re=re.compile(r"^(.*)\\$"), breaker="\n"):
         yield buf
 
 
-def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=False, strict=False):
+def splitup_kvpairs(lines: Iterable[str],
+                    comments_re: re.Pattern = re.compile(r"^\s*[#;]"),
+                    keep_comments: bool = False,
+                    strict: bool = False
+                    ) -> Generator[Tuple[str, str], None, None]:
     """
     Break up 'attribute=value' entries in a configuration file.
 
@@ -207,19 +233,22 @@ def splitup_kvpairs(lines, comments_re=re.compile(r"^\s*[#;]"), keep_comments=Fa
         if comments_re.search(entry):
             if keep_comments:
                 comment += 1
-                yield ("#-%06d" % comment, entry)
+                yield f"#-{comment:06d}", entry
         elif "=" in entry:
             k, v = entry.split("=", 1)
             yield k.rstrip(), v.lstrip()
         elif re.search(r'^\s*\[|\]\s*$', entry):
             # ToDo:  There should be a 'loose' mode that allows this to be ignored...
-            raise ConfParserException("Dangling stanza header:  {0}".format(entry))
+            raise ConfParserException(f"Dangling stanza header:  {entry}")
         elif strict and entry.strip():
             #  if entry == "\ufeff": continue # UTF-8 BOM read as UTF-8;  But this ONLY works for PY3
-            raise ConfParserException("Unexpected entry:  {0!r}".format(entry))
+            raise ConfParserException(f"Unexpected entry:  {entry!r}")
 
 
-def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
+def parse_conf(stream: _StreamNameFile,
+               profile: ParserConfig = PARSECONF_MID,
+               encoding: str = None
+               ) -> ConfType:
     """
     Parse a .conf file.  This is a wrapper around :func:`parse_conf_stream` that allows filenames
     or stream to be passed in.
@@ -229,7 +258,7 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
     :param profile: parsing configuration settings
     :param encoding: Defaults to the system default, (Often "utf-8")
     :return: a mapping of the stanza and attributes.
-             The resulting output is accessible as [stanaza][attribute] -> value
+             The resulting output is accessible as [stanza][attribute] -> value
     :rtype: dict
     """
     try:
@@ -243,11 +272,16 @@ def parse_conf(stream, profile=PARSECONF_MID, encoding=None):
             with open(stream, "r", encoding=encoding) as stream:
                 return parse_conf_stream(stream, **profile)
     except UnicodeDecodeError as e:
-        raise ConfParserException("Encoding error encountered: {}".format(e))
+        raise ConfParserException(f"Encoding error encountered: {e}")
 
 
-def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments=False,
-                      dup_stanza=DUP_EXCEPTION, dup_key=DUP_OVERWRITE, strict=False):
+def parse_conf_stream(stream: _StreamInput,
+                      keys_lower: bool = False,
+                      handle_conts: bool = True,
+                      keep_comments: bool = False,
+                      dup_stanza: DuplicateEnum = DUP_EXCEPTION,
+                      dup_key: DuplicateEnum = DUP_OVERWRITE,
+                      strict: bool = False) -> ConfType:
     if hasattr(stream, "name"):
         stream_name = stream.name
     else:
@@ -256,19 +290,17 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     sections = {}
     # Q: What's the value of allowing line continuations to be disabled?
     if handle_conts:
-        reader = section_reader(cont_handler(stream))
-    else:
-        reader = section_reader(stream)
-    for section, entry in reader:
+        stream = cont_handler(stream)
+    for section, entry in section_reader(stream):
         if section is None:
             section = GLOBAL_STANZA
         if section in sections:
             if dup_stanza == DUP_OVERWRITE:
                 s = sections[section] = {}
             elif dup_stanza == DUP_EXCEPTION:
-                raise DuplicateStanzaException("Stanza [{0}] found more than once in config "
-                                               "file {1}".format(_format_stanza(section),
-                                                                 stream_name))
+                raise DuplicateStanzaException(
+                    f"Stanza [{_format_stanza(section)}] found more than once "
+                    f"in config file {stream_name}")
             elif dup_stanza == DUP_MERGE:
                 s = sections[section]
             else:
@@ -284,9 +316,9 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
                     s[key] = value
                     local_stanza[key] = value
                 elif dup_key == DUP_EXCEPTION:
-                    raise DuplicateKeyException("Stanza [{0}] has duplicate key '{1}' in file "
-                                                "{2}".format(_format_stanza(section),
-                                                             key, stream_name))
+                    raise DuplicateKeyException(
+                        f"Stanza [{_format_stanza(section)}] has duplicate "
+                        f"key '{key}' in file {stream_name}")
             else:
                 local_stanza[key] = value
                 s[key] = value
@@ -300,7 +332,11 @@ def parse_conf_stream(stream, keys_lower=False, handle_conts=True, keep_comments
     return sections
 
 
-def write_conf(stream, conf, stanza_delim="\n", sort=True, mtime=None):
+def write_conf(stream: _StreamOutput,
+               conf: ConfType,
+               stanza_delim: str = "\n",
+               sort: bool = True,
+               mtime: float = None):
     if not hasattr(stream, "write"):
         # Assume it's a filename
         with open(stream, "w", encoding=default_encoding) as stream:
@@ -311,45 +347,54 @@ def write_conf(stream, conf, stanza_delim="\n", sort=True, mtime=None):
         write_conf_stream(stream, conf, stanza_delim, sort)
 
 
-def write_conf_stream(stream, conf, stanza_delim="\n", sort=True):
+def write_conf_stream(stream: TextIO,
+                      conf: ConfType,
+                      stanza_delim: str = "\n",
+                      sort: bool = True):
     if sort:
         sorter = sorted
     else:
         sorter = list
 
-    def write_stanza_body(items):
-        for (key, value) in sorter(items.items()):
+    def write_stanza_body(stanza: dict):
+        for (key, value) in sorter(stanza.items()):
             if value is None:
                 value = ""
             else:
                 value = str(value)
             if key.startswith("#"):
-                stream.write("{0}\n".format(value))
+                stream.write(f"{value}\n")
             elif value:
-                stream.write("{0} = {1}\n".format(key, value.replace("\n", "\\\n")))
+                value = value.replace("\n", "\\\n")
+                stream.write(f"{key} = {value}\n")
             else:
                 # Avoid a trailing whitespace to keep the git gods happy
-                stream.write("{0} =\n".format(key))
+                stream.write(f"{key} =\n")
 
     keys = sorter(conf)
     while keys:
         section = keys.pop(0)
         cfg = conf[section]
         if section is not GLOBAL_STANZA:
-            stream.write("[{0}]\n".format(section))
+            stream.write(f"[{section}]\n")
         write_stanza_body(cfg)
         if keys:
             stream.write(stanza_delim)
 
 
-def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix=".tmp", mtime=None):
+def smart_write_conf(filename: PathType,
+                     conf: ConfType,
+                     stanza_delim: str = "\n",
+                     sort: bool = True,
+                     temp_suffix: str = ".tmp",
+                     mtime: float = None) -> SmartEnum:
     if os.path.isfile(filename):
         temp = StringIO()
         write_conf_stream(temp, conf, stanza_delim, sort)
         with open(filename, encoding=default_encoding) as dest:
             file_diff = fileobj_compare(temp, dest)
         if file_diff:
-            return SMART_NOCHANGE
+            return SmartEnum.NOCHANGE
         else:
             tempfile = filename + temp_suffix
             with open(tempfile, "w", encoding=default_encoding) as dest:
@@ -358,7 +403,7 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
                 os.utime(tempfile, (mtime, mtime))
             os.unlink(filename)
             os.rename(tempfile, filename)
-            return SMART_UPDATE
+            return SmartEnum.UPDATE
     else:
         tempfile = filename + temp_suffix
         with open(tempfile, "w", encoding=default_encoding) as dest:
@@ -366,10 +411,10 @@ def smart_write_conf(filename, conf, stanza_delim="\n", sort=True, temp_suffix="
         if mtime:
             os.utime(tempfile, (mtime, mtime))
         os.rename(tempfile, filename)
-        return SMART_CREATE
+        return SmartEnum.CREATE
 
 
-def _format_stanza(stanza):
+def _format_stanza(stanza: Union[str, Token]) -> str:
     """ Return a more human readable stanza name."""
     if stanza is GLOBAL_STANZA:
         return "GLOBAL"
@@ -377,6 +422,7 @@ def _format_stanza(stanza):
         return stanza
 
 
+def _extract_comments(section: StanzaType) -> List[str]:
     """ Return a sequential list of comments REMOVED from a section dict """
     comments = []
     for key, value in sorted(section.items()):
@@ -386,11 +432,14 @@ def _format_stanza(stanza):
     return comments
 
 
-def inject_section_comments(section, prepend=None, append=None):
-    # Extract existing comments from section dict (in order; and remove them)
-    # Add in any prepend/append comments (if that comment isn't already present)
-    # Re-inject comments back into the section dict with fresh numbering
-    #
+def inject_section_comments(section: StanzaType,
+                            prepend: str = None,
+                            append: str = None):
+    """
+    Extract existing comments from section dict (in order; and remove them)
+    Add in any prepend/append comments (if that comment isn't already present)
+    Re-inject comments back into the section dict with fresh numbering
+    """
     # Yes, this is really hacky, but the only way to make the diffs work correctly ;-(
     comments = _extract_comments(section)
     new_comments = []
@@ -404,29 +453,29 @@ def inject_section_comments(section, prepend=None, append=None):
             if c not in comments:
                 new_comments.append(c)
     for (i, comment) in enumerate(new_comments, 1):
-        section["#-%06d" % i] = comment
+        section[f"#-{i:06d}"] = comment
 
 
-def _drop_stanza_comments(stanza):
+def _drop_stanza_comments(stanza: StanzaType) -> StanzaType:
     n = {}
-    for (key, value) in six.iteritems(stanza):
+    for (key, value) in stanza.items():
         if key.startswith("#"):
             continue
         n[key] = value
     return n
 
 
-def conf_attr_boolean(value):
+def conf_attr_boolean(value: Union[str, bool, int]) -> bool:
     if isinstance(value, bool):
         return value
-    elif isinstance(value, six.string_types):
+    elif isinstance(value, str):
         value = value.lower()
         if value in ("1", "t", "y", "true", "yes"):
             return True
         elif value in ("0", "f", "n", "false", "no"):
             return False
         else:
-            raise ValueError("Can't convert {!r} to a boolean.".format(value))
+            raise ValueError(f"Can't convert {value!r} to a boolean.")
     elif isinstance(value, int):
         if value == 0:
             return False
@@ -435,12 +484,12 @@ def conf_attr_boolean(value):
             # Let's keep the logic the same as how stings are handled:  Only '1' as true.
             return True
         else:
-            raise ValueError("Can't convert {!r} to a boolean.".format(value))
+            raise ValueError(f"Can't convert {value!r} to a boolean.")
     else:
-        raise ValueError("Can't convert type {} to a boolean.".format(type(value)))
+        raise ValueError(f"Can't convert type {type(value)} to a boolean.")
 
 
-class update_conf(object):
+class update_conf:
     """
     Context manager that allows for simple in-place updates to conf files.
     This provides a simple dict-like interface for easy updates.
@@ -460,12 +509,15 @@ class update_conf(object):
                                with the updates rather than raising an exception.
     """
 
-    def __init__(self, conf_path, profile=PARSECONF_MID, encoding=None, make_missing=False):
+    def __init__(self, conf_path: PathType,
+                 profile: ParserConfig = PARSECONF_MID,
+                 encoding: str = None,
+                 make_missing: bool = False):
         self.path = conf_path
         self.profile = profile
         self.encoding = encoding
         self.make_missing = make_missing
-        self._data = None
+        self._data: ConfType = None
 
     def __enter__(self):
         if not os.path.isfile(self.path) and self.make_missing:
@@ -484,20 +536,20 @@ class update_conf(object):
                 os.makedirs(parent)
         smart_write_conf(self.path, self._data, sort=True)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> StanzaType:
         return self._data[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: StanzaType):
         self._data[key] = value
         return value
 
     def __contains__(self, item):
         return item in self._data
 
-    def __iter__(self):
-        return iter
+    def __iter__(self) -> Iterable[str]:
+        return iter(self._data)
 
-    def keys(self):
+    def keys(self) -> List[str]:
         return list(self._data)
 
     def update(self, *args, **kwargs):

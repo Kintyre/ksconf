@@ -2,10 +2,20 @@ from __future__ import unicode_literals
 
 import re
 import sys
+from enum import Enum
 
-SMART_CREATE = "created"
-SMART_UPDATE = "updated"
-SMART_NOCHANGE = "unchanged"
+
+class SmartEnum(Enum):
+    CREATE = "created"
+    UPDATE = "updated"
+    NOCHANGE = "unchanged"
+
+
+# Legacy names
+SMART_CREATE = SmartEnum.CREATE
+SMART_UPDATE = SmartEnum.UPDATE
+SMART_NOCHANGE = SmartEnum.NOCHANGE
+
 
 # EXIT_CODE_* constants:  Use consistent exit codes for scriptability
 #
