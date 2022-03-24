@@ -55,10 +55,10 @@ class BuildStep:
         if prefix is None:
             prefix = inspect.currentframe().f_back.f_code.co_name
         elif re.match(r'[\w_]+', prefix):
-            prefix = "[{}] ".format(prefix)
+            prefix = f"[{prefix}] "
 
         def log(message, *args, **kwargs):
-            message = "{} {}".format(prefix, message)
+            message = f"{prefix} {message}"
             return self._log(message, *args, **kwargs)
         return log
 
@@ -86,12 +86,13 @@ class BuildStep:
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
         args = [executable] + [str(s) for s in args]
         cwd = cwd or str(self.build_path)
-        self._log("EXEC:  {}  cwd={}".format(" ".join(text_type(s) for s in args), cwd), VERBOSE)
+        exec_info = " ".join(str(s) for s in args)
+        self._log(f"EXEC:  {exec_info}  cwd={cwd}", VERBOSE)
         process = Popen(args, cwd=cwd)
         process.wait()
         if process.returncode != 0:
-            raise BuildExternalException("Exit code of {} while executing {}".format(
-                process.returncode, executable))
+            raise BuildExternalException(f"Exit code of {process.returncode} "
+                                         f"while executing {executable}")
 
 
 from ksconf.builder.core import BuildManager  # noqa
@@ -136,5 +137,5 @@ def default_cli(build_manager: BuildManager,
             # XXX: instead of re-raising; write out traceback (with this final frame removed)?
             # Allow stack track to be dumped to screen for developer review/debugging
             raise
-        sys.stderr.write("Unhandled exception in build process:  {}\n".format(e))
+        sys.stderr.write(f"Unhandled exception in build process:  {e}\n")
         sys.exit(EXIT_CODE_INTERNAL_ERROR)

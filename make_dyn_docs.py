@@ -46,7 +46,7 @@ def prefix(iterable, indent=4):
 def restructured_header(header, level):
     level_symbols = '#*=-^"~'
     char = level_symbols[level - 1]
-    return "{}\n{}\n".format(header, char * len(header))
+    return f"{header}\n{char * len(header)}\n"
 
 
 def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
