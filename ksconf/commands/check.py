@@ -58,30 +58,31 @@ class CheckCmd(KsconfCmd):
         for conf in confs:
             c["checked"] += 1
             if not os.path.isfile(conf):
-                self.stderr.write("Skipping missing file:  {0}\n".format(conf))
+                self.stderr.write(f"Skipping missing file:  {conf}\n")
                 c["missing"] += 1
                 continue
             try:
                 parse_conf(conf, profile=PARSECONF_STRICT_NC)
                 c["okay"] += 1
                 if not args.quiet:
-                    self.stdout.write("Successfully parsed {0}\n".format(conf))
+                    self.stdout.write(f"Successfully parsed {conf}\n")
                     self.stdout.flush()
             except ConfParserException as e:
-                self.stderr.write("Error in file {0}:  {1}\n".format(conf, e))
+                self.stderr.write(f"Error in file {conf}:  {e}\n")
                 self.stderr.flush()
                 exit_code = EXIT_CODE_BAD_CONF_FILE
                 # TODO:  Break out counts by error type/category (there's only a few of them)
                 c["error"] += 1
             except Exception as e:  # pragma: no cover
-                self.stderr.write("Unhandled top-level exception while parsing {0}.  "
-                                  "Aborting.\n{1}\n".format(conf, e))
+                self.stderr.write(f"Unhandled top-level exception while parsing {conf}.  "
+                                  f"Aborting.\n{e}\n")
                 debug_traceback()
                 exit_code = EXIT_CODE_INTERNAL_ERROR
                 c["error"] += 1
                 break
         if True:  # show stats or verbose
-            self.stdout.write("Completed checking {0[checked]} files.  rc={1} Breakdown:\n"
-                              "   {0[okay]} files were parsed successfully.\n"
-                              "   {0[error]} files failed.\n".format(c, exit_code))
+            self.stdout.write(f"Completed checking {c['checked']} files.  "
+                              f"rc={exit_code} Breakdown:\n"
+                              f"   {c['okay']} files were parsed successfully.\n"
+                              f"   {c['error']} files failed.\n")
         return exit_code

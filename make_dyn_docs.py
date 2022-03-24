@@ -114,9 +114,8 @@ def make_subcommands_table(csv_path):
         for ep in commands:
             # Pros/conf links to the doc vs 'ref'?
             # ref_template = ":doc:`cmd_{}`"
-            ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
             row = [
-                ref_template.format(ep.name),
+                f":ref:`ksconf {ep.name} <ksconf_cmd_{ep.name}>`",
                 ep.cmd_cls.maturity,
                 ep.cmd_cls.help.replace("\n", " "),
             ]

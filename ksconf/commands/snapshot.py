@@ -87,7 +87,7 @@ class ConfSnapshot:
                 conf.append(rec)
         except ConfParserException as e:
             record["conf"] = None
-            record["failure"] = "{}".format(e)
+            record["failure"] = f"{e}"
         self._data.append(record)
 
     def snapshot_dir(self, path):
@@ -158,7 +158,7 @@ class SnapshotCmd(KsconfCmd):
             elif os.path.isdir(path):
                 confSnap.snapshot_dir(path)
             else:
-                self.stderr.write("No such file or directory {}\n".format(path))
+                self.stderr.write(f"No such file or directory {path}\n")
                 return EXIT_CODE_NO_SUCH_FILE
 
         if args.minimize:

@@ -183,7 +183,7 @@ class PackageCmd(KsconfCmd):
                 app_name = os.path.basename(args.source)
                 app_name_source = "extracted from source directory"
         '''
-        self.stdout.write("Packaging {}   (App name {})\n".format(app_name, app_name_source))
+        self.stdout.write(f"Packaging {app_name}   (App name {app_name_source})\n")
         packager = AppPackager(args.source, app_name, output=self.stderr)
 
         # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
@@ -200,10 +200,10 @@ class PackageCmd(KsconfCmd):
             elif args.local == "preserve":
                 pass
             else:   # pragma: no cover
-                raise ValueError("Unknown value for 'local': {}".format(args.local))
+                raise ValueError(f"Unknown value for 'local': {args.local}")
 
             if args.blocklist:
-                self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))
+                self.stderr.write(f"Applying blocklist:  {args.blocklist!r}\n")
                 packager.blocklist(args.blocklist)
 
             if args.set_build or args.set_version:
@@ -212,7 +212,7 @@ class PackageCmd(KsconfCmd):
                     build=args.set_build)
 
             packager.check()
-            # os.system("ls -lR {}".format(packager.app_dir))
+            # os.system(f"ls -lR {packager.app_dir}")
 
             dest = args.file or "{}-{{{{version}}}}.tgz".format(packager.app_name.lower().replace("-", "_"))
             archive_path = packager.make_archive(dest)

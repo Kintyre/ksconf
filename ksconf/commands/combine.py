@@ -121,11 +121,11 @@ class CombineCmd(KsconfCmd):
         parser.add_argument("-K", "--keep-existing", action="append", default=[],
                             help="Existing file(s) to preserve in the TARGET folder.  "
                             "This argument may be used multiple times.")
-        parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent("""
-            Prevents the creation of or checking for the ``{}`` marker file safety check.
+        parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent(f"""
+            Prevents the creation of or checking for the ``{CONTROLLED_DIR_MARKER}`` marker file safety check.
             This file is typically used indicate that the destination folder is managed by ksconf.
             This option should be reserved for well-controlled batch processing scenarios.
-            """.format(CONTROLLED_DIR_MARKER)))
+            """))
         parser.add_argument("--disable-cleanup", action="store_true", default=False,
                             help="Disable all file removal operations.  Skip the cleanup phase "
                             "that typically removes files in TARGET that no longer exist in SOURCE")
@@ -165,25 +165,25 @@ class CombineCmd(KsconfCmd):
             layer_root = DotDLayerRoot(config=config)
             layer_root.set_root(args.source[0], follow_symlinks=args.follow_symlink)
             for (dir, layers) in layer_root._mount_points.items():
-                self.stderr.write("Found layer parent folder:  {}  with layers {}\n"
-                                  .format(dir, ", ".join(layers)))
+                self.stderr.write(f"Found layer parent folder:  {dir}  "
+                                  f"with layers {', '.join(layers)}\n")
         else:
             self.stderr.write("Automatic layer detection is disabled.\n")
             layer_root = DirectLayerRoot(config=config)
             for src in args.source:
-                self.stderr.write("Reading conf files from directory {}\n".format(src))
+                self.stderr.write(f"Reading conf files from directory {src}\n")
                 layer_root.add_layer(src)
 
         if args.target is None:
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
-        self.stderr.write("Combining files into directory {}\n".format(args.target))
+        self.stderr.write(f"Combining files into directory {args.target}\n")
 
-        self.stderr.write("Layers detected:  {}\n".format(layer_root.list_layer_names()))
+        self.stderr.write(f"Layers detected:  {layer_root.list_layer_names()}\n")
 
         if layer_root.apply_filter(layer_filter):
-            self.stderr.write("Layers after filter: {}\n".format(layer_root.list_layer_names()))
+            self.stderr.write(f"Layers after filter: {layer_root.list_layer_names()}\n")
 
         marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
         if os.path.isdir(args.target):
@@ -193,18 +193,20 @@ class CombineCmd(KsconfCmd):
                 return EXIT_CODE_COMBINE_MARKER_MISSING
         elif args.dry_run:
             self.stderr.write(
-                "Skipping creating destination directory {0} (dry-run)\n".format(args.target))
+                "Skipping creating destination directory {args.target} (dry-run)\n")
         else:
             try:
                 os.mkdir(args.target)
             except OSError as e:
-                self.stderr.write("Unable to create destination directory {}.  {}\n".
-                                  format(args.target, e))
+                self.stderr.write(f"Unable to create destination directory {args.target}.  {e}\n")
                 return EXIT_CODE_NO_SUCH_FILE
-            self.stderr.write("Created destination directory {0}\n".format(args.target))
+            self.stderr.write(f"Created destination directory {args.target}\n")
             if not args.disable_marker:
                 with open(marker_file, "w") as f:
                     f.write("This directory is managed by KSCONF.  Don't touch\n")
+
+        def physical_paths(l):
+            return [s.physical_path for s in l]
 
         # Build a common tree of all src files.
         src_file_listing = set(layer_root.list_files())
@@ -225,7 +227,7 @@ class CombineCmd(KsconfCmd):
             try:
                 dest_fn = sources[0].logical_path
             except IndexError:
-                self.stderr.write("File disappeared during execution?  {}\n".format(src_file))
+                self.stderr.write(f"File disappeared during execution?  {src_file}\n")
                 return EXIT_CODE_NO_SUCH_FILE
 
             dest_path = os.path.join(args.target, dest_fn)
@@ -248,8 +250,8 @@ class CombineCmd(KsconfCmd):
                 method = "copy"
 
             if method == "copy":
-                # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  "
-                #                   "{1!r}\n".format(dest_fn, sources[-1].physical_path))
+                # self.stderr.write(f"Considering {dest_fn:50}  NON-CONF Copy from source:  "
+                #                   f"{sources[-1].physical_path!r}\n")
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].physical_path
                 if args.dry_run:
@@ -269,8 +271,7 @@ class CombineCmd(KsconfCmd):
                     smart_rc = smart_copy(src_file, dest_path)
                 if smart_rc != SMART_NOCHANGE:
                     if not args.quiet:
-                        self.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(
-                            smart_rc, dest_path, src_file))
+                        self.stderr.write(f"Copy <{smart_rc}>   {dest_path:50}  from {src_file}\n")
                 del src_file
 
             elif method == "merge":
@@ -280,14 +281,14 @@ class CombineCmd(KsconfCmd):
                                          parse_profile=PARSECONF_MID)
                     srcs = [ConfFileProxy(s.physical_path, "r",
                                           parse_profile=PARSECONF_STRICT) for s in sources]
-                    # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n"
-                    #                   .format(dest_fn, sources[0].physical_path))
+                    # self.stderr.write(f"Considering {dest_fn:50}  CONF MERGE from source:  "
+                    #                   f"{1!sources[0].physical_path}\n")
                     smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
                                                 banner_comment=args.banner)
                     if smart_rc != SMART_NOCHANGE:
                         if not args.quiet:
-                            self.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(
-                                smart_rc, dest_path, [s.physical_path for s in sources]))
+                            self.stderr.write(f"Merge <{smart_rc}>   {dest_path:50}  "
+                                              f"from {physical_paths(sources)!r}\n")
                 finally:
                     # Protect against any dangling open files:  (ResourceWarning: unclosed file)
                     dest.close()
@@ -322,28 +323,28 @@ class CombineCmd(KsconfCmd):
 
                 if smart_rc != SMART_NOCHANGE:
                     if not args.quiet:
-                        self.stderr.write("Concatenate <{0}>   {1:50}  from {2!r}\n".format(
-                            smart_rc, dest_path, [s.physical_path for s in sources]))
+                        self.stderr.write(f"Concatenate <{smart_rc}>   {dest_path:50}  "
+                                          f"from {physical_paths(sources)!r}\n")
                 os.utime(dest_path, (last_mtime, last_mtime))
                 del combined_content
             else:
-                raise AssertionError("Internal implementation error.  Unknown method={}".format(method))
+                raise AssertionError(f"Internal implementation error.  Unknown method={method}")
 
         if target_extra_files:
             if args.disable_cleanup:
                 self.stderr.write("Cleanup operations disabled by user.\n")
             else:
-                self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
-                                  format(len(target_extra_files)))
+                self.stderr.write("Found extra files not part of source tree(s):  "
+                                  f"{len(target_extra_files)} files.\n")
 
             keep_existing = create_filtered_list("splunk", default=False)
             # splglob_simple:  Either full paths, or simple file-only match
             keep_existing.feedall(args.keep_existing, filter=splglob_simple)
             for dest_fn in target_extra_files:
                 if keep_existing.match_path(dest_fn):
-                    self.stderr.write("Keep existing file {0}\n".format(dest_fn))
+                    self.stderr.write(f"Keep existing file {dest_fn}\n")
                 elif args.disable_cleanup:
-                    self.stderr.write("Skip cleanup of unwanted file {0}\n".format(dest_fn))
+                    self.stderr.write(f"Skip cleanup of unwanted file {dest_fn}\n")
                 else:
-                    self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
+                    self.stderr.write(f"Remove unwanted file {dest_fn}\n")
                     os.unlink(os.path.join(args.target, dest_fn))

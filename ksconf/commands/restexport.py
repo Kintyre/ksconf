@@ -56,9 +56,9 @@ class CurlCommand:
         if isinstance(s, Literal):
             return s.value
         if "$" in s:
-            s = '"{}"'.format(s)
+            s = f'"{s}"'
         elif " " in s:
-            s = "'{}'".format(s)
+            s = f"'{s}'"
         return s
 
     def get_command(self):
@@ -73,7 +73,7 @@ class CurlCommand:
             for header in self.headers:
                 value = self.headers[header]
                 args.append("-H")
-                args.append("{}: {}".format(header, value))
+                args.append(f"{header}: {value}")
         if self.data:
             for key in self.data:
                 value = self.data[key]
@@ -81,7 +81,7 @@ class CurlCommand:
                     args.append(Literal("\\\n -d"))
                 else:
                     args.append("-d")
-                args.append("{}={}".format(quote(key), quote(value)))
+                args.append(f"{quote(key)}={quote(value)}")
 
         # if self.pre_args:
         #    cmd.append(" ".join(self.pre_args))
@@ -172,7 +172,7 @@ class RestExportCmd(KsconfCmd):
         # XXX: Quote owner & app; however for now we're still allowing the user to pass though an
         #  environmental variable as-is and quoting would break that.   Need to make a decision,
         # for now this is not likely to be a big issue given app and user name restrictions.
-        return build_rest_url(base, "configs/conf-{}".format(conf), owner, app)
+        return build_rest_url(base, f"configs/conf-{conf}", owner, app)
 
     def run(self, args):
         ''' Convert a conf file into a bunch of CURL commands'''
@@ -219,9 +219,9 @@ class RestExportCmd(KsconfCmd):
             # Make this preamble optional
             stream.write("## Example of creating a local SPLUNKDAUTH token\n")
             stream.write("export SPLUNKDAUTH=$("
-                         "curl -ks {}/services/auth/login -d username=admin -d password=changeme "
+                         f"curl -ks {args.url}/services/auth/login -d username=admin -d password=changeme "
                          "| grep sessionKey "
-                         r"| sed -E 's/[ ]*<sessionKey>(.*)<.sessionKey>/\1/')".format(args.url))
+                         r"| sed -E 's/[ ]*<sessionKey>(.*)<.sessionKey>/\1/')")
             stream.write('; [[ -n $SPLUNKDAUTH ]] && echo "Login token created"')
             stream.write("\n\n\n")
 
@@ -232,7 +232,7 @@ class RestExportCmd(KsconfCmd):
             else:
                 conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-            stream.write("# CURL REST commands for {}\n".format(conf_proxy.name))
+            stream.write(f"# CURL REST commands for {conf_proxy.name}\n")
 
             for stanza_name, stanza_data in conf.items():
                 cc = CurlCommand()
