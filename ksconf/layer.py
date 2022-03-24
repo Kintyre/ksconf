@@ -96,8 +96,8 @@ class LayerFilter:
     def add_rule(self, action, pattern):
         # If no filter rules have been setup yet, be sure to set the default
         if action not in self._valid_actions:
-            raise ValueError("Unknown action of {}.  Valid actions include: {}"
-                             .format(action, self._valid_actions))
+            raise ValueError(f"Unknown action of {action}.  "
+                             f"Valid actions include: {self._valid_actions}")
         if not self._rules:
             if action == "include":
                 first_filter = ("exclude", "*")
@@ -268,7 +268,7 @@ class DirectLayerRoot(LayerRootBase):
         layer_name = os.path.basename(path)
         if not os.path.isdir(path):
             raise LayerUsageException("Layers must be directories.  "
-                                      "Given path '{}' is not a directory.".format(path))
+                                      f"Given path '{path}' is not a directory.")
         layer = Layer(layer_name, path, None, None, config=self.config, file_cls=File)
         super(DirectLayerRoot, self).add_layer(layer)
 
@@ -399,13 +399,13 @@ class DotDLayerRoot(LayerRootBase):
                         # XXX: Give the user the option of logging the near-matches (could indicate a
                         # problem in the config, or could be some other legit directory structure)
                         '''
-                        print("LAYER NEAR MISS:  {} looks like a mount point, but {} doesn't "
-                              "follow the expected convention".format(top, dir_))
+                        print(f"LAYER NEAR MISS:  {top} looks like a mount point, but {dir_} doesn't "
+                              "follow the expected convention")
                         '''
                         pass
             elif top.endswith(".d"):
                 '''
-                print("MOUNT NEAR MISS:  {}".format(top))
+                print(f"MOUNT NEAR MISS:  {top}")
                 '''
                 pass
 

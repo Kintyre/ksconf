@@ -89,7 +89,7 @@ html_theme = 'alabaster'
 html_theme = 'classic'
 html_theme = os.environ.get("KSCONF_DOCS_THEME", 'sphinx_rtd_theme')
 
-print("Using theme:  {}".format(html_theme))
+print(f"Using theme:  {html_theme}")
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

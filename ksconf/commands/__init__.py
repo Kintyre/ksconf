@@ -135,8 +135,7 @@ class ConfFileProxy:
     def load(self, profile=None):
         if not self.readable():
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
-            raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
-                                                                              self._mode))
+            raise ValueError(f"Unable to load() from {self._type()} with mode '{self._mode}'")
         parse_profile = dict(self._parse_profile)
         if profile:
             parse_profile.update(profile)
@@ -145,8 +144,7 @@ class ConfFileProxy:
 
     def dump(self, data, **kwargs):
         if not self.writable():      # pragma: no cover
-            raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
-                                                                            self._mode))
+            raise ValueError(f"Unable to dump() to {self._type()} with mode '{self._mode}'")
         # Feels like the right thing to do????  OR self._data = data
         self._data = None
         # write vs smart write here ----
@@ -226,12 +224,12 @@ class ConfFileType:
                     try:
                         cfp.data  # noqa: F841
                     except ConfParserException as e:
-                        raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
+                        raise ArgumentTypeError(f"failed to parse <stdin>: {e}")
                 return cfp
             elif 'w' in self._mode:
                 return ConfFileProxy("<stdout>", "w", stream=sys.stdout, is_file=False)
             else:
-                raise ValueError('argument "-" with mode {}'.format(self._mode))
+                raise ValueError(f'argument "-" with mode {self._mode}')
         if self._accept_dir and os.path.isdir(string):
             return ConfDirProxy(string, self._mode, parse_profile=self._parse_profile)
         if self._action == "none":
@@ -255,20 +253,19 @@ class ConfFileType:
                     cfp.data  # noqa: F841
                 return cfp
             except IOError as e:
-                message = "can't open '%s': %s"
                 debug_traceback()
-                raise ArgumentTypeError(message % (string, e))
+                raise ArgumentTypeError(f"can't open '{string}': {e}")
             except ConfParserException as e:
                 debug_traceback()
-                raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
+                raise ArgumentTypeError(f"failed to parse '{string}': {e}")
             except TypeError as e:
                 debug_traceback()
-                raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
+                raise ArgumentTypeError(f"Parser config error '{string}': {e}")
 
     def __repr__(self):     # pragma: no cover
         args = self._mode, self._action, self._parse_profile
         args_str = ', '.join(repr(arg) for arg in args if arg != -1)
-        return '%s(%s)' % (type(self).__name__, args_str)
+        return f"{type(self).__name__}({args_str})"
 
 
 class DescriptionFormatterNoReST(argparse.HelpFormatter):
@@ -320,7 +317,7 @@ class KsconfCmd:
     def __init__(self, name):
         self.name = name.lower()
         # XXX:  Add logging support.  Find clean lines between logging and UI/console output.
-        self.logger = logging.getLogger("ksconf.cmd.{}".format(self.name))
+        self.logger = logging.getLogger(f"ksconf.cmd.{self.name}")
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -432,15 +429,15 @@ class KsconfCmd:
             return self._parse_conf(path, mode, profile)
         except IOError as e:
             # debug_traceback()
-            self.stderr.write("can't open '{}': {}\n".format(path, e))
+            self.stderr.write(f"can't open '{path}': {e}\n")
             raise KsconfCmdReadConfException(EXIT_CODE_NO_SUCH_FILE)
         except ConfParserException as e:
             # debug_traceback()
-            self.stderr.write("Failed to parse '{}':  {}\n".format(path, e))
+            self.stderr.write(f"Failed to parse '{path}':  {e}\n")
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
         except TypeError as e:
             # debug_traceback()
-            self.stderr.write("Parser config error '{}': {}\n".format(path, e))
+            self.stderr.write(f"Parser config error '{path}': {e}\n")
             # I guess bad conf file.... can't remember what this one is for.
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
 

@@ -100,19 +100,19 @@ class SplunkSimpleXmlFormatter:
             source_lines = lines[lineno:lineno + 2]
             for line in source_lines:
                 if CDATA in line:
-                    # print("Found source line:  {}".format(line))
+                    # print(f"Found source line:  {line}")
                     return True
             return False
 
         for tag in tags:
-            for e in elem.findall(".//{}".format(tag)):
+            for e in elem.findall(f".//{tag}"):
                 if e.text and e.text.strip():
                     # Determine if the data is ALREADY in a CDATA element
                     # if isinstance(e.text, etree.CDATA):   # Doesn't work...
                     if already_using_cdata(e):
                         pass
                     elif re.search(r'[<>&]', e.text):
-                        # print("SHOULD BE CDATA:   {}".format(e.text))
+                        # print(f"SHOULD BE CDATA:   {e.text}")
                         # Convert text to CDATA
                         e.text = etree.CDATA(e.text)
 
@@ -121,7 +121,7 @@ class SplunkSimpleXmlFormatter:
         if elem.text:
             prefix = elem.text.strip("\r\n")
             indent = len(prefix) or default
-            # print("Found indent={}".format(indent))
+            # print(f"Found indent={indent}")
         else:
             indent = default
         return indent

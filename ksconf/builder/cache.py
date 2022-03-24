@@ -84,10 +84,10 @@ class FileSet:
             if p.is_dir():
                 # Audience: Exception text relevant to from_filesystem() caller
                 raise BuildCacheException(
-                    "Expected file '{0}' is actually a directory.  If this is "
+                    f"Expected file '{p}' is actually a directory.  If this is "
                     "correct indicate a directory with a trailing slash: "
-                    "'{0}/'".format(p))
-            raise BuildCacheException("Missing expected file {}".format(p))
+                    f"'{p}/'")
+            raise BuildCacheException(f"Missing expected file {p}")
         fp = self.get_fingerprint(p)
         self.files.add(relative_path)
         self.files_meta[relative_path] = fp

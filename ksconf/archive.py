@@ -32,7 +32,7 @@ def _extract_tar(path, extract_filter=None, encoding="utf-8"):
         for ti in tar:
             if not ti.isreg():
                 '''
-                print "Skipping {}  ({})".format(ti.name, ti.type)
+                print(f"Skipping {ti.name}  ({ti.type})")
                 '''
                 continue
             mode = ti.mode & 0o777
@@ -66,7 +66,7 @@ def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
 def sanity_checker(iterable):
     for gaf in iterable:
         if gaf.path.startswith("/") or ".." in gaf.path:
-            raise ValueError("Bad path found in archive:  {}".format(gaf.path))
+            raise ValueError(f"Bad path found in archive:  {gaf.path}")
         yield gaf
 
 
