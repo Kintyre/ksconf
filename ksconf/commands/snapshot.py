@@ -23,14 +23,14 @@ from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
 from ksconf.util.file import file_hash
 
 
-class ConfSnapshotConfig(object):
+class ConfSnapshotConfig:
     max_file_size = 10 * 1024 * 1024
 
     # max_files = 10000
     # include_parts = [ "conf", "meta", "lookups", "data/ui", "data/model", "data/ui/nav" ]
 
 
-class ConfSnapshot(object):
+class ConfSnapshot:
     schema_version = 0.2
 
     def __init__(self, config):

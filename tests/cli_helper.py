@@ -89,7 +89,7 @@ class _KsconfCli():
     tmpfile:    os.tmpfile, or StringIO?
     """
 
-    class KsconfOutput(object):
+    class KsconfOutput:
         """ Container for the results from a KsconfCli call."""
         __slots__ = ("returncode", "stdout", "stderr")
 
@@ -157,7 +157,7 @@ class _KsconfCli():
 ksconf_cli = _KsconfCli()
 
 
-class FakeStdin(object):
+class FakeStdin:
     def __init__(self, content):
         if isinstance(content, six.string_types):
             content = StringIO(content)
@@ -176,7 +176,7 @@ class FakeStdin(object):
             return False
 
 
-class TestWorkDir(object):
+class TestWorkDir:
     """ Create a temporary working directory to create app-like structures and other supporting
     file system artifacts necessary for many CLI tests.  Cleanup is done automatically.
 

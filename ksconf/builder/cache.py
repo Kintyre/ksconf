@@ -9,7 +9,7 @@ from ksconf.builder import BuildCacheException
 from ksconf.util.file import file_hash
 
 
-class FileSet(object):
+class FileSet:
     """ A collection of fingerprinted files.
 
     Currently the fingerprint is only a SHA256 hash.
@@ -120,7 +120,7 @@ class FileSet(object):
             copy2(src, dest)
 
 
-class CachedRun(object):
+class CachedRun:
     __slots__ = ["root", "config_file", "cache_dir", "_info", "_settings", "_state"]
 
     STATE_NEW = "new"

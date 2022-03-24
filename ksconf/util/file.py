@@ -144,7 +144,7 @@ def _samefile(file1, file2):
         return file1 == file2
 
 
-class ReluctantWriter(object):
+class ReluctantWriter:
     """
     Context manager to intelligently handle updates to an existing file.  New content is written
     to a temp file, and then compared to the current file's content.  The file file will be

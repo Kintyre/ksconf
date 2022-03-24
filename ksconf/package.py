@@ -48,7 +48,7 @@ class PackagingException(Exception):
     pass
 
 
-class AppPackager(object):
+class AppPackager:
 
     def __init__(self, src_path, app_name, output):
         self.src_path = src_path
@@ -245,7 +245,7 @@ class AppVarMagicException(KeyError):
     pass
 
 
-class AppVarMagic(object):
+class AppVarMagic:
     """ A lazy loading dict-like object to fetch things like app version and such on demand. """
 
     def __init__(self, src_dir, build_dir):
