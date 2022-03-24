@@ -7,7 +7,6 @@ import shutil
 import sys
 from glob import glob
 from io import open
-from pathlib import PurePath
 
 from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
