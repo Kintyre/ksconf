@@ -32,7 +32,7 @@ from ksconf.util.completers import conf_files_completer
 from ksconf.util.rest import build_rest_url
 
 
-class Literal(object):
+class Literal:
     def __init__(self, value):
         self.value = value
 
@@ -42,7 +42,7 @@ class Literal(object):
     '''
 
 
-class CurlCommand(object):
+class CurlCommand:
     def __init__(self):
         self.url = None
         self.method = None  # curl defaults this to POST

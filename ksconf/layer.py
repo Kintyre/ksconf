@@ -87,7 +87,7 @@ class LayerUsageException(LayerException):
     pass
 
 
-class LayerFilter(object):
+class LayerFilter:
     _valid_actions = ("include", "exclude")
 
     def __init__(self):
@@ -117,7 +117,7 @@ class LayerFilter(object):
     __call__ = evaluate
 
 
-class LayerConfig(object):
+class LayerConfig:
 
     def __init__(self):
         # Set defaults
@@ -126,7 +126,7 @@ class LayerConfig(object):
         self.block_dirs = {".git"}
 
 
-class LayerRootBase(object):
+class LayerRootBase:
     """ All 'path's here are relative to the ROOT. """
 
     class File(PathLike):
@@ -162,7 +162,7 @@ class LayerRootBase(object):
         def mtime(self):
             return self.stat.st_mtime
 
-    class Layer(object):
+    class Layer:
         """ Basic layer Container:   Connects logical and physical paths. """
         __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_cls"]
 
@@ -338,7 +338,7 @@ class DotDLayerRoot(LayerRootBase):
                     yield (root, dirs, files)
 
     '''
-    class MountBase(object):
+    class MountBase:
         def __init__(self, path):
             self.path = path
 

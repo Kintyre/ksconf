@@ -43,7 +43,7 @@ class HelperFunctionsTestCase(unittest.TestCase):
         self.assertEqual(path_in_layer(None, "path"), "path")
 
     def test_layerfilter_include(self):
-        class mocklayer(object):
+        class mocklayer:
             def __init__(self, name):
                 self.name = name
         layers = [mocklayer(l) for l in [

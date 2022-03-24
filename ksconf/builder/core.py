@@ -42,7 +42,7 @@ def _get_function_sourcecode_hash(f):
     return h.hexdigest()
 
 
-class BuildManager(object):
+class BuildManager:
     """ Management of individual build steps
 
     .. versionadded:: v0.8.0

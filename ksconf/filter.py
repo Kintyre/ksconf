@@ -14,7 +14,7 @@ from ksconf.util.file import splglob_to_regex
 # This would allow things like a special prefix to lazy-switch modes (for example:  ~regex~, or only do fnmatching if there's a wildcard otherwise stick with simple string matching, ...)
 
 
-class FilteredList(object):
+class FilteredList:
     IGNORECASE = 1
     INVERT = 2
     VERBOSE = 4
