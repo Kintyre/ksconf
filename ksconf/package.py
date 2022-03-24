@@ -325,6 +325,11 @@ class AppVarMagic(object):
                 yield (var, doc)
 
     def __getitem__(self, item):
+        if item not in self._cache:
+            self._cache[item] = self._get_expanded_var(item)
+        return self._cache[item]
+
+    def _get_expanded_var(self, item):
         get_funct_name = "get_" + item
         if hasattr(self, get_funct_name):
             try:

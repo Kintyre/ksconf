@@ -21,6 +21,13 @@ Ksconf 0.9
    This new option can be used to control the level of detail in the output.
 
 
+Ksconf v0.9.3 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+-  Added internal caching for :py:class:`~ksconf.package.AppVarMagic` (``ksconf package`` command) to reduce repeated variable expansion work.
+   This will likely go unnoticed by most, but it does speed up some operations in the ``cdillc.splunk.ksconf_package`` Ansible module.
+-  Minor docs corrections.
+
+
 Ksconf v0.9.2 (2022-03-04)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 -  The ``filter`` command can now include/exclude stanzas based on the boolean value of ``disabled`` using the new ``--enabled-only`` or ``--disabled-only`` arguments.
@@ -41,13 +48,13 @@ Ksconf v0.9.0 (2021-08-12)
 Features & Enhancements:
 
 -  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
-   Similiarly the new ``--disable-cleanup`` option will prevent any files from being removed.
+   Similarly the new ``--disable-cleanup`` option will prevent any files from being removed.
    This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
    These new options can be used together; for example, one useful pattern is to use ``--disable-cleanup`` to block all removal while perfecting/testing ``--keep-existing`` patterns.
 -  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
 -  New CLI args for ``ksconf diff``.
    (1) New ``--detail`` option to specify how to handle certain 'replace' levels which impacts the way certain changes are represented.
-   (2) New ``--format json`` for a more parseable output format.
+   (2) New ``--format json`` for a more parsable output format.
    Note:  This json format shouldn't be considered stable at this time.  If you have ideas about how this could be used, please reach out.
 -  Allow enabling/disabling TTY colors via environmental variable.   The new ``--disable-color`` option will disable color, or to disable more widely, add something like ``export KSCONF_TTY_COLOR=off`` to your bashrc profile or Windows environment variables.
 
