@@ -92,7 +92,7 @@ class AppPackager:
                 "--disable-marker"]
         if allow_symlink:
             args.append("--follow-symlink")
-        args += ["--{}={}".format(action, path) for (action, path) in filters]
+        args += [f"--{action}={path}" for (action, path) in filters]
         from ksconf.__main__ import cli
 
         # Passing in _unittest because that swaps sys.exit() for return
@@ -111,14 +111,14 @@ class AppPackager:
                 path = os.path.join(root, fn)
                 for pattern in patterns:
                     if ("*" in pattern and fnmatch(path, pattern)) or fn == pattern:
-                        self.output.write("Blocked file: {}  (pattern: {})\n".format(path, pattern))
+                        self.output.write(f"Blocked file: {path}  (pattern: {pattern})\n")
                         os.unlink(path)
                         break
             for d in list(dirs):
                 path = os.path.join(root, d)
                 for pattern in patterns:
                     if ("*" in pattern and fnmatch(path, pattern)) or d == pattern:
-                        self.output.write("Blocked dir:  {}  (pattern: {})\n".format(path, pattern))
+                        self.output.write(f"Blocked dir:  {path}  (pattern: {pattern})\n")
                         dirs.remove(d)
                         shutil.rmtree(path)
                         break
@@ -154,7 +154,7 @@ class AppPackager:
         appconf_file = find_conf_in_layers(self.app_dir, "app.conf") or \
             os.path.join(self.app_dir, "default", "app.conf")
 
-        self.output.write("Updating app.conf file:  {}\n".format(appconf_file))
+        self.output.write(f"Updating app.conf file:  {appconf_file}\n")
         with update_conf(appconf_file, make_missing=True) as conf:
             for (stanza, attr, value) in app_settings:
                 new_value = self.expand_new_only(value)
@@ -162,12 +162,13 @@ class AppPackager:
                     if stanza not in conf:
                         conf[stanza] = {}
                     if new_value:
-                        self.output.write("\tUpdate app.conf:  [{}] {} = {}  (From {})\n"
-                                          .format(stanza, attr, new_value, value))
+                        self.output.write(f"\tUpdate app.conf:  [{stanza}] "
+                                          f"{attr} = {new_value} "
+                                          f"(From {value})\n")
                         value = new_value
                     else:
-                        self.output.write("\tUpdate app.conf:  [{}] {} = {}\n"
-                                          .format(stanza, attr, value))
+                        self.output.write(f"\tUpdate app.conf:  [{stanza}] "
+                                          f"{attr} = {value}\n")
                     conf[stanza][attr] = value
 
     def check(self):
@@ -188,11 +189,13 @@ class AppPackager:
 
         if package_id:
             if not self.app_name or self.app_name == ".":
-                self.output.write("Set app name from app.conf:  {}\n".format(self.app_name))
+                self.output.write("Set app name from app.conf:  "
+                                  f"{self.app_name}\n")
                 self.app_name = package_id
             elif package_id != self.app_name:
-                self.output.write("Top-level folder does not match the package id:  folder: {} "
-                                  "package id: {}\n".format(self.app_name, package_id))
+                self.output.write(f"Top-level folder does not match the "
+                                  f"package id:  folder: {self.app_name} "
+                                  f"package id: {package_id}\n")
                 if target_splunkbase:
                     raise PackagingException("Aborting build due to app name and package id "
                                              "discrepancy for public app")
@@ -201,26 +204,26 @@ class AppPackager:
             for items, t in [(dirs, "directory"), (files, "file")]:
                 for name in items:
                     if name[0] == ".":
-                        self.output.write("Found hidden {}:  {}/{}\n".format(t, root, name))
+                        self.output.write(f"Found hidden {t}:  {root}/{name}\n")
 
     def make_archive(self, filename):
         """ Create a compressed tarball of the build directory.
         """
         # type: (str) -> str
         # if os.path.isfile(filename):
-        #    raise ValueError("Destination file already exists:  {}".format(filename))
+        #    raise ValueError(f"Destination file already exists:  {filename}")
         app_name = self.expand_var(self.app_name)
         if app_name != self.app_name:
-            self.output.write("Expanding template {} to final app name: {}\n"
-                              .format(self.app_name, app_name))
+            self.output.write(f"Expanding template {self.app_name} to final "
+                              f"app name: {app_name}\n")
 
         new_filename = self.expand_new_only(filename)
         if new_filename:
-            self.output.write("Creating archive:  {}  (Expanded from '{}'\n"
-                              .format(new_filename, os.path.basename(filename)))
+            self.output.write(f"Creating archive:  {new_filename}  (Expanded "
+                              f"from '{os.path.basename(filename)}'\n")
             filename = new_filename
         else:
-            self.output.write("Creating archive:  {}\n".format(filename))
+            self.output.write(f"Creating archive:  {filename}\n")
 
         normalize_directory_mtime(self.app_dir)
         with tarfile.open(filename, mode="w:gz") as spl:
@@ -266,7 +269,7 @@ class AppVarMagic:
     def git_single_line(self, *args):
         out = git_cmd(args, cwd=self.src_dir)
         if out.returncode != 0:
-            return "git-errorcode-{}".format(out.returncode)
+            return f"git-errorcode-{out.returncode}"
         return out.stdout.strip()
 
     # START Variable fetching functions.  Be sure to add a docstring
@@ -332,6 +335,6 @@ class AppVarMagic:
             except AppVarMagicException as e:
                 if KSCONF_DEBUG in os.environ:
                     raise e
-                return "VAR-{}-ERROR".format(item)
+                return f"VAR-{item}-ERROR"
         else:
             raise KeyError(item)

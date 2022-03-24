@@ -13,7 +13,7 @@ sys.path.insert(0, home)
 
 import ksconf  # nopep8
 
-print("Running all KSCONF unit tests.   KSCONF home:  {}".format(ksconf.__path__[0]))
+print("Running all KSCONF unit tests.   KSCONF home:  {ksconf.__path__[0]}")
 
 # Because this script is run from the 'pre-commit' hooks, and some of these
 # unittests do git automation, we need to purge all the "GIT_*" variables

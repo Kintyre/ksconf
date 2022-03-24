@@ -146,7 +146,7 @@ class BuildManager:
                     try:
                         cache.load()
                     except Exception as e:
-                        log("Failed to load cache:  {}".format(e), QUIET)
+                        log(f"Failed to load cache:  {e}", QUIET)
                         use_cache = False
                 if cache._settings:
                     # Always use the most up-to-date value for timeout
@@ -154,13 +154,13 @@ class BuildManager:
                     try:
                         for setting in cache_settings:
                             if cache_settings[setting] != cache._settings[setting]:
-                                log("Cache invalided due to setting '{}': {} was {}"
-                                    .format(setting, cache_settings[setting],
-                                            cache._settings[setting]))
+                                log(f"Cache invalided due to setting '{setting}': "
+                                    f"{cache_settings[setting]} was "
+                                    f"{cache._settings[setting]}")
                                 use_cache = False
                                 break
                     except KeyError as e:
-                        log("Cache invalided due to missing setting {}".format(e))
+                        log(f"Cache invalided due to missing setting {e}")
                         use_cache = False
                 # TODO: Check for cache tampering (confirm that existing files haven't
                 #       been modified); user requestable
@@ -181,7 +181,7 @@ class BuildManager:
                     log("Cache used")
                     cached_output = cache.cached_outputs
                     cached_output.copy_all(cache.cache_dir, self.build_path)
-                    log("Reused {} output objects from cache".format(len(cached_output)), VERBOSE)
+                    log(f"Reused {len(cached_output)} output objects from cache", VERBOSE)
                     # XXX:  VERBOSE 3 should list all expanded files
                 else:
                     # Cache MISS: Prepare to call the wrapped function
@@ -194,7 +194,7 @@ class BuildManager:
 
                     # Make temporary folder for executing wrapped function
                     with TemporaryDirectory(dir=self.cache_path,
-                                            prefix="{}-tmp-".format(name)) as temp_dir:
+                                            prefix=f"{name}-tmp-") as temp_dir:
                         # NOTE: Make a 't' dir under the temp folder so that the cache.rename() doesn't remove the
                         #       folder managed by TemporaryDirectory, which it doesn't like.
                         temp_dir = Path(temp_dir) / "t"
@@ -205,15 +205,15 @@ class BuildManager:
                         # Collect inputs from the source directory and copy them to the temporary directory
                         fs_inputs = FileSet.from_filesystem(self.source_path, inputs)
                         fs_inputs.copy_all(self.source_path, cache.cache_dir)
-                        log("Copied {} input files".format(len(fs_inputs)), VERBOSE * 2)
-                        log("Copied input files: {}".format(", ".join(str(p) for p in fs_inputs)), VERBOSE * 3)
+                        log(f"Copied {len(fs_inputs)} input files".format(), VERBOSE * 2)
+                        log(f"Copied input files: {', '.join(str(p) for p in fs_inputs)}", VERBOSE * 3)
                         try:
                             # Run wrapped function
                             ret = f(alt_bs)
                             if ret is not None:
                                 raise NotImplementedError("A return value not supported for cached build steps")
                         except Exception as e:
-                            log("Failed during executing.  Error: {}".format(e), QUIET * 2)
+                            log(f"Failed during executing.  Error: {e}", QUIET * 2)
                             # XXX: More error handling here.  Add custom exception class
                             raise
                         # TODO: Check for change to inputs.  This could lead to nondeterministic results
@@ -223,7 +223,7 @@ class BuildManager:
                             raise BuildCacheException("Inputs were modified")
                         fs_outputs = FileSet.from_filesystem(cache.cache_dir, outputs)
                         # Store input/output fingerprint to the internal cache state and persist to disk
-                        log("Capture {} outputs".format(len(fs_outputs)))
+                        log(f"Capture {len(fs_outputs)} outputs")
                         cache.set_settings(cache_settings)
                         cache.set_cache_info("inputs", fs_inputs)
                         cache.set_cache_info("outputs", fs_outputs)
