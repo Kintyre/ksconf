@@ -51,7 +51,7 @@ def get_entrypoints_setup():
     return setup
 
 
-class LocalEntryPoint(object):
+class LocalEntryPoint:
     """ Bare minimum stand-in for entrypoints.EntryPoint """
 
     def __init__(self, data):

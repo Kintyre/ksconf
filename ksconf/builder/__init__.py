@@ -31,7 +31,7 @@ class BuildCacheException(Exception):
     pass
 
 
-class BuildStep(object):
+class BuildStep:
     __slots__ = ["build_path", "source_path", "dist_path", "config", "verbosity", "_output"]
 
     def __init__(self, build, source=None, dist=None, output=sys.stdout):

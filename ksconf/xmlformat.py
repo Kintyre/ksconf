@@ -21,7 +21,7 @@ def _import_etree():
     g["etree"] = etree
 
 
-class FileReadlinesCache(object):
+class FileReadlinesCache:
     """ Silly class as a hacky workaround for CDATA detection... """
 
     def __init__(self):
