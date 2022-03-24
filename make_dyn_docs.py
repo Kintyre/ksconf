@@ -12,7 +12,7 @@ from subprocess import PIPE, Popen
 project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, project_dir)
 
-from ksconf.util.file import ReluctantWriter  # nopep8
+from ksconf.util.file import ReluctantWriter  # noqa
 
 PY_ENV = {
     "PYTHONWARNINGS": "ignore",

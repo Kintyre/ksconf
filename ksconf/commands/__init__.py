@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import textwrap
-from argparse import ArgumentParser, ArgumentTypeError, FileType
+from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
 from io import open
 from textwrap import dedent

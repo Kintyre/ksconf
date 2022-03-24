@@ -6,7 +6,7 @@
 import sys
 from pathlib import Path
 
-from ksconf.builder import QUIET, VERBOSE, BuildManager, default_cli
+from ksconf.builder import QUIET, VERBOSE, BuildManager, BuildStep, default_cli
 from ksconf.builder.steps import clean_build, copy_files, pip_install
 
 manager = BuildManager()
@@ -41,10 +41,13 @@ def python_packages(step):
                 handle_dist_info="remove")
 
 
-def package_spl(step):
+def package_spl(step: BuildStep):
+    log = step.get_logger()
     top_dir = step.dist_path.parent
     release_path = top_dir / ".release_path"
     release_name = top_dir / ".release_name"
+    # Verbose message
+    log("Starting to package SPL file!", VERBOSE)
     step.run(sys.executable, "-m", "ksconf", "package",
              "--file", step.dist_path / SPL_NAME,   # Path to created tarball
              "--app-name", APP_FOLDER,              # Top-level directory name
@@ -55,9 +58,11 @@ def package_spl(step):
     path = release_path.read_text()
     short_name = Path(path).name
     release_name.write_text(short_name)
+    # Output message will be produced even in QUIET mode
+    log(f"Created SPL file:  {short_name}", QUIET)
 
 
-def build(step, args):
+def build(step: BuildStep, args):
     """ Build process """
     # Step 1:  Clean/create build folder
     clean_build(step)

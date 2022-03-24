@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import sys
 from functools import lru_cache
 
 from ksconf.consts import KSCONF_DEBUG

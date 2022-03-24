@@ -22,12 +22,10 @@ decorator used to implement caching:
                         (Cache "slot"), must be filesystem safe]
 """
 
-import sys
 from functools import wraps
 from pathlib import Path
-from shutil import copy2, rmtree
 from tempfile import TemporaryDirectory
-from typing import Callable, List, Union
+from typing import List, Union
 
 from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
 from ksconf.builder.cache import CachedRun, FileSet

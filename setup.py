@@ -14,7 +14,7 @@ def get_ver():
     # Todo: There has to be a better library/method of doing this junk.
     from ksconf.vc.git import git_cmd
     ver_file = os.path.join("ksconf", "_version.py")
-    #git_sha1 = git_cmd(["rev-parse", "HEAD"]).stdout[:12]
+    # git_sha1 = git_cmd(["rev-parse", "HEAD"]).stdout[:12]
     vc_info = git_cmd(["show", "-s", "--abbrev=8", "--format=Git SHA1 %h committed on %cd",
                        "--date=format:%Y-%m-%d", "HEAD"]).stdout.strip()
     gitout = git_cmd(["describe", "--tags", "--always", "--dirty"])
