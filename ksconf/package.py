@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import hashlib
 import os
 import re
 import shutil
@@ -95,6 +96,7 @@ class AppPackager:
         for action, path in filters:
             combiner.add_layer_filter(action, path)
         combiner.combine(self.app_dir)
+        self._var_magic.meta["layers"] = combiner.layer_names_used
 
     def blocklist(self, patterns):
         # XXX: Rewrite explicitly blocklist '.git' dir, because '.git*' wasn't working here. :=(
@@ -247,10 +249,11 @@ class AppVarMagicException(KeyError):
 class AppVarMagic:
     """ A lazy loading dict-like object to fetch things like app version and such on demand. """
 
-    def __init__(self, src_dir, build_dir):
+    def __init__(self, src_dir, build_dir, meta=None):
         self._cache = {}
         self.src_dir = src_dir
         self.build_dir = build_dir
+        self.meta = meta or {}
 
     def expand(self, value):
         """ A simple Jinja2 like {{VAR}} substitution mechanism. """
@@ -306,6 +309,24 @@ class AppVarMagic:
     def get_git_head(self):
         """ Git HEAD rev abbreviated """
         return self.git_single_line("rev-parse", "--short", "HEAD")
+
+    def get_layers_list(self):
+        """ List of ksconf layers used. """
+        layers = sorted(self.meta.get("layers"))
+        if layers:
+            return f'__{"__".join(layers)}__'
+        else:
+            return ""
+
+    def get_layers_hash(self):
+        """ Build a unique hash representing the combination of ksconf layers used. """
+        DIGITS = 16
+        layers_string = self["layers_list"]
+        if layers_string:
+            h = hashlib.sha256(layers_string.encode("utf-8"))
+            return h.hexdigest()[:DIGITS]
+        else:
+            return "0" * DIGITS
 
     # END Variable fetching functions.
 

@@ -80,6 +80,11 @@ class RepeatableCombiner(LayerCombiner):
         Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         """
         config = self.config
+
+        self.stderr.write(f"Layers detected:  {self.layer_names_all}\n")
+        if self.layer_names_all != self.layer_names_used:
+            self.stderr.write(f"Layers after filter: {self.layer_names_used}\n")
+
         # Convert src_files to a set to speed up
         src_files = set(src_files)
         self.target_extra_files = set()
@@ -265,9 +270,6 @@ class CombineCmd(KsconfCmd):
             return EXIT_CODE_MISSING_ARG
 
         self.stderr.write(f"Combining files into directory {args.target}\n")
-
-        layer_root = combiner.layer_root
-        self.stderr.write(f"Layers detected:  {layer_root.list_layer_names()}\n")
 
         try:
             combiner.combine(args.target)

@@ -30,6 +30,8 @@ Supported Variables
     ``git_tag``         git         Run ``git describe --tags --always --dirty``.  Common prefixes are removed such as ``v`` or ``release-`` from the tag name.
     ``git_last_rev``    git         Run ``git log -n1 --pretty=format:%h -- .``
     ``git_head``        git         Run ``git rev-parse --short HEAD``
+    ``layers_list``     layers      List of unique ksconf layers used to build the app.  Layers are seperated by an double underscore (``__``)character.  If no layers were used then an empty string is returned.
+    ``layers_hash``     layers      Unique hash of unique ksconf layers used.  This is a truncated SHA256 of the ``layers_list`` variable.
     ==================  =========   ============================================================
 
 

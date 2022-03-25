@@ -18,7 +18,9 @@ Ksconf v0.10.0 (DRAFT)
 *  Updated ``package`` to use new combine new layer classes rather than making internal CLI calls to "combine".
    This has the potentially to be more efficient and allow for easier functionality expansions in the future.
 *  Deprecated the ``--layer_method=auto`` choice from the ``package`` command.  This will be an error in the next release (v0.11).
-
+*  Add new layer-related dynamic variables for the ``package`` command.
+   Use ``{{layers_list}}`` to capture what unique layer names made their way into a tarball, and
+   use ``{{layers_hash}}`` when that list get too long to be manageable.
 
 
 Ksconf 0.9

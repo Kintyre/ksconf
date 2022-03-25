@@ -67,6 +67,11 @@ class LayerCombiner:
         self.quiet = quiet
 
         self.config.follow_symlink = follow_symlink
+
+        # Internal tracking variables
+        self.layer_names_all = set()
+        self.layer_names_used = set()
+
         # Not a great long-term design, but good enough for initial converstion from command-based desgin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -105,8 +110,11 @@ class LayerCombiner:
 
         self.prepare_target_dir(target)
 
+        self.layer_names_all.update(layer_root.list_layer_names())
         if layer_root.apply_filter(layer_filter):
-            self.stderr.write(f"Layers after filter: {layer_root.list_layer_names()}\n")
+            self.layer_names_used.update(layer_root.list_layer_names())
+        else:
+            self.layer_names_used.update(self.layer_names_all)
 
     def prepare_target_dir(self, target):
         """ Hook to ensure destination directory is ready for use.  This can be overridden
