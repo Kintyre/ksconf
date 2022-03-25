@@ -111,17 +111,7 @@ class ConfSnapshot:
             },
         }
         record["records"] = self._data
-
-        # Workaround for unittesting (Py2.7 issue only);  there's probably a better solution
-        try:
-            json.dump(record, stream, **kwargs)
-        except TypeError:
-            from io import StringIO
-            if isinstance(stream, StringIO):
-                s = json.dumps(record, **kwargs)
-                stream.write(s.decode("utf-8"))
-            else:   # pragma: no cover
-                raise
+        json.dump(record, stream, **kwargs)
 
 
 class SnapshotCmd(KsconfCmd):
