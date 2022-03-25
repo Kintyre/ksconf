@@ -88,11 +88,15 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         """)
 
     def test_combine_3dir(self):
+        # Note that this test tests the old shool version of '*.d' processing.  But we must preserve this behavior.
+        # Be aware that we pass in 'default.d/*' as a string, and expand the glob vs allowing the shell to handle this
+        # and this is _normal_ behavior when dealing with Windows.
         twd = TestWorkDir()
         self.build_test01(twd)
         default = twd.get_path("etc/apps/Splunk_TA_aws/default")
         with ksconf_cli:
             ko = ksconf_cli("combine", "--dry-run", "--target", default, default + ".d/*")
+            # Q: Why do we run this once, but not check anything about it?  (To ensure dry-run has no side effects?)
             ko = ksconf_cli("combine", "--target", default, default + ".d/*")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             cfg = parse_conf(twd.get_path("etc/apps/Splunk_TA_aws/default/props.conf"))
@@ -252,10 +256,10 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             ko = ksconf_cli("combine", "source-dir")
             self.assertRegex(ko.stderr, "Must provide [^\r\n]+--target")
 
-    def test_missing_combine_dir(self):
+    def test_missing_marker(self):
         twd = TestWorkDir()
         twd.write_file("source-dir/someapp/default/blah.conf", "[entry]\nboring=yes\n")
-        twd.write_file("dest-dir/someapp/default//blah.conf", "[entry]\nboring=yes\n")
+        twd.write_file("dest-dir/someapp/default/blah.conf", "[entry]\nboring=yes\n")
 
         ko = ksconf_cli("combine", twd.get_path("source-dir"), "--target", twd.get_path("dest-dir"))
         self.assertEqual(ko.returncode, EXIT_CODE_COMBINE_MARKER_MISSING)

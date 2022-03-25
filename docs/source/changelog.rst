@@ -10,6 +10,10 @@ Ksconf v0.10.0 (DRAFT)
 **Python 3 ONLY**
 *  Ksconf v0.10 and later requires Python 3.7 or newer.
 *  Remove ``six`` built-in dependency.
+*  Refactor the ``combine`` logic into more reusuable classes.
+   The core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombine`,
+   :py:class:`~ksconf.command.combine.RepeatableCombiner` adds logic for marker safety checks and tunables for removing or preserving existing files.
+   The remaining bits in :py:class:`~ksconf.command.combine.CombineCmd` is just for command line functionality.
 
 
 Ksconf 0.9
