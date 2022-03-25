@@ -15,12 +15,6 @@ from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
-# Some unittest fixup for various python versions
-import tests.compat as _  # noqa
-
-del _
-
-
 # What to export
 __all__ = [
     "static_data",
