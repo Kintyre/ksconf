@@ -225,7 +225,7 @@ ksconf package
 
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
                           [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
-                          [--layer-method {auto,dir.d,disable}] [-I PATTERN]
+                          [--layer-method {dir.d,disable,auto}] [-I PATTERN]
                           [-E PATTERN] [--follow-symlink] [--set-version VERSION]
                           [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
@@ -283,9 +283,10 @@ ksconf package
       used to control which ones should be included in the final app file. If no
       layer options are specified, then all layers will be included.
     
-      --layer-method {auto,dir.d,disable}
+      --layer-method {dir.d,disable,auto}
                             Set the layer type used by SOURCE. Additional
-                            description provided in in the 'combine' command.
+                            description provided in in the 'combine' command.Note
+                            that 'auto' is no longer supported as of v0.10.
       -I PATTERN, --include PATTERN
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN

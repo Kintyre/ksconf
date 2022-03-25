@@ -6,6 +6,7 @@ import shutil
 import tarfile
 import tempfile
 
+from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
@@ -83,22 +84,17 @@ class AppPackager:
         return new_value if new_value != value else False
 
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
-        # VERY HACKY FOR NOW:
-        args = ["combine", src, "--target", self.app_dir,
-                "--layer-method", layer_method,
-                # Stuff we shouldn't have to do with a proper interface:
-                "--banner", "",
-                "--quiet",
-                "--disable-marker"]
-        if allow_symlink:
-            args.append("--follow-symlink")
-        args += [f"--{action}={path}" for (action, path) in filters]
-        from ksconf.__main__ import cli
-
-        # Passing in _unittest because that swaps sys.exit() for return
-        rc = cli(args, _unittest=True)
-        if rc != 0:
-            raise PackagingException("Issue calling 'combine' internally during app build....")
+        combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
+        if layer_method == "dir.d":
+            combiner.set_layer_root(src)
+        elif layer_method == "disable":
+            combiner.set_source_dirs([src])
+        else:
+            raise NotImplementedError(f"layer_method of '{layer_method}' is not supported.  "
+                                      "Please use 'dir.d' or 'disable'.")
+        for action, path in filters:
+            combiner.add_layer_filter(action, path)
+        combiner.combine(self.app_dir)
 
     def blocklist(self, patterns):
         # XXX: Rewrite explicitly blocklist '.git' dir, because '.git*' wasn't working here. :=(
