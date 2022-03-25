@@ -8,14 +8,17 @@ Tools
 
 If you are a developer, then we strongly suggest installing into a virtual environment to prevent
 overwriting the production version of ksconf and for the installation of the developer tools. (The
-virtualenv name ``ksconfdev-pyve`` is used below, but this can be whatever suites, just make sure
+virtual environment name ``venv`` is used below, but this can be whatever suites, just make sure
 not to commit it.)
 
 ..  code-block:: sh
 
+    git clone https://github.com/Kintyre/ksconf.git
+    cd ksconf
+
     # Setup and activate virtual environment
-    virtualenv ksconfdev-pyve
-    . ksconfdev-pyve/bin/activate
+    python3 -m venv venv
+    . venv/bin/activate
 
     # Install developer packages
     pip install -r requirements-dev.txt
@@ -38,7 +41,7 @@ Building the docs
 ..  code-block:: sh
 
     cd ksconf
-    . ksconfdev-pyve/bin/activate
+    . venv/bin/activate
 
     cd docs
     make html
@@ -52,7 +55,7 @@ If you are actively editing the docs, and would like changes to be updated in yo
     ./make_docs
 
 
-If you’d like to build PDF, then you’ll need some extra tools. On Mac, you may also want to install
+If you'd like to build PDF, then you'll need some extra tools. On Mac, you may also want to install
 the following (for building docs, etc.):
 
 ..  code-block:: sh
@@ -72,12 +75,12 @@ Tox and pyenv can be run like so:
 ..  code-block:: sh
 
     # Install the necessary python versions
-    pyenv install 2.7.17
+    pyenv install 3.7.9
     ...
-    pyenv install 3.8.1
+    pyenv install 3.10.1
 
     # Set specific default version of python for each major/minor release (tab completion is your friend here)
-    pyenv local 2.7.17 ... 3.8.1
+    pyenv local 3.7.9 ... 3.10.1
 
     # Run tox for ALL python versions
     tox

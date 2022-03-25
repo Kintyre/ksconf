@@ -20,7 +20,7 @@ use Splunk's embedded Python. For everyone else, please start with the one-liner
         - ``virtualenv``
         - ``wheel``
         - ``pyenv`` (not the same as ``pyvenv``)
-        - ``python2.7`` vs ``python27`` vs ``py -27``
+        - ``python3.7`` vs ``python37`` vs ``py -37``
         - ``PYTHONPATH``
         - ``LD_LIBARY``
         - RedHat Software Collections
@@ -37,8 +37,7 @@ Flowchart
 
  -  Is Python installed? (OS level)
 
-    -   Is the version greater than 2.7? (Some early 2.7 version have quarks, but typically this is okay)
-    -   If Python 3.x, is it greater than 3.4? (I'd like to drop 3.4, but lots of old distros still have it.)
+    -   Is the version greater than 3.7?
 
  -  Do you have admin access? (root/Administrator; or can you get it? How hard? Will you need it each time you upgrade the ksconf?)
  -  Do you already have a large Python deployment or dependency? (If so, you'll probably be fine. Use `virtualenv`_)
@@ -135,12 +134,12 @@ CentOS (RedHat derived) distros
 RedHat Software Collections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following assumes the ``python27`` software collection, but other version of Python are supported
+The following assumes the ``python38`` software collection, but other version of Python are supported
 too. The initial setup and deployment of Software Collections is beyond the scope of this doc.
 
 ..  code-block:: sh
 
-    sudo scl enable python27 python -m pip install kintyre-splunk-conf
+    sudo scl enable python38 python -m pip install kintyre-splunk-conf
 
 ..  hint::  Missing pip?
 
@@ -148,7 +147,7 @@ too. The initial setup and deployment of Software Collections is beyond the scop
 
     ..  code-block:: sh
 
-        yum install python27-python-pip
+        yum install python38-python-pip
 
 Unfortunately, the ``ksconf`` entrypoint script (in the ``bin`` folder) will not work correctly on it's
 own because it doesn't know about the scl environment, nor is it in the default PATH. To solve this,
@@ -229,7 +228,7 @@ On Windows
 
         @echo off
         SET SPLUNK_HOME=C:\Program Files\Splunk
-        SET PYTHONPATH=%SPLUNK_HOME%\bin;%SPLUNK_HOME%\Python-2.7\Lib\site-packages\win32;%SPLUNK_HOME%\Python-2.7\Lib\site-packages;%SPLUNK_HOME%\Python-2.7\Lib
+        SET PYTHONPATH=%SPLUNK_HOME%\bin;%SPLUNK_HOME%\Python-3.7\Lib\site-packages\win32;%SPLUNK_HOME%\Python-3.7\Lib\site-packages;%SPLUNK_HOME%\Python-3.7\Lib
         SET PYTHONPATH=%PYTHONPATH%;%SPLUNK_HOME%\Kintyre
         CALL "%SPLUNK_HOME%\bin\python.exe" -m ksconf %*
 
@@ -274,7 +273,7 @@ version of Python that is running on destination machine.
 ..  code-block:: sh
 
     # download packages
-    python2.7 -m pip download -d ksconf-packages kintyre-splunk-conf
+    python3 -m pip download -d ksconf-packages kintyre-splunk-conf
 
 A new directory named 'ksconf-packages' will be created and will contain the necessary ``*.whl`` files.
 
@@ -320,7 +319,7 @@ above and can be combined, if needed.)
 
     mkdir ksconf-packages
     curl https://bootstrap.pypa.io/get-pip.py -o ksconf-packages/get-pip.py
-    python2.7 -m pip download -d /tmp/my_packages pip setuptools wheel
+    python3 -m pip download -d /tmp/my_packages pip setuptools wheel
 
 The ``ksconf-pacakges`` folder should contain 1 script, and 3 wheel (``*.whl``) files.
 
@@ -424,7 +423,7 @@ Check your installed Python version by running:
     python --version
 
 Note that Linux distributions and Mac OS X that ship with multiple versions of Python may have
-renamed this to ``python2``, ``python2.7`` or similar.
+renamed this to ``python3``, ``python3.8`` or similar.
 
 
 Check PIP Version
@@ -438,7 +437,7 @@ If you are running a different Python interpreter version, you can instead run t
 
 ..  code-block:: sh
 
-    python2.7 -m pip --version
+    python3 -m pip --version
 
 
 
