@@ -77,7 +77,7 @@ Please see the [Official docs](https://ksconf.readthedocs.io/en/latest/) for mor
 """
 
 
-setup(name="kintyre-splunk-conf",
+setup(name="ksconf",
       version=get_ver(),
       description="KSCONF: Kintyre's Splunk Configuration Tool",
       long_description=DESCRIPTION,
