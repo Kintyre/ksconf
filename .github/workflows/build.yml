@@ -134,14 +134,14 @@ jobs:
 
           twine upload dist/ksconf-*
 
-      - name: Build and publish kintyre-splunk-conf to PyPI
+      - name: Build and publish legacy kintyre-splunk-conf to PyPI
         if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          echo "::group::Run setup_legacy.py"
-          python setup_legacy.py bdist_wheel
+          echo "::group::Run legacy/setup.py"
+          python legacy/setup.py sdist bdist_wheel
           echo "::endgroup::"
 
           twine upload dist/kintyre_splunk_conf-*
