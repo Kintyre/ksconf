@@ -12,7 +12,6 @@ Usage example:
 from __future__ import absolute_import, unicode_literals
 
 import os
-from dis import dis
 from io import open
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
