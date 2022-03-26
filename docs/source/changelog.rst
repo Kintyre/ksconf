@@ -4,20 +4,45 @@ Changelog
 .. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
 
 
+
+Ksconf 0.10
+-----------
+
+**Highlights:**
+
+*  Ksconf now requires Python 3.7 or newer.
+*  The Python package was renamed ``ksconf``.
+
+
+**API Changes**
+
+*  Core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombine`.
+   The new :py:class:`~ksconf.command.combine.RepeatableCombiner` class has logic for marker safety checks and settings for removing or preserving existing files.
+   The :py:class:`~ksconf.command.combine.CombineCmd` now contains only the command line functionality.
+
+
 Ksconf v0.10.0 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**Python 3 ONLY**
+**Hishglights:**
 
 *  Ksconf v0.10 and later requires Python 3.7 or newer.
-*  The offical Python package was renamed ``ksconf``.
-   The ``kintyre-splunk-conf`` package continue to be released in parallel at least until the version 1.0 release.
-   You can continue updating the ``kintyre-splunk-conf`` package and it will install the ``ksconf`` package.
+   If you need Python 2.7 or 3.6 support, please stick with the latest 0.9.x release.
+*  The official Python package was renamed ``ksconf``.
+   The ``kintyre-splunk-conf`` package continue to be released in parallel at least until version 1.0.
+   You can continue updating the ``kintyre-splunk-conf`` package and it will install the ``ksconf`` package as a dependency.
+*  The KSCONF acronym has taken on a new meaning.
+   Originally, meaning *Kintyre's Splunk CONFiguration tool*,
+   now becomes a recursive acronym:  *Ksconf Splunk CONFiguration tool*.
+   Kintyre has been acquired by CDI LLC, and this option seemed least intrusive.
+
+
+More changes:
+
 *  Remove ``six`` built-in dependency.
 *  Refactor the ``combine`` logic into more reusable classes.
-   The core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombine`,
-   :py:class:`~ksconf.command.combine.RepeatableCombiner` adds logic for marker safety checks and tunables for removing or preserving existing files.
-   The remaining bits in :py:class:`~ksconf.command.combine.CombineCmd` is just for command line functionality.
+   This simplifies the CLI logic for both the ``combine`` and ``package`` functionality.
+   The ``combine`` CLI and functionality remains unchanged.
 *  Updated ``package`` to use new combine new layer classes rather than making internal CLI calls to "combine".
    This has the potentially to be more efficient and allow for easier functionality expansions in the future.
 *  Deprecated the ``--layer_method=auto`` choice from the ``package`` command.  This will be an error in the next release (v0.11).
@@ -70,10 +95,10 @@ Ksconf v0.9.0 (2021-08-12)
 
 Features & Enhancements:
 
--  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but now within any source.
+-  Add new ``--keep-existing`` option for ``ksconf combine`` to preserve certain files that exist within the target directory but not within any source.
    Similarly the new ``--disable-cleanup`` option will prevent any files from being removed.
    This is useful, for example if using ``ksconf combine`` to write apps into ``deployment-apps`` where Splunk automatically creates a local ``app.conf`` file, and the deletion and recreation of the file can result in unnecessary app re-deployments.
-   These new options can be used together; for example, one useful pattern is to use ``--disable-cleanup`` to block all removal while perfecting/testing ``--keep-existing`` patterns.
+   These new options can be used together; for example, one useful pattern is to use ``--disable-cleanup`` to block all removals while perfecting/testing ``--keep-existing`` patterns.
 -  Add support for previewing stanza changes with ``ksconf promote`` by combining ``--stanza X`` and ``--summary`` options at the same time.  Thanks to guilhemmarchand for the suggestion. (`#89 <https://github.com/Kintyre/ksconf/issues/89>`__)
 -  New CLI args for ``ksconf diff``.
    (1) New ``--detail`` option to specify how to handle certain 'replace' levels which impacts the way certain changes are represented.

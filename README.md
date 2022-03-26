@@ -1,4 +1,4 @@
-# Kintyre's Splunk CONFiguration tool
+# Ksconf Splunk CONFiguration tool
 
 [![Build](https://github.com/Kintyre/ksconf/actions/workflows/build.yml/badge.svg)](https://github.com/Kintyre/ksconf/actions/workflows/build.yml)
 [![PyPI](https://img.shields.io/pypi/v/ksconf.svg)](https://pypi.org/project/ksconf/)

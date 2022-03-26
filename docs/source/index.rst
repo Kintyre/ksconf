@@ -1,4 +1,4 @@
-Kintyre's Splunk CONFiguration tool
+Ksconf Splunk CONFiguration tool
 ===================================
 
 ..  image:: ../images/logo.png
@@ -27,7 +27,7 @@ environment and explore ways to integrate Ksconf capabilities into your existing
 We are glad you are here! No matter where you're starting from, Ksconf can help. Let us
 know if there is anything we can do to help along your journey.
 
-    -- Kintyre team
+    -- Kintyre, a CDI Company
 
 
 Install
