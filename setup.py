@@ -79,7 +79,7 @@ Please see the [Official docs](https://ksconf.readthedocs.io/en/latest/) for mor
 
 setup(name="ksconf",
       version=get_ver(),
-      description="KSCONF: Kintyre's Splunk Configuration Tool",
+      description="KSCONF: Ksconf Splunk Configuration Tool",
       long_description=DESCRIPTION,
       long_description_content_type="text/markdown",
       classifiers=[
