@@ -40,7 +40,7 @@ To install as a **python package**, run the following:
 
 ..  code-block:: shell
 
-    pip install kintyre-splunk-conf
+    pip install ksconf
 
 
 To install the **Splunk app**, download the latest `KSCONF App for Splunk`_ release.  Note that a

@@ -1,4 +1,4 @@
-""" ksconf - Kintyre Splunk CONFig tool
+""" ksconf - Ksconf Splunk CONFig tool
 
 
 Design goals:

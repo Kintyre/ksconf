@@ -64,7 +64,7 @@ Install from PyPI with PIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The preferred installation method is to install via the standard Python package tool :command:`pip`. Ksconf
-can be installed via the registered `kintyre-splunk-conf`_ package using the standard Python process.
+can be installed via the registered `ksconf`_ package using the standard Python process.
 
 There are 2 popular variations, depending on whether or not you would like to install for all users
 or test it locally.
@@ -89,7 +89,7 @@ Please change ``venv`` to a suitable path for your environment.
     virtualenv venv
     source venv/bin/activate
 
-    pip install kintyre-splunk-conf
+    pip install ksconf
 
 ..  note:: Windows users
 
@@ -109,13 +109,13 @@ On Mac or Linux, run:
 
 ..  code-block:: sh
 
-    sudo pip install kintyre-splunk-conf
+    sudo pip install ksconf
 
 On Windows, run this command from an Administrator console.
 
 ..  code-block:: sh
 
-    pip install kintyre-splunk-conf
+    pip install ksconf
 
 CentOS (RedHat derived) distros
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ CentOS (RedHat derived) distros
     sudo yum install -y python-pip
 
     # Install ksconf (globally, for all users)
-    sudo pip install kintyre-splunk-conf
+    sudo pip install ksconf
 
 RedHat Software Collections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -139,7 +139,7 @@ too. The initial setup and deployment of Software Collections is beyond the scop
 
 ..  code-block:: sh
 
-    sudo scl enable python38 python -m pip install kintyre-splunk-conf
+    sudo scl enable python38 python -m pip install ksconf
 
 ..  hint::  Missing pip?
 
@@ -179,7 +179,7 @@ Offline pip install:
 On Linux or Mac
 ^^^^^^^^^^^^^^^
 
-Download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_. The path to this download will be
+Download the latest "Wheel" file file from `PyPI <ksconf-wheel>`_. The path to this download will be
 set in the ``pkg`` variable as shown below.
 
 Setup the shell:
@@ -215,7 +215,7 @@ Test the install:
 On Windows
 ^^^^^^^^^^
 
-1.  Open a browser and download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_.
+1.  Open a browser and download the latest "Wheel" file file from `PyPI <ksconf-wheel>`_.
 2.  Rename the ``.whl`` extension to ``.zip``. (This may require showing file extensions in Explorer.)
 3.  Extract the zip file to a temporary folder. (This should create a folder named "ksconf")
 4.  Create a new folder called "Kintyre" under the Splunk installation path (aka ``SPLUNK_HOME``)
@@ -273,7 +273,7 @@ version of Python that is running on destination machine.
 ..  code-block:: sh
 
     # download packages
-    python3 -m pip download -d ksconf-packages kintyre-splunk-conf
+    python3 -m pip download -d ksconf-packages ksconf
 
 A new directory named 'ksconf-packages' will be created and will contain the necessary ``*.whl`` files.
 

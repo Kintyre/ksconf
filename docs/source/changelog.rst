@@ -10,6 +10,9 @@ Ksconf v0.10.0 (DRAFT)
 **Python 3 ONLY**
 
 *  Ksconf v0.10 and later requires Python 3.7 or newer.
+*  The offical Python package was renamed ``ksconf``.
+   The ``kintyre-splunk-conf`` package continue to be released in parallel at least until the version 1.0 release.
+   You can continue updating the ``kintyre-splunk-conf`` package and it will install the ``ksconf`` package.
 *  Remove ``six`` built-in dependency.
 *  Refactor the ``combine`` logic into more reusable classes.
    The core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombine`,

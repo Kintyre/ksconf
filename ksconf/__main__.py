@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-""" ksconf - Kintyre Splunk CONFig tool
+""" KSCONF - Ksconf Splunk CONFig tool
 
 Optionally supports argcomplete for commandline argument (tab) completion.
 
@@ -40,7 +40,7 @@ except OSError:  # WindowsError:  pragma: no cover
 
 
 # ------------------------------------------ wrap to 80 chars ----------------v
-_cli_description = """Ksconf: Kintyre Splunk CONFig tool
+_cli_description = """KSCONF: Ksconf Splunk CONFig tool
 
 This utility handles a number of common Splunk app maintenance tasks in a small
 and easy to deploy package.  Specifically, this tool deals with many of the

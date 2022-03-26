@@ -15,7 +15,7 @@ ksconf
                   {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
-    Ksconf: Kintyre Splunk CONFig tool
+    KSCONF: Ksconf Splunk CONFig tool
     
     This utility handles a number of common Splunk app maintenance tasks in a small
     and easy to deploy package.  Specifically, this tool deals with many of the

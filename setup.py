@@ -57,7 +57,7 @@ Tasks like creating new Splunk apps from your local system while merging the 'lo
 
 Install with
 
-    pip install kintyre-splunk-conf
+    pip install ksconf
 
 Confirm installation with the following command:
 

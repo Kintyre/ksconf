@@ -100,13 +100,13 @@ Quick Install
 
 .. code-block:: sh
 
-   pip install kintyre-splunk-conf
+   pip install ksconf
 
 **System-level install**: (For Mac/Linux)
 
 .. code-block:: sh
 
-   curl https://bootstrap.pypa.io/get-pip.py | sudo python - kintyre-splunk-conf
+   curl https://bootstrap.pypa.io/get-pip.py | sudo python - ksconf
 
 .. note: PIP
    This will also install/update ``pip`` and work around some known TLS/SSL issues
@@ -225,7 +225,7 @@ If you want the packages, install the "thirdparty" extras using the following co
 
 ..  code-block:: sh
 
-    pip install kintyre-splunk-conf[thirdparty]
+    pip install ksconf[thirdparty]
 
 
 
