@@ -117,11 +117,11 @@ jobs:
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish to PyPI
+      - name: Build and publish ksconf to PyPI
         if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_PASSWORD: ${{ secrets.KSCONF_PYPI_TOKEN }}
         run: |
           echo $GITHUB_REF
           echo "::group::Pip install"
@@ -132,7 +132,19 @@ jobs:
           python setup.py sdist bdist_wheel
           echo "::endgroup::"
 
-          twine upload dist/*
+          twine upload dist/ksconf-*
+
+      - name: Build and publish kintyre-splunk-conf to PyPI
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          echo "::group::Run setup_legacy.py"
+          python setup_legacy.py bdist_wheel
+          echo "::endgroup::"
+
+          twine upload dist/kintyre_splunk_conf-*
 
       - name: Build Splunk app
         id: buildpkg
