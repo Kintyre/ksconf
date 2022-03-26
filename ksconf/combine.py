@@ -216,8 +216,7 @@ class LayerCombiner:
                 combined_content = ""
                 last_mtime = max(src.mtime for src in sources)
                 for src in sources:
-                    # PY3:  Just open(src) is fine
-                    with open(src.physical_path, "r") as stream:
+                    with open(src, "r") as stream:
                         content = stream.read()
                         if not content.endswith("\n"):
                             content += "\n"
