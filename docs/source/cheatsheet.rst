@@ -9,11 +9,10 @@ Here's a quick rundown of handy ``ksconf`` commands:
 
 ..  note::
 
-    Note that for clarity, most of the command line arguments are given in their long form,
-    but many options also have a short form.
+    Note that for clarity, most of the command line arguments are given in their long form.
 
     Long commands may be broken across line for readability.   When this happens, a trailing
-    backslash (``\``) is added so the command could still be copied verbatim into most shells.
+    backslash (``\``) is shown.  This can be copied verbatim into many shells.
 
     ..  only:: builder_epub
 
@@ -137,7 +136,8 @@ Quick package and install
 
 Use the ``--release-file`` option of the package command to write out the name of the final created tarball.
 This helps when the final tarball name isn't known in advance because it contains a version string, for example.
-By simply placing the latest release in a static location, this allows commonly repeated operations, like build+install be chained together in a convienent way making iterations quite fast from a shell.
+By simply placing the latest release in a static location, this allows commonly repeated operations,
+like build+install to be chained together in a convenient way making iterations quite fast.
 
     .. code-block:: sh
 
@@ -145,9 +145,7 @@ By simply placing the latest release in a static location, this allows commonly 
         ksconf package --release-file .release kintyre_app_speedtest &&
             "$SPLUNK_HOME/bin/splunk" install app "$(<.release)" -update 1
 
-To save time, I often put the one-line version of this command (along with a first-time install command) in a README or DEVELOPMENT file at the top-level of the app repo.
-
-A build process for the same page, where the version is defined by the latest git tag, would look something like this:
+A build process for the same package, where the version is defined by the latest git tag, would look something like this:
 
     .. code-block:: sh
 
@@ -170,14 +168,14 @@ Migrating content between apps
 
 Say you want to move a bunch of savedsearches from ``search`` into a more appropriate app.
 First create a file that lists all the names of your searches (one per line) in :file:`corp_searches.txt`.
-Next, copy just the desired stanzas, those named in the 'corp_searches' file, over to your new :file:`corp_app` application.
+Next, copy just the desired stanzas, to your new :file:`corp_app` application using the following command:
 
     .. code-block:: sh
 
         ksconf filter --match string --stanza 'file://corp_searches.txt' \
             search/local/savedsearches.conf --output corp_app/default/savedsearches.conf
 
-Now, to avoid duplication and confusion, you want to remove that exact same set of searches from the search app.
+Because we want to *move*, not just *copy*, the searches, they can now be removed from the search app using the following steps:
 
     .. code-block:: sh
 
@@ -223,22 +221,29 @@ After stopping Splunk on the new server, run the following commands.
 
 Now double check the results and start Splunk.
 
-We use the ``--banner`` option here to essential disable an output banner.
-Because, in this case, the combine operation is a one-time job and therefore no warning is needed.
+Using ``--banner`` essentially disables the output banner feature.
+Because, in this case, the combine operation is a one-time job and therefore no top-of-file warning is needed.
 
 
 Maintaining apps stored in a local git repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Extract and commit a new/updated app
 
     .. code-block:: sh
 
-        ksconf unarchive
+        ksconf unarchive --git-mode=commit my-package-112.tgz
 
+For apps that use layers (``default.d`` folder), then use a command like so:
 
-.. TODO - Finish this section
+    .. code-block:: sh
 
+        ksconf unarchive --git-mode=commit \
+            --default-dir=default.d/10-upstream \
+            --keep 'default.d/*' my-package-112.tgz
 
+If you'd like to disable git hooks, like pre-commit, when importing a new release of
+an upsteam app, add ``--git-commit-args="--no-verify`` to the above commands.
 
 
 
