@@ -44,7 +44,7 @@ def get_ver():
 
 
 DESCRIPTION = """\
-# Kintyre's Splunk CONFiguration tool
+# Ksconf Splunk CONFiguration tool
 
 This utility handles common Splunk app maintenance tasks in an installable python package.
 Specifically, this tool deals with many of the nuances of storing Splunk apps in a

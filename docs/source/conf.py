@@ -169,8 +169,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'KSConf', u'KSConf Documentation',
-     author, 'KSConf', "Kintyre's Splunk Configuration tool",
+    (master_doc, 'KSCONF', u'Ksconf Documentation',
+     author, 'KSCONF', "Ksconf Splunk Configuration tool",
      'Miscellaneous'),
 ]
 

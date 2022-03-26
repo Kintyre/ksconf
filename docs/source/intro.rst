@@ -1,7 +1,7 @@
 Introduction
 ------------
 
-:abbr:`ksconf (Kintyre's Splunk Configuration tool)`
+:abbr:`ksconf (Ksconf Splunk Configuration tool)`
 is a command-line tool that helps administrators and developers manage their Splunk environments by
 enhancing their ability to control configuration files.  By design, the interface is modular so that
 each function (aka subcommand) can be learned quickly and used independently.  Most Ksconf commands
