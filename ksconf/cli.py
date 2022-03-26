@@ -20,18 +20,6 @@ import platform
 import sys
 from collections import defaultdict
 
-# Doh! This probably only works for Python 3.6; earlier version will fail due to f-string use (needs refactoring)
-if sys.version_info < (3, 7):   # noqa
-    from ksconf.consts import EXIT_CODE_BAD_PY_VERSION
-    sys.stderr.write(
-        "ERROR:  ksconf requires Python 3.7+.\n\n"
-        "If you need Python 2.7/3.6 support, consider downgrading.\n"
-        "Releases 0.9.x support these older Python versions.\n\n"
-        "You can try running:\n\n"
-        "   pip install -U 'kintyre-splunk-conf>=0.9,<=0.10'\n")
-    sys.exit(EXIT_CODE_BAD_PY_VERSION)
-
-
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
@@ -221,8 +209,7 @@ def build_cli_parser(do_formatter=False):
 
 def cli(argv=None, _unittest=False):
     # TODO:  Rename '_unitest' to something more appropriate, maybe _exit=True?
-    if check_py is not None:
-        check_py()
+    check_py()
 
     parser = build_cli_parser(True)
     if not _unittest:
@@ -266,8 +253,4 @@ def check_py():
         if KSCONF_DEBUG not in os.environ:
             sys.exit(EXIT_CODE_ENV_BUSTED)
     # Okay, now NEVER call this code again....   (helpful for unit-testing & nested calls)
-    globals()["check_py"] = None
-
-
-if __name__ == '__main__':  # pragma: no cover
-    cli()
+    globals()["check_py"] = lambda: None
