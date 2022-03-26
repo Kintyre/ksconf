@@ -8,13 +8,11 @@ import sys
 from functools import wraps
 from subprocess import PIPE, Popen
 
-from ksconf.ext.six import PY2
-
 # Prevent installed (likely older) version of ksconf from taking over
 project_dir = os.path.dirname(os.path.abspath(__file__ or sys.argv[0]))
 sys.path.insert(0, project_dir)
 
-from ksconf.util.file import ReluctantWriter  # nopep8
+from ksconf.util.file import ReluctantWriter  # noqa
 
 PY_ENV = {
     "PYTHONWARNINGS": "ignore",
@@ -23,25 +21,11 @@ PY_ENV = {
     "KSCONF_DISABLE_PLUGINS": "ksconf_cmd",
 }
 
-if PY2:
-    # Convert to bytes for Python 2
-    PY_ENV = {k.encode("utf-8"): v.encode("utf-8") for (k, v) in PY_ENV.items()}
-
 
 def cmd_output(*cmd):
     p = Popen(cmd, stdout=PIPE, env=PY_ENV)
     (stdout, stderr) = p.communicate()
     return stdout.decode("utf-8").splitlines()
-
-
-'''
-# Not sure how else to tell if environment variables should be bytes or string/unicode, so we try it and adjust from there....
-# Seems to be different based on Python version and OS
-try:
-    cmd_output("-m", "ksconf", "--version")
-except TypeError:
-    print("Falling back to unicode strings for envvars")
-'''
 
 
 def parse_subcommand(lines):
@@ -62,7 +46,7 @@ def prefix(iterable, indent=4):
 def restructured_header(header, level):
     level_symbols = '#*=-^"~'
     char = level_symbols[level - 1]
-    return "{}\n{}\n".format(header, char * len(header))
+    return f"{header}\n{char * len(header)}\n"
 
 
 def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
@@ -75,14 +59,14 @@ def write_doc_for(stream, cmd, level=2, cmd_name=None, level_inc=1, *subcmds):
     out = list(cmd_output(*args))
     heading = " ".join([cmd_name] + subcmds)
     ref = "_".join(["", cmd_name, "cli"] + subcmds)
-    stream.write(".. {}:\n\n{}\n".format(ref, restructured_header(heading, level)))
+    stream.write(f".. {ref}:\n\n{restructured_header(heading, level)}\n")
     stream.write(" .. code-block:: none\n\n")
     for line in prefix(out):
         stream.write(line + "\n")
     stream.write("\n\n\n")
     for subcmd in parse_subcommand(out):
         sc = subcmds + [subcmd]
-        print("  Subcmd docs for {} {}".format(cmd_name, " ".join(sc)))
+        print(f"  Subcmd docs for {cmd_name} {' '.join(sc)}")
         write_doc_for(stream, cmd, level + level_inc, cmd_name, level_inc, *sc)
 
 
@@ -91,11 +75,11 @@ def show_changes(f):
     def wrapper(path):
         rw = f(path)
         if rw.result == "created":
-            print("Make fresh {}".format(path))
+            print(f"Make fresh {path}")
         elif rw.result == "unchanged":
-            print("No changes made to {}.".format(path))
+            print(f"No changes made to {path}.")
         elif rw.result == "updated":
-            print("{} updated".format(path))
+            print(f"{path} updated")
         if rw.change_needed:
             return 1
         return 0
@@ -122,26 +106,19 @@ def make_subcommands_table(csv_path):
     # Explicitly sort commands by name (no more random git diffs!)
     commands = [(ep.name, ep) for ep in get_all_ksconf_cmds()]
     commands.sort()
-    commands = [ep for (name, ep) in commands]
+    commands = [ep for (_, ep) in commands]
 
-    if PY2:
-        table = ReluctantWriter(csv_path, "wb")
-    else:
-        table = ReluctantWriter(csv_path, "w", encoding="utf-8")
+    table = ReluctantWriter(csv_path, "w", encoding="utf-8")
     with table as stream:
         csvwriter = csv.writer(stream, dialect=csv.QUOTE_NONNUMERIC)
         for ep in commands:
             # Pros/conf links to the doc vs 'ref'?
-            #ref_template = ":doc:`cmd_{}`"
-            ref_template = ":ref:`ksconf {0} <ksconf_cmd_{0}>`"
+            # ref_template = ":doc:`cmd_{}`"
             row = [
-                ref_template.format(ep.name),
+                f":ref:`ksconf {ep.name} <ksconf_cmd_{ep.name}>`",
                 ep.cmd_cls.maturity,
                 ep.cmd_cls.help.replace("\n", " "),
             ]
-            # Workaround csv module not supporting unicode in PY2
-            if PY2:
-                row = [s.encode("utf-8") for s in row]
             csvwriter.writerow(row)
     return table
 
@@ -151,7 +128,7 @@ if __name__ == '__main__':
     if not os.path.isdir(dyn):
         os.makedirs(dyn)
 
-    def docs_dir(filename): return os.path.join(dyn, filename)  # nopep8
+    def docs_dir(filename): return os.path.join(dyn, filename)  # noqa
     changes = 0
 
     changes += make_cli_docs(docs_dir("cli.rst"))

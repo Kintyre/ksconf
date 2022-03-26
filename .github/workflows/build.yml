@@ -20,10 +20,10 @@ jobs:
         os:
           - ubuntu-18.04
         python-version:
-          # - '2.7'
           - '3.7'
           - '3.8'
-          #- '3.9'
+          - '3.9'
+          - '3.10'
         include:
           - os: ubuntu-18.04
             python-version: 3.9
@@ -31,8 +31,6 @@ jobs:
           - os: ubuntu-18.04
             python-version: 3.8
             extra_packages: argcomplete
-          - os: macos-latest
-            python-version: 2.7.18
           - os: macos-latest
             python-version: 3.7.12
     steps:
@@ -119,11 +117,11 @@ jobs:
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish to PyPI
+      - name: Build and publish ksconf to PyPI
         if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_PASSWORD: ${{ secrets.KSCONF_PYPI_TOKEN }}
         run: |
           echo $GITHUB_REF
           echo "::group::Pip install"
@@ -134,7 +132,19 @@ jobs:
           python setup.py sdist bdist_wheel
           echo "::endgroup::"
 
-          twine upload dist/*
+          twine upload dist/ksconf-*
+
+      - name: Build and publish legacy kintyre-splunk-conf to PyPI
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          echo "::group::Run legacy/setup.py"
+          python legacy/setup.py sdist bdist_wheel
+          echo "::endgroup::"
+
+          twine upload dist/kintyre_splunk_conf-*
 
       - name: Build Splunk app
         id: buildpkg

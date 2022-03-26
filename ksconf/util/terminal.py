@@ -9,7 +9,7 @@ ANSI_RESET = 0
 TTY_COLOR_MODE = "auto"
 
 
-class TermColor(object):
+class TermColor:
     """
     Simple color setting helper class that's a context manager wrapper around a stream.
     This ensure that the color is always reset at the end of a session.

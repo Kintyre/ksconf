@@ -46,13 +46,13 @@ Requirements
 
 *Python package install:*
 
- - `Python`_ Supports Python 2.7, 3.4+
+ - `Python`_ Supports Python 3.7+
  - `PIP <https://pip.pypa.io/en/stable/installing/>`__ (strongly recommended)
  - Tested on Mac, Linux, and Windows
 
 *Splunk app install:*
 
- - Splunk 6.0 or greater is installed
+ - Splunk 8.0 or greater is installed
 
 
 
@@ -75,12 +75,6 @@ On Windows, open a terminal as Administrator and type:
 
     cd "C:\Program Files\Splunk"
     bin\splunk.exe cmd python3 etc\apps\ksconf\bin\install.py
-
-.. note:: Splunk 7 vs Splunk 8
-
-    The above command will use Python 3 which will shortly be the only version supported.
-    If you're stuck on Splunk 7 or earlier, please replace ``python3`` with ``python`` in the command above.
-
 
 This will add ``ksconf`` to Splunk's ``bin`` folder, thus making it executable either as ``ksconf``
 or, less optimally, ``splunk cmd ksconf``.  (If you can run ``splunk`` without giving it a path, then
@@ -106,13 +100,13 @@ Quick Install
 
 .. code-block:: sh
 
-   pip install kintyre-splunk-conf
+   pip install ksconf
 
 **System-level install**: (For Mac/Linux)
 
 .. code-block:: sh
 
-   curl https://bootstrap.pypa.io/get-pip.py | sudo python - kintyre-splunk-conf
+   curl https://bootstrap.pypa.io/get-pip.py | sudo python - ksconf
 
 .. note: PIP
    This will also install/update ``pip`` and work around some known TLS/SSL issues
@@ -231,7 +225,7 @@ If you want the packages, install the "thirdparty" extras using the following co
 
 ..  code-block:: sh
 
-    pip install kintyre-splunk-conf[thirdparty]
+    pip install ksconf[thirdparty]
 
 
 

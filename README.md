@@ -1,15 +1,15 @@
 # Kintyre's Splunk CONFiguration tool
 
 [![Build](https://github.com/Kintyre/ksconf/actions/workflows/build.yml/badge.svg)](https://github.com/Kintyre/ksconf/actions/workflows/build.yml)
-[![PyPI](https://img.shields.io/pypi/v/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
+[![PyPI](https://img.shields.io/pypi/v/ksconf.svg)](https://pypi.org/project/ksconf/)
 [![codecov](https://codecov.io/gh/Kintyre/ksconf/branch/master/graph/badge.svg)](https://codecov.io/gh/Kintyre/ksconf)
 [![Coverage Status](https://coveralls.io/repos/github/Kintyre/ksconf/badge.svg?branch=master)](https://coveralls.io/github/Kintyre/ksconf?branch=master)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/rlbgstkpf17y8nxh/branch/master?svg=true)](https://ci.appveyor.com/project/lowell80/ksconf/branch/master)
 [![Documentation Status](https://readthedocs.org/projects/ksconf/badge/?version=latest)](https://ksconf.readthedocs.io/en/latest/?badge=latest)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/kintyre-splunk-conf.svg)](https://pypi.org/project/kintyre-splunk-conf/)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/kintyre-splunk-conf.svg)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ksconf.svg)](https://pypi.org/project/ksconf/)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/ksconf.svg)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![Snyk Score](https://snyk.io/advisor/python/kintyre-splunk-conf/badge.svg)](https://snyk.io/advisor/python/kintyre-splunk-conf)
+[![Snyk Score](https://snyk.io/advisor/python/ksconf/badge.svg)](https://snyk.io/advisor/python/ksconf)
 [![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
 
 
@@ -31,7 +31,7 @@ more than one layer of "default" are all supported tasks which are not native to
 
 **Python:**
 
-    pip install kintyre-splunk-conf
+    pip install ksconf
 
 **Confirm installation** with the following command:
 

@@ -7,52 +7,11 @@ import shutil
 import sys
 from glob import glob
 from io import open
-from pathlib import PurePath
-
-from ksconf.ext.six import text_type
-from ksconf.ext.six.moves import range
 
 from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
 
-if sys.version_info >= (3, 6):
-    from os import fspath
-else:
-    def fspath(path):
-        # type: (PurePath) -> str
-        """ Mimic os.fspath() for backwards compatibility. """
-        # duck typing
-        if hasattr(path, "__fspath__"):
-            return path.__fspath__()
-        else:
-            return text_type(path)
 
-
-def _path_to_str(p):
-    if isinstance(p, PurePath):
-        return fspath(p)
-    if isinstance(p, tuple):
-        return tuple(_path_to_str(i) for i in p)
-    if isinstance(p, list):
-        return [_path_to_str(i) for i in p]
-    return p
-
-
-def pathlib_compat(f):
-    if sys.version_info < (3, 6):
-        from functools import wraps
-
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            args = [_path_to_str(p) for p in args]
-            kwargs = {k: _path_to_str(v) for k, v in kwargs.items()}
-            return f(*args, **kwargs)
-        return wrapper
-    else:
-        return f
-
-
-@pathlib_compat
 def _is_binary_file(filename, peek=2048):
     # https://stackoverflow.com/a/7392391/315892; modified for Python 2.6 compatibility
     textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
@@ -64,7 +23,6 @@ def _is_binary_file(filename, peek=2048):
 _dir_exists_cache = set()
 
 
-@pathlib_compat
 def dir_exists(directory):
     """ Ensure that the directory exists """
     # This works as long as we never call os.chdir()
@@ -75,7 +33,6 @@ def dir_exists(directory):
     _dir_exists_cache.add(directory)
 
 
-@pathlib_compat
 def smart_copy(src, dest):
     """ Copy (overwrite) file only if the contents have changed. """
     ret = SMART_CREATE
@@ -97,7 +54,6 @@ def _stdin_iter(stream=None):
         yield line.rstrip()
 
 
-@pathlib_compat
 def file_fingerprint(path, compare_to=None):
     stat = os.stat(path)
     fp = (stat.st_mtime, stat.st_size)
@@ -162,7 +118,6 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
         yield (dirpath, dirnames, filenames)
 
 
-@pathlib_compat
 def file_hash(path, algorithm="sha256"):
     import hashlib
     h = hashlib.new(algorithm)
@@ -174,7 +129,6 @@ def file_hash(path, algorithm="sha256"):
     return h.hexdigest()
 
 
-@pathlib_compat
 def _samefile(file1, file2):
     if hasattr(os.path, "samefile"):
         # Nix
@@ -186,7 +140,7 @@ def _samefile(file1, file2):
         return file1 == file2
 
 
-class ReluctantWriter(object):
+class ReluctantWriter:
     """
     Context manager to intelligently handle updates to an existing file.  New content is written
     to a temp file, and then compared to the current file's content.  The file file will be

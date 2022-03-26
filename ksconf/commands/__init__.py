@@ -6,14 +6,16 @@ import os
 import re
 import sys
 import textwrap
+from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
 from io import open
 from textwrap import dedent
 from warnings import warn
 
 from ksconf import KsconfPluginWarning
-from ksconf.conf.parser import (ConfParserException, detect_by_bom, parse_conf,
-                                smart_write_conf, write_conf)
+from ksconf.conf.parser import (ConfParserException, ParserConfig,
+                                detect_by_bom, parse_conf, smart_write_conf,
+                                write_conf)
 from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE
 from ksconf.util import debug_traceback, memoize
 
@@ -30,15 +32,7 @@ __all__ = [
 ]
 
 
-try:
-    BrokenPipeError
-except NameError:
-    # Ugh?!  Close enough.  Dropping Python 2 ASAP!
-    import socket
-    BrokenPipeError = socket.error
-
-
-class ConfDirProxy(object):
+class ConfDirProxy:
     def __init__(self, name, mode, parse_profile=None):
         self.name = name
         self._mode = mode
@@ -49,7 +43,7 @@ class ConfDirProxy(object):
         return ConfFileProxy(path, self._mode, parse_profile=self._parse_profile, is_file=True)
 
 
-class ConfFileProxy(object):
+class ConfFileProxy:
     def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
         self.name = name
         self._mode = mode
@@ -141,8 +135,7 @@ class ConfFileProxy(object):
     def load(self, profile=None):
         if not self.readable():
             # Q: Should we mimic the exception caused by doing a read() on a write-only file object?
-            raise ValueError("Unable to load() from {} with mode '{}'".format(self._type(),
-                                                                              self._mode))
+            raise ValueError(f"Unable to load() from {self._type()} with mode '{self._mode}'")
         parse_profile = dict(self._parse_profile)
         if profile:
             parse_profile.update(profile)
@@ -151,8 +144,7 @@ class ConfFileProxy(object):
 
     def dump(self, data, **kwargs):
         if not self.writable():      # pragma: no cover
-            raise ValueError("Unable to dump() to {} with mode '{}'".format(self._type(),
-                                                                            self._mode))
+            raise ValueError(f"Unable to dump() to {self._type()} with mode '{self._mode}'")
         # Feels like the right thing to do????  OR self._data = data
         self._data = None
         # write vs smart write here ----
@@ -180,10 +172,10 @@ class ConfFileProxy(object):
     '''
 
 
-class ConfFileType(object):
+class ConfFileType:
     """Factory for creating conf file object types;  returns a lazy-loader ConfFile proxy class
 
-    Started from argparse.FileType() and then changed everything.   With our use case, it's often
+    Started from FileType() and then changed everything.   With our use case, it's often
     necessary to delay writing, or read before writing to a conf file (depending on whether or not
     --dry-run mode is enabled, for example.)
 
@@ -215,14 +207,15 @@ class ConfFileType(object):
     :class:`ConfDirProxy` object if a directory is passed in via the CLI.
     """
 
-    def __init__(self, mode='r', action="open", parse_profile=None, accept_dir=False):
+    def __init__(self, mode='r', action="open",
+                 parse_profile: ParserConfig = None,
+                 accept_dir: bool = False):
         self._mode = mode
         self._action = action
         self._parse_profile = parse_profile or {}
         self._accept_dir = accept_dir
 
     def __call__(self, string):
-        ArgumentTypeError = argparse.ArgumentTypeError
         # the special argument "-" means sys.std{in,out}
         if string == '-':
             if 'r' in self._mode:
@@ -231,12 +224,12 @@ class ConfFileType(object):
                     try:
                         cfp.data  # noqa: F841
                     except ConfParserException as e:
-                        raise ArgumentTypeError("failed to parse <stdin>: {}".format(e))
+                        raise ArgumentTypeError(f"failed to parse <stdin>: {e}")
                 return cfp
             elif 'w' in self._mode:
                 return ConfFileProxy("<stdout>", "w", stream=sys.stdout, is_file=False)
             else:
-                raise ValueError('argument "-" with mode {}'.format(self._mode))
+                raise ValueError(f'argument "-" with mode {self._mode}')
         if self._accept_dir and os.path.isdir(string):
             return ConfDirProxy(string, self._mode, parse_profile=self._parse_profile)
         if self._action == "none":
@@ -260,20 +253,19 @@ class ConfFileType(object):
                     cfp.data  # noqa: F841
                 return cfp
             except IOError as e:
-                message = "can't open '%s': %s"
                 debug_traceback()
-                raise ArgumentTypeError(message % (string, e))
+                raise ArgumentTypeError(f"can't open '{string}': {e}")
             except ConfParserException as e:
                 debug_traceback()
-                raise ArgumentTypeError("failed to parse '%s': %s" % (string, e))
+                raise ArgumentTypeError(f"failed to parse '{string}': {e}")
             except TypeError as e:
                 debug_traceback()
-                raise ArgumentTypeError("Parser config error '%s': %s" % (string, e))
+                raise ArgumentTypeError(f"Parser config error '{string}': {e}")
 
     def __repr__(self):     # pragma: no cover
         args = self._mode, self._action, self._parse_profile
         args_str = ', '.join(repr(arg) for arg in args if arg != -1)
-        return '%s(%s)' % (type(self).__name__, args_str)
+        return f"{type(self).__name__}({args_str})"
 
 
 class DescriptionFormatterNoReST(argparse.HelpFormatter):
@@ -314,7 +306,7 @@ class KsconfCmdReadConfException(Exception):
         self.returncode = rc
 
 
-class KsconfCmd(object):
+class KsconfCmd:
     """ Ksconf command specification base class. """
     help = None
     description = None
@@ -325,7 +317,7 @@ class KsconfCmd(object):
     def __init__(self, name):
         self.name = name.lower()
         # XXX:  Add logging support.  Find clean lines between logging and UI/console output.
-        self.logger = logging.getLogger("ksconf.cmd.{}".format(self.name))
+        self.logger = logging.getLogger(f"ksconf.cmd.{self.name}")
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -368,8 +360,7 @@ class KsconfCmd(object):
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
 
-    def register_args(self, parser):        # pragma: no cover
-        # type: (argparse.ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):        # pragma: no cover
         """ This function in passed the """
         raise NotImplementedError
 
@@ -429,29 +420,29 @@ class KsconfCmd(object):
         del d
         return cfp
 
-    def parse_conf(self, path, mode="r", profile=None, raw_exec=False):
-        # type: (str, str, dict, bool) -> ConfFileProxy
+    def parse_conf(self, path: str, mode: str = "r",
+                   profile: ParserConfig = None,
+                   raw_exec: bool = False) -> ConfFileProxy:
         if raw_exec:
             return self._parse_conf(path, mode, profile)
         try:
             return self._parse_conf(path, mode, profile)
         except IOError as e:
             # debug_traceback()
-            self.stderr.write("can't open '{}': {}\n".format(path, e))
+            self.stderr.write(f"can't open '{path}': {e}\n")
             raise KsconfCmdReadConfException(EXIT_CODE_NO_SUCH_FILE)
         except ConfParserException as e:
             # debug_traceback()
-            self.stderr.write("Failed to parse '{}':  {}\n".format(path, e))
+            self.stderr.write(f"Failed to parse '{path}':  {e}\n")
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
         except TypeError as e:
             # debug_traceback()
-            self.stderr.write("Parser config error '{}': {}\n".format(path, e))
+            self.stderr.write(f"Parser config error '{path}': {e}\n")
             # I guess bad conf file.... can't remember what this one is for.
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
 
 
-def add_splunkd_access_args(parser):
-    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+def add_splunkd_access_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--url", default="https://localhost:8089",
                         help="URL of Splunkd.  Default:  %(default)s")
     parser.add_argument("--user", default="admin",
@@ -466,8 +457,7 @@ def add_splunkd_access_args(parser):
     return parser
 
 
-def add_splunkd_namespace(parser):
-    # type: (argparse.ArgumentParser) -> argparse.ArgumentParser
+def add_splunkd_namespace(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--app", default="$SPLUNK_APP",
                         help="Set the namespace (app name) for the endpoint")
     parser.add_argument("--owner", default="nobody",
@@ -559,17 +549,17 @@ def get_all_ksconf_cmds(on_error="warn"):
             cmd_cls = entry.load()
         except (ImportError, NameError, SyntaxError) as e:
             if on_error == "warn":
-                warn("Unable to load entrypoint for {}.  Disabling.\n"
-                     "Base exception {}.".format(name, e), KsconfPluginWarning)
+                warn(f"Unable to load entrypoint for {name}.  Disabling.\n"
+                     f"Base exception {e}.", KsconfPluginWarning)
             elif on_error == "return":
-                error = "Internal error:  {}".format(e)
+                error = f"Internal error:  {e}"
                 yield KsconfCmdEntryPoint(name, entry, None, error)
             else:
                 raise e
             continue
         if not issubclass(cmd_cls, KsconfCmd):
             msg = "Issue loading class for entrypoint:  Disabling.\n" \
-                  "{!r} is not derived from KsconfCmd.  ".format(entry)
+                  f"{entry!r} is not derived from KsconfCmd.  "
             if on_error == "warn":
                 warn(msg, KsconfPluginWarning)
             elif on_error == "return":
@@ -585,10 +575,10 @@ def get_all_ksconf_cmds(on_error="warn"):
             else:
                 module = e
             if on_error == "warn":
-                warn("Unable to load external modules for {}.  Disabling.  "
-                     "{}.".format(name, module), KsconfPluginWarning)
+                warn(f"Unable to load external modules for {name}.  Disabling.  "
+                     f"{module}.", KsconfPluginWarning)
             elif on_error == "return":
-                error = "Missing 3rd party module:  {}".format(module)
+                error = f"Missing 3rd party module:  {module}"
                 yield KsconfCmdEntryPoint(name, entry, cmd_cls, error)
             else:
                 raise e

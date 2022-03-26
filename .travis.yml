@@ -9,34 +9,27 @@ cache:
 matrix:
   include:
   - os: linux
-    python: '2.7'
-  - os: linux
-    python: '3.4'
-  - os: linux
-    python: '3.5'
-    env: EXTRA_PKGS="argcomplete"
-  - os: linux
-    python: '3.6'
-    env: BUILD_SDIST=true
-  - os: linux
     # Travis Python 3.7 support https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
     python: '3.7'
+    env: BUILD_SDIST=true
     dist: xenial
     sudo: true
   - os: linux
     python: '3.8'
     dist: xenial
+    env: EXTRA_PKGS="argcomplete"
     sudo: true
   - os: linux
     python: '3.9'
     dist: xenial
     sudo: true
+  - os: linux
+    python: '3.10'
+    dist: xenial
+    sudo: true
   - os: osx
     language: objective-c
-    env: PYENV_VERSION=2.7.17
-  - os: osx
-    language: objective-c
-    env: PYENV_VERSION=3.7.5
+    env: PYENV_VERSION=3.7.12
   - os: linux
     python: 'pypy3'
     dist: bionic
@@ -65,7 +58,7 @@ install:
         pyenv rehash
         pip install wheel
         # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
-        if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
+        if pip show ksconf; then pip uninstall -y ksconf; fi
     fi
   - pip install $EXTRA_PKGS -r requirements-ci.txt
   - pip install .

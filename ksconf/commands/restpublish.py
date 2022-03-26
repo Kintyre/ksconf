@@ -15,9 +15,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from argparse import ArgumentParser
-
-import ksconf.ext.six as six
-from ksconf.ext.six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
                              add_splunkd_access_args, add_splunkd_namespace,
@@ -59,7 +57,7 @@ class RestPublishCmd(KsconfCmd):
     def __init__(self, *args, **kwargs):
         super(RestPublishCmd, self).__init__(*args, **kwargs)
         self._service = None
-        self.meta = None        # type: MetaData
+        self.meta: MetaData = None
 
     @classmethod
     def _handle_imports(cls):
@@ -69,10 +67,9 @@ class RestPublishCmd(KsconfCmd):
         import splunklib.client
         g["splunklib"] = splunklib
         import splunklib
-        cls.version_extra = "splunk-sdk {}".format(splunklib.__version__)
+        cls.version_extra = f"splunk-sdk {splunklib.__version__}"
 
-    def register_args(self, parser):
-        # type: (ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                             help="Configuration file(s) to export settings from."
@@ -120,7 +117,7 @@ class RestPublishCmd(KsconfCmd):
             auth_args = {
                 "token": args.session_key
             }
-            login_fail_info = "session={}...".format(args.session_key[:10])
+            login_fail_info = f"session={args.session_key[:10]}..."
         else:
             username = up.username or args.user
             password = up.password or args.password
@@ -128,7 +125,7 @@ class RestPublishCmd(KsconfCmd):
                 "username": username,
                 "password": password,
             }
-            login_fail_info = "user={} pass={}".format(username, "*" * len(password))
+            login_fail_info = f"user={username} pass={'*' * len(password)}"
         try:
             self._service = splunklib.client.connect(
                 host=up.hostname, port=up.port,
@@ -139,8 +136,8 @@ class RestPublishCmd(KsconfCmd):
             #   (2) confirm that that the given namespace (app) is legit.
             self._service.apps.list()
         except Exception as e:
-            sys.stderr.write("Connect issue url=https://{}:{} {}:  {}\n".format(
-                up.hostname, up.port, login_fail_info, e))
+            sys.stderr.write(f"Connect issue url=https://{up.hostname}:{up.port} "
+                             f"{login_fail_info}:  {e}\n")
             raise e
 
     def handle_conf_file(self, args, conf_proxy):
@@ -149,13 +146,13 @@ class RestPublishCmd(KsconfCmd):
         else:
             conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-        if isinstance(conf_type, six.text_type):
+        if isinstance(conf_type, str):
             conf_type = conf_type.encode("utf-8")
 
         try:
             config_file = self._service.confs[conf_type]
         except KeyError:
-            self.stderr.write("Invalid conf type named '{}'.\n".format(conf_type))
+            self.stderr.write(f"Invalid conf type named '{conf_type}'.\n")
             return
         conf = conf_proxy.data
 
@@ -165,7 +162,7 @@ class RestPublishCmd(KsconfCmd):
             stanza_data = conf[stanza_name]
 
             if not stanza_data:
-                print("Skipping empty stanza [{}]".format(stanza_name))
+                print(f"Skipping empty stanza [{stanza_name}]")
                 continue
 
             if stanza_name is GLOBAL_STANZA or stanza_name == "":
@@ -223,22 +220,22 @@ class RestPublishCmd(KsconfCmd):
             stz = None
 
         if stz is not None:
-            # print("Stanza {} already exists on server.  Checking to see if update is needed.".format(stanza_name))
+            # print(f"Stanza {stanza_name} already exists on server.  Checking to see if update is needed.")
             # When pulling do we need to specify this?  (owner=owner, app=app, sharing=sharing);
             # If meta is given and where these are different than the defaults on the CLI?...
             stz_data = stz.content
 
             # Diff printing really doesn't like 'None's...
-            stz_data = {k: v or "" for k, v in six.iteritems(stz_data)}
+            stz_data = {k: v or "" for k, v in stz_data.items()}
             self.make_boolean(stz_data)
             res["path"] = stz.path
             try:
                 res["updated"] = stz.state["updated"]
             except Exception:
                 pass
-            # print("VALUE NOW:   (FROM SERVER)   {}".format(stz.content))  ## VERY NOISY!
+            # print(f"VALUE NOW:   (FROM SERVER)   {stz.content}")  ## VERY NOISY!
             data = reduce_stanza(stz_data, stanza_data)
-            # print("VALUE NOW:   (FILTERED TO OUR ATTRS)   {}".format(data))
+            # print(f"VALUE NOW:   (FILTERED TO OUR ATTRS)   {data}")
             delta = res["delta"] = compare_stanzas(stanza_data, data, stanza_name)
             if is_equal(delta):
                 # print("NO CHANGE NEEDED.")
@@ -249,7 +246,7 @@ class RestPublishCmd(KsconfCmd):
                 # Any need to call .refresh() here to grab the state from the server?
                 action = "update"
         else:
-            # print("Stanza {} new -- publishing!".format(stanza_name))
+            # print(f"Stanza {stanza_name} new -- publishing!")
             stz = config_file.create(stanza_name, owner=owner, app=app, sharing=sharing, **stanza_data)
             res["delta"] = compare_stanzas({}, stanza_data, stanza_name)
             res["path"] = stz.path
@@ -266,7 +263,7 @@ class RestPublishCmd(KsconfCmd):
 
         # NOTE:  We don't support attribute-level metadata here (Need it?  2 words:  pull request)
         if not metadata:
-            res["meta"] = "No metadata found for [{}/{}]".format(config_file.name, stanza_name)
+            res["meta"] = f"No metadata found for [{config_file.name}/{stanza_name}]"
             return (action, res)
         final_meta = {}
         if "access.read" in metadata:
@@ -294,7 +291,7 @@ class RestPublishCmd(KsconfCmd):
                 access["perms." + x] = ",".join(stz.access["perms"][x])
             except (KeyError, TypeError):
                 access["perms." + x] = ""
-        # print("[{}] fm={} access:  {}".format(stanza_name, final_meta, access))
+        # print(f"[{stanza_name}] fm={final_meta} access:  {access}")
 
         acl_delta = compare_stanzas(reduce_stanza(access, final_meta), final_meta,
                                     stanza_name + "/acl")
@@ -322,7 +319,7 @@ class RestPublishCmd(KsconfCmd):
             res["meta_response"] = response
         except Exception:
             # Don't die on exceptions for ACLs...  print the error and move on (too many things to go wrong here)
-            print("Failed hitting:  {}  ARGS={}".format(resource, final_meta))
+            print(f"Failed hitting:  {resource}  ARGS={final_meta}")
             import traceback
             traceback.print_exc()
             # XXX:  Do better
@@ -342,7 +339,7 @@ class RestPublishCmd(KsconfCmd):
                 pass
 
             self.make_boolean(stz_data)
-            # print("Found {}".format(stz_data))
+            # print(f"Found {stz_data}")
             data = reduce_stanza(stz_data, stanza_data)
             config_file.delete(stanza_name)
             res["delta"] = compare_stanzas(data, {}, stanza_name)
@@ -358,7 +355,7 @@ class RestPublishCmd(KsconfCmd):
         if args.meta:
             self.meta = MetaData()
             for meta_file in args.meta:
-                print("Loading metadata from {}".format(meta_file))
+                print(f"Loading metadata from {meta_file}")
                 self.meta.feed_file(meta_file)
 
         self.connect_splunkd(args)

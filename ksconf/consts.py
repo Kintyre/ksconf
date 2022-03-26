@@ -2,10 +2,20 @@ from __future__ import unicode_literals
 
 import re
 import sys
+from enum import Enum
 
-SMART_CREATE = "created"
-SMART_UPDATE = "updated"
-SMART_NOCHANGE = "unchanged"
+
+class SmartEnum(Enum):
+    CREATE = "created"
+    UPDATE = "updated"
+    NOCHANGE = "unchanged"
+
+
+# Legacy names
+SMART_CREATE = SmartEnum.CREATE
+SMART_UPDATE = SmartEnum.UPDATE
+SMART_NOCHANGE = SmartEnum.NOCHANGE
+
 
 # EXIT_CODE_* constants:  Use consistent exit codes for scriptability
 #
@@ -27,6 +37,8 @@ EXIT_CODE_DIFF_CHANGE = 3
 EXIT_CODE_DIFF_NO_COMMON = 4
 EXIT_CODE_FORMAT_APPLIED = 8
 EXIT_CODE_SORT_APPLIED = 9
+
+EXIT_CODE_CLI_ARG_DEPRECATED = 10
 
 # Errors caused by users
 EXIT_CODE_BAD_CONF_FILE = 20
@@ -51,19 +63,8 @@ EXIT_CODE_ENV_BUSTED = 120
 RegexType = type(re.compile(r'.'))
 
 
-# Environmental vars are treated as bytes in PY2, and unicode in PY3.  (This wouldn't be needed,
-# except that we import unicode_literals, which we need for other constant strings.)  UGH!
-# Oh the joys of supporting 2 + 3 at the same time!
-
-# PY2 - Six may be missing when 'setup.py' is first called.  (Breaks pre-commit)
-PY2 = sys.version_info[0] == 2
-
-
-if PY2:
-    KSCONF_DEBUG = b"KSCONF_DEBUG"
-else:
-    KSCONF_DEBUG = "KSCONF_DEBUG"
+KSCONF_DEBUG = "KSCONF_DEBUG"
 
 
 # Cleanup namespace for wildcard imports
-del re, sys, PY2
+del re, sys

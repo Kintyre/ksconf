@@ -1,14 +1,17 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import re
 from io import BytesIO
-
-from ksconf.ext.six import PY2
+from typing import TYPE_CHECKING, Any, List
 
 from ksconf.util.file import ReluctantWriter
 
 etree = None
+
+
+if TYPE_CHECKING:
+    from lxml.etree import ElementTree
+else:
+    ElementTree = Any
 
 
 def _import_etree():
@@ -18,7 +21,7 @@ def _import_etree():
     g["etree"] = etree
 
 
-class FileReadlinesCache(object):
+class FileReadlinesCache:
     """ Silly class as a hacky workaround for CDATA detection... """
 
     def __init__(self):
@@ -45,7 +48,7 @@ class FileReadlinesCache(object):
             return stream.readlines()
 
 
-class SplunkSimpleXmlFormatter(object):
+class SplunkSimpleXmlFormatter:
     keep_tags = {"latest", "earliest", "set", "label", "fieldset", "default", "search", "option"}
 
     def __init__(self):
@@ -53,7 +56,7 @@ class SplunkSimpleXmlFormatter(object):
             _import_etree()
 
     @classmethod
-    def indent_tree(cls, elem, level=0, indent=2):
+    def indent_tree(cls, elem: ElementTree, level=0, indent=2):
         # Copied from http://effbot.org/zone/element-lib.htm#prettyprint
         itxt = " " * indent
         i = "\n" + level * itxt
@@ -71,9 +74,8 @@ class SplunkSimpleXmlFormatter(object):
                 elem.tail = i
 
     @classmethod
-    def expand_tags(cls, elem, tags):
+    def expand_tags(cls, elem: ElementTree, tags: set):
         """Keep <elem></elem> instead of shortening to <elem/>"""
-        # type:  (etree.ElementTree, set)
         if elem.tag in tags and elem.text is None:
             # By setting this to an empty string (vs None), the trailing tag is kept
             elem.text = ""
@@ -81,7 +83,7 @@ class SplunkSimpleXmlFormatter(object):
             cls.expand_tags(c, tags)
 
     @staticmethod
-    def cdata_tags(elem, tags):
+    def cdata_tags(elem: ElementTree, tags: List[str]):
         """ Expand text to CDATA, if it isn't already. """
         cache = FileReadlinesCache()
         CDATA = "<![CDATA["
@@ -98,28 +100,28 @@ class SplunkSimpleXmlFormatter(object):
             source_lines = lines[lineno:lineno + 2]
             for line in source_lines:
                 if CDATA in line:
-                    # print("Found source line:  {}".format(line))
+                    # print(f"Found source line:  {line}")
                     return True
             return False
 
         for tag in tags:
-            for e in elem.findall(".//{}".format(tag)):
+            for e in elem.findall(f".//{tag}"):
                 if e.text and e.text.strip():
                     # Determine if the data is ALREADY in a CDATA element
                     # if isinstance(e.text, etree.CDATA):   # Doesn't work...
                     if already_using_cdata(e):
                         pass
                     elif re.search(r'[<>&]', e.text):
-                        # print("SHOULD BE CDATA:   {}".format(e.text))
+                        # print(f"SHOULD BE CDATA:   {e.text}")
                         # Convert text to CDATA
                         e.text = etree.CDATA(e.text)
 
     @staticmethod
-    def guess_indent(elem, default=2):
+    def guess_indent(elem: ElementTree, default=2):
         if elem.text:
             prefix = elem.text.strip("\r\n")
             indent = len(prefix) or default
-            # print("Found indent={}".format(indent))
+            # print(f"Found indent={indent}")
         else:
             indent = default
         return indent
@@ -139,11 +141,6 @@ class SplunkSimpleXmlFormatter(object):
         document.write(b, pretty_print=True, encoding='utf-8')
         writer = ReluctantWriter(dest, "wb")
         with writer as f:
-            if PY2:
-                f.write(b.getvalue().strip("\r\n"))
-                # Single newline
-                f.write("\n")
-            else:
-                f.write(b.getvalue().strip(b"\r\n"))
-                f.write(b"\n")
+            f.write(b.getvalue().strip(b"\r\n"))
+            f.write(b"\n")
         return writer.change_needed

@@ -22,8 +22,7 @@ import shlex
 import sys
 from argparse import ArgumentParser, FileType
 from collections import OrderedDict
-
-from ksconf.ext.six.moves.urllib.parse import quote
+from urllib.parse import quote
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE
@@ -32,7 +31,7 @@ from ksconf.util.completers import conf_files_completer
 from ksconf.util.rest import build_rest_url
 
 
-class Literal(object):
+class Literal:
     def __init__(self, value):
         self.value = value
 
@@ -42,7 +41,7 @@ class Literal(object):
     '''
 
 
-class CurlCommand(object):
+class CurlCommand:
     def __init__(self):
         self.url = None
         self.method = None  # curl defaults this to POST
@@ -57,9 +56,9 @@ class CurlCommand(object):
         if isinstance(s, Literal):
             return s.value
         if "$" in s:
-            s = '"{}"'.format(s)
+            s = f'"{s}"'
         elif " " in s:
-            s = "'{}'".format(s)
+            s = f"'{s}'"
         return s
 
     def get_command(self):
@@ -74,7 +73,7 @@ class CurlCommand(object):
             for header in self.headers:
                 value = self.headers[header]
                 args.append("-H")
-                args.append("{}: {}".format(header, value))
+                args.append(f"{header}: {value}")
         if self.data:
             for key in self.data:
                 value = self.data[key]
@@ -82,7 +81,7 @@ class CurlCommand(object):
                     args.append(Literal("\\\n -d"))
                 else:
                     args.append("-d")
-                args.append("{}={}".format(quote(key), quote(value)))
+                args.append(f"{quote(key)}={quote(value)}")
 
         # if self.pre_args:
         #    cmd.append(" ".join(self.pre_args))
@@ -93,12 +92,8 @@ class CurlCommand(object):
         return " ".join(cmd)
 
     def extend_args(self, args):
-        # Use shlex parsing to handle embedded quotes
-        # Work around some of the known unicode limitations in shlex prior to Python 3.
-        # Technically, this does more than just parse quotes, but should be a good enough handler
+        # Use shlex parsing to handle embedded quotess
         for s in shlex.split(args):
-            if hasattr(s, "decode"):
-                s = s.decode("utf8")
             self.post_args.append(s)
 
 
@@ -115,8 +110,7 @@ class RestExportCmd(KsconfCmd):
     format = "manual"
     maturity = "beta"
 
-    def register_args(self, parser):
-        # type: (ArgumentParser) -> None
+    def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", nargs="+",
                             type=ConfFileType("r", "load", parse_profile=PARSECONF_LOOSE),
                             help="Configuration file(s) to export settings from."
@@ -178,7 +172,7 @@ class RestExportCmd(KsconfCmd):
         # XXX: Quote owner & app; however for now we're still allowing the user to pass though an
         #  environmental variable as-is and quoting would break that.   Need to make a decision,
         # for now this is not likely to be a big issue given app and user name restrictions.
-        return build_rest_url(base, "configs/conf-{}".format(conf), owner, app)
+        return build_rest_url(base, f"configs/conf-{conf}", owner, app)
 
     def run(self, args):
         ''' Convert a conf file into a bunch of CURL commands'''
@@ -225,9 +219,9 @@ class RestExportCmd(KsconfCmd):
             # Make this preamble optional
             stream.write("## Example of creating a local SPLUNKDAUTH token\n")
             stream.write("export SPLUNKDAUTH=$("
-                         "curl -ks {}/services/auth/login -d username=admin -d password=changeme "
+                         f"curl -ks {args.url}/services/auth/login -d username=admin -d password=changeme "
                          "| grep sessionKey "
-                         r"| sed -E 's/[ ]*<sessionKey>(.*)<.sessionKey>/\1/')".format(args.url))
+                         r"| sed -E 's/[ ]*<sessionKey>(.*)<.sessionKey>/\1/')")
             stream.write('; [[ -n $SPLUNKDAUTH ]] && echo "Login token created"')
             stream.write("\n\n\n")
 
@@ -238,7 +232,7 @@ class RestExportCmd(KsconfCmd):
             else:
                 conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-            stream.write("# CURL REST commands for {}\n".format(conf_proxy.name))
+            stream.write(f"# CURL REST commands for {conf_proxy.name}\n")
 
             for stanza_name, stanza_data in conf.items():
                 cc = CurlCommand()

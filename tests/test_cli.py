@@ -20,7 +20,7 @@ class CliSimpleTestCase(unittest.TestCase):
     def test_help(self):
         out = ksconf_cli("--help")
         with ksconf_cli:
-            self.assertIn("Kintyre Splunk CONFig tool", out.stdout)
+            self.assertIn("Ksconf Splunk CONFig tool", out.stdout)
             self.assertIn("usage: ", out.stdout)
             self.assertEqual(out.returncode, EXIT_CODE_SUCCESS)
 

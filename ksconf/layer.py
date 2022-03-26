@@ -1,9 +1,10 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import os
 import re
 from collections import defaultdict
 from fnmatch import fnmatch
+from typing import Type
 
 from ksconf.util.file import relwalk
 
@@ -86,7 +87,7 @@ class LayerUsageException(LayerException):
     pass
 
 
-class LayerFilter(object):
+class LayerFilter:
     _valid_actions = ("include", "exclude")
 
     def __init__(self):
@@ -95,8 +96,8 @@ class LayerFilter(object):
     def add_rule(self, action, pattern):
         # If no filter rules have been setup yet, be sure to set the default
         if action not in self._valid_actions:
-            raise ValueError("Unknown action of {}.  Valid actions include: {}"
-                             .format(action, self._valid_actions))
+            raise ValueError(f"Unknown action of {action}.  "
+                             f"Valid actions include: {self._valid_actions}")
         if not self._rules:
             if action == "include":
                 first_filter = ("exclude", "*")
@@ -105,8 +106,7 @@ class LayerFilter(object):
             self._rules.append(first_filter)
         self._rules.append((action, pattern))
 
-    def evaluate(self, layer):
-        # type: (LayerRootBase.Layer) -> bool
+    def evaluate(self, layer: "LayerRootBase.Layer") -> bool:
         response = True
         layer_name = layer.name
         for rule_action, rule_pattern in self._rules:
@@ -117,7 +117,7 @@ class LayerFilter(object):
     __call__ = evaluate
 
 
-class LayerConfig(object):
+class LayerConfig:
 
     def __init__(self):
         # Set defaults
@@ -126,7 +126,7 @@ class LayerConfig(object):
         self.block_dirs = {".git"}
 
 
-class LayerRootBase(object):
+class LayerRootBase:
     """ All 'path's here are relative to the ROOT. """
 
     class File(PathLike):
@@ -137,8 +137,7 @@ class LayerRootBase(object):
             self.relative_path = relative_path
             self._stat = stat
 
-        def __fspath__(self):
-            # type: () -> str
+        def __fspath__(self) -> str:
             return self.physical_path
 
         @property
@@ -163,12 +162,12 @@ class LayerRootBase(object):
         def mtime(self):
             return self.stat.st_mtime
 
-    class Layer(object):
+    class Layer:
         """ Basic layer Container:   Connects logical and physical paths. """
         __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_cls"]
 
-        def __init__(self, name, root, physical, logical, config, file_cls):
-            # type: (str, str, str, str, LayerConfig, type) -> None
+        def __init__(self, name: str, root: str, physical: str, logical: str,
+                     config: LayerConfig, file_cls: Type):
             self.name = name
             self.root = root
             self.physical_path = physical
@@ -269,7 +268,7 @@ class DirectLayerRoot(LayerRootBase):
         layer_name = os.path.basename(path)
         if not os.path.isdir(path):
             raise LayerUsageException("Layers must be directories.  "
-                                      "Given path '{}' is not a directory.".format(path))
+                                      f"Given path '{path}' is not a directory.")
         layer = Layer(layer_name, path, None, None, config=self.config, file_cls=File)
         super(DirectLayerRoot, self).add_layer(layer)
 
@@ -339,7 +338,7 @@ class DotDLayerRoot(LayerRootBase):
                     yield (root, dirs, files)
 
     '''
-    class MountBase(object):
+    class MountBase:
         def __init__(self, path):
             self.path = path
 
@@ -400,13 +399,13 @@ class DotDLayerRoot(LayerRootBase):
                         # XXX: Give the user the option of logging the near-matches (could indicate a
                         # problem in the config, or could be some other legit directory structure)
                         '''
-                        print("LAYER NEAR MISS:  {} looks like a mount point, but {} doesn't "
-                              "follow the expected convention".format(top, dir_))
+                        print(f"LAYER NEAR MISS:  {top} looks like a mount point, but {dir_} doesn't "
+                              "follow the expected convention")
                         '''
                         pass
             elif top.endswith(".d"):
                 '''
-                print("MOUNT NEAR MISS:  {}".format(top))
+                print(f"MOUNT NEAR MISS:  {top}")
                 '''
                 pass
 

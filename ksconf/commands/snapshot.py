@@ -23,14 +23,14 @@ from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
 from ksconf.util.file import file_hash
 
 
-class ConfSnapshotConfig(object):
+class ConfSnapshotConfig:
     max_file_size = 10 * 1024 * 1024
 
     # max_files = 10000
     # include_parts = [ "conf", "meta", "lookups", "data/ui", "data/model", "data/ui/nav" ]
 
 
-class ConfSnapshot(object):
+class ConfSnapshot:
     schema_version = 0.2
 
     def __init__(self, config):
@@ -87,7 +87,7 @@ class ConfSnapshot(object):
                 conf.append(rec)
         except ConfParserException as e:
             record["conf"] = None
-            record["failure"] = "{}".format(e)
+            record["failure"] = f"{e}"
         self._data.append(record)
 
     def snapshot_dir(self, path):
@@ -111,17 +111,7 @@ class ConfSnapshot(object):
             },
         }
         record["records"] = self._data
-
-        # Workaround for unittesting (Py2.7 issue only);  there's probably a better solution
-        try:
-            json.dump(record, stream, **kwargs)
-        except TypeError:
-            from io import StringIO
-            if isinstance(stream, StringIO):
-                s = json.dumps(record, **kwargs)
-                stream.write(s.decode("utf-8"))
-            else:   # pragma: no cover
-                raise
+        json.dump(record, stream, **kwargs)
 
 
 class SnapshotCmd(KsconfCmd):
@@ -158,7 +148,7 @@ class SnapshotCmd(KsconfCmd):
             elif os.path.isdir(path):
                 confSnap.snapshot_dir(path)
             else:
-                self.stderr.write("No such file or directory {}\n".format(path))
+                self.stderr.write(f"No such file or directory {path}\n")
                 return EXIT_CODE_NO_SUCH_FILE
 
         if args.minimize:

@@ -15,8 +15,6 @@ import os
 import shutil
 from copy import deepcopy
 
-from ksconf.ext.six.moves import input
-
 from ksconf.commands import ConfDirProxy, ConfFileType, KsconfCmd, dedent
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
                                DIFF_OP_REPLACE, DiffStanza, DiffStzKey,
@@ -93,8 +91,7 @@ class PromoteCmd(KsconfCmd):
     format = "manual"
     maturity = "beta"
 
-    def register_args(self, parser):
-        # type: (argparse.ArgumentParser) -> None
+    def register_args(self, parser: argparse.ArgumentParser):
         parser.set_defaults(mode="ask")
         parser.add_argument("source", metavar="SOURCE",
                             type=ConfFileType("r+", "load", parse_profile=PARSECONF_STRICT_NC),
@@ -189,9 +186,8 @@ class PromoteCmd(KsconfCmd):
             del source_basename
 
         if not os.path.isfile(args.target.name):
-            self.stdout.write("Target file {} does not exist.  "
-                              "Moving source file {} to the target.\n"
-                              .format(args.target.name, args.source.name))
+            self.stdout.write(f"Target file {args.target.name} does not exist.  "
+                              f"Moving source file {args.source.name} to the target.\n")
             # For windows:  Close out any open file descriptors first
             args.target.close()
             args.source.close()
@@ -225,13 +221,13 @@ class PromoteCmd(KsconfCmd):
             # Todo: Allow for interactive prompting when in interactive but not force mode.
             elif args.force:
                 self.stderr.write(
-                    "Promoting content across conf file types ({0} --> {1}) because the "
-                    "'--force' CLI option was set.\n".format(bn_source, bn_target))
+                    f"Promoting content across conf file types ({bn_source} --> {bn_target}) because the "
+                    "'--force' CLI option was set.\n")
             else:
                 self.stderr.write(
                     "Refusing to promote content between different types of configuration "
-                    "files.  {0} --> {1}  If this is intentional, override this safety "
-                    "check with '--force'\n".format(bn_source, bn_target))
+                    f"files.  {bn_source} --> {bn_target}  If this is intentional, override this safety "
+                    "check with '--force'\n")
                 return EXIT_CODE_FAILED_SAFETY_CHECK
 
         # Todo:  Preserve comments in the TARGET file.  Worry with promoting of comments later...
@@ -240,7 +236,7 @@ class PromoteCmd(KsconfCmd):
         cfg_tgt = args.target.data
 
         if not cfg_src:
-            self.stderr.write("No settings in {}.  Nothing to promote.\n".format(args.source.name))
+            self.stderr.write(f"No settings in {args.source.name}.  Nothing to promote.\n")
             return EXIT_CODE_NOTHING_TO_DO
 
         # Prep filters and determine if there's any automatic work that can be done
@@ -417,7 +413,7 @@ class PromoteCmd(KsconfCmd):
                     msg = "[{0.stanza}]  {0.key}".format(op.location)
                 elif isinstance(op.location, DiffStanza):
                     msg = "[{0.stanza}]".format(op.location)
-                if prompt_yes_no("Remove matching entry {0}  ".format(msg)):
+                if prompt_yes_no(f"Remove matching entry {msg}  "):
                     if isinstance(op.location, DiffStanza):
                         del out_src[op.location.stanza]
                     else:
@@ -430,20 +426,20 @@ class PromoteCmd(KsconfCmd):
                 if isinstance(op.location, DiffStanza):
                     # Move entire stanza
                     """ ----  If we need to support empty stanza promotion.....
-                    print("OP:   {!r}".format(op))
+                    print(f"OP:   {op!r}")
                     if empty_dict(op.b):
-                        print("Empty stanza [{}]".format(op.location.stanza))
+                        print(f"Empty stanza [{op.location.stanza}]")
                     else:
                     """
                     if True:
                         show_diff(self.stdout, [op])
-                    if prompt_yes_no("Apply [{0}]".format(op.location.stanza)):
+                    if prompt_yes_no(f"Apply [{op.location.stanza}]"):
                         out_cfg[op.location.stanza] = self.combine_stanza(op.a, op.b)
                         del out_src[op.location.stanza]
                 else:
                     show_diff(self.stdout, [op])
                     # Logically, this must be either an INSERT or REPLACE
-                    if prompt_yes_no("Apply [{0}] {1}".format(op.location.stanza, op.location.key)):
+                    if prompt_yes_no(f"Apply [{op.location.stanza}] {op.location.key}"):
                         # Move key
                         out_cfg[op.location.stanza][op.location.key] = op.b
                         del out_src[op.location.stanza][op.location.key]

@@ -40,11 +40,14 @@ RUN git clone git://github.com/yyuu/pyenv.git ~/.pyenv --depth=20 \
     && echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> ~/.bashrc
 
+# Speed up (optional)
+# RUN cd ~/.pyenv && src/configure && make -C src || true
+
 RUN git clone https://github.com/magicmonty/bash-git-prompt.git ~/.bash-git-prompt --depth=20 \
     && echo 'GIT_PROMPT_ONLY_IN_REPO=1' >> ~/.bashrc \
     && echo 'source ~/.bash-git-prompt/gitprompt.sh' >> ~/.bashrc
 
-ENV PYVERS="2.7.17 3.9.1 3.8.1 3.7.6 3.6.10 3.5.9 3.4.9 pypy2.7-6.0.0"
+ENV PYVERS="3.7.12 3.10.1 3.9.9 3.8.12"
 
 RUN for i in ${PYVERS}; do \
         ~/.pyenv/bin/pyenv install ${i}; \

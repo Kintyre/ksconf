@@ -93,7 +93,7 @@ Vagrant.configure("2") do |config|
     eval "$(pyenv init -)"
 
     # Keep python versions in just one list to reduce number of edits and typos ;-)
-    PYVERS="2.7.17 3.9.1 3.8.1 3.7.6 3.6.10 3.5.9 3.4.9 pypy2.7-6.0.0"
+    PYVERS="3.7.12 3.10.1 3.9.9 3.8.12"
 
     for ver in $PYVERS
     do
@@ -103,7 +103,7 @@ Vagrant.configure("2") do |config|
     # Fallback to the first version (in case any compiles fail) :   pyver global ${PYVERS%% *}
     pyenv global $(cat ~/.pyver-installed-okay)
 
-    # Another option: (down side, priority list is different, but 2.7 is still the first.  Probably be good enough)
+    # Another option: (down side, priority list is different, but 3.7 is still the first.  Probably be good enough)
     # pyenv global $(pyenv versions --bare)
     pyenv rehash
 

@@ -32,13 +32,10 @@ def _extract_tar(path, extract_filter=None, encoding="utf-8"):
         for ti in tar:
             if not ti.isreg():
                 '''
-                print "Skipping {}  ({})".format(ti.name, ti.type)
+                print(f"Skipping {ti.name}  ({ti.type})")
                 '''
                 continue
             mode = ti.mode & 0o777
-            # PY2 doesn't return unicode file names
-            if hasattr(ti.name, "decode"):
-                ti.name = ti.name.decode(encoding)
             if extract_filter is None or \
                     extract_filter(GenArchFile(ti.name, mode, ti.size, None)):
                 tar_file_fp = tar.extractfile(ti)
@@ -69,7 +66,7 @@ def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
 def sanity_checker(iterable):
     for gaf in iterable:
         if gaf.path.startswith("/") or ".." in gaf.path:
-            raise ValueError("Bad path found in archive:  {}".format(gaf.path))
+            raise ValueError(f"Bad path found in archive:  {gaf.path}")
         yield gaf
 
 

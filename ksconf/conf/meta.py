@@ -18,9 +18,7 @@ LEVELS:
 from __future__ import absolute_import, unicode_literals
 
 import re
-
-import ksconf.ext.six as six
-from ksconf.ext.six.moves.urllib.parse import quote, unquote
+from urllib.parse import quote, unquote
 
 from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
 
@@ -36,7 +34,7 @@ d = dict(zip(("conf", "stanza", "attribute"), (unquote(p) for p in stanza_name.s
 """
 
 
-class MetaLayer(object):
+class MetaLayer:
     def __init__(self, name):
         self.name = name
         self._data = {}             # Current level data
@@ -61,10 +59,8 @@ class MetaLayer(object):
         if self._data:
             yield _prefix
         if self._children:
-            for child_name, child in six.iteritems(self._children):
-                # PY3: yield from
-                for r in child.walk(_prefix=_prefix + (child_name,)):
-                    yield r
+            for child_name, child in self._children.items():
+                yield from child.walk(_prefix=_prefix + (child_name,))
 
     def items(self, prefix=None):
         """ Helpful when rebuilding the input file. """
@@ -73,13 +69,11 @@ class MetaLayer(object):
         if self._data:
             yield prefix, self._data
         if self._children:
-            for child_name, child in six.iteritems(self._children):
-                # yield from  (PY3)
-                for r in child.items(prefix=prefix + (child_name,)):
-                    yield r
+            for child_name, child in self._children.items():
+                yield from child.items(prefix=prefix + (child_name,))
 
 
-class MetaData(object):
+class MetaData:
 
     regex_access = r"(?:^|\s*,\s*)(?P<action>read|write)\s*:\s*\[\s*(?P<roles>[^\]]+?)\s*\]"
 

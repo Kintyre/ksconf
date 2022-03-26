@@ -1,23 +1,15 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
 
-from ksconf.ext.six import PY2, text_type
-
 from ksconf.builder import BuildCacheException
-from ksconf.util.file import file_hash, pathlib_compat
-
-if sys.version_info < (3, 6):
-    # Allow these stdlib functions to work with pathlib
-    copy2 = pathlib_compat(copy2)
-    rmtree = pathlib_compat(rmtree)
+from ksconf.util.file import file_hash
 
 
-class FileSet(object):
+class FileSet:
     """ A collection of fingerprinted files.
 
     Currently the fingerprint is only a SHA256 hash.
@@ -35,12 +27,10 @@ class FileSet(object):
         self.files = set()
         self.files_meta = {}
 
-    def __eq__(self, other):
-        # type: (FileSet) -> bool
+    def __eq__(self, other: "FileSet") -> bool:
         return self.files_meta == other.files_meta
 
-    def __ne__(self, other):
-        # type: (FileSet) -> bool
+    def __ne__(self, other: "FileSet") -> bool:
         return self.files_meta != other.files_meta
 
     '''
@@ -94,10 +84,10 @@ class FileSet(object):
             if p.is_dir():
                 # Audience: Exception text relevant to from_filesystem() caller
                 raise BuildCacheException(
-                    "Expected file '{0}' is actually a directory.  If this is "
+                    f"Expected file '{p}' is actually a directory.  If this is "
                     "correct indicate a directory with a trailing slash: "
-                    "'{0}/'".format(p))
-            raise BuildCacheException("Missing expected file {}".format(p))
+                    f"'{p}/'")
+            raise BuildCacheException(f"Missing expected file {p}")
         fp = self.get_fingerprint(p)
         self.files.add(relative_path)
         self.files_meta[relative_path] = fp
@@ -130,7 +120,7 @@ class FileSet(object):
             copy2(src, dest)
 
 
-class CachedRun(object):
+class CachedRun:
     __slots__ = ["root", "config_file", "cache_dir", "_info", "_settings", "_state"]
 
     STATE_NEW = "new"
@@ -140,8 +130,7 @@ class CachedRun(object):
 
     _timestamp_format = "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, root):
-        # type: (Path)
+    def __init__(self, root: Path):
         self.root = root
         self.config_file = self.root / "cache.json"
         self.cache_dir = self.root / "data"
@@ -192,14 +181,13 @@ class CachedRun(object):
     def is_disabled(self):
         return self._state == self.STATE_DISABLED
 
-    def inputs_identical(self, inputs):
-        # type: (FileSet) -> bool
+    def inputs_identical(self, inputs: FileSet) -> bool:
         return self.cached_inputs == inputs
 
     def dump(self):
         def map_keys(d):
-            return {text_type(k): v for k, v in d.items()}
-        mode = "wb" if PY2 else "w"
+            return {str(k): v for k, v in d.items()}
+        mode = "w"
         meta = dict(self._info)
         inputs = meta.pop("inputs")
         outputs = meta.pop("outputs")
@@ -229,8 +217,7 @@ class CachedRun(object):
         self._settings = data["settings"]
         self._info = info
 
-    def set_cache_info(self, type, data):
-        # type: (str, FileSet)
+    def set_cache_info(self, type: str, data: FileSet):
         assert type in ("inputs", "outputs")
         self._info[type] = data.files_meta
 

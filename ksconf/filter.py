@@ -14,7 +14,7 @@ from ksconf.util.file import splglob_to_regex
 # This would allow things like a special prefix to lazy-switch modes (for example:  ~regex~, or only do fnmatching if there's a wildcard otherwise stick with simple string matching, ...)
 
 
-class FilteredList(object):
+class FilteredList:
     IGNORECASE = 1
     INVERT = 2
     VERBOSE = 4
@@ -37,7 +37,7 @@ class FilteredList(object):
                 if line and line[0] != "#":
                     items.append(line)
         if self.flags & self.VERBOSE:
-            sys.stderr.write("Loaded {} patterns from {}\n".format(len(items), path))
+            sys.stderr.write(f"Loaded {len(items)} patterns from {path}\n")
         return items
 
     def feed(self, item, filter=None):
@@ -194,5 +194,5 @@ def create_filtered_list(match_mode, flags=0, default=True):
     try:
         class_ = class_mapping[match_mode]
     except KeyError:
-        raise NotImplementedError("Matching mode {!r} undefined".format(match_mode))
+        raise NotImplementedError(f"Matching mode {match_mode!r} undefined")
     return class_(flags, default)

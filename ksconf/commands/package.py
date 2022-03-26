@@ -18,13 +18,12 @@ Build system example:
 
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import argparse
 import os
 
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_SUCCESS
+from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_CLI_ARG_DEPRECATED, EXIT_CODE_SUCCESS
 from ksconf.package import AppPackager
 
 
@@ -50,9 +49,7 @@ class PackageCmd(KsconfCmd):
         ".DS_Store"
     ]
 
-    def register_args(self, parser):
-        # type: (argparse.ArgumentParser) -> None
-
+    def register_args(self, parser: argparse.ArgumentParser):
         def wb_type(action):
             def f(pattern):
                 return action, pattern
@@ -90,10 +87,11 @@ class PackageCmd(KsconfCmd):
             "are specified, then all layers will be included.")
 
         player.add_argument("--layer-method",
-                            choices=["auto", "dir.d", "disable"],
-                            default="auto",
+                            choices=["dir.d", "disable", "auto"],
+                            default="dir.d",
                             help="Set the layer type used by SOURCE.  "
-                                 "Additional description provided in in the ``combine`` command.")
+                                 "Additional description provided in in the ``combine`` command."
+                                 "Note that 'auto' is no longer supported as of v0.10.")
         player.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
                             type=wb_type("include"), metavar="PATTERN",
                             help="Name or pattern of layers to include.")
@@ -186,8 +184,17 @@ class PackageCmd(KsconfCmd):
                 app_name = os.path.basename(args.source)
                 app_name_source = "extracted from source directory"
         '''
-        self.stdout.write("Packaging {}   (App name {})\n".format(app_name, app_name_source))
+        self.stdout.write(f"Packaging {app_name}   (App name {app_name_source})\n")
         packager = AppPackager(args.source, app_name, output=self.stderr)
+
+        if args.layer_method == "auto":
+            # There'd no way to make this option legal but not shown in argparse.  :-(
+            # Yeah, all this needs *LOTS* of work!
+            self.stderr("The 'auto' option for layer_method is not longer supported.  "
+                        "This will be an error in v0.11 and removed in v0.12\n")
+            from ksconf import __version__
+            if __version__.startswith("0.11."):
+                return EXIT_CODE_CLI_ARG_DEPRECATED
 
         # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
         #       for faster packaging in simple scenarios (this may not matter once this is done in memory)
@@ -203,10 +210,10 @@ class PackageCmd(KsconfCmd):
             elif args.local == "preserve":
                 pass
             else:   # pragma: no cover
-                raise ValueError("Unknown value for 'local': {}".format(args.local))
+                raise ValueError(f"Unknown value for 'local': {args.local}")
 
             if args.blocklist:
-                self.stderr.write("Applying blocklist:  {!r}\n".format(args.blocklist))
+                self.stderr.write(f"Applying blocklist:  {args.blocklist!r}\n")
                 packager.blocklist(args.blocklist)
 
             if args.set_build or args.set_version:
@@ -215,7 +222,7 @@ class PackageCmd(KsconfCmd):
                     build=args.set_build)
 
             packager.check()
-            # os.system("ls -lR {}".format(packager.app_dir))
+            # os.system(f"ls -lR {packager.app_dir}")
 
             dest = args.file or "{}-{{{{version}}}}.tgz".format(packager.app_name.lower().replace("-", "_"))
             archive_path = packager.make_archive(dest)

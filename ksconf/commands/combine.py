@@ -12,23 +12,113 @@ Usage example:
 from __future__ import absolute_import, unicode_literals
 
 import os
-import re
 from io import open
 
-from ksconf.commands import ConfFileProxy, KsconfCmd, dedent
-from ksconf.conf.delta import show_text_diff
-from ksconf.conf.merge import merge_conf_files
-from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
+from ksconf.combine import LayerCombiner, LayerCombinerException
+from ksconf.commands import KsconfCmd, dedent
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
-                           EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE,
-                           SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE)
+                           EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter
-from ksconf.util.compare import file_compare
 from ksconf.util.completers import DirectoriesCompleter
-from ksconf.util.file import _is_binary_file, expand_glob_list, relwalk, smart_copy, splglob_simple
+from ksconf.util.file import expand_glob_list, relwalk, splglob_simple
 
 CONTROLLED_DIR_MARKER = ".ksconf_controlled"
+
+
+class LayerCombinerExceptionCode(LayerCombinerException):
+    def __init__(self, msg, return_code=None):
+        super().__init__(msg)
+        self.return_code = return_code
+
+
+class RepeatableCombiner(LayerCombiner):
+    """
+    Re-runable combiner class.  Beyond the reusable layer combining functionality,
+    this class enables the use of a marker file for added safety.  Removed files
+    will cleanup.
+    """
+
+    def __init__(self, *args,
+                 disable_marker: bool = False,
+                 disable_cleanup: bool = False,
+                 keep_existing: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.target_extra_files: set = None
+        self.disable_marker = disable_marker
+        self.disable_cleanup = disable_cleanup
+        self.keep_existing = keep_existing
+
+    def prepare_target_dir(self, target):
+        """
+        Handle marker file and ensure that target directory gets created safely.
+        """
+        marker_file = os.path.join(target, CONTROLLED_DIR_MARKER)
+        if os.path.isdir(target):
+            if not self.disable_marker and not os.path.isfile(marker_file):
+                self.stderr.write("Target directory already exists, but it appears to have been "
+                                  "created by some other means.  Marker file missing.\n")
+                raise LayerCombinerExceptionCode("Target directory exists without marker file",
+                                                 EXIT_CODE_COMBINE_MARKER_MISSING)
+
+        elif self.dry_run:
+            self.stderr.write("Skipping creating destination directory {target} (dry-run)\n")
+        else:
+            try:
+                os.mkdir(target)
+            except OSError as e:
+                self.stderr.write(f"Unable to create destination directory {target}.  {e}\n")
+                raise LayerCombinerExceptionCode(f"Unable to create destination directory {target}",
+                                                 EXIT_CODE_NO_SUCH_FILE)
+            self.stderr.write(f"Created destination directory {target}\n")
+            if not self.disable_marker:
+                with open(marker_file, "w") as f:
+                    f.write("This directory is managed by KSCONF.  Don't touch\n")
+
+    def pre_combine_inventory(self, target, src_files):
+        """
+        Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
+        """
+        config = self.config
+
+        self.stderr.write(f"Layers detected:  {self.layer_names_all}\n")
+        if self.layer_names_all != self.layer_names_used:
+            self.stderr.write(f"Layers after filter: {self.layer_names_used}\n")
+
+        # Convert src_files to a set to speed up
+        src_files = set(src_files)
+        self.target_extra_files = set()
+        for (root, dirs, files) in relwalk(target, followlinks=config.follow_symlink):
+            for fn in files:
+                tgt_file = os.path.join(root, fn)
+                if tgt_file not in src_files:
+                    if fn == CONTROLLED_DIR_MARKER or config.block_files.search(fn):
+                        continue  # pragma: no cover (peephole optimization)
+                    self.target_extra_files.add(tgt_file)
+        return src_files
+
+    def post_combine(self, target):
+        """
+        Handle cleanup of extra files
+        """
+        target_extra_files = self.target_extra_files
+        if target_extra_files:
+            if self.disable_cleanup:
+                self.stderr.write("Cleanup operations disabled by user.\n")
+            else:
+                self.stderr.write("Found extra files not part of source tree(s):  "
+                                  f"{len(target_extra_files)} files.\n")
+
+            keep_existing = create_filtered_list("splunk", default=False)
+            # splglob_simple:  Either full paths, or simple file-only match
+            keep_existing.feedall(self.keep_existing, filter=splglob_simple)
+            for dest_fn in target_extra_files:
+                if keep_existing.match_path(dest_fn):
+                    self.stderr.write(f"Keep existing file {dest_fn}\n")
+                elif self.disable_cleanup:
+                    self.stderr.write(f"Skip cleanup of unwanted file {dest_fn}\n")
+                else:
+                    self.stderr.write(f"Remove unwanted file {dest_fn}\n")
+                    os.unlink(os.path.join(target, dest_fn))
 
 
 class CombineCmd(KsconfCmd):
@@ -121,27 +211,28 @@ class CombineCmd(KsconfCmd):
         parser.add_argument("-K", "--keep-existing", action="append", default=[],
                             help="Existing file(s) to preserve in the TARGET folder.  "
                             "This argument may be used multiple times.")
-        parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent("""
-            Prevents the creation of or checking for the ``{}`` marker file safety check.
+        parser.add_argument("--disable-marker", action="store_true", default=False, help=dedent(f"""
+            Prevents the creation of or checking for the ``{CONTROLLED_DIR_MARKER}`` marker file safety check.
             This file is typically used indicate that the destination folder is managed by ksconf.
             This option should be reserved for well-controlled batch processing scenarios.
-            """.format(CONTROLLED_DIR_MARKER)))
+            """))
         parser.add_argument("--disable-cleanup", action="store_true", default=False,
                             help="Disable all file removal operations.  Skip the cleanup phase "
                             "that typically removes files in TARGET that no longer exist in SOURCE")
 
     def run(self, args):
-        # Note this is case sensitive.  Don't be lazy, name your files correctly  :-)
-        conf_file_re = re.compile(r"([a-z_-]+\.conf|(default|local)\.meta)$")
-        spec_file_re = re.compile(r"\.conf\.spec$")
-        args.source = list(expand_glob_list(args.source, do_sort=True))
+        combiner = RepeatableCombiner(follow_symlink=args.follow_symlink, banner=args.banner, dry_run=args.dry_run, quiet=args.quiet,
+                                      keep_existing=args.keep_existing, disable_cleanup=args.disable_cleanup, disable_marker=args.disable_marker)
 
-        config = LayerConfig()
-        config.follow_symlink = args.follow_symlink
+        # For now, just copy all settings from 'args' to class instance... needs work
+        combiner.stdout = self.stdout
+        combiner.stderr = self.stderr
 
-        layer_filter = LayerFilter()
         for (action, pattern) in args.layer_filter:
-            layer_filter.add_rule(action, pattern)
+            combiner.add_layer_filter(action, pattern)
+
+        # Expand any globs in the CLI to individual directories
+        args.source = list(expand_glob_list(args.source, do_sort=True))
 
         if args.layer_method == "auto":
             self.stderr.write(
@@ -162,188 +253,24 @@ class CombineCmd(KsconfCmd):
                                   "'dir.d' layer mode.\n")
                 return EXIT_CODE_BAD_ARGS
 
-            layer_root = DotDLayerRoot(config=config)
-            layer_root.set_root(args.source[0], follow_symlinks=args.follow_symlink)
+            combiner.set_layer_root(args.source[0])
+            layer_root = combiner.layer_root
             for (dir, layers) in layer_root._mount_points.items():
-                self.stderr.write("Found layer parent folder:  {}  with layers {}\n"
-                                  .format(dir, ", ".join(layers)))
+                self.stderr.write(f"Found layer parent folder:  {dir}  "
+                                  f"with layers {', '.join(layers)}\n")
         else:
             self.stderr.write("Automatic layer detection is disabled.\n")
-            layer_root = DirectLayerRoot(config=config)
             for src in args.source:
-                self.stderr.write("Reading conf files from directory {}\n".format(src))
-                layer_root.add_layer(src)
+                self.stderr.write(f"Reading conf files from directory {src}\n")
+            combiner.set_source_dirs(args.source)
 
         if args.target is None:
             self.stderr.write("Must provide the '--target' directory.\n")
             return EXIT_CODE_MISSING_ARG
 
-        self.stderr.write("Combining files into directory {}\n".format(args.target))
+        self.stderr.write(f"Combining files into directory {args.target}\n")
 
-        self.stderr.write("Layers detected:  {}\n".format(layer_root.list_layer_names()))
-
-        if layer_root.apply_filter(layer_filter):
-            self.stderr.write("Layers after filter: {}\n".format(layer_root.list_layer_names()))
-
-        marker_file = os.path.join(args.target, CONTROLLED_DIR_MARKER)
-        if os.path.isdir(args.target):
-            if not args.disable_marker and not os.path.isfile(marker_file):
-                self.stderr.write("Target directory already exists, but it appears to have been "
-                                  "created by some other means.  Marker file missing.\n")
-                return EXIT_CODE_COMBINE_MARKER_MISSING
-        elif args.dry_run:
-            self.stderr.write(
-                "Skipping creating destination directory {0} (dry-run)\n".format(args.target))
-        else:
-            try:
-                os.mkdir(args.target)
-            except OSError as e:
-                self.stderr.write("Unable to create destination directory {}.  {}\n".
-                                  format(args.target, e))
-                return EXIT_CODE_NO_SUCH_FILE
-            self.stderr.write("Created destination directory {0}\n".format(args.target))
-            if not args.disable_marker:
-                with open(marker_file, "w") as f:
-                    f.write("This directory is managed by KSCONF.  Don't touch\n")
-
-        # Build a common tree of all src files.
-        src_file_listing = set(layer_root.list_files())
-
-        # Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
-        target_extra_files = set()
-        for (root, dirs, files) in relwalk(args.target, followlinks=args.follow_symlink):
-            for fn in files:
-                tgt_file = os.path.join(root, fn)
-                if tgt_file not in src_file_listing:
-                    if fn == CONTROLLED_DIR_MARKER or config.block_files.search(fn):
-                        continue  # pragma: no cover (peephole optimization)
-                    target_extra_files.add(tgt_file)
-
-        for src_file in sorted(src_file_listing):
-            # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
-            sources = list(layer_root.get_file(src_file))
-            try:
-                dest_fn = sources[0].logical_path
-            except IndexError:
-                self.stderr.write("File disappeared during execution?  {}\n".format(src_file))
-                return EXIT_CODE_NO_SUCH_FILE
-
-            dest_path = os.path.join(args.target, dest_fn)
-
-            # Make missing destination folder, if missing
-            dest_dir = os.path.dirname(dest_path)
-            if not os.path.isdir(dest_dir) and not args.dry_run:
-                os.makedirs(dest_dir)
-
-            # Determine handling method based on source count and filename pattern
-            if len(sources) == 1:
-                # Copy only file (most common case)
-                method = "copy"
-            elif spec_file_re.search(dest_fn):
-                method = "concatenate"
-            elif conf_file_re.search(dest_fn):
-                method = "merge"
-            else:
-                # Copy highest precedence
-                method = "copy"
-
-            if method == "copy":
-                # self.stderr.write("Considering {0:50}  NON-CONF Copy from source:  "
-                #                   "{1!r}\n".format(dest_fn, sources[-1].physical_path))
-                # Always use the last file in the list (since last directory always wins)
-                src_file = sources[-1].physical_path
-                if args.dry_run:
-                    if os.path.isfile(dest_path):
-                        if file_compare(src_file, dest_path):
-                            smart_rc = SMART_NOCHANGE
-                        else:
-                            if (_is_binary_file(src_file) or _is_binary_file(dest_path)):
-                                # Binary files.  Can't compare...
-                                smart_rc = "DRY-RUN (NO-DIFF=BIN)"
-                            else:
-                                show_text_diff(self.stdout, dest_path, src_file)
-                                smart_rc = "DRY-RUN (DIFF)"
-                    else:
-                        smart_rc = "DRY-RUN (NEW)"
-                else:
-                    smart_rc = smart_copy(src_file, dest_path)
-                if smart_rc != SMART_NOCHANGE:
-                    if not args.quiet:
-                        self.stderr.write("Copy <{0}>   {1:50}  from {2}\n".format(
-                            smart_rc, dest_path, src_file))
-                del src_file
-
-            elif method == "merge":
-                try:
-                    # Handle merging conf files
-                    dest = ConfFileProxy(dest_path, "r+",
-                                         parse_profile=PARSECONF_MID)
-                    srcs = [ConfFileProxy(s.physical_path, "r",
-                                          parse_profile=PARSECONF_STRICT) for s in sources]
-                    # self.stderr.write("Considering {0:50}  CONF MERGE from source:  {1!r}\n"
-                    #                   .format(dest_fn, sources[0].physical_path))
-                    smart_rc = merge_conf_files(dest, srcs, dry_run=args.dry_run,
-                                                banner_comment=args.banner)
-                    if smart_rc != SMART_NOCHANGE:
-                        if not args.quiet:
-                            self.stderr.write("Merge <{0}>   {1:50}  from {2!r}\n".format(
-                                smart_rc, dest_path, [s.physical_path for s in sources]))
-                finally:
-                    # Protect against any dangling open files:  (ResourceWarning: unclosed file)
-                    dest.close()
-                    for src in srcs:
-                        src.close()
-                    del srcs, dest
-
-            elif method == "concatenate":
-                combined_content = ""
-                last_mtime = max(src.mtime for src in sources)
-                for src in sources:
-                    # PY3:  Just open(src) is fine
-                    with open(src.physical_path, "r") as stream:
-                        content = stream.read()
-                        if not content.endswith("\n"):
-                            content += "\n"
-                        combined_content += content
-                        del content
-                smart_rc = SMART_CREATE
-                if os.path.isfile(dest_path):
-                    with open(dest) as stream:
-                        dest_content = stream.read()
-                    if dest_content == combined_content:
-                        smart_rc = SMART_NOCHANGE
-                    else:
-                        smart_rc = SMART_UPDATE
-                    del dest_content
-
-                if not args.dry_run:
-                    with open(dest_path, "w") as stream:
-                        stream.write(combined_content)
-
-                if smart_rc != SMART_NOCHANGE:
-                    if not args.quiet:
-                        self.stderr.write("Concatenate <{0}>   {1:50}  from {2!r}\n".format(
-                            smart_rc, dest_path, [s.physical_path for s in sources]))
-                os.utime(dest_path, (last_mtime, last_mtime))
-                del combined_content
-            else:
-                raise AssertionError("Internal implementation error.  Unknown method={}".format(method))
-
-        if target_extra_files:
-            if args.disable_cleanup:
-                self.stderr.write("Cleanup operations disabled by user.\n")
-            else:
-                self.stderr.write("Found extra files not part of source tree(s):  {0} files.\n".
-                                  format(len(target_extra_files)))
-
-            keep_existing = create_filtered_list("splunk", default=False)
-            # splglob_simple:  Either full paths, or simple file-only match
-            keep_existing.feedall(args.keep_existing, filter=splglob_simple)
-            for dest_fn in target_extra_files:
-                if keep_existing.match_path(dest_fn):
-                    self.stderr.write("Keep existing file {0}\n".format(dest_fn))
-                elif args.disable_cleanup:
-                    self.stderr.write("Skip cleanup of unwanted file {0}\n".format(dest_fn))
-                else:
-                    self.stderr.write("Remove unwanted file {0}\n".format(dest_fn))
-                    os.unlink(os.path.join(args.target, dest_fn))
+        try:
+            combiner.combine(args.target)
+        except LayerCombinerExceptionCode as e:
+            return e.return_code

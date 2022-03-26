@@ -5,8 +5,8 @@
 ..  _GitHub Releases: https://github.com/Kintyre/ksconf/releases
 ..  _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 ..  _gitlint: https://jorisroovers.github.io/gitlint/
-..  _kintyre-splunk-conf-wheel:  https://pypi.org/project/kintyre-splunk-conf/#files
-..  _kintyre-splunk-conf:  https://pypi.org/project/kintyre-splunk-conf
+..  _ksconf-wheel:  https://pypi.org/project/ksconf/#files
+..  _ksconf:  https://pypi.org/project/ksconf
 ..  _ksconf app for splunk: https://splunkbase.splunk.com/app/4383/
 ..  _ksconf repo: https://github.com/Kintyre/ksconf
 ..  _pre-commit: https://pre-commit.com/
