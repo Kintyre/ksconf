@@ -57,6 +57,7 @@ EXIT_CODE_FEAT_NOT_IMPLEMENTED = 101     # Too bad we can't use 404 :=)
 
 # Environmental error
 EXIT_CODE_ENV_BUSTED = 120
+EXIT_CODE_BAD_PY_VERSION = 121
 
 
 # This gets properly supported in Python 3.6, but until then....

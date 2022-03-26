@@ -20,6 +20,18 @@ import platform
 import sys
 from collections import defaultdict
 
+# Doh! This probably only works for Python 3.6; earlier version will fail due to f-string use (needs refactoring)
+if sys.version_info < (3, 7):   # noqa
+    from ksconf.consts import EXIT_CODE_BAD_PY_VERSION
+    sys.stderr.write(
+        "ERROR:  ksconf requires Python 3.7+.\n\n"
+        "If you need Python 2.7/3.6 support, consider downgrading.\n"
+        "Releases 0.9.x support these older Python versions.\n\n"
+        "You can try running:\n\n"
+        "   pip install -U 'kintyre-splunk-conf>=0.9,<=0.10'\n")
+    sys.exit(EXIT_CODE_BAD_PY_VERSION)
+
+
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
