@@ -7,25 +7,26 @@ environment:
     - PYTHON: "C:\\Python37"
     - PYTHON: "C:\\Python37-x64"
     - PYTHON: "C:\\Python38-x64"
-    - PYTHON: "C:\\Python39-x64"
-    - PYTHON: "C:\\Python310-x64"
+#    - PYTHON: "C:\\Python39-x64"
+#    - PYTHON: "C:\\Python310-x64"
 
 # scripts that are called at very beginning, before repo cloning
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
-  - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  # Git command run locally during testing with throw-away repos; values don't matter.
+  - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - python -m pip install --upgrade pip wheel
+  # Git command run locally during testing with throw-away repos; values don't
   - git config --global user.email "automation@kintyre.co"
   - git config --global user.name "App Veyor"
 
 install:
   - echo PATH=%PATH%
   - python --version
-  - pip --version
-  - pip install -r requirements-ci.txt
-  - pip install .
+  - python -m pip --version
+  - python -m pip install -r requirements-ci.txt
+  - python -m pip install .
   # This will report setuptools and wheel
-  - pip freeze --all
+  - python -m pip freeze --all
 
 test_script:
   - ksconf --version
