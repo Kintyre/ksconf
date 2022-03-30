@@ -131,6 +131,7 @@ class UnarchiveCmd(KsconfCmd):
         f_hash = file_hash(args.tarball)
         self.stdout.write("Inspecting archive:               {}\n".format(args.tarball))
 
+        # TODO: Grab and share wit ksconf_shared.py in https://github.com/Kintyre/ansible-collection-splunk
         new_app_name = args.app_name
         # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
         app_name = set()

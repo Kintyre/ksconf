@@ -129,7 +129,7 @@ The following example assume we're make a new command called ``asciiart``:
     vim ksconf/setup_entrypoints*.py
     git add kconf/setup_entrypoints.py
 
-    # Now run-precomit to ensure that the new command is found sucessfully and is importable
+    # Now run pre-commit to ensure that the new command is found sucessfully and is importable
 
     pre-commit
     # Now go write code, tests, docs and commit ...

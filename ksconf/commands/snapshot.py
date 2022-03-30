@@ -55,7 +55,7 @@ class ConfSnapshot:
     def _get_file_info(path):
         file_info = {}
         file_info["path"] = path
-        # XXX:  Format is ISO something or other (with timezone, ugh); for now just use int
+        # XXX:  Format as ISO something or other (with timezone, ugh); for now just use int
         st = os.stat(path)
         file_info["mtime"] = int(st.st_mtime)
         file_info["size"] = st.st_size
