@@ -30,7 +30,7 @@ Supported Variables
     ``git_tag``         git         Run ``git describe --tags --always --dirty``.  Common prefixes are removed such as ``v`` or ``release-`` from the tag name.
     ``git_last_rev``    git         Run ``git log -n1 --pretty=format:%h -- .``
     ``git_head``        git         Run ``git rev-parse --short HEAD``
-    ``layers_list``     layers      List of unique ksconf layers used to build the app.  Layers are seperated by an double underscore (``__``)character.  If no layers were used then an empty string is returned.
+    ``layers_list``     layers      List of unique ksconf layers used to build the app.  Layers are separated by an double underscores (``__``).  If no layers were used then an empty string is returned.
     ``layers_hash``     layers      Unique hash of unique ksconf layers used.  This is a truncated SHA256 of the ``layers_list`` variable.
     ==================  =========   ============================================================
 
@@ -49,10 +49,13 @@ A more realistic example where the version number in ``app.conf`` is managed by 
 ..  code-block:: sh
 
     bumpversion minor
-    ksconf package -f dist/my_app-{{version}}.tgz MyApp --release-file=.artifact
+    ksconf package MyApp \
+        --set-version={{git_tag}} \
+        -f dist/my_app-{{version}}.tgz \
+        --release-file=.artifact
     echo "Build complete, upload $(<.artifact) to SplunkBase"
 
-This will output a message like: ``Build complete, upload dist/my_app-1.2.3.tgz to SplunkBase``
+This will output a message like: ``Build complete, upload dist/my_app-1.3.0.tgz to SplunkBase``
 
 And of course this workflow could be further automated using Splunkbase API calls.
 
