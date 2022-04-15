@@ -21,7 +21,6 @@ import os
 import shlex
 import sys
 from argparse import ArgumentParser, FileType
-from collections import OrderedDict
 from urllib.parse import quote
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
@@ -47,8 +46,8 @@ class CurlCommand:
         self.method = None  # curl defaults this to POST
         self.pre_args = ["-k"]
         self.post_args = []
-        self.headers = OrderedDict()
-        self.data = OrderedDict()
+        self.headers = {}
+        self.data = {}
         self.pretty_format = True
 
     @classmethod

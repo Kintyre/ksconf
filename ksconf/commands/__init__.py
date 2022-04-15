@@ -477,15 +477,11 @@ def _get_entrypoints_lib(group, name=None):
     if name:
         return entrypoints.get_single(group, name)
     else:
-        from collections import OrderedDict
+        return entrypoints.get_group_named(group)
 
-        # Copied from 'get_group_named()' except that it preserves order
-        result = OrderedDict()
-        for ep in entrypoints.get_group_all(group):
-            if ep.name not in result:
-                result[ep.name] = ep
-        return result
 
+# TODO:  Switch to importlib.metadata once ksconf is Python 3.8+ (Could use importlib_metadata backport)
+# TODO:  Find out if Splunk ships with importlib.metadata
 
 """ Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
 function is called outside of our control.   Going with 'entrypoints' module or local fallback,

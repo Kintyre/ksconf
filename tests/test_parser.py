@@ -370,6 +370,8 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(d_copy, d, "Dictionary sent to write_conf has been modified!")
 
     def test_write_unsorted(self):
+        # Technically all dicts are ordered as of Python 3.7+, however keeping
+        # OrderedDict here explicitly to make it clear what is being tested.
         d = OrderedDict()
         d["stanza3"] = {"added": "first"}
         d["stanza2"] = {"added": "second"}
