@@ -10,7 +10,7 @@ from ksconf.commands import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import (GLOBAL_STANZA, ConfType, _extract_comments,
                                 inject_section_comments, parse_conf, write_conf)
-from ksconf.consts import SMART_UPDATE
+from ksconf.consts import SMART_UPDATE, SmartEnum
 from ksconf.util.file import relwalk
 
 ####################################################################################################
@@ -61,7 +61,7 @@ def merge_conf_dicts(*dicts):
 def merge_conf_files(dest: ConfFileProxy,
                      configs: List[ConfFileProxy],
                      dry_run: bool = False,
-                     banner_comment: str = None) -> ConfType:
+                     banner_comment: str = None) -> SmartEnum:
     # Parse all config files
     cfgs = [conf.data for conf in configs]
     newest_mtime = max(conf.mtime for conf in configs) if configs else None

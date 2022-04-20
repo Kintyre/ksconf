@@ -16,7 +16,7 @@ from ksconf import KsconfPluginWarning
 from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 detect_by_bom, parse_conf, smart_write_conf,
                                 write_conf)
-from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum
 from ksconf.util import debug_traceback, memoize
 
 __all__ = [
@@ -142,7 +142,7 @@ class ConfFileProxy:
         data = parse_conf(self.stream, profile=parse_profile)
         return data
 
-    def dump(self, data, **kwargs):
+    def dump(self, data, **kwargs) -> SmartEnum:
         if not self.writable():      # pragma: no cover
             raise ValueError(f"Unable to dump() to {self._type()} with mode '{self._mode}'")
         # Feels like the right thing to do????  OR self._data = data

@@ -10,6 +10,9 @@ class SmartEnum(Enum):
     UPDATE = "updated"
     NOCHANGE = "unchanged"
 
+    def __str__(self):
+        return self.value
+
 
 # Legacy names
 SMART_CREATE = SmartEnum.CREATE
