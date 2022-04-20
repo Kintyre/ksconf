@@ -22,8 +22,6 @@ from __future__ import absolute_import, unicode_literals
 import sys
 
 if sys.version_info < (3, 7):   # noqa
-    from ksconf.consts import EXIT_CODE_BAD_PY_VERSION
-
     # Can't actually import 'consts' because it loads 'enum'; so we cheat
     EXIT_CODE_BAD_PY_VERSION = 121
     sys.stderr.write(
@@ -33,6 +31,9 @@ if sys.version_info < (3, 7):   # noqa
         "Releases 0.9.x support these older Python versions.\n\n"
         "If you installed this with pip, try running:\n\n"
         "   pip install -U 'kintyre-splunk-conf>=0.9,<=0.10'\n")
+    sys.stderr.write("\nAdditional info\n"
+                     "  Python:  {}  {}\n"
+                     "  Ksconf:  {}\n".format(sys.executable, sys.version_info[:3], sys.argv[0]))
     sys.exit(EXIT_CODE_BAD_PY_VERSION)
 
 from ksconf.cli import cli
