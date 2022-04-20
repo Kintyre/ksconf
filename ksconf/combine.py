@@ -224,7 +224,7 @@ class LayerCombiner:
                         del content
                 smart_rc = SMART_CREATE
                 if os.path.isfile(dest_path):
-                    with open(dest) as stream:
+                    with open(dest_path) as stream:
                         dest_content = stream.read()
                     if dest_content == combined_content:
                         smart_rc = SMART_NOCHANGE
