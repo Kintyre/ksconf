@@ -21,6 +21,11 @@ Ksconf 0.9
    This new option can be used to control the level of detail in the output.
 
 
+Ksconf v0.9.4 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+-  Fix combine concatenate bug (back ported from v0.10.0-beta4)
+
+
 Ksconf v0.9.3 (2022-02-26)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 -  Added internal caching for :py:class:`~ksconf.package.AppVarMagic` (``ksconf package`` command) to reduce repeated variable expansion work.
