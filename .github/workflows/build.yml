@@ -24,6 +24,7 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
+          - '3.11'
         include:
           - os: ubuntu-18.04
             python-version: 3.9
@@ -40,17 +41,17 @@ jobs:
           EXTRA_PKGS: ${{matrix.extra_packages}}
         run: echo BUILD_SDIST=$BUILD_SDIST
       - name: 'Set up Python ${{ matrix.python-version }}'
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '${{ matrix.python-version }}'
       - name: Cache multiple paths
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |-
             $HOME/.cache/pip
             $HOME/.pyenv
           key: '${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles(''requirements.txt'') }}'
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: MacOS pyenv setup
         run: |
@@ -96,7 +97,7 @@ jobs:
       - run: coverage xml
 
       - name: Submit to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
           verbose: true
@@ -158,26 +159,12 @@ jobs:
         env:
           KSCONF_DEBUG: 1
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        id: create_release
+      - name: Create and upload GitHub release
+        uses: "marvinpinto/action-automatic-releases@latest"
         if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: ${{ github.ref }}
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        id: upload-release-asset
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.buildpkg.outputs.path }}
-          asset_name: ${{ steps.buildpkg.outputs.name }}
-          asset_content_type: application/tar+gzip
+          files: ${{ steps.buildpkg.outputs.path }}
