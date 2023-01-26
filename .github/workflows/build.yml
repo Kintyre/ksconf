@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
+          - ubuntu-latest
         python-version:
           - '3.7'
           - '3.8'
@@ -26,10 +26,10 @@ jobs:
           - '3.10'
           - '3.11'
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-latest
             python-version: 3.9
             build_sdist: true
-          - os: ubuntu-18.04
+          - os: ubuntu-latest
             python-version: 3.8
             extra_packages: argcomplete
           - os: macos-latest
@@ -74,6 +74,7 @@ jobs:
           pip install wheel
           # Since pyenv can be cached across OSX builds, uninstall first for a fresh build
           if pip show kintyre-splunk-conf; then pip uninstall -y kintyre-splunk-conf; fi
+          if pip show ksconf; then pip uninstall -y ksconf; fi
         if: ${{ matrix.os == 'macOS' }}
         env:
           PYENV_VERSION: ${{matrix.python-version}}
@@ -99,6 +100,7 @@ jobs:
       - name: Submit to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           verbose: true
 
