@@ -50,6 +50,12 @@ More changes:
    Use ``{{layers_list}}`` to capture what unique layer names made their way into a tarball, and
    use ``{{layers_hash}}`` when that list get too long to be manageable.
 
+Bug fixes:
+
+*  Fixed ``sort`` bug where the user was incorrectly told that a file with errors was unexpectedly also successfully replaced.
+   The contradictory output messages have been cleaned up.
+   For clarity, this only occurred for inline replacement mode, and was purely an output issue, not a file handling problem.
+
 
 Ksconf 0.9
 ----------

@@ -100,6 +100,7 @@ class SortCmd(KsconfCmd):
                     self.stderr.write("Error trying to process file {0}.  "
                                       "Error:  {1}\n".format(conf, e))
                     failure = True
+                    continue
                 if smart_rc == SMART_NOCHANGE:
                     if not args.quiet:
                         self.stderr.write("Nothing to update.  "

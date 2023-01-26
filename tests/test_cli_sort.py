@@ -71,16 +71,13 @@ class CliSortTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stderr, "^Nothing to update")
 
-    r''' # Leaving this enabled makes too much noise...
-    @unittest.expectedFailure
     def test_sort_glob(self):
-        # Not yet implemented.  Currently relying on the shell to do this.
+        # Implemented in 0.7.7 for Windows.  Don't rely on shell for expansion
         glob_pattern = self.twd.get_path("*.conf")
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", glob_pattern)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
-            self.assertRegex(ko.stderr, r"badfile\.conf")
-    '''
+            self.assertRegex(ko.stderr, r"(?i)error[^\r\n]+badfile\.conf")
 
     def test_bad_file(self):
         with ksconf_cli:
