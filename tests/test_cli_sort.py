@@ -85,7 +85,6 @@ class CliSortTest(unittest.TestCase):
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
 
     def test_sort_mixed(self):
-        # Not yet implemented.  Currently relying on the shell to do this.
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", *self.all_confs)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
@@ -94,30 +93,28 @@ class CliSortTest(unittest.TestCase):
             self.assertRegex(ko.stderr, r"Skipping no-sort file [^ ]+[/\\]transforms\.conf")
 
     def test_sort_stdout(self):
-        # Not yet implemented.  Currently relying on the shell to do this.
         with ksconf_cli:
             ko = ksconf_cli("sort", self.conf_bogus, self.no_sort)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertRegex(ko.stdout, r"-----+ [^\r\n]+[/\\]bogus\.conf")
-            self.assertRegex(ko.stdout, r"[\r\n]-----+ [^\r\n]+[/\\]transforms\.conf")
-            self.assertRegex(ko.stdout, r"[\r\n]DEST_KEY = [^\r\n]+[\r\n]FORMAT =",
+            self.assertRegex(ko.stdout, r"(?m)^-----+ [^\r\n]+[/\\]transforms\.conf")
+            self.assertRegex(ko.stdout, r"(?m)^DEST_KEY = [^\r\n]+[\r\n]FORMAT =",
                              "transforms.conf should be sorted even with KSCONF-NO-SORT directive for non-inplace mode")
 
     def test_sort_mixed_quiet(self):
-        # Not yet implemented.  Currently relying on the shell to do this.
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", "--quiet", *self.all_confs)
             self.assertEqual(ko.returncode, EXIT_CODE_BAD_CONF_FILE)
             self.assertRegex(ko.stderr, r"Error [^\r\n]+?[/\\]badfile\.conf")
             self.assertNotRegex(ko.stderr, r"Skipping [^\r\n]+?[/\\]transforms\.conf")
-            self.assertRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
+            self.assertRegex(ko.stderr, r"(?m)^Replaced file [^\r\n]+?\.conf")
         # No there should be NO output
         with ksconf_cli:
             ko = ksconf_cli("sort", "-i", "--quiet", self.conf_bogus, self.no_sort)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             self.assertNotRegex(ko.stderr, r"Error [^\r\n]+?\.conf")
-            self.assertNotRegex(ko.stderr, r"[\r\n]Skipping [^\r\n]+?[/\\]transforms.conf")
-            self.assertNotRegex(ko.stderr, r"[\r\n]Replaced file [^\r\n]+?\.conf")
+            self.assertNotRegex(ko.stderr, r"(?m)^Skipping [^\r\n]+?[/\\]transforms.conf")
+            self.assertNotRegex(ko.stderr, r"(?m)^Replaced file [^\r\n]+?\.conf")
 
 
 if __name__ == '__main__':  # pragma: no cover
