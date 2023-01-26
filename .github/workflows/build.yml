@@ -1,5 +1,3 @@
-# Converted from Travis CI using https://akx.github.io/travis-to-github-actions/
-
 name: Build python package and splunk app
 on:
   push:
@@ -156,8 +154,8 @@ jobs:
           python -m pip install -r requirements-doc.txt
           python splunk_app/build.py -vv
           set +x
-          echo "::set-output name=path::$(cat .release_path)"
-          echo "::set-output name=name::$(cat .release_name)"
+          echo "path=$(cat .release_path) >> $GITHUB_OUTPUT"
+          echo "name=$(cat .release_name) >> $GITHUB_OUTPUT"
         env:
           KSCONF_DEBUG: 1
 
