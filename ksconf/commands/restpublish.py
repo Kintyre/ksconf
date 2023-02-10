@@ -146,8 +146,6 @@ class RestPublishCmd(KsconfCmd):
         else:
             conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
 
-        if isinstance(conf_type, str):
-            conf_type = conf_type.encode("utf-8")
 
         try:
             config_file = self._service.confs[conf_type]
