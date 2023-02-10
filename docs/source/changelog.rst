@@ -35,6 +35,9 @@ Ksconf v0.10.0 (DRAFT)
    Originally, meaning *Kintyre's Splunk CONFiguration tool*,
    now becomes a recursive acronym:  *Ksconf Splunk CONFiguration tool*.
    Kintyre has been acquired by CDI LLC, and this option seemed least intrusive.
+*  Add support Dashboard Studio dashboards.
+   The JSON blobs inside of Simple XML payloads can now be formatted too.
+   Multiline searches are stiff difficult to diff, but it should be better than before.
 
 
 More changes:
@@ -55,6 +58,9 @@ Bug fixes:
 *  Fixed ``sort`` bug where the user was incorrectly told that a file with errors was unexpectedly also successfully replaced.
    The contradictory output messages have been cleaned up.
    For clarity, this only occurred for inline replacement mode, and was purely an output issue, not a file handling problem.
+*  Fixed compatibility issues with ``rest-publish`` command and the splunk-sdk library around data type expectations.
+   A big thanks to bayeslearner (`#95 <https://github.com/Kintyre/ksconf/issues/95>`__) for the fix.
+   If you run into any issues, try upgrading your version of ``splunk-sdk``.
 
 
 Ksconf 0.9

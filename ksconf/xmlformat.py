@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from io import BytesIO
@@ -127,6 +128,29 @@ class SplunkSimpleXmlFormatter:
         return indent
 
     @classmethod
+    def format_json(cls, elem: ElementTree, indent=2):
+        """  Format JSON data within a Dashboard Studio dashboard.   This is
+        still pretty limited (for example, long searches still show up on a
+        single line), but this give you at least a fighting change to figure
+        out what's different.
+        """
+
+        # Abort if this isn't Dashboard Studio embedded in Simple XML
+        if not elem.attrib.get("version") == "2":
+            return
+
+        tags = ["definition", "assets"]
+        for tag in tags:
+            for e in elem.findall(f".//{tag}"):
+                if e.text:
+                    data = json.loads(e.text)
+                    output = json.dumps(data, indent=indent, sort_keys=False)
+                    # Multiple lines?  Spread out CDATA header/trailer
+                    if "\n" in output:
+                        output = f"\n{output}\n"
+                    e.text = etree.CDATA(output)
+
+    @classmethod
     def format_xml(cls, src, dest, default_indent=2):
         # Copied from https://stackoverflow.com/a/5649263/315892
         parser = etree.XMLParser(resolve_entities=False, strip_cdata=False)
@@ -135,6 +159,7 @@ class SplunkSimpleXmlFormatter:
         i = cls.guess_indent(root, default_indent)
         cls.indent_tree(root, indent=i)
         cls.cdata_tags(root, ["query"])
+        cls.format_json(root, indent=i)
         cls.expand_tags(root, cls.keep_tags)
 
         b = BytesIO()
