@@ -21,23 +21,24 @@ Ksconf 0.10
    The :py:class:`~ksconf.command.combine.CombineCmd` now contains only the command line functionality.
 
 
-Ksconf v0.10.0 (DRAFT)
-~~~~~~~~~~~~~~~~~~~~~~~
+Ksconf v0.10.0 (2023-03-03)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Hishglights:**
 
-*  Ksconf v0.10 and later requires Python 3.7 or newer.
-   If you need Python 2.7 or 3.6 support, please stick with the latest 0.9.x release.
+**Highlights:**
+
 *  The official Python package was renamed ``ksconf``.
-   The ``kintyre-splunk-conf`` package continue to be released in parallel at least until version 1.0.
-   You can continue updating the ``kintyre-splunk-conf`` package and it will install the ``ksconf`` package as a dependency.
+   The ``kintyre-splunk-conf`` package will continue to be released in parallel at least until version 1.0.
+   You can continue updating and using the ``kintyre-splunk-conf`` package but eventually startup warnings will be added to remind users to switch.
+*  Ksconf v0.10 and later requires Python 3.7 or newer.
+   If you need Python 2.7 or 3.6 support, please stick with the latest 0.9.x release of ``kintyre-splunk-conf``.
 *  The KSCONF acronym has taken on a new meaning.
    Originally, meaning *Kintyre's Splunk CONFiguration tool*,
    now becomes a recursive acronym:  *Ksconf Splunk CONFiguration tool*.
    Kintyre has been acquired by CDI LLC, and this option seemed least intrusive.
 *  Add support Dashboard Studio dashboards.
    The JSON blobs inside of Simple XML payloads can now be formatted too.
-   Multiline searches are stiff difficult to diff, but it should be better than before.
+   Multiline searches are still difficult to diff, but there's no way to fix that while using JSON.
 
 
 More changes:
@@ -57,7 +58,7 @@ Bug fixes:
 
 *  Fixed ``sort`` bug where the user was incorrectly told that a file with errors was unexpectedly also successfully replaced.
    The contradictory output messages have been cleaned up.
-   For clarity, this only occurred for inline replacement mode, and was purely an output issue, not a file handling problem.
+   For clarity, this only occurred for inline replacement mode, and was purely a reporting issue, not a file handling problem.
 *  Fixed compatibility issues with ``rest-publish`` command and the splunk-sdk library around data type expectations.
    A big thanks to bayeslearner (`#95 <https://github.com/Kintyre/ksconf/issues/95>`__) for the fix.
    If you run into any issues, try upgrading your version of ``splunk-sdk``.

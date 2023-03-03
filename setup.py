@@ -12,12 +12,13 @@ from ksconf.setup_entrypoints import get_entrypoints_setup
 package_name = "kintyre-splunk-conf" if os.getenv("BUILD_OLD_PACKAGE") == "1" else "ksconf"
 
 if package_name == "ksconf":
-    package_rename_message = "This package was previously called `kintyre-splunk-conf` prior to v0.10.0"
+    package_rename_message = "Earlier version of this project were packaged as " \
+        "[kintyre-splunk-conf](https://pypi.org/project/kintyre-splunk-conf) prior to v0.10.0"
 else:
     package_rename_message = dedent(f"""
     ## Package rename
     This package has been renamed [ksconf](https://pypi.org/project/ksconf/) starting with v0.10.
-    Please switching to this new package using the upgrade steps listed below.
+    Please switch to this new package using the upgrade steps listed below.
 
     ## Suggested upgrade steps:
     ```sh
@@ -27,8 +28,7 @@ else:
 
     ## Who should keep using {package_name}?
     For the time being, you can still install and upgrade the latest release of
-    ksconf using the `{package_name}` package.  Expect annoying startup messages
-    at or near the 0.11 release!
+    ksconf using the `{package_name}` package.
 
     Note that as of the v0.10 release, only Python 3.7 and higher are supported.
     If you need a version of ksconf that works with Python 2.7 & Python 3.6,
@@ -168,7 +168,7 @@ setup(name=package_name,
       extras_require={
           "bash": ["argcomplete"],
           "thirdparty": [
-              "splunk-sdk"
+              "splunk-sdk>=1.7.0"
           ],
       },
       include_package_data=True,
