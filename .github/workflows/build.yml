@@ -154,17 +154,16 @@ jobs:
           python -m pip install -r requirements-doc.txt
           python splunk_app/build.py -vv
           set +x
-          echo "path=$(cat .release_path) >> $GITHUB_OUTPUT"
-          echo "name=$(cat .release_name) >> $GITHUB_OUTPUT"
+          echo "path=$(cat .release_path)" >> $GITHUB_OUTPUT
+          echo "name=$(cat .release_name)" >> $GITHUB_OUTPUT
         env:
           KSCONF_DEBUG: 1
 
-      - name: Create and upload GitHub release
-        uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Create release and upload GitHub artifact
+        uses: softprops/action-gh-release@v1
         if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          title: ${{ github.ref }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: ${{ steps.buildpkg.outputs.path }}
