@@ -7,7 +7,6 @@
 :ref:`ksconf package <ksconf_cmd_package>`,alpha,Create a Splunk app .spl file from a source directory
 :ref:`ksconf promote <ksconf_cmd_promote>`,beta,"Promote .conf settings between layers using either batch or interactive mode.  Frequently this is used to promote conf changes made via the UI (stored in the ``local`` folder) to a version-controlled directory, such as ``default``. "
 :ref:`ksconf rest-export <ksconf_cmd_rest-export>`,beta,Export .conf settings as a curl script to apply to a Splunk instance later (via REST)
-:ref:`ksconf rest-publish <ksconf_cmd_rest-publish>`,alpha,Publish .conf settings to a live Splunk instance via REST
 :ref:`ksconf snapshot <ksconf_cmd_snapshot>`,alpha,Snapshot .conf file directories into a JSON dump format
 :ref:`ksconf sort <ksconf_cmd_sort>`,stable,Sort a Splunk .conf file creating a normalized format appropriate for version control
 :ref:`ksconf unarchive <ksconf_cmd_unarchive>`,beta,Install or upgrade an existing app in a git-friendly and safe way

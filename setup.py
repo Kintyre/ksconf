@@ -9,6 +9,41 @@ from setuptools import setup
 
 from ksconf.setup_entrypoints import get_entrypoints_setup
 
+package_name = "kintyre-splunk-conf" if os.getenv("BUILD_OLD_PACKAGE") == "1" else "ksconf"
+
+if package_name == "ksconf":
+    package_rename_message = "This package was previously called `kintyre-splunk-conf` prior to v0.10.0"
+else:
+    package_rename_message = dedent(f"""
+    ## Package rename
+    This package has been renamed [ksconf](https://pypi.org/project/ksconf/) starting with v0.10.
+    Please switching to this new package using the upgrade steps listed below.
+
+    ## Suggested upgrade steps:
+    ```sh
+    pip uninstall {package_name}
+    pip install ksconf
+    ```
+
+    ## Who should keep using {package_name}?
+    For the time being, you can still install and upgrade the latest release of
+    ksconf using the `{package_name}` package.  Expect annoying startup messages
+    at or near the 0.11 release!
+
+    Note that as of the v0.10 release, only Python 3.7 and higher are supported.
+    If you need a version of ksconf that works with Python 2.7 & Python 3.6,
+    then you should use {package_name} prior to v0.10.  We suggest that everyone
+    else should upgrade to the latest `ksconf` package.
+
+    Side note:  Attempts to make {package_name} simply install the new ksconf
+    package under the covers resulted in an unusable deployment.  So for now
+    we are building two identical packages under different names.  In the next
+    minor release you can expect additional onscreen warnings about the package
+    rename at every invocation.
+
+    ## Moving on ...
+    """)
+
 
 def get_ver():
     # Todo: There has to be a better library/method of doing this junk.
@@ -35,6 +70,7 @@ def get_ver():
         version = {version!r}
         build = {build_no!r}
         vcs_info = {vc_info!r}
+        package_name = {package_name!r}
 
         if __name__ == '__main__':
             print('KSCONF_VERSION="{version}"\\nKSCONF_BUILD="{build_no}"\\nKSCONF_VCS_INFO="{vc_info}"')
@@ -43,7 +79,7 @@ def get_ver():
     return version
 
 
-DESCRIPTION = """\
+DESCRIPTION = f"""\
 # Ksconf Splunk CONFiguration tool
 
 This utility handles common Splunk app maintenance tasks in an installable python package.
@@ -54,10 +90,11 @@ more than one layer of "default" are all supported tasks which are not native to
 Tasks like creating new Splunk apps from your local system while merging the 'local' folder into
 'default' is also supported.
 
+{package_rename_message}
 
 Install with
 
-    pip install ksconf
+    pip install {package_name}
 
 Confirm installation with the following command:
 
@@ -77,7 +114,7 @@ Please see the [Official docs](https://ksconf.readthedocs.io/en/latest/) for mor
 """
 
 
-setup(name="ksconf",
+setup(name=package_name,
       version=get_ver(),
       description="KSCONF: Ksconf Splunk Configuration Tool",
       long_description=DESCRIPTION,

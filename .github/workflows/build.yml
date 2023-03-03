@@ -140,9 +140,10 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          BUILD_OLD_PACKAGE: 1
         run: |
           echo "::group::Run legacy/setup.py"
-          python legacy/setup.py sdist bdist_wheel
+          python setup.py sdist bdist_wheel
           echo "::endgroup::"
 
           twine upload dist/kintyre_splunk_conf-*
