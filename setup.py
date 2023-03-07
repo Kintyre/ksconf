@@ -55,6 +55,21 @@ def get_ver():
     gitout = git_cmd(["describe", "--tags", "--always", "--dirty"])
     version = gitout.stdout.strip()
     version = version.lstrip("v")   # Tags format is v0.0.0
+    del gitout
+
+    # If version is hex string, assume there's an issue (aka running from pre-commit's install)
+    # Pre-commit has it's own shallow clone that doesn't check out that tags we need to build the
+    # package.  See https://github.com/pre-commit/pre-commit/issues/2610
+    # Alternate pre-commit detection ideas: env PRE_COMMIT=1, or "pre-commit" in VIRTUAL_ENV or PATH
+    if re.match(r'[a-f0-9]+', version):
+        # Fallback to valid, but silly version number; This seems better than failing
+        gitout = git_cmd(["fetch", "--tags"])
+        # If new tags found, then try again
+        if gitout.stdout.strip():
+            return get_ver()
+        else:
+            version = "0.0.0"
+
     # replace hash with local version format
     # XXX:  Wow. this needs unittests.  smh
     version = re.sub(r'-(\d+)-g([a-f0-9]+)((?:-dirty)?)', r'.dev\1+\2\3', version)

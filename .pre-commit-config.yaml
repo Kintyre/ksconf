@@ -18,7 +18,7 @@ repos:
       exclude: (\.bat|\.csv)$
 
 - repo: https://github.com/PyCQA/isort.git
-  rev: 5.7.0
+  rev: 5.12.0
   hooks:
     - id: isort
       exclude: (ksconf/ext/)

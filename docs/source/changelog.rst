@@ -21,6 +21,17 @@ Ksconf 0.10
    The :py:class:`~ksconf.command.combine.CombineCmd` now contains only the command line functionality.
 
 
+Ksconf v0.10.1 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **Fix for pre-commit hook installation.**
+  Pre-commit now uses an alternate shallow clone that fails to fetch the actual tag pointed to by ``rev``.
+  The ksconf python packaging process relies on git metadata.
+  This results in an error message ``InvalidVersion: Invalid version: 'cec3615'`` in the pre-commit.log file.
+  See `pre-commit #2610 <https://github.com/pre-commit/pre-commit/issues/2610>`__ for additional background.
+
+
+
 Ksconf v0.10.0 (2023-03-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
