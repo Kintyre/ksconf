@@ -45,7 +45,7 @@ else:
     """)
 
 
-def get_ver():
+def get_ver(_allow_git_fetch=True):
     # Todo: There has to be a better library/method of doing this junk.
     from ksconf.vc.git import git_cmd
     ver_file = os.path.join("ksconf", "_version.py")
@@ -61,13 +61,14 @@ def get_ver():
     # Pre-commit has it's own shallow clone that doesn't check out that tags we need to build the
     # package.  See https://github.com/pre-commit/pre-commit/issues/2610
     # Alternate pre-commit detection ideas: env PRE_COMMIT=1, or "pre-commit" in VIRTUAL_ENV or PATH
-    if re.match(r'[a-f0-9]+', version):
-        # Fallback to valid, but silly version number; This seems better than failing
-        gitout = git_cmd(["fetch", "--tags"])
-        # If new tags found, then try again
-        if gitout.stdout.strip():
-            return get_ver()
+    if re.match(r'^[a-f0-9]+$', version):
+        if _allow_git_fetch:
+            # Fallback to valid, but silly version number; This seems better than failing
+            print(f"Found unlikely version '{version}'.  Fetching git tags")
+            git_cmd(["fetch", "--tags"])
+            return get_ver(_allow_git_fetch=False)
         else:
+            print("Can't determine version from git repository!")
             version = "0.0.0"
 
     # replace hash with local version format
