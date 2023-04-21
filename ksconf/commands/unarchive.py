@@ -19,7 +19,8 @@ from ksconf.archive import (extract_archive, gaf_filter_name_like,
                             gen_arch_file_remapper, sanity_checker)
 from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, default_encoding, parse_conf
-from ksconf.consts import EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG
+from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_FAILED_SAFETY_CHECK,
+                           EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG)
 from ksconf.filter import create_filtered_list
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
@@ -131,8 +132,16 @@ class UnarchiveCmd(KsconfCmd):
         f_hash = file_hash(args.tarball)
         self.stdout.write("Inspecting archive:               {}\n".format(args.tarball))
 
-        # TODO: Grab and share wit ksconf_shared.py in https://github.com/Kintyre/ansible-collection-splunk
+        # TODO: Find a way to share with ksconf_shared.py in https://github.com/Kintyre/ansible-collection-splunk
         new_app_name = args.app_name
+
+        if new_app_name and "/" in new_app_name:
+            if new_app_name.endswith("/"):
+                new_app_name = new_app_name.rstrip("/")
+            else:
+                self.stderr.write(f"Invalid app name.  Please remove '/' from app name {new_app_name}")
+                return EXIT_CODE_BAD_ARGS
+
         # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
         app_name = set()
         app_conf = {}
@@ -172,7 +181,6 @@ class UnarchiveCmd(KsconfCmd):
             if app_name.endswith("-master"):
                 self.stdout.write("Automatically dropping '-master' from the app name.  "
                                   "This is often the result of a github export.\n")
-                # Trick, but it works...
                 new_app_name = app_name[:-7]
             mo = re.search(r"(.*)-\d+\.[\d.-]+$", app_name)
             if mo:
@@ -213,8 +221,13 @@ class UnarchiveCmd(KsconfCmd):
                 is_git = git_is_working_tree(args.dest)
         if is_git:
             vc_msg = "with git support"
-        if new_app_name and new_app_name != app_name:
-            app_name_msg = "{} (renamed from {})".format(new_app_name, app_name)
+
+        if new_app_name:
+            if new_app_name == app_name:
+                # No rename detected (user provided 'app_name' matches the default app name)
+                new_app_name = None
+            else:
+                app_name_msg = "{} (renamed from {})".format(new_app_name, app_name)
 
         def show_pkg_info(conf, label):
             self.stdout.write("{} packaging info:    '{}' by {} (version {})\n".format(
@@ -311,11 +324,12 @@ class UnarchiveCmd(KsconfCmd):
             path_rewrites.append((re.compile(r"^(/?[^/]+)/{}/".format(DEFAULT_DIR)), rep))
             del rep
         if new_app_name:
-            # We do have the "app_name" extracted from our first pass above, but
             regex = re.compile(r'^([^/]+)(?=/)')
             path_rewrites.append((regex, new_app_name))
+            del regex
         if path_rewrites:
             files_iter = gen_arch_file_remapper(files_iter, path_rewrites)
+        del path_rewrites
 
         # Filer out "removed" files; and let us keep some based on a keep-allowlist
         self.stdout.write("Extracting app now...\n")
