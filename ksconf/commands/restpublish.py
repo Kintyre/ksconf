@@ -14,7 +14,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from urllib.parse import urlparse
 
 from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
@@ -22,7 +22,7 @@ from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
                              dedent)
 from ksconf.conf.delta import DiffHeader, compare_stanzas, is_equal, reduce_stanza, show_diff
 from ksconf.conf.meta import MetaData
-from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE, conf_attr_boolean
+from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE, ConfType, conf_attr_boolean
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 
@@ -106,11 +106,11 @@ class RestPublishCmd(KsconfCmd):
             """))
 
     @staticmethod
-    def make_boolean(stanza, attr="disabled"):
+    def make_boolean(stanza: ConfType, attr: str = "disabled"):
         if attr in stanza:
             stanza[attr] = "1" if conf_attr_boolean(stanza[attr]) else "0"
 
-    def connect_splunkd(self, args):
+    def connect_splunkd(self, args: Namespace):
         up = urlparse(args.url)
         # Take username/password form URL, if encoded there; otherwise use defaults from argparse
         if args.session_key:
@@ -140,12 +140,11 @@ class RestPublishCmd(KsconfCmd):
                              f"{login_fail_info}:  {e}\n")
             raise e
 
-    def handle_conf_file(self, args, conf_proxy):
+    def handle_conf_file(self, args: Namespace, conf_proxy: ConfFileProxy):
         if args.conf_type:
             conf_type = args.conf_type
         else:
             conf_type = os.path.basename(conf_proxy.name).replace(".conf", "")
-
 
         try:
             config_file = self._service.confs[conf_type]
@@ -191,7 +190,10 @@ class RestPublishCmd(KsconfCmd):
             if "acl_delta" in info:
                 show_diff(self.stdout, info["acl_delta"])
 
-    def publish_conf(self, stanza_name, stanza_data, config_file):
+    def publish_conf(self,
+                     stanza_name: str,
+                     stanza_data: ConfType,
+                     config_file):
         if self.meta:
             metadata = self.meta.get(config_file.name, stanza_name)
             owner = metadata.get("owner", None)
@@ -324,7 +326,10 @@ class RestPublishCmd(KsconfCmd):
 
         return (action, res)
 
-    def delete_conf(self, stanza_name, stanza_data, config_file):
+    def delete_conf(self,
+                    stanza_name: str,
+                    stanza_data: ConfType,
+                    config_file):
         res = {}
         if stanza_name in config_file:
             stz = config_file[stanza_name]
@@ -346,7 +351,7 @@ class RestPublishCmd(KsconfCmd):
             res["delta"] = []
             return ("nochange", res)
 
-    def run(self, args):
+    def run(self, args: Namespace):
         if args.insecure:
             raise NotImplementedError("Need to implement -k feature")
 

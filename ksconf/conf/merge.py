@@ -46,7 +46,7 @@ def _merge_conf_dicts(base, new_layer):
     # Nothing to return, base is updated in-place
 
 
-def merge_conf_dicts(*dicts):
+def merge_conf_dicts(*dicts: ConfType) -> ConfType:
     result = {}
     for d in dicts:
         d = deepcopy(d)
