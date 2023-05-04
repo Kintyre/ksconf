@@ -212,7 +212,7 @@ ksconf diff
       --format {diff,json}, -f {diff,json}
                             Output file format to produce. 'diff' the the classic
                             format used by default. 'json' is helpful when trying
-                            to review changes programatically .
+                            to review changes programmatically.
 
 
 

@@ -23,7 +23,7 @@ def _import_etree():
 
 
 class FileReadlinesCache:
-    """ Silly class as a hacky workaround for CDATA detection... """
+    """ Silly workaround for CDATA detection... """
 
     def __init__(self):
         self.cache = {}

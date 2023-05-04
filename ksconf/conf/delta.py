@@ -38,15 +38,6 @@ DIFF_OP_REPLACE = DiffVerb.REPLACE
 DIFF_OP_EQUAL = DiffVerb.EQUAL
 
 
-'''
-from typing import NamedTuple
-DiffOp = NamedTuple("DiffOp", (["tag", DiffVerb], ["location", Union[DiffGlobal, DiffStanza, DiffStzKey]], ["a", Union[ConfType, StanzaType, str]], ["b", Union[ConfType, StanzaType, str]]))
-DiffGlobal = NamedTuple("DiffGlobal", (["type", str],))
-DiffStanza = NamedTuple("DiffStanza", (["type", str], ["stanza", str]))
-DiffStzKey = NamedTuple("DiffStzKey", (["type", str], ["stanza", str], ["key", str]))
-'''
-
-
 class DiffLevel(Enum):
     GLOBAL = "global"
     STANZA = "stanza"
@@ -174,7 +165,7 @@ def compare_cfgs(a: ConfType, b: ConfType,
               in the standard Python module.
 
     This function returns a sequence of 5 element tuples describing the
-    transformation based on the detail level specified in `replace_level`.
+    transformation based on the detail level specified in ``replace_level``.
 
     Each :py:class:`DiffOp` (named tuple) takes the form:
 
@@ -202,7 +193,7 @@ def compare_cfgs(a: ConfType, b: ConfType,
     ====================== ========== ==============================================================
 
     .. versionchanged:: v0.8.8
-        The ``preserve_empty`` argument was origionally introduced to preserve backwards
+        The ``preserve_empty`` argument was originally introduced to preserve backwards
         compatibility, but it ended up introducing new bugs.
         Additionally, no use cases were found where better to automatically discarding empty stanzas.
 
@@ -252,7 +243,7 @@ def compare_cfgs(a: ConfType, b: ConfType,
 
 
 def summarize_cfg_diffs(delta: List[DiffOp], stream: TextIO):
-    """ Summarize a delta into a human-readable format.   The input `delta` is in the format
+    """ Summarize a delta into a human-readable format.   The input ``delta`` is in the format
     produced by the compare_cfgs() function.
     """
     stanza_stats = defaultdict(set)

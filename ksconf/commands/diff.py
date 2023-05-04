@@ -50,7 +50,7 @@ class DiffCmd(KsconfCmd):
         parser.add_argument("--format", "-f",
                             choices=["diff", "json"], default="diff",
                             help="Output file format to produce.  'diff' the the classic format used by default. "
-                            "'json' is helpful when trying to review changes programatically .")
+                            "'json' is helpful when trying to review changes programmatically.")
 
     def run(self, args):
         ''' Compare two configuration files. '''

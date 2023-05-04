@@ -1,15 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 from collections import Counter, namedtuple
+from shutil import which
 from subprocess import PIPE, Popen, call, list2cmdline
 
 from ksconf.util import _xargs, memoize
-
-try:
-    from shutil import which
-except ImportError:
-    from backports.shutil_which import which
-
 
 GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
@@ -45,7 +40,7 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
                 p.returncode, list2cmdline(args + chunk)))
 
 
-# Shave time off of unit testing; or anyting that does CLI calls from the API
+# Shave time off of unit testing; or anything that does CLI calls from the API
 @memoize
 def git_version():
     git_path = which(GIT_BIN)

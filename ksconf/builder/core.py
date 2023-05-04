@@ -4,11 +4,11 @@
 
 Cache build requirements:
 
-    * Caching mechanism should inspet 'inputs' (collect file hashes) to determine if any content has
+    * Caching mechanism should inspect 'inputs' (collect file hashes) to determine if any content has
       changed.  If input varies, then command should be re-run.
     * Command (decorated function) should be generally unaware of all other details of build process,
       and it should *ONLY* be able to see files listed in "inputs"
-    * Allow caching to be fully disabled (run in-place with no dir proxying) for CI/CD
+    * Allow caching to be fully disabled (run in-place with no dir proxy) for CI/CD
     * Cache should have allow a timeout parameter
 
 

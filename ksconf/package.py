@@ -77,7 +77,7 @@ class AppPackager:
     def expand_new_only(self, value):
         """ Expand a variable but return False if no substitution occurred
 
-        :param str value:  String that main contain ``{{variable}}`` substitution.
+        :param str value:  String that may contain ``{{variable}}`` substitution.
         :return:  Expanded value if variables were expanded, else False
         :rtype: str
         """
@@ -231,7 +231,7 @@ class AppPackager:
     def __enter__(self):
         self.build_dir = tempfile.mkdtemp("-ksconf-package-build")
         if self.app_name == "." or "{{" in self.app_name:
-            # Use a placehold app name, specifically as "." causes build_dir == app_dir
+            # Use a placeholder app name, otherwise build_dir == app_dir
             self.app_dir = os.path.join(self.build_dir, "app")
         else:
             self.app_dir = os.path.join(self.build_dir, self.app_name)

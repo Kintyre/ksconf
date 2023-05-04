@@ -27,7 +27,7 @@ class LayerCombinerException(Exception):
 
 class LayerCombiner:
     """
-    Class to rescursively combine layers (directories) into a single rendered output target directory.
+    Class to recursively combine layers (directories) into a single rendered output target directory.
     This is heavily used by the ``ksconf combine`` command as well as by the ``package`` command.
 
 
@@ -45,7 +45,7 @@ class LayerCombiner:
         lc.combine()                    Entry point
             -> prepare()                Directory, layer prep
                 -> prepare_target_dir() Make dir; subclass handles marker here (combine CLI)
-            -> pre_combine_inventory()  Hook for pre-processing (or alterting) the set of files to combine
+            -> pre_combine_inventory()  Hook for pre-processing (or alerting) the set of files to combine
             -> combine_files()          Main worker function
             -> post_combine()           Optional, cleanup leftover files
     """
@@ -72,7 +72,7 @@ class LayerCombiner:
         self.layer_names_all = set()
         self.layer_names_used = set()
 
-        # Not a great long-term design, but good enough for initial converstion from command-based desgin
+        # Not a great long-term design, but good enough for initial conversion from command-based design
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
