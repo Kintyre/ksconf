@@ -95,12 +95,11 @@ class CliXmlFormatTest(unittest.TestCase):
         self.twd = TestWorkDir()
 
     def cdata_regex(self, content=".*?", escape_content=False):
-        # XXX PY36+: Switch to f-string, drop F841
-        prefix = re.escape("<![CDATA[")  # noqa: F841
-        suffix = re.escape("]]>")  # noqa: F841
+        prefix = re.escape("<![CDATA[")
+        suffix = re.escape("]]>")
         if escape_content:
             content = re.escape(content)
-        return r"(?ms){prefix}.*?{content}.*?{suffix}".format(**vars())
+        return f"(?ms){prefix}.*?{content}.*?{suffix}"
 
     @unittest.skipIf(PYPY, "Skipping PyPy for XML exceptions")
     def test_broken_xml(self):

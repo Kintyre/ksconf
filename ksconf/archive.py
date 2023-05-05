@@ -1,17 +1,23 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-from collections import namedtuple
 from fnmatch import fnmatch
+from typing import Iterable, NamedTuple, Sequence, Tuple, Union
 
 from ksconf.consts import RegexType
 
-GenArchFile = namedtuple("GenericArchiveEntry", ("path", "mode", "size", "payload"))
+
+class GenArchFile(NamedTuple):
+    path: str
+    mode: int
+    size: int
+    payload: Union[bytes, None]
 
 
-def extract_archive(archive_name, extract_filter=None):
+def extract_archive(archive_name, extract_filter: callable = None) -> Iterable[GenArchFile]:
     if extract_filter is not None and not callable(extract_filter):  # pragma: no cover
         raise ValueError("extract_filter must be a callable!")
+    archive_name = os.fspath(archive_name)
     if archive_name.lower().endswith(".zip"):
         return _extract_zip(archive_name, extract_filter)
     else:
@@ -63,14 +69,16 @@ def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
             yield GenArchFile(zi.filename, mode, zi.file_size, payload)
 
 
-def sanity_checker(iterable):
+def sanity_checker(iterable: Iterable[GenArchFile]) -> Iterable[GenArchFile]:
     for gaf in iterable:
         if gaf.path.startswith("/") or ".." in gaf.path:
             raise ValueError(f"Bad path found in archive:  {gaf.path}")
         yield gaf
 
 
-def gen_arch_file_remapper(iterable, mapping):
+def gen_arch_file_remapper(iterable: Iterable[GenArchFile],
+                           mapping: Sequence[Tuple[str, str]]
+                           ) -> Iterable[GenArchFile]:
     # Mapping is assumed to be a sequence of (find,replace) strings; find can be compiled regex
     for gaf in iterable:
         path = gaf.path

@@ -159,7 +159,7 @@ class UnarchiveCmd(KsconfCmd):
             elif gaf_relpath.startswith("local" + os.path.sep) or \
                     gaf_relpath.endswith("local.meta"):
                 local_files.add(gaf_relpath)
-            app_name.add(gaf.path.split("/", 1)[0])
+            app_name.add(gaf_app)
             del gaf_app, gaf_relpath
         if len(app_name) > 1:
             self.stderr.write("The 'unarchive' command only supports extracting a single splunk"

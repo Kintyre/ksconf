@@ -4,15 +4,10 @@ import os
 import re
 from collections import defaultdict
 from fnmatch import fnmatch
+from os import PathLike
 from typing import Type
 
 from ksconf.util.file import relwalk
-
-try:
-    # PY3 with no-op fallback for older versions
-    from os import PathLike
-except ImportError:
-    PathLike = object
 
 """
 

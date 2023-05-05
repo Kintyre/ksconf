@@ -102,8 +102,6 @@ class _KsconfCli():
         return stream.read()
 
     def __call__(self, *args):
-        # In later versions of Python (3.4), something like this could be considered:
-        # from contextlib import redirect_stdout
         self._last_args = args
         _stdout, _stderr = (sys.stdout, sys.stderr)
         try:
@@ -113,10 +111,7 @@ class _KsconfCli():
             try:
                 rc = cli(args, _unittest=True)
             except SystemExit as e:  # pragma: no cover
-                if hasattr(e, "code"):  # PY3
-                    rc = e.code
-                else:
-                    rc = e.message
+                rc = e.code
         finally:
             # This next step MUST be done!
             (sys.stdout, sys.stderr) = _stdout, _stderr
