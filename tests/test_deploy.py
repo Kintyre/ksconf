@@ -39,7 +39,7 @@ class ManifestTestCase(unittest.TestCase):
         manifest = mm.build_manifest_from_archive(tgz)
         self.assertEqual(len(manifest.files), 15)
 
-        mm.save_manifest_from_archive(tgz.with_suffix(".cache"), manifest)
+        mm.save_manifest_from_archive(tgz, tgz.with_suffix(".cache"), manifest)
         print(manifest.files)
 
     def test_load_metadata(self):
@@ -50,13 +50,16 @@ class ManifestTestCase(unittest.TestCase):
         manifest = mm.manifest_from_archive(tgz)
         self.assertEqual(len(manifest.files), 15)
         # Ensure hash value doesn't change without knowing
-        self.assertEqual(manifest.hash, "964240d4c07268a6eac6776bec265dfeab30f8704a23ecdd542709a8796e10b0")
+        self.assertEqual(manifest.hash, "d20973be2fd1d8828ee978e2a3fb7bd96e3ced06e234289e789b25a0462e9003")
 
         # Ensure that cache file was created (lives along side the tarball)
-        self.assertEqual(len(list(tgz.parent.glob("*.cache"))), 1)
+        cache_files = list(tgz.parent.glob("*.cache"))
+        self.assertEqual(len(cache_files), 1)
 
-        # Ensure that second load
-        manifest2 = mm.manifest_from_archive(tgz)
+        # Explicitly load manifest from cache file
+        manifest2 = mm.load_manifest_from_archive_cache(tgz, cache_files[0])
+
+        self.assertEqual(manifest, manifest2)
 
 
 if __name__ == '__main__':  # pragma: no cover
