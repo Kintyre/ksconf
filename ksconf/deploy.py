@@ -11,7 +11,9 @@ from dataclasses import asdict, dataclass, field
 from os import fspath
 from pathlib import Path
 
+from ksconf.app import AppInfo
 from ksconf.archive import GenArchFile, extract_archive
+from ksconf.conf.parser import PARSECONF_LOOSE, ConfType, conf_attr_boolean, parse_conf
 from ksconf.util.file import file_hash
 
 if sys.version_info < (3, 8):

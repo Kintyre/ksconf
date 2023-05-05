@@ -8,7 +8,7 @@ import unittest
 from io import open
 from pathlib import Path
 
-# Allow interactive execution from CLI,  cd tests; ./test_meta.py
+# Allow interactive execution from CLI,  cd tests; ./test_deploy.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

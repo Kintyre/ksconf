@@ -40,7 +40,7 @@ def _debug_file(flag, fn):  # pragma: no cover
     del flag, hash, length
 
 
-def static_data(path):
+def static_data(path: str) -> str:
     """ Get paths to files under the 'tests/data/*' location """
     # Assume "/" for path separation for simplicity; but ultimately OS independent
     parts = path.split("/")
