@@ -12,7 +12,8 @@ from pathlib import Path
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.deploy import ManifestManager
+from ksconf.deploy import (AppManifest, ManifestManager, StoredArchiveManifest,
+                           create_manifest_from_archive)
 from tests.cli_helper import TestWorkDir, static_data
 
 """
@@ -33,13 +34,11 @@ class ManifestTestCase(unittest.TestCase):
 
     def test_build_metadata(self):
         tgz = self.twd.copy_static("apps/modsecurity-add-on-for-splunk_11.tgz", "modsecurity-add-on-for-splunk_11.tgz")
-
-        mm = ManifestManager()
         tgz = Path(tgz)
-        manifest = mm.build_manifest_from_archive(tgz)
+        manifest = AppManifest.from_archive(tgz)
         self.assertEqual(len(manifest.files), 15)
 
-        mm.save_manifest_from_archive(tgz, tgz.with_suffix(".cache"), manifest)
+        create_manifest_from_archive(tgz, tgz.with_suffix(".cache"), manifest)
         print(manifest.files)
 
     def test_load_metadata(self):
@@ -53,11 +52,11 @@ class ManifestTestCase(unittest.TestCase):
         self.assertEqual(manifest.hash, "d20973be2fd1d8828ee978e2a3fb7bd96e3ced06e234289e789b25a0462e9003")
 
         # Ensure that cache file was created (lives along side the tarball)
-        cache_files = list(tgz.parent.glob("*.cache"))
+        cache_files = list(tgz.parent.glob("*.manifest"))
         self.assertEqual(len(cache_files), 1)
 
         # Explicitly load manifest from cache file
-        manifest2 = mm.load_manifest_from_archive_cache(tgz, cache_files[0])
+        manifest2 = StoredArchiveManifest.from_manifest(tgz, cache_files[0]).manifest
 
         self.assertEqual(manifest, manifest2)
 

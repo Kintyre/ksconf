@@ -25,20 +25,15 @@ else:
 MANIFEST_HASH = "sha256"
 
 
-def _get_json(path) -> dict:
-    with open(path) as fp:
-        return json.load(fp)
-
-
 class AppManifestContentError(Exception):
     pass
 
 
-class AppManifestCacheError(Exception):
+class AppManifestStorageError(Exception):
     pass
 
 
-class AppManifestCacheInvalid(AppManifestCacheError):
+class AppManifestStorageInvalid(AppManifestStorageError):
     pass
 
 
@@ -131,11 +126,11 @@ class AppManifest:
 
 
 @dataclass
-class CachedArchiveManifest:
-    # TODO:  Rename the 'cache' as a stored manifest.... Cache is the wrong idea here.
-
+class StoredArchiveManifest:
     """
-    Cached manifest for a tarball.  Typically the cache file lives along side the archive.
+    Stored manifest for a tarball.  Typically the manifest file lives in the
+    same directory as the archive.  Details around the naming, storage, and
+    clean up of these persistent manifest files are managed by the caller.
     """
     archive: Path
     size: int
@@ -152,12 +147,12 @@ class CachedArchiveManifest:
                 try:
                     self._manifest = AppManifest.from_dict(self._manifest_dict)
                 except KeyError as e:
-                    raise AppManifestCacheError(f"Error loading manifest {e}")
+                    raise AppManifestStorageError(f"Error loading manifest {e}")
 
         return self._manifest
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CachedArchiveManifest":
+    def from_dict(cls, data: dict) -> "StoredArchiveManifest":
         o = cls(Path(data["archive"]), data["size"], data["mtime"], data["hash"])
         o._manifest_dict = data["manifest"]
         return o
@@ -171,11 +166,22 @@ class CachedArchiveManifest:
             "manifest": self.manifest.to_dict(),
         }
 
+    def write_json_manifest(self, manifest_file: Path):
+        data = self.to_dict()
+        with open(manifest_file, "w") as fp:
+            json.dump(data, fp)
+
+    @classmethod
+    def read_json_manifest(cls, manifest_file: Path):
+        with open(manifest_file) as fp:
+            data = json.load(fp)
+        return cls.from_dict(data)
+
     @classmethod
     def from_file(cls,
                   archive: Path,
                   manifest: AppManifest
-                  ) -> "CachedArchiveManifest":
+                  ) -> "StoredArchiveManifest":
         """
         Construct instance from a tarball.
         """
@@ -187,37 +193,44 @@ class CachedArchiveManifest:
         return o
 
     @classmethod
-    def from_cache(cls,
-                   archive: Path,
-                   cache_file: Path) -> "CachedArchiveManifest":
+    def from_manifest(cls,
+                      archive: Path,
+                      stored_file: Path) -> "StoredArchiveManifest":
         """
         Attempt to load as stored manifest from archive & stored manifest paths.
         If the archive has changed since the manifest was stored, then an
         exception will be raised indicating the reason for invalidation.
         """
-        if not cache_file:
-            raise AppManifestCacheInvalid("No cache found")
+        if not stored_file:
+            raise AppManifestStorageInvalid("No stored manifest found")
 
         try:
-            data = _get_json(cache_file)
-            cache = cls.from_dict(data)
+            stored = cls.read_json_manifest(stored_file)
 
-            if cache.archive != archive:
-                raise AppManifestCacheInvalid(f"Archive name differs: {cache.archive!r} != {archive!r}")
+            if stored.archive != archive:
+                raise AppManifestStorageInvalid(f"Archive name differs: {stored.archive!r} != {archive!r}")
             stat = archive.stat()
-            if cache.size != stat.st_size:
-                raise AppManifestCacheInvalid(f"Archive file size differs:  {cache.size} != {stat.st_size}")
-            if abs(cache.mtime - stat.st_mtime) > 0.1:
-                raise AppManifestCacheInvalid(f"Archive file mtime differs: {cache.mtime} vs {stat.st_mtime}")
+            if stored.size != stat.st_size:
+                raise AppManifestStorageInvalid(f"Archive file size differs:  {stored.size} != {stat.st_size}")
+            if abs(stored.mtime - stat.st_mtime) > 0.1:
+                raise AppManifestStorageInvalid(f"Archive file mtime differs: {stored.mtime} vs {stat.st_mtime}")
         except (ValueError, KeyError) as e:
-            raise AppManifestCacheError(f"Unable to load cache due to {e}")
-        return cache
+            raise AppManifestStorageError(f"Unable to load stored manifest due to {e}")
+        return stored
+
+
+def create_manifest_from_archive(archive_file: Path,
+                                 manifest_file: Path,
+                                 manifest: AppManifest):
+    sam = StoredArchiveManifest.from_file(archive_file, manifest)
+    sam.write_json_manifest(manifest_file)
+    return sam
 
 
 class ManifestManager:
     @staticmethod
-    def find_archive_cache(archive: Path):
-        c = archive.with_name(f".{archive.name}.cache")
+    def get_stored_manifest_name(archive: Path):
+        c = archive.with_name(f".{archive.name}.manifest")
         return c
         '''
         if c.exists():
@@ -225,48 +238,27 @@ class ManifestManager:
         return None
         '''
 
-    @staticmethod
-    def load_manifest_from_archive_cache(archive: Path,
-                                         cache_file: Path
-                                         ) -> AppManifest:
-        """ Return manifest, reason for cache invalidation. """
-        cache = CachedArchiveManifest.from_cache(archive, cache_file)
-        return cache.manifest
-
-    @staticmethod
-    def save_manifest_from_archive(archive_file: Path,
-                                   cache_file: Path,
-                                   manifest: AppManifest):
-
-        manifest_archive = CachedArchiveManifest.from_file(archive_file, manifest)
-        data = manifest_archive.to_dict()
-        with open(cache_file, "w") as fp:
-            json.dump(data, fp)
-
-    @classmethod
-    def build_manifest_from_archive(cls, archive: Path) -> AppManifest:
-        return AppManifest.from_archive(archive)
-
     def manifest_from_archive(self,
                               archive: Path,
-                              read_cache=True,
-                              write_cache=True) -> AppManifest:
+                              read_manifest=True,
+                              write_manifest=True) -> AppManifest:
         manifest = None
 
-        if read_cache or write_cache:
-            cache_file = self.find_archive_cache(archive)
+        if read_manifest or write_manifest:
+            manifest_file = self.get_stored_manifest_name(archive)
 
-        if read_cache and cache_file.exists():
+        if read_manifest and manifest_file.exists():
             try:
-                manifest = self.load_manifest_from_archive_cache(archive, cache_file)
-            except AppManifestCacheError as e:
-                print(f"WARN:   loading existing cache failed:  {e}")
+                sam = StoredArchiveManifest.from_manifest(archive, manifest_file)
+                manifest = sam.manifest
+            except AppManifestStorageError as e:
+                print(f"WARN:   loading stored manifest failed:  {e}")
 
         if manifest is None:
             print(f"Calculating manifest for {archive}")
-            manifest = self.build_manifest_from_archive(archive)
+            manifest = AppManifest.from_archive(archive)
 
-            if write_cache:
-                self.save_manifest_from_archive(archive, cache_file, manifest)
+            if write_manifest:
+                create_manifest_from_archive(archive, manifest_file, manifest)
 
         return manifest
