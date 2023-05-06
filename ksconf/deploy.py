@@ -94,12 +94,6 @@ class AppManifest:
         }
         return d
 
-    @staticmethod
-    def filter_archive(gaf: GenArchFile):
-        if Path(gaf.path).name in (".ksconf_sideload.json"):
-            return False
-        return True
-
     @classmethod
     def from_archive(cls, archive: Path) -> "AppManifest":
         manifest = cls()
@@ -112,7 +106,7 @@ class AppManifest:
             h.update(content)
             return h.hexdigest()
 
-        for gaf in extract_archive(archive, cls.filter_archive):
+        for gaf in extract_archive(archive):
             app, relpath = gaf.path.split("/", 1)
             app_names.add(app)
             hash = gethash(gaf.payload)
