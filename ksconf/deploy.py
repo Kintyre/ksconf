@@ -99,9 +99,41 @@ class AppManifest:
         }
         return d
 
+    @staticmethod
+    def filter_archive(gaf: GenArchFile):
+        if Path(gaf.path).name in (".ksconf_sideload.json"):
+            return False
+        return True
+
+    @classmethod
+    def from_archive(cls, archive: Path) -> "AppManifest":
+        manifest = cls()
+        app_names = set()
+        h_ = hashlib.new(MANIFEST_HASH)
+
+        def gethash(content):
+            # h = hashlib.new(MANIFEST_HASH)
+            h = h_.copy()
+            h.update(content)
+            return h.hexdigest()
+
+        for gaf in extract_archive(archive, cls.filter_archive):
+            app, relpath = gaf.path.split("/", 1)
+            app_names.add(app)
+            hash = gethash(gaf.payload)
+            f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
+            manifest.files.append(f)
+        if len(app_names) > 1:
+            raise AppManifestContentError("Found multiple top-level app names!  "
+                                          f"Archive {archive} contains apps {', '.join(app_names)}")
+        manifest.name = app_names.pop()
+        return manifest
+
 
 @dataclass
 class CachedArchiveManifest:
+    # TODO:  Rename the 'cache' as a stored manifest.... Cache is the wrong idea here.
+
     """
     Cached manifest for a tarball.  Typically the cache file lives along side the archive.
     """
@@ -141,25 +173,48 @@ class CachedArchiveManifest:
 
     @classmethod
     def from_file(cls,
-                  path: Path,
+                  archive: Path,
                   manifest: AppManifest
                   ) -> "CachedArchiveManifest":
-        stat = path.stat()
+        """
+        Construct instance from a tarball.
+        """
+        stat = archive.stat()
 
-        hash = file_hash(path, MANIFEST_HASH)
-        o = cls(path, stat.st_size, stat.st_mtime, hash)
+        hash = file_hash(archive, MANIFEST_HASH)
+        o = cls(archive, stat.st_size, stat.st_mtime, hash)
         o._manifest = manifest
         return o
 
+    @classmethod
+    def from_cache(cls,
+                   archive: Path,
+                   cache_file: Path) -> "CachedArchiveManifest":
+        """
+        Attempt to load as stored manifest from archive & stored manifest paths.
+        If the archive has changed since the manifest was stored, then an
+        exception will be raised indicating the reason for invalidation.
+        """
+        if not cache_file:
+            raise AppManifestCacheInvalid("No cache found")
+
+        try:
+            data = _get_json(cache_file)
+            cache = cls.from_dict(data)
+
+            if cache.archive != archive:
+                raise AppManifestCacheInvalid(f"Archive name differs: {cache.archive!r} != {archive!r}")
+            stat = archive.stat()
+            if cache.size != stat.st_size:
+                raise AppManifestCacheInvalid(f"Archive file size differs:  {cache.size} != {stat.st_size}")
+            if abs(cache.mtime - stat.st_mtime) > 0.1:
+                raise AppManifestCacheInvalid(f"Archive file mtime differs: {cache.mtime} vs {stat.st_mtime}")
+        except (ValueError, KeyError) as e:
+            raise AppManifestCacheError(f"Unable to load cache due to {e}")
+        return cache
+
 
 class ManifestManager:
-
-    @staticmethod
-    def filter_archive(gaf: GenArchFile):
-        if Path(gaf.path).name in (".ksconf_sideload.json"):
-            return False
-        return True
-
     @staticmethod
     def find_archive_cache(archive: Path):
         c = archive.with_name(f".{archive.name}.cache")
@@ -175,22 +230,7 @@ class ManifestManager:
                                          cache_file: Path
                                          ) -> AppManifest:
         """ Return manifest, reason for cache invalidation. """
-        if not cache_file:
-            raise AppManifestCacheInvalid("No cache found")
-
-        try:
-            data = _get_json(cache_file)
-            cache = CachedArchiveManifest.from_dict(data)
-
-            if cache.archive != archive:
-                raise AppManifestCacheInvalid(f"Archive name differs: {cache.archive!r} != {archive!r}")
-            stat = archive.stat()
-            if cache.size != stat.st_size:
-                raise AppManifestCacheInvalid(f"Archive file size differs:  {cache.size} != {stat.st_size}")
-            if abs(cache.mtime - stat.st_mtime) > 0.1:
-                raise AppManifestCacheInvalid(f"Archive file mtime differs: {cache.mtime} vs {stat.st_mtime}")
-        except (ValueError, KeyError) as e:
-            raise AppManifestCacheError(f"Unable to load cache due to {e}")
+        cache = CachedArchiveManifest.from_cache(archive, cache_file)
         return cache.manifest
 
     @staticmethod
@@ -205,27 +245,7 @@ class ManifestManager:
 
     @classmethod
     def build_manifest_from_archive(cls, archive: Path) -> AppManifest:
-        manifest = AppManifest()
-        app_names = set()
-        h_ = hashlib.new(MANIFEST_HASH)
-
-        def gethash(content):
-            # h = hashlib.new(MANIFEST_HASH)
-            h = h_.copy()
-            h.update(content)
-            return h.hexdigest()
-
-        for gaf in extract_archive(archive, cls.filter_archive):
-            app, relpath = gaf.path.split("/", 1)
-            app_names.add(app)
-            hash = gethash(gaf.payload)
-            f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
-            manifest.files.append(f)
-        if len(app_names) > 1:
-            raise AppManifestContentError("Found multiple top-level app names!  "
-                                          f"Archive {archive} contains apps {', '.join(app_names)}")
-        manifest.name = app_names.pop()
-        return manifest
+        return AppManifest.from_archive(archive)
 
     def manifest_from_archive(self,
                               archive: Path,
