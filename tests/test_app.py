@@ -12,7 +12,7 @@ from pathlib import Path
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.app import AppArchiveError, AppInfo
+from ksconf.app import AppArchiveError, AppInfo, AppManifest
 from tests.cli_helper import TestWorkDir, static_data
 
 """

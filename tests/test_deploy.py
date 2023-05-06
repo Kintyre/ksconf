@@ -5,7 +5,6 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 import unittest
-from io import open
 from pathlib import Path
 
 # Allow interactive execution from CLI,  cd tests; ./test_deploy.py

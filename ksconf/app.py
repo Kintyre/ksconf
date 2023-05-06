@@ -3,20 +3,32 @@
 """
 from __future__ import absolute_import, annotations, unicode_literals
 
+import hashlib
+import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from io import StringIO
 from os import fspath
 from pathlib import Path
-from typing import ClassVar, List, Tuple
+from typing import ClassVar, Tuple
 
 from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
                                 default_encoding, parse_conf)
+from ksconf.consts import MANIFEST_HASH
+
+if sys.version_info < (3, 8):
+    from typing import List
+else:
+    List = list
 
 
 class AppArchiveError(Exception):
+    pass
+
+
+class AppManifestContentError(Exception):
     pass
 
 
@@ -95,7 +107,6 @@ class AppInfo:
             try:
                 return convert_function(value)
             except ValueError:
-                raise
                 # Best effort.  pass the buck to the consumer
                 return value
 
@@ -157,3 +168,85 @@ class AppInfo:
         conf = merge_conf_dicts(app_confs["default"], app_confs["local"])
         app_name = app_names.pop()
         return cls.from_conf(app_name, conf)
+
+
+@dataclass(order=True)
+class AppManifestFile:
+    path: str
+    mode: int
+    size: int
+    hash: str = None
+
+    def content_match(self, other):
+        return self.hash == other.hash
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AppManifestFile":
+        return cls(data["path"], data["mode"], data["size"], data["hash"])
+
+
+@dataclass
+class AppManifest:
+    name: str = None
+    hash_algorithm: str = field(default=MANIFEST_HASH)
+    _hash: str = field(default=None, init=False)
+    files: List[AppManifestFile] = field(default_factory=list)
+
+    @property
+    def hash(self):
+        if self._hash is None:
+            self.files.sort()
+            self._hash = self._calculate_hash()
+        return self._hash
+
+    def _calculate_hash(self) -> str:
+        """ Build unique hash based on file content """
+        parts = []
+        for f in sorted(self.files):
+            parts.append(f"{f.hash} 0{f.mode:o} {f.path}")
+        parts.insert(0, self.name)
+        payload = "\n".join(parts)
+        print(f"DEBUG:   {payload}")
+        h = hashlib.new(self.hash_algorithm)
+        h.update(payload.encode("utf-8"))
+        return h.hexdigest()
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AppManifest":
+        files = [AppManifestFile.from_dict(f) for f in data["files"]]
+        o = cls(data["name"], hash_algorithm=data["hash_algorithm"], files=files)
+        o._hash = data["hash"]
+        return o
+
+    def to_dict(self):
+        d = {
+            "name": self.name,
+            "hash_algorithm": self.hash_algorithm,
+            "hash": self.hash,
+            "files": [asdict(f) for f in self.files]
+        }
+        return d
+
+    @classmethod
+    def from_archive(cls, archive: Path) -> "AppManifest":
+        manifest = cls()
+        app_names = set()
+        h_ = hashlib.new(MANIFEST_HASH)
+
+        def gethash(content):
+            # h = hashlib.new(MANIFEST_HASH)
+            h = h_.copy()
+            h.update(content)
+            return h.hexdigest()
+
+        for gaf in extract_archive(archive):
+            app, relpath = gaf.path.split("/", 1)
+            app_names.add(app)
+            hash = gethash(gaf.payload)
+            f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
+            manifest.files.append(f)
+        if len(app_names) > 1:
+            raise AppManifestContentError("Found multiple top-level app names!  "
+                                          f"Archive {archive} contains apps {', '.join(app_names)}")
+        manifest.name = app_names.pop()
+        return manifest

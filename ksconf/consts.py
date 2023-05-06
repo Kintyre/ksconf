@@ -14,6 +14,9 @@ class SmartEnum(Enum):
         return self.value
 
 
+MANIFEST_HASH = "sha256"
+
+
 # Legacy names
 SMART_CREATE = SmartEnum.CREATE
 SMART_UPDATE = SmartEnum.UPDATE
