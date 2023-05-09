@@ -14,6 +14,13 @@ class SmartEnum(Enum):
         return self.value
 
 
+class _UNSET:
+    pass
+
+
+UNSET = _UNSET()
+
+
 MANIFEST_HASH = "sha256"
 
 

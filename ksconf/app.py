@@ -10,13 +10,13 @@ from dataclasses import asdict, dataclass, field
 from io import StringIO
 from os import fspath
 from pathlib import Path
-from typing import ClassVar, Tuple
+from typing import ClassVar, Iterable, Tuple
 
 from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
                                 default_encoding, parse_conf)
-from ksconf.consts import MANIFEST_HASH
+from ksconf.consts import MANIFEST_HASH, UNSET
 
 if sys.version_info < (3, 8):
     from typing import List
@@ -189,13 +189,12 @@ class AppManifestFile:
 class AppManifest:
     name: str = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
-    _hash: str = field(default=None, init=False)
+    _hash: str = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
 
     @property
     def hash(self):
-        if self._hash is None:
-            self.files.sort()
+        if self._hash is UNSET:
             self._hash = self._calculate_hash()
         return self._hash
 
@@ -203,10 +202,12 @@ class AppManifest:
         """ Build unique hash based on file content """
         parts = []
         for f in sorted(self.files):
+            # If one or more hash is None, then refuse to calculate hash
+            if f.hash is None:
+                return None
             parts.append(f"{f.hash} 0{f.mode:o} {f.path}")
         parts.insert(0, self.name)
         payload = "\n".join(parts)
-        print(f"DEBUG:   {payload}")
         h = hashlib.new(self.hash_algorithm)
         h.update(payload.encode("utf-8"))
         return h.hexdigest()
@@ -228,18 +229,25 @@ class AppManifest:
         return d
 
     @classmethod
-    def from_archive(cls, archive: Path) -> "AppManifest":
+    def from_archive(cls, archive: Path,
+                     calculate_hash=True) -> "AppManifest":
         manifest = cls()
         app_names = set()
-        h_ = hashlib.new(MANIFEST_HASH)
+        archive = Path(archive)
 
-        def gethash(content):
-            # h = hashlib.new(MANIFEST_HASH)
-            h = h_.copy()
-            h.update(content)
-            return h.hexdigest()
+        if calculate_hash:
+            h_ = hashlib.new(MANIFEST_HASH)
 
-        for gaf in extract_archive(archive):
+            def gethash(content):
+                # h = hashlib.new(MANIFEST_HASH)
+                h = h_.copy()
+                h.update(content)
+                return h.hexdigest()
+        else:
+            def gethash(_):
+                return None
+
+        for gaf in extract_archive(archive, lambda _: calculate_hash):
             app, relpath = gaf.path.split("/", 1)
             app_names.add(app)
             hash = gethash(gaf.payload)
@@ -250,3 +258,28 @@ class AppManifest:
                                           f"Archive {archive} contains apps {', '.join(app_names)}")
         manifest.name = app_names.pop()
         return manifest
+
+    def find_local(self) -> Iterable[AppManifestFile]:
+        for f in self.files:
+            if f.path.startswith("local/") or f.path.endswith("/local.meta"):
+                yield f
+
+
+def get_info_manifest_from_archive(archive: Path,
+                                   calculate_hash=True
+                                   ) -> Tuple[AppInfo, AppManifest]:
+    """ Get both AppInfo and AppManifest from a single archive.
+    If ``calculate_hash`` is True, then the manifest will contain checksums for
+    all files in the archive.  Without this, it's not possible to calculate a
+    hash for the combined manifest.
+
+    Use this function to collect both sets of information at once.
+    """
+    # XXX: Optimize this so that both AppInfo and AppManifest can be created
+    #      concurrently; from a single read of the archive.
+    archive = Path(archive)
+
+    info = AppInfo.from_archive(archive)
+    manifest = AppManifest.from_archive(archive, calculate_hash=calculate_hash)
+
+    return info, manifest

@@ -40,7 +40,9 @@ class LayerCombiner:
             (1) lc.set_source_dirs()  OR
             (2) lc.set_layer_root()
 
-        Call hierarch:
+    Call hierarch:
+
+    ::
 
         lc.combine()                    Entry point
             -> prepare()                Directory, layer prep
