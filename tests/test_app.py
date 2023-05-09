@@ -51,7 +51,7 @@ class AppTestCase(unittest.TestCase):
         info, manifest = get_info_manifest_from_archive(tarball_path)
 
         self.assertEqual(info.name, "Splunk_TA_modsecurity")
-        self.assertEqual(manifest.hash, "96c0bfd21bf0803c93ff297566029eff1c0d93a5df62d8bb920364fbab51830d")
+        self.assertEqual(manifest.hash, "7f9e7b63ed13befe24b12715b1e1e9202dc1186266497aad0b723fe27ca1de12")
 
         # No local files
         self.assertEqual(len(list(manifest.find_local())), 0)

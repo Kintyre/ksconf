@@ -172,7 +172,7 @@ class AppInfo:
 
 @dataclass(order=True)
 class AppManifestFile:
-    path: str
+    path: Path
     mode: int
     size: int
     hash: str = None
@@ -180,9 +180,14 @@ class AppManifestFile:
     def content_match(self, other):
         return self.hash == other.hash
 
+    def to_dict(self):
+        d = asdict(self)
+        d["path"] = fspath(self.path)
+        return d
+
     @classmethod
     def from_dict(cls, data: dict) -> "AppManifestFile":
-        return cls(data["path"], data["mode"], data["size"], data["hash"])
+        return cls(Path(data["path"]), data["mode"], data["size"], data["hash"])
 
 
 @dataclass
@@ -200,11 +205,18 @@ class AppManifest:
 
     def _calculate_hash(self) -> str:
         """ Build unique hash based on file content """
+        # Path sort order notes.  Sorting based on Path objects is different
+        # than textual sorting, consider:
+        #   README.txt
+        #   README/inputs.conf.spec
+        # Sorting based on path is equivalent to sorting tuples of path components
+        # Like doing sort(key=lambda s: s.path.split("/"))
         parts = []
         for f in sorted(self.files):
             # If one or more hash is None, then refuse to calculate hash
             if f.hash is None:
                 return None
+            # If OS issues, use:   {'/'.join(f.path.parts)}
             parts.append(f"{f.hash} 0{f.mode:o} {f.path}")
         parts.insert(0, self.name)
         payload = "\n".join(parts)
@@ -224,7 +236,7 @@ class AppManifest:
             "name": self.name,
             "hash_algorithm": self.hash_algorithm,
             "hash": self.hash,
-            "files": [asdict(f) for f in self.files]
+            "files": [f.to_dict() for f in self.files]
         }
         return d
 
@@ -251,7 +263,7 @@ class AppManifest:
             app, relpath = gaf.path.split("/", 1)
             app_names.add(app)
             hash = gethash(gaf.payload)
-            f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
+            f = AppManifestFile(Path(relpath), gaf.mode, gaf.size, hash)
             manifest.files.append(f)
         if len(app_names) > 1:
             raise AppManifestContentError("Found multiple top-level app names!  "
@@ -261,7 +273,7 @@ class AppManifest:
 
     def find_local(self) -> Iterable[AppManifestFile]:
         for f in self.files:
-            if f.path.startswith("local/") or f.path.endswith("/local.meta"):
+            if f.path.parts[0] == "local" or f.path.name == "local.meta":
                 yield f
 
 
