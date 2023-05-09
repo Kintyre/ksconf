@@ -16,6 +16,14 @@ Subpackages
 Submodules
 ----------
 
+ksconf.app module
+-----------------
+
+.. automodule:: ksconf.app
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.archive module
 ---------------------
 
@@ -24,10 +32,34 @@ ksconf.archive module
    :undoc-members:
    :show-inheritance:
 
+ksconf.cli module
+-----------------
+
+.. automodule:: ksconf.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ksconf.combine module
+---------------------
+
+.. automodule:: ksconf.combine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.consts module
 --------------------
 
 .. automodule:: ksconf.consts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ksconf.deploy module
+--------------------
+
+.. automodule:: ksconf.deploy
    :members:
    :undoc-members:
    :show-inheritance:
