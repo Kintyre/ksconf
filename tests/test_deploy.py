@@ -11,8 +11,9 @@ from pathlib import Path
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.deploy import (AppManifest, ManifestManager, StoredArchiveManifest,
-                           create_manifest_from_archive)
+from ksconf.deploy import (AppManifest, StoredArchiveManifest,
+                           create_manifest_from_archive,
+                           load_manifest_for_archive)
 from tests.cli_helper import TestWorkDir, static_data
 
 """
@@ -44,8 +45,7 @@ class ManifestTestCase(unittest.TestCase):
         tgz = self.twd.copy_static("apps/modsecurity-add-on-for-splunk_11.tgz", "modsecurity-add-on-for-splunk_11.tgz")
         tgz = Path(tgz)
 
-        mm = ManifestManager()
-        manifest = mm.manifest_from_archive(tgz)
+        manifest = load_manifest_for_archive(tgz)
         self.assertEqual(len(manifest.files), 15)
         # Ensure hash value doesn't change without knowing
         self.assertEqual(manifest.hash, "d20973be2fd1d8828ee978e2a3fb7bd96e3ced06e234289e789b25a0462e9003")
@@ -55,7 +55,7 @@ class ManifestTestCase(unittest.TestCase):
         self.assertEqual(len(cache_files), 1)
 
         # Explicitly load manifest from cache file
-        manifest2 = StoredArchiveManifest.from_manifest(tgz, cache_files[0]).manifest
+        manifest2 = StoredArchiveManifest.from_json_manifest(tgz, cache_files[0]).manifest
 
         self.assertEqual(manifest, manifest2)
 

@@ -139,9 +139,6 @@ class AppInfo:
     @classmethod
     def from_archive(cls, archive: Path):
         ''' Returns list of app names, merged app_conf and a dictionary of extra facts that may be useful '''
-        # XXX: Use this in ksconf.commands.unarchive
-        # XXX: Find a way to to use coroutines to create both AppInfo and AppManifest data concurrently
-        #      (to avoid re-reading archives)
         archive = Path(archive)
 
         app_names = set()
@@ -287,8 +284,8 @@ def get_info_manifest_from_archive(archive: Path,
 
     Use this function to collect both sets of information at once.
     """
-    # XXX: Optimize this so that both AppInfo and AppManifest can be created
-    #      concurrently; from a single read of the archive.
+    # XXX: Optimize to create AppInfo and AppManifest concurrently; from a single read of the archive.
+    # XXX: Use this in ksconf.commands.unarchive
     archive = Path(archive)
 
     info = AppInfo.from_archive(archive)

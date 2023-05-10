@@ -90,14 +90,15 @@ class StoredArchiveManifest:
         return o
 
     @classmethod
-    def from_manifest(cls,
-                      archive: Path,
-                      stored_file: Path) -> "StoredArchiveManifest":
+    def from_json_manifest(cls,
+                           archive: Path,
+                           stored_file: Path) -> "StoredArchiveManifest":
         """
         Attempt to load as stored manifest from archive & stored manifest paths.
         If the archive has changed since the manifest was stored, then an
         exception will be raised indicating the reason for invalidation.
         """
+        # XXX: Optimization: tests if archive is newer than stored_file.  No need to open/parse JSON.
         if not stored_file:
             raise AppManifestStorageInvalid("No stored manifest found")
 
@@ -124,38 +125,47 @@ def create_manifest_from_archive(archive_file: Path,
     return sam
 
 
-class ManifestManager:
-    @staticmethod
-    def get_stored_manifest_name(archive: Path):
-        c = archive.with_name(f".{archive.name}.manifest")
-        return c
-        '''
-        if c.exists():
-            return c
-        return None
-        '''
+def get_stored_manifest_name(archive: Path):
+    """ Calculate the name of the stored manifest file based on ``archive``. """
+    c = archive.with_name(f".{archive.name}.manifest")
+    return c
 
-    def manifest_from_archive(self,
-                              archive: Path,
-                              read_manifest=True,
-                              write_manifest=True) -> AppManifest:
-        manifest = None
 
-        if read_manifest or write_manifest:
-            manifest_file = self.get_stored_manifest_name(archive)
+def load_manifest_for_archive(
+        archive: Path,
+        manifest_file: Path = None,
+        read_manifest=True,
+        write_manifest=True) -> AppManifest:
+    """
+    Load manifest for ``archive`` and create a stored copy of the manifest in
+    ``manifest_file``.  On subsequent calls the manifest data stored to disk
+    will be reused assuming ``manifest_file`` is up-to-date.
 
-        if read_manifest and manifest_file.exists():
-            try:
-                sam = StoredArchiveManifest.from_manifest(archive, manifest_file)
-                manifest = sam.manifest
-            except AppManifestStorageError as e:
-                print(f"WARN:   loading stored manifest failed:  {e}")
+    File modification time and size are used to determine if ``archive`` has
+    been changed since the ``manifest_file`` was written.
 
-        if manifest is None:
-            print(f"Calculating manifest for {archive}")
-            manifest = AppManifest.from_archive(archive)
+    If no ``manifest_file`` is provided, the default manifest naming convention
+    will be applied where the ``manifest_file`` is stored in the same directory
+    as ``archive``.
+    """
+    # XXX: Add optimization to check if archive is newer than manifest_file, assume old
+    manifest = None
 
-            if write_manifest:
-                create_manifest_from_archive(archive, manifest_file, manifest)
+    if manifest_file is None and read_manifest or write_manifest:
+        manifest_file = get_stored_manifest_name(archive)
 
-        return manifest
+    if read_manifest and manifest_file.exists():
+        try:
+            sam = StoredArchiveManifest.from_json_manifest(archive, manifest_file)
+            manifest = sam.manifest
+        except AppManifestStorageError as e:
+            print(f"WARN:   loading stored manifest failed:  {e}")
+
+    if manifest is None:
+        print(f"Calculating manifest for {archive}")
+        manifest = AppManifest.from_archive(archive)
+
+        if write_manifest:
+            create_manifest_from_archive(archive, manifest_file, manifest)
+
+    return manifest
