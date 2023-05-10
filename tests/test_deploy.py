@@ -13,6 +13,7 @@ if __package__ is None:
 
 from ksconf.deploy import (AppManifest, StoredArchiveManifest,
                            create_manifest_from_archive,
+                           expand_archive_by_manifest,
                            load_manifest_for_archive)
 from tests.cli_helper import TestWorkDir, static_data
 
@@ -58,6 +59,17 @@ class ManifestTestCase(unittest.TestCase):
         manifest2 = StoredArchiveManifest.from_json_manifest(tgz, cache_files[0]).manifest
 
         self.assertEqual(manifest, manifest2)
+
+    def test_full_cycle_to_fs(self):
+        """ Ensure that the fs manifest from an expanded archive matches the archive-created manifest. """
+        tgz_path = static_data("apps/modsecurity-add-on-for-splunk_14.tgz")
+        tgz_manifest = AppManifest.from_archive(tgz_path)
+
+        apps_dir = Path(self.twd.makedir("apps"))
+        expand_archive_by_manifest(tgz_path, apps_dir, tgz_manifest)
+
+        fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
+        self.assertEqual(tgz_manifest, fs_manifest)
 
 
 if __name__ == '__main__':  # pragma: no cover

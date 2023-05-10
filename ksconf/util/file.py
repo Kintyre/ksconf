@@ -110,6 +110,7 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
     """
+    top = os.fspath(top)
     if not top.endswith(os.path.sep):
         top += os.path.sep
     prefix = len(top)

@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+""" Splunk App helper classes
+
+Note that these representations are for native Splunk apps that use 'default'
+and 'local' and have not built-in concept of ksconf layers.
+
 """
-"""
+
 from __future__ import absolute_import, annotations, unicode_literals
 
 import hashlib
@@ -17,6 +22,7 @@ from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
                                 default_encoding, parse_conf)
 from ksconf.consts import MANIFEST_HASH, UNSET
+from ksconf.util.file import relwalk
 
 if sys.version_info < (3, 8):
     from typing import List
@@ -194,6 +200,11 @@ class AppManifest:
     _hash: str = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
 
+    def __eq__(self, other: AppManifest) -> bool:
+        if self.name != other.name or self.hash != other.hash:
+            return False
+        return sorted(self.files) == sorted(other.files)
+
     @property
     def hash(self):
         if self._hash is UNSET:
@@ -240,12 +251,16 @@ class AppManifest:
     @classmethod
     def from_archive(cls, archive: Path,
                      calculate_hash=True) -> "AppManifest":
+        """
+        Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
+        False when only a file listing is needed.
+        """
         manifest = cls()
         app_names = set()
         archive = Path(archive)
 
         if calculate_hash:
-            h_ = hashlib.new(MANIFEST_HASH)
+            h_ = hashlib.new(cls.hash_algorithm)
 
             def gethash(content):
                 # h = hashlib.new(MANIFEST_HASH)
@@ -266,6 +281,36 @@ class AppManifest:
             raise AppManifestContentError("Found multiple top-level app names!  "
                                           f"Archive {archive} contains apps {', '.join(app_names)}")
         manifest.name = app_names.pop()
+        return manifest
+
+    @classmethod
+    def from_filesystem(cls, path: Path,
+                        name: str = None,
+                        follow_symlinks=False,
+                        calculate_hash=True) -> "AppManifest":
+        """
+        Create as new AppManifest from an existing directory structure.
+        Set ``calculate_hash`` as False when only a file listing is needed.
+        """
+        path = Path(path)
+        if name is None:
+            name = path.name
+        manifest = cls(name)
+        h_ = hashlib.new(cls.hash_algorithm)
+
+        for (root, _, files) in relwalk(path, followlinks=follow_symlinks):
+            root_path = Path(root)
+            for file_name in files:
+                rel_path: Path = root_path.joinpath(file_name)
+                full_path: Path = path.joinpath(root, file_name)
+                st = full_path.stat()
+                amf = AppManifestFile(rel_path, st.st_mode & 0o777, st.st_size)
+                if calculate_hash:
+                    h = h_.copy()
+                    h.update(full_path.read_bytes())
+                    amf.hash = h.hexdigest()
+                    del h
+                manifest.files.append(amf)
         return manifest
 
     def find_local(self) -> Iterable[AppManifestFile]:

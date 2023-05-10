@@ -10,6 +10,7 @@ from os import fspath
 from pathlib import Path
 
 from ksconf.app import AppManifest
+from ksconf.archive import extract_archive
 from ksconf.consts import MANIFEST_HASH
 from ksconf.util.file import file_hash
 
@@ -169,3 +170,54 @@ def load_manifest_for_archive(
             create_manifest_from_archive(archive, manifest_file, manifest)
 
     return manifest
+
+
+# Instead of just extracting only, I think we need a function that extracts (adds/updates),
+# changes attribute (mode), and removes old files.
+# Adding rewrites would be nice, but probably *only* useful for the 'unarchive' command.
+
+
+def expand_archive_by_manifest(
+        archive: Path,
+        dest: Path,
+        manifest: AppManifest,
+        dir_mode=0o770):
+    """
+    Expand an tarball to a local file system including only the files referenced
+    by the files within the app manifest.
+
+    This function assumes that safety checks on manifest have already been
+    performed, such as eliminating any absolute paths.
+    """
+    # XXX: Optimize out inefficiencies created by our use of extract_archive()
+
+    ''' If no ``manifest`` is provided, all files are expanded.
+    Not sure we want to allow this.  Let's keep this disabled unless needed.
+    if manifest is None:
+        # It's assumed that this is non-normal code path; as this is inefficient
+        manifest = AppManifest.from_archive(archive, calculate_hash=False)
+    '''
+    keep_paths = set()
+    make_dirs = set()
+    app_path = Path(manifest.name)
+    for f in manifest.files:
+        path = app_path.joinpath(f.path)
+        keep_paths.add(path)
+        make_dirs.add(path.parent)
+
+    # Ensure shorter paths are created first
+    make_dirs = [(len(d.parts), d) for d in make_dirs]
+
+    # Make necessary directories
+    for _, d in sorted(make_dirs):
+        dest_dir: Path = dest.joinpath(d)
+        dest_dir.mkdir(dir_mode, exist_ok=True)
+
+    # Expand matching files
+    for gaf in extract_archive(archive):
+        p = Path(gaf.path)
+        if p in keep_paths:
+            dest_path: Path = dest.joinpath(p)
+            dest_path.write_bytes(gaf.payload)
+            dest_path.chmod(gaf.mode)
+    # Anything else?
