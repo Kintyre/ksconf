@@ -5,14 +5,24 @@
 from __future__ import absolute_import, annotations, unicode_literals
 
 import json
+import sys
+from collections import Counter
 from dataclasses import dataclass, field
+from enum import Enum
 from os import fspath
 from pathlib import Path
+from typing import Any, ClassVar, Dict, Set, Type
 
 from ksconf.app import AppManifest
 from ksconf.archive import extract_archive
 from ksconf.consts import MANIFEST_HASH
+from ksconf.util.compare import cmp_sets
 from ksconf.util.file import file_hash
+
+if sys.version_info < (3, 8):
+    from typing import List
+else:
+    List = list
 
 
 class AppManifestStorageError(Exception):
@@ -175,6 +185,219 @@ def load_manifest_for_archive(
 # Instead of just extracting only, I think we need a function that extracts (adds/updates),
 # changes attribute (mode), and removes old files.
 # Adding rewrites would be nice, but probably *only* useful for the 'unarchive' command.
+
+
+class DeployActionType(Enum):
+    SET_APP_NAME = "app"
+    EXTRACT_FILE = "extract_file"
+    REMOVE_FILE = "remove"
+
+    """ Implement in future phase
+    SET_SYMLINK = "link"
+    UPDATE_META = "meta"
+    """
+
+    def __str__(self):
+        return self.value
+
+
+@dataclass
+class DeployAction:
+    action: str
+
+
+@dataclass
+class DeployAction_ExtractFile(DeployAction):
+    action: str = field(init=False, default=DeployActionType.EXTRACT_FILE)
+    path: Path
+    mode: int = None
+    mtime: int = None
+    hash: str = None
+    rel_path: str = None
+
+
+@dataclass
+class DeployAction_SetAppName(DeployAction):
+    action: str = field(init=False, default=DeployActionType.SET_APP_NAME)
+    name: str
+
+
+@dataclass
+class DeployAction_RemoveFile(DeployAction):
+    action: str = field(init=False, default=DeployActionType.REMOVE_FILE)
+    path: Path = None
+
+
+def get_deploy_action_class(action: str) -> DeployAction:
+    return {
+        DeployActionType.EXTRACT_FILE: DeployAction_ExtractFile,
+        DeployActionType.REMOVE_FILE: DeployAction_RemoveFile,
+        DeployActionType.SET_APP_NAME: DeployAction_SetAppName,
+    }[action]
+
+
+'''
+@dataclass
+class DeployIntention:
+    """ Container describing a deployment transformation intention. """
+    path: Path
+    action: DeployIntentionActions
+    detail: Any = None
+
+    _detail_class_mapping: ClassVar = {
+        DeployIntentionActions.EXTRACT_FILE: _DeployAction_Extract,
+        DeployIntentionActions.SET_APP_NAME: _DeployAction_SetAppName,
+    }
+
+    def __post_init__(self):
+        detail_cls = self._detail_class_mapping.get(self.action)
+        if detail_cls:
+            if isinstance(self.detail, dict) and self.detail:
+                self.detail = detail_cls(**self.detail)
+        self.detail = detail_cls()
+'''
+
+
+class DeploySequence:
+    def __init__(self):
+        self.actions: List[DeployAction] = []
+        self.actions_by_type = Counter()
+
+    def add(self, action: str, *args, **kwargs):
+        if not isinstance(action, DeployAction):
+            action_cls = get_deploy_action_class(action)
+            action = action_cls(*args, **kwargs)
+        else:
+            assert not args and not kwargs
+        self.actions_by_type[action.action] += 1
+        self.actions.append(action)
+
+    @classmethod
+    def from_manifest(
+            cls,
+            manifest: AppManifest) -> "DeploySequence":
+        dc = cls()
+        dc.add(DeployAction_SetAppName(manifest.name))
+        for f in manifest.files:
+            dc.add(DeployActionType.EXTRACT_FILE, f.path, mode=f.mode, hash=f.hash)
+        return dc
+
+    @classmethod
+    def from_manifest_transformation(cls,
+                                     base: AppManifest,
+                                     target: AppManifest) -> "DeploySequence":
+        seq = cls()
+        if base.name != target.name:
+            raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
+        seq.add(DeployAction_SetAppName(target.name))
+
+        base_files = {f.path: f for f in base.files}
+        target_files = {f.path: f for f in target.files}
+
+        base_only, common, target_only = cmp_sets(base_files, target_files)
+
+        for fn in target_only:
+            f = target_files[fn]
+            seq.add(DeployAction_ExtractFile(fn, mode=f.mode, hash=f.hash))
+            # seq.add(DeployAction_RemoveFile(fn))
+
+        for fn in common:
+            base_file = base_files[fn]
+            target_file = target_files[fn]
+            if base_file != target_file:
+                seq.add(DeployAction_ExtractFile(fn, target_file.mode, hash=target_file.hash, rel_path="FILE UPDATED"))
+
+        for fn in base_only:
+            seq.add(DeployAction_RemoveFile(fn))
+            # f = base_files[fn]
+            # seq.add(DeployAction_ExtractFile(fn, mode=f.mode, hash=f.hash))
+
+        return seq
+
+
+# Will we need this, or can we get all this as class methods within DeploySequence?
+class DeployPlanner():
+    pass
+
+
+def _path_by_part_len(path: Path):
+    # sort helper function for directory top-down/bottom-up operations
+    return len(path.parts), path
+
+
+class DeployApply:
+    def __init__(self, dest: Path):
+        self.dest = dest
+        self.dir_mode = 0o770
+
+    def apply_sequence(self,
+                       archive: Path,
+                       deployment_sequence: DeploySequence):
+        '''
+        Apply a pre-calculated deployment sequence to the local file system.
+        '''
+        #
+        '''
+        app = None
+        items = []
+        for action in deployment_sequence.actions:
+            if action.action == DeployActionType.SET_APP_NAME:
+                if items:
+                    self.apply_sequence_for_app(archive, deployment_sequence)
+                app = action.name
+        '''
+
+        '''
+    def apply_sequence_for_app(self,
+            archive: Path,
+            app_name: str,
+            deployment_sequence: DeploySequence):
+        '''
+        keep_paths: Set[Path] = set()
+        make_dirs: Set[Path] = set()
+        remove_path: Set[Path] = set()
+        app_path = Path()
+        for action in deployment_sequence.actions:
+            if isinstance(action, DeployAction_ExtractFile):
+                path = app_path.joinpath(action.path)
+                keep_paths.add(path)
+                make_dirs.add(path.parent)
+            elif isinstance(action, DeployAction_SetAppName):
+                app_path = Path(action.name)
+            elif isinstance(action, DeployAction_RemoveFile):
+                remove_path.add(app_path.joinpath(action.path))
+            else:
+                raise TypeError(f"Unable to handle action of type {type(action)}")
+
+        # Make necessary directories
+        for d in sorted(make_dirs, key=_path_by_part_len):
+            dest_dir: Path = self.dest.joinpath(d)
+            # Even with careful sorting, we must still use parents=True as some
+            # directories contain no files, such as 'ui' in 'default/data/ui/nav'.
+            dest_dir.mkdir(self.dir_mode, parents=True, exist_ok=True)
+
+        # Expand matching files
+        for gaf in extract_archive(archive):
+            p = Path(gaf.path)
+            if p in keep_paths:
+                dest_path: Path = self.dest.joinpath(p)
+                dest_path.write_bytes(gaf.payload)
+                # Should we use the chmod from the archive, or the one from the deployment sequence object?
+                dest_path.chmod(gaf.mode)
+
+        # Cleanup removed files
+        for p in remove_path:
+            full_path: Path = self.dest.joinpath(p)
+            full_path.unlink()
+
+        # Cleanup any empty directories (longest paths first)
+        for d in sorted(set(f.parent for f in remove_path),
+                        key=_path_by_part_len,
+                        reverse=True):
+            full_path = self.dest.joinpath(d)
+            if full_path.stat().st_nlink == 2:
+                print(f"Cleaning empty directory {d}")
+                full_path.rmdir()
 
 
 def expand_archive_by_manifest(
