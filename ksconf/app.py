@@ -14,7 +14,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from io import StringIO
 from os import fspath
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import ClassVar, Iterable, Tuple
 
 from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker
@@ -175,7 +175,7 @@ class AppInfo:
 
 @dataclass(order=True)
 class AppManifestFile:
-    path: Path
+    path: PurePosixPath
     mode: int
     size: int
     hash: str = None
@@ -190,7 +190,7 @@ class AppManifestFile:
 
     @classmethod
     def from_dict(cls, data: dict) -> "AppManifestFile":
-        return cls(Path(data["path"]), data["mode"], data["size"], data["hash"])
+        return cls(PurePosixPath(data["path"]), data["mode"], data["size"], data["hash"])
 
 
 @dataclass
@@ -275,7 +275,7 @@ class AppManifest:
             app, relpath = gaf.path.split("/", 1)
             app_names.add(app)
             hash = gethash(gaf.payload)
-            f = AppManifestFile(Path(relpath), gaf.mode, gaf.size, hash)
+            f = AppManifestFile(PurePosixPath(relpath), gaf.mode, gaf.size, hash)
             manifest.files.append(f)
         if len(app_names) > 1:
             raise AppManifestContentError("Found multiple top-level app names!  "
@@ -299,9 +299,9 @@ class AppManifest:
         h_ = hashlib.new(cls.hash_algorithm)
 
         for (root, _, files) in relwalk(path, followlinks=follow_symlinks):
-            root_path = Path(root)
+            root_path = PurePosixPath(root)
             for file_name in files:
-                rel_path: Path = root_path.joinpath(file_name)
+                rel_path: PurePosixPath = root_path.joinpath(file_name)
                 full_path: Path = path.joinpath(root, file_name)
                 st = full_path.stat()
                 amf = AppManifestFile(rel_path, st.st_mode & 0o777, st.st_size)
