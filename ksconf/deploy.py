@@ -10,7 +10,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
 from os import fspath
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, ClassVar, Dict, Set, Type
 
 from ksconf.app import AppManifest
@@ -189,6 +189,7 @@ def load_manifest_for_archive(
 
 class DeployActionType(Enum):
     SET_APP_NAME = "app"
+    SOURCE_REFERENCE = "source"
     EXTRACT_FILE = "extract_file"
     REMOVE_FILE = "remove"
 
@@ -209,7 +210,8 @@ class DeployAction:
 @dataclass
 class DeployAction_ExtractFile(DeployAction):
     action: str = field(init=False, default=DeployActionType.EXTRACT_FILE)
-    path: Path
+    subtype: str
+    path: PurePosixPath
     mode: int = None
     mtime: int = None
     hash: str = None
@@ -223,9 +225,16 @@ class DeployAction_SetAppName(DeployAction):
 
 
 @dataclass
+class DeployAction_SourceReference(DeployAction):
+    action: str = field(init=False, default=DeployActionType.SOURCE_REFERENCE)
+    archive_path: str
+    hash: str
+
+
+@dataclass
 class DeployAction_RemoveFile(DeployAction):
     action: str = field(init=False, default=DeployActionType.REMOVE_FILE)
-    path: Path = None
+    path: PurePosixPath
 
 
 def get_deploy_action_class(action: str) -> DeployAction:
@@ -233,6 +242,7 @@ def get_deploy_action_class(action: str) -> DeployAction:
         DeployActionType.EXTRACT_FILE: DeployAction_ExtractFile,
         DeployActionType.REMOVE_FILE: DeployAction_RemoveFile,
         DeployActionType.SET_APP_NAME: DeployAction_SetAppName,
+        DeployActionType.SOURCE_REFERENCE: DeployAction_SourceReference,
     }[action]
 
 
@@ -276,10 +286,17 @@ class DeploySequence:
     def from_manifest(
             cls,
             manifest: AppManifest) -> "DeploySequence":
+        """
+        Fresh deploy of an app from scratch.
+
+        (There should probably be a new
+        op-code for this, eventually instead of listing every single file.)
+        """
         dc = cls()
+        dc.add(DeployAction_SourceReference(manifest.source, manifest.hash))
         dc.add(DeployAction_SetAppName(manifest.name))
         for f in manifest.files:
-            dc.add(DeployActionType.EXTRACT_FILE, f.path, mode=f.mode, hash=f.hash)
+            dc.add(DeployActionType.EXTRACT_FILE, "create", f.path, mode=f.mode, hash=f.hash)
         return dc
 
     @classmethod
@@ -289,6 +306,7 @@ class DeploySequence:
         seq = cls()
         if base.name != target.name:
             raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
+        seq.add(DeployAction_SourceReference(target.source, target.hash))
         seq.add(DeployAction_SetAppName(target.name))
 
         base_files = {f.path: f for f in base.files}
@@ -298,19 +316,17 @@ class DeploySequence:
 
         for fn in target_only:
             f = target_files[fn]
-            seq.add(DeployAction_ExtractFile(fn, mode=f.mode, hash=f.hash))
-            # seq.add(DeployAction_RemoveFile(fn))
+            seq.add(DeployAction_ExtractFile("create", fn, mode=f.mode, hash=f.hash))
 
         for fn in common:
             base_file = base_files[fn]
             target_file = target_files[fn]
             if base_file != target_file:
-                seq.add(DeployAction_ExtractFile(fn, target_file.mode, hash=target_file.hash, rel_path="FILE UPDATED"))
+                sub = "attr" if base_file.content_match(target_file) else "update"
+                seq.add(DeployAction_ExtractFile(sub, fn, target_file.mode, hash=target_file.hash))
 
         for fn in base_only:
             seq.add(DeployAction_RemoveFile(fn))
-            # f = base_files[fn]
-            # seq.add(DeployAction_ExtractFile(fn, mode=f.mode, hash=f.hash))
 
         return seq
 
@@ -330,9 +346,11 @@ class DeployApply:
         self.dest = dest
         self.dir_mode = 0o770
 
-    def apply_sequence(self,
-                       archive: Path,
-                       deployment_sequence: DeploySequence):
+    def resolve_source(self, source, hash):
+        # In the future, this may look in a local/remote directory based on the hash value.
+        return Path(source)
+
+    def apply_sequence(self, deployment_sequence: DeploySequence):
         '''
         Apply a pre-calculated deployment sequence to the local file system.
         '''
@@ -366,6 +384,8 @@ class DeployApply:
                 app_path = Path(action.name)
             elif isinstance(action, DeployAction_RemoveFile):
                 remove_path.add(app_path.joinpath(action.path))
+            elif isinstance(action, DeployAction_SourceReference):
+                archive = self.resolve_source(action.archive_path, action.hash)
             else:
                 raise TypeError(f"Unable to handle action of type {type(action)}")
 
@@ -434,7 +454,7 @@ def expand_archive_by_manifest(
     # Make necessary directories
     for _, d in sorted(make_dirs):
         dest_dir: Path = dest.joinpath(d)
-        dest_dir.mkdir(dir_mode, exist_ok=True)
+        dest_dir.mkdir(dir_mode, parents=True, exist_ok=True)
 
     # Expand matching files
     for gaf in extract_archive(archive):

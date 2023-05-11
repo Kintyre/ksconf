@@ -196,6 +196,7 @@ class AppManifestFile:
 @dataclass
 class AppManifest:
     name: str = None
+    source: str = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
     _hash: str = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
@@ -207,6 +208,8 @@ class AppManifest:
 
     @property
     def hash(self):
+        # How do we trigger an update if files is updated?  Should we make the caller worry about this?  Maybe call a reset() method?
+        # Should we convert the list to a tuple as soon as hash is calculated for the first time, then require cloning to make further modifications?
         if self._hash is UNSET:
             self._hash = self._calculate_hash()
         return self._hash
@@ -234,13 +237,15 @@ class AppManifest:
     @classmethod
     def from_dict(cls, data: dict) -> "AppManifest":
         files = [AppManifestFile.from_dict(f) for f in data["files"]]
-        o = cls(data["name"], hash_algorithm=data["hash_algorithm"], files=files)
+        o = cls(data["name"], source=data["source"],
+                hash_algorithm=data["hash_algorithm"], files=files)
         o._hash = data["hash"]
         return o
 
     def to_dict(self):
         d = {
             "name": self.name,
+            "source": self.source,
             "hash_algorithm": self.hash_algorithm,
             "hash": self.hash,
             "files": [f.to_dict() for f in self.files]
@@ -254,7 +259,7 @@ class AppManifest:
         Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
         False when only a file listing is needed.
         """
-        manifest = cls()
+        manifest = cls(source=fspath(archive))
         app_names = set()
         archive = Path(archive)
 
@@ -294,7 +299,7 @@ class AppManifest:
         path = Path(path)
         if name is None:
             name = path.name
-        manifest = cls(name)
+        manifest = cls(name, source=path)
         h_ = hashlib.new(cls.hash_algorithm)
 
         for (root, _, files) in relwalk(path, followlinks=follow_symlinks):

@@ -82,7 +82,7 @@ class ManifestTestCase(unittest.TestCase):
         apps_dir = Path(self.twd.makedir("apps"))
         # expand_archive_by_manifest(tgz_path, apps_dir, tgz_manifest)
         dep = DeployApply(apps_dir)
-        dep.apply_sequence(tgz_path, tgz_deployseq)
+        dep.apply_sequence(tgz_deployseq)
 
         fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
         self.assertEqual(tgz_manifest, fs_manifest)
@@ -100,11 +100,11 @@ class ManifestTestCase(unittest.TestCase):
         # Install 11
         dep = DeployApply(apps_dir)
         install_11_seq = DeploySequence.from_manifest(manifest11)
-        dep.apply_sequence(modsec11_tgz, install_11_seq)
+        dep.apply_sequence(install_11_seq)
 
         # Upgrade to 12 (calculate & apply)
         upgrade_to_12_seq = DeploySequence.from_manifest_transformation(manifest11, manifest12)
-        dep.apply_sequence(modsec12_tgz, upgrade_to_12_seq)
+        dep.apply_sequence(upgrade_to_12_seq)
 
         # Calculate manifest from the installed app
         fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
