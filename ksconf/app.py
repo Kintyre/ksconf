@@ -224,10 +224,10 @@ class AppManifest:
             # If one or more hash is None, then refuse to calculate hash
             if f.hash is None:
                 return None
-            # If OS issues, use:   {'/'.join(f.path.parts)}
-            parts.append(f"{f.hash} 0{f.mode:o} {f.path}")
+            parts.append(f"{f.hash} 0{f.mode:o} {'/'.join(f.path.parts)}")
         parts.insert(0, self.name)
         payload = "\n".join(parts)
+        print(f"DEBUG:  {payload}")
         h = hashlib.new(self.hash_algorithm)
         h.update(payload.encode("utf-8"))
         return h.hexdigest()
