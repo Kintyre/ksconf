@@ -60,6 +60,7 @@ class ManifestTestCase(unittest.TestCase):
 
         self.assertEqual(manifest, manifest2)
 
+    @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
     def test_full_cycle_to_fs(self):
         """ Ensure that the fs manifest from an expanded archive matches the archive-created manifest. """
         tgz_path = static_data("apps/modsecurity-add-on-for-splunk_14.tgz")
@@ -71,6 +72,7 @@ class ManifestTestCase(unittest.TestCase):
         fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
         self.assertEqual(tgz_manifest, fs_manifest)
 
+    @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
     def test_full_cycle2(self):
         """ Ensure that the fs manifest from an expanded archive matches the archive-created manifest. """
         tgz_path = static_data("apps/modsecurity-add-on-for-splunk_14.tgz")
@@ -85,6 +87,7 @@ class ManifestTestCase(unittest.TestCase):
         fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
         self.assertEqual(tgz_manifest, fs_manifest)
 
+    @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
     def test_modsec_upgrade11to12(self):
         modsec11_tgz = Path(static_data("apps/modsecurity-add-on-for-splunk_11.tgz"))
         modsec12_tgz = Path(static_data("apps/modsecurity-add-on-for-splunk_12.tgz"))

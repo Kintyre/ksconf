@@ -227,7 +227,6 @@ class AppManifest:
             parts.append(f"{f.hash} 0{f.mode:o} {'/'.join(f.path.parts)}")
         parts.insert(0, self.name)
         payload = "\n".join(parts)
-        print(f"DEBUG:  {payload}")
         h = hashlib.new(self.hash_algorithm)
         h.update(payload.encode("utf-8"))
         return h.hexdigest()
