@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import json
 import os
 import sys
 import unittest
@@ -88,7 +89,7 @@ class ManifestTestCase(unittest.TestCase):
         self.assertEqual(tgz_manifest, fs_manifest)
 
     @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
-    def test_modsec_upgrade11to12(self):
+    def test_modsec_upgrade11to12(self, serialize=False):
         modsec11_tgz = Path(static_data("apps/modsecurity-add-on-for-splunk_11.tgz"))
         modsec12_tgz = Path(static_data("apps/modsecurity-add-on-for-splunk_12.tgz"))
 
@@ -104,11 +105,21 @@ class ManifestTestCase(unittest.TestCase):
 
         # Upgrade to 12 (calculate & apply)
         upgrade_to_12_seq = DeploySequence.from_manifest_transformation(manifest11, manifest12)
+
+        if serialize:
+            txt = json.dumps(upgrade_to_12_seq.to_dict())
+            del upgrade_to_12_seq
+            upgrade_to_12_seq = DeploySequence.from_dict(json.loads(txt))
+
         dep.apply_sequence(upgrade_to_12_seq)
 
         # Calculate manifest from the installed app
         fs_manifest = AppManifest.from_filesystem(self.twd.get_path("apps/Splunk_TA_modsecurity"))
         self.assertEqual(manifest12, fs_manifest)
+
+    @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
+    def test_modsec_upgrade11to12_searialize(self):
+        self.test_modsec_upgrade11to12(serialize=True)
 
 
 if __name__ == '__main__':  # pragma: no cover

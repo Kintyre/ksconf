@@ -7,11 +7,11 @@ from __future__ import absolute_import, annotations, unicode_literals
 import json
 import sys
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
-from os import fspath
-from pathlib import Path, PurePosixPath
-from typing import Any, ClassVar, Dict, Set, Type
+from os import PathLike, fspath
+from pathlib import Path, PurePath, PurePosixPath
+from typing import Set
 
 from ksconf.app import AppManifest
 from ksconf.archive import extract_archive
@@ -80,7 +80,7 @@ class StoredArchiveManifest:
             json.dump(data, fp)
 
     @classmethod
-    def read_json_manifest(cls, manifest_file: Path):
+    def read_json_manifest(cls, manifest_file: Path) -> "StoredArchiveManifest":
         with open(manifest_file) as fp:
             data = json.load(fp)
         return cls.from_dict(data)
@@ -131,6 +131,9 @@ class StoredArchiveManifest:
 def create_manifest_from_archive(archive_file: Path,
                                  manifest_file: Path,
                                  manifest: AppManifest):
+    """
+    Create a new stored manifest file based on a given archive.
+    """
     sam = StoredArchiveManifest.from_file(archive_file, manifest)
     sam.write_json_manifest(manifest_file)
     return sam
@@ -182,9 +185,7 @@ def load_manifest_for_archive(
     return manifest
 
 
-# Instead of just extracting only, I think we need a function that extracts (adds/updates),
-# changes attribute (mode), and removes old files.
-# Adding rewrites would be nice, but probably *only* useful for the 'unarchive' command.
+# Deployment Action classes
 
 
 class DeployActionType(Enum):
@@ -202,9 +203,43 @@ class DeployActionType(Enum):
         return self.value
 
 
+# Specific action definitions
+
 @dataclass
 class DeployAction:
+    # Abstract base class
     action: str
+
+    def to_dict(self) -> dict:
+        data = asdict(self)
+        data["action"] = str(self.action)
+
+        for dc_field in fields(self):
+            if dc_field.name == "action":
+                continue
+
+            value = data[dc_field.name]
+            t = eval(dc_field.type)
+            if issubclass(t, PurePath):
+                value = fspath(value)
+                data[dc_field.name] = value
+        return data
+
+    @classmethod
+    def from_dict(self, data: dict) -> "DeployAction":
+        data = data.copy()
+        action = data.pop("action")
+        action = DeployActionType(action)
+        da_class = get_deploy_action_class(action)
+        for dc_field in fields(da_class):
+            if dc_field.name == "action":
+                continue
+            value = data[dc_field.name]
+            t = eval(dc_field.type)
+            if issubclass(t, PurePath):
+                value = t(value)
+                data[dc_field.name] = value
+        return da_class(**data)
 
 
 @dataclass
@@ -219,6 +254,12 @@ class DeployAction_ExtractFile(DeployAction):
 
 
 @dataclass
+class DeployAction_RemoveFile(DeployAction):
+    action: str = field(init=False, default=DeployActionType.REMOVE_FILE)
+    path: PurePosixPath
+
+
+@dataclass
 class DeployAction_SetAppName(DeployAction):
     action: str = field(init=False, default=DeployActionType.SET_APP_NAME)
     name: str
@@ -229,12 +270,6 @@ class DeployAction_SourceReference(DeployAction):
     action: str = field(init=False, default=DeployActionType.SOURCE_REFERENCE)
     archive_path: str
     hash: str
-
-
-@dataclass
-class DeployAction_RemoveFile(DeployAction):
-    action: str = field(init=False, default=DeployActionType.REMOVE_FILE)
-    path: PurePosixPath
 
 
 def get_deploy_action_class(action: str) -> DeployAction:
@@ -281,6 +316,20 @@ class DeploySequence:
             assert not args and not kwargs
         self.actions_by_type[action.action] += 1
         self.actions.append(action)
+
+    def to_dict(self) -> dict:
+        d = {
+            "actions": [a.to_dict() for a in self.actions]
+        }
+        return d
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "DeploySequence":
+        seq = cls()
+        for action in data["actions"]:
+            da = DeployAction.from_dict(action)
+            seq.add(da)
+        return seq
 
     @classmethod
     def from_manifest(
