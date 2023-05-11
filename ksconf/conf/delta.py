@@ -10,7 +10,7 @@ from typing import List, NamedTuple, Sequence, TextIO, Union
 
 from ksconf.conf.parser import GLOBAL_STANZA, ConfType, StanzaType, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
-from ksconf.util.compare import _cmp_sets
+from ksconf.util.compare import cmp_sets
 from ksconf.util.terminal import ANSI_BOLD, ANSI_GREEN, ANSI_RED, ANSI_RESET, ANSI_YELLOW, TermColor
 
 ####################################################################################################
@@ -116,7 +116,7 @@ def compare_stanzas(a: StanzaType, b: StanzaType,
 def _compare_stanzas(a: StanzaType, b: StanzaType,
                      stanza_name: str,
                      replace_level: DiffLevel) -> List[DiffOp]:
-    kv_a, kv_common, kv_b = _cmp_sets(list(a.keys()), list(b.keys()))
+    kv_a, kv_common, kv_b = cmp_sets(list(a.keys()), list(b.keys()))
 
     if replace_level in (DiffLevel.GLOBAL, DiffLevel.STANZA) and not kv_common:
         # No keys in common, just swap
@@ -218,7 +218,7 @@ def compare_cfgs(a: ConfType, b: ConfType,
 
     # Level 0 - Compare entire file
     if replace_level == DiffLevel.GLOBAL:
-        stanza_a, stanza_common, stanza_b = _cmp_sets(list(a.keys()), list(b.keys()))
+        stanza_a, stanza_common, stanza_b = cmp_sets(list(a.keys()), list(b.keys()))
         if a == b:
             return [DiffOp(DiffVerb.EQUAL, DiffGlobal(DiffLevel.GLOBAL), a, b)]
         if not stanza_common:
