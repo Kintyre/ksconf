@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import re
+from pathlib import Path
 from subprocess import list2cmdline
 
 from ksconf.app import get_facts_manifest_from_archive
@@ -24,7 +25,7 @@ from ksconf.consts import (EXIT_CODE_BAD_ARCHIVE_FILE, EXIT_CODE_BAD_ARGS,
                            EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE,
                            KSCONF_DEBUG)
 from ksconf.filter import create_filtered_list
-from ksconf.util.compare import _cmp_sets
+from ksconf.util.compare import cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
 from ksconf.util.file import dir_exists, file_hash, relwalk
 from ksconf.vc.git import (git_cmd, git_cmd_iterable, git_is_clean,
@@ -120,19 +121,20 @@ class UnarchiveCmd(KsconfCmd):
         """ Install / upgrade a Splunk app from an archive file """
         # Handle ignored files by preserving them as much as possible.
         # Add --dry-run mode?  j/k - that's what git is for!
-
         DEBUG = KSCONF_DEBUG in os.environ
 
-        if not os.path.isfile(args.tarball):
-            self.stderr.write("No such file or directory {}\n".format(args.tarball))
+        tarball = Path(args.tarball)
+        if not tarball.is_file():
+            self.stderr.write(f"No such file or directory {tarball}\n")
             return EXIT_CODE_FAILED_SAFETY_CHECK
 
-        if not os.path.isdir(args.dest):
-            self.stderr.write("Destination directory does not exist: {}\n".format(args.dest))
+        dest = Path(args.dest)
+        if not dest.is_dir():
+            self.stderr.write(f"Destination directory does not exist: {dest}\n")
             return EXIT_CODE_FAILED_SAFETY_CHECK
 
-        f_hash = file_hash(args.tarball)
-        self.stdout.write("Inspecting archive:               {}\n".format(args.tarball))
+        f_hash = file_hash(tarball)
+        self.stdout.write(f"Inspecting archive:               {tarball}\n")
 
         new_app_name = args.app_name
 
@@ -146,19 +148,19 @@ class UnarchiveCmd(KsconfCmd):
         # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
         try:
             app_facts, app_manifest = get_facts_manifest_from_archive(
-                args.tarball, calculate_hash=False, check_paths=True)
+                tarball, calculate_hash=False, check_paths=True)
         except AppArchiveError as e:
-            self.stderr.write(f"Failed to extract content from {args.tarball}\n{e}")
+            self.stderr.write(f"Failed to extract content from {tarball}\n{e}")
             return EXIT_CODE_BAD_ARCHIVE_FILE
         except AppArchiveContentError as e:
-            self.stderr.write(f"The 'unarchive' command does not support the given archive.\n{e}")
+            self.stderr.write(f"The 'unarchive' command does not support the {tarball} archive.\n{e}")
             return EXIT_CODE_FAILED_SAFETY_CHECK
 
         local_files = set(app_manifest.find_local())
         app_name = app_facts.name
 
         if local_files:
-            self.stderr.write("Local {} files found in the archive.  ".format(len(local_files)))
+            self.stderr.write(f"Local {len(local_files)} files found in the archive.  ")
             if args.allow_local:
                 self.stderr.write("Keeping these due to the '--allow-local' flag\n")
             else:
@@ -172,13 +174,13 @@ class UnarchiveCmd(KsconfCmd):
                 new_app_name = app_name[:-7]
             mo = re.search(r"(.*)-\d+\.[\d.-]+$", app_name)
             if mo:
-                self.stdout.write("Automatically removing the version suffix from the app name.  "
-                                  "'{}' will be extracted as '{}'\n".format(app_name, mo.group(1)))
                 new_app_name = mo.group(1)
+                self.stdout.write("Automatically removing the version suffix from the app name.  "
+                                  f"'{app_name}' will be extracted as '{new_app_name}'\n")
 
         app_basename = new_app_name or app_name
-        dest_app = os.path.join(args.dest, app_basename)
-        self.stdout.write("Inspecting destination folder:    {}\n".format(os.path.abspath(dest_app)))
+        dest_app: Path = dest / app_basename
+        self.stdout.write(f"Inspecting destination folder:    {dest_app.absolute()}\n")
 
         # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
         app_name_msg = app_name
@@ -192,7 +194,7 @@ class UnarchiveCmd(KsconfCmd):
 
         existing_app = None
 
-        if os.path.isdir(dest_app):
+        if dest_app.is_dir():
             mode = "upgrade"
             if git_ver:
                 is_git = git_is_working_tree(dest_app)
@@ -217,7 +219,7 @@ class UnarchiveCmd(KsconfCmd):
                 # No rename detected (user provided 'app_name' matches the default app name)
                 new_app_name = None
             else:
-                app_name_msg = "{} (renamed from {})".format(new_app_name, app_name)
+                app_name_msg = f"{new_app_name} (renamed from {app_name})"
 
         def show_pkg_info(facts: AppFacts, label):
             self.stdout.write(f"{label} packaging info:    "
@@ -230,7 +232,7 @@ class UnarchiveCmd(KsconfCmd):
         if app_facts:
             show_pkg_info(app_facts, "   Tarball app")
 
-        self.stdout.write("About to {} the {} app {}.\n".format(mode, app_name_msg, vc_msg))
+        self.stdout.write(f"About to {mode} the {app_name_msg} app {vc_msg}.\n")
 
         existing_files = set()
         if mode == "upgrade":
@@ -238,8 +240,7 @@ class UnarchiveCmd(KsconfCmd):
                 existing_files.update(git_ls_files(dest_app))
                 if not existing_files:
                     self.stderr.write("App is in a git repository but no files have been staged "
-                                      "or committed.  Either commit or remove '{}' and try again."
-                                      "\n".format(dest_app))
+                                      f"or committed.  Either commit or remove '{dest_app}' and try again.")
                     return EXIT_CODE_FAILED_SAFETY_CHECK
                 if args.git_sanity_check == "off":
                     self.stdout.write("The 'git status' safety checks have been disabled via CLI"
@@ -272,7 +273,7 @@ class UnarchiveCmd(KsconfCmd):
                 for (root, _, filenames) in relwalk(dest_app):
                     for fn in filenames:
                         existing_files.add(os.path.join(root, fn))
-            self.stdout.write("Before upgrade.  App has {} files\n".format(len(existing_files)))
+            self.stdout.write(f"Before upgrade.  App has {len(existing_files)} files\n")
         elif is_git:
             self.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
 
@@ -325,7 +326,7 @@ class UnarchiveCmd(KsconfCmd):
                 self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
-                self.stdout.write("{0:60s} {2:o} {1:-6d}\n".format(gaf.path, gaf.size, gaf.mode))
+                self.stdout.write(f"{gaf.path:60s} {gaf.mode:o} {gaf.size:-6d}\n")
             installed_files.add(gaf.path.split("/", 1)[1])
             full_path = os.path.join(args.dest, gaf.path)
             dir_exists(os.path.dirname(full_path))
@@ -334,15 +335,16 @@ class UnarchiveCmd(KsconfCmd):
             os.chmod(full_path, gaf.mode)
             del fp, full_path
 
-        files_new, files_upd, files_del = _cmp_sets(installed_files, existing_files)
+        files_new, files_upd, files_del = cmp_sets(installed_files, existing_files)
 
         if DEBUG:
             print("New: \n\t{}".format("\n\t".join(sorted(files_new))))
             print("Existing: \n\t{}".format("\n\t".join(sorted(files_upd))))
             print("Removed:  \n\t{}".format("\n\t".join(sorted(files_del))))
 
-        self.stdout.write("Extracted {} files:  {} new, {} existing, and {} removed\n".format(
-            len(installed_files), len(files_new), len(files_upd), len(files_del)))
+        self.stdout.write(f"Extracted {len(installed_files)} files:  "
+                          f"{len(files_new)} new, {len(files_upd)} existing, "
+                          f"and {len(files_del)} removed\n")
 
         # Filer out "removed" files; and let us keep some based on a keep-allowlist:  This should
         # include things like local, ".gitignore", ".gitattributes" and so on
@@ -352,7 +354,7 @@ class UnarchiveCmd(KsconfCmd):
         if not args.allow_local:
             keep_list += ["local/...", "local.meta"]
         keep_list = fixup_pattern_bw(keep_list)
-        self.stderr.write("Keep file patterns:  {!r}\n".format(keep_list))
+        self.stderr.write(f"Keep file patterns:  {keep_list!r}\n")
 
         keep_filter = create_filtered_list("splunk", default=False)
         keep_filter.feedall(keep_list)
@@ -365,13 +367,13 @@ class UnarchiveCmd(KsconfCmd):
                 # redirect folder of "default.d/10-upstream"?
                 # This may be an academic question since most apps will continue to send
                 # an ever increasing list of default files (to mask out old/unused ones)
-                self.stdout.write("Keeping {}\n".format(fn))
+                self.stdout.write(f"Keeping {fn}\n")
                 files_to_keep.append(fn)
             else:
                 files_to_delete.append(fn)
         if files_to_keep:
-            self.stdout.write("Keeping {} of {} files marked for deletion due to allow list.\n"
-                              .format(len(files_to_keep), len(files_del)))
+            self.stdout.write(f"Keeping {len(files_to_keep)} of {len(files_del)} "
+                              "files marked for deletion due to allow list.\n")
         git_rm_queue = []
 
         if files_to_delete:
@@ -379,10 +381,10 @@ class UnarchiveCmd(KsconfCmd):
         for fn in files_to_delete:
             path = os.path.join(dest_app, fn)
             if is_git and args.git_mode in ("stage", "commit"):
-                self.stdout.write("git rm -f {}\n".format(path))
+                self.stdout.write(f"git rm -f {path}\n")
                 git_rm_queue.append(fn)
             else:
-                self.stdout.write("rm -f {}\n".format(path))
+                self.stdout.write(f"rm -f {path}\n")
                 os.unlink(path)
 
         if git_rm_queue:
@@ -392,7 +394,7 @@ class UnarchiveCmd(KsconfCmd):
 
         if is_git:
             if args.git_mode in ("stage", "commit"):
-                git_cmd(["add", "--all", os.path.basename(dest_app)], cwd=os.path.dirname(dest_app))
+                git_cmd(["add", "--all", dest_app.name], cwd=dest_app.parent)
                 # self.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
             '''
             else:
@@ -400,11 +402,11 @@ class UnarchiveCmd(KsconfCmd):
             '''
 
             # Is there anything to stage/commit?
-            if git_is_clean(os.path.dirname(dest_app), check_untracked=False):
-                self.stderr.write("No changes detected.  Nothing to {}\n".format(args.git_mode))
+            if git_is_clean(dest_app.parent, check_untracked=False):
+                self.stderr.write(f"No changes detected.  Nothing to {args.git_mode}\n")
                 return
 
-            git_commit_app_name = app_facts.label or os.path.basename(dest_app)
+            git_commit_app_name = app_facts.label or dest_app.name
             if mode == "install":
                 git_commit_message = f"Install {git_commit_app_name}"
                 if app_facts.version:
@@ -417,9 +419,8 @@ class UnarchiveCmd(KsconfCmd):
                 elif app_facts.version:
                     git_commit_message += f" to version {app_facts.version}"
             # Could possibly include some CLI arg details, like what file patterns were excluded
-            git_commit_message += "\n\nSHA256 {} {}\n\nSplunk-App-managed-by: ksconf" \
-                .format(f_hash, os.path.basename(args.tarball))
-            git_commit_cmd = ["commit", os.path.basename(dest_app), "-m", git_commit_message]
+            git_commit_message += f"\n\nSHA256 {f_hash} {tarball.name}\n\nSplunk-App-managed-by: ksconf"
+            git_commit_cmd = ["commit", dest_app.name, "-m", git_commit_message]
 
             if not args.no_edit:
                 git_commit_cmd.append("--edit")
@@ -428,8 +429,7 @@ class UnarchiveCmd(KsconfCmd):
 
             if args.git_mode == "commit":
                 capture_std = True if args.no_edit else False
-                proc = git_cmd(git_commit_cmd, cwd=os.path.dirname(dest_app),
-                               capture_std=capture_std)
+                proc = git_cmd(git_commit_cmd, cwd=dest_app.parent, capture_std=capture_std)
                 if proc.returncode == 0:
                     self.stderr.write(dedent("""\
                     Your changes have been committed.  Please review before pushing.  If you
@@ -451,11 +451,11 @@ class UnarchiveCmd(KsconfCmd):
                     NOTE:  Make sure you have *no* other uncommitted changes before running 'reset'.
                     """))
                 else:
-                    self.stderr.write("Git commit failed.  Return code {}.  Git args:  git {}\n"
-                                      .format(proc.returncode, list2cmdline(git_commit_cmd)))
+                    self.stderr.write(f"Git commit failed.  Return code {proc.returncode}.  "
+                                      f"Git args:  git {list2cmdline(git_commit_cmd)}\n")
                     return EXIT_CODE_GIT_FAILURE
             elif args.git_mode == "stage":
                 self.stdout.write("To commit later, use the following\n")
-                self.stdout.write(
-                    "\tgit {}\n".format(list2cmdline(git_commit_cmd).replace("\n", "\\n")))
+                self.stdout.write("\tgit {}\n".format(
+                    list2cmdline(git_commit_cmd).replace("\n", "\\n")))
             # When in 'nochange' mode, no point in even noting these options to the user.
