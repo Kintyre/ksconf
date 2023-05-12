@@ -4,7 +4,8 @@ from collections import Counter, namedtuple
 from shutil import which
 from subprocess import PIPE, Popen, call, list2cmdline
 
-from ksconf.util import _xargs, memoize
+from ksconf.compat import cache
+from ksconf.util import _xargs
 
 GIT_BIN = "git"
 GitCmdOutput = namedtuple("GitCmdOutput", ["cmd", "returncode", "stdout", "stderr", "lines"])
@@ -41,7 +42,7 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
 
 
 # Shave time off of unit testing; or anything that does CLI calls from the API
-@memoize
+@cache
 def git_version():
     git_path = which(GIT_BIN)
     if not git_path:

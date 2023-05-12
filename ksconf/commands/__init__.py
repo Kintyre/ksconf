@@ -13,11 +13,12 @@ from textwrap import dedent
 from warnings import warn
 
 from ksconf import KsconfPluginWarning
+from ksconf.compat import cache
 from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 detect_by_bom, parse_conf, smart_write_conf,
                                 write_conf)
 from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum
-from ksconf.util import debug_traceback, memoize
+from ksconf.util import debug_traceback
 
 __all__ = [
     "KsconfCmd",
@@ -522,7 +523,7 @@ if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):    # pragma: no
 
 
 # This caching is *mostly* beneficial for unittest CLI testing
-@memoize
+@cache
 def get_entrypoints(group, name=None):
 
     for resolver in list(__get_entity_resolvers):
@@ -566,10 +567,7 @@ def get_all_ksconf_cmds(on_error="warn"):
         try:
             cmd_cls._handle_imports()
         except ImportError as e:
-            if hasattr(e, "name"):         # PY3
-                module = e.name
-            else:
-                module = e
+            module = e.name
             if on_error == "warn":
                 warn(f"Unable to load external modules for {name}.  Disabling.  "
                      f"{module}.", KsconfPluginWarning)

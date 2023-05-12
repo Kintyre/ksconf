@@ -8,8 +8,8 @@ import sys
 from subprocess import Popen
 from typing import Callable, List
 
+from ksconf.compat import handle_py3_kw_only_args
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
-from ksconf.util import handle_py3_kw_only_args
 
 QUIET = -1
 NORMAL = 0

@@ -65,12 +65,10 @@ class CliPackageCmdTest(unittest.TestCase):
         tarball = twd.read_file("release_file")
         self.assertTrue(os.path.basename(tarball), "my_app_on_splunkbase-0.0.1.tgz")
         self.assertTrue(os.path.isfile(tarball))
-        tf = tarfile.open(tarball, "r:gz")
-
-        names = tf.getnames()
-        self.assertIn("my_app_on_splunkbase/default/app.conf", names)
-        self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
-        tf.close()  # PY3:  use context manager (with) instead
+        with tarfile.open(tarball, "r:gz") as tf:
+            names = tf.getnames()
+            self.assertIn("my_app_on_splunkbase/default/app.conf", names)
+            self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
 
     def test_package_simple_local(self):
         twd = TestWorkDir()
@@ -89,16 +87,15 @@ class CliPackageCmdTest(unittest.TestCase):
         self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase-1.2.3.spl")
         self.assertTrue(os.path.isfile(tarball))
 
-        tf = tarfile.open(tarball, "r:gz")
-        names = tf.getnames()
-        # Expected files
-        self.assertIn("my_app_on_splunkbase/default/app.conf", names)
-        self.assertIn("my_app_on_splunkbase/metadata/default.meta", names)
-        # Ensure these files are NOT present
-        self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
-        self.assertNotIn("my_app_on_splunkbase/metadata/local.meta", names)
-        # self.assertRegex(ko.stdout, r"^diff ", "Missing diff header line")
-        tf.close()  # PY3:  use context manager (with) instead
+        with tarfile.open(tarball, "r:gz") as tf:
+            names = tf.getnames()
+            # Expected files
+            self.assertIn("my_app_on_splunkbase/default/app.conf", names)
+            self.assertIn("my_app_on_splunkbase/metadata/default.meta", names)
+            # Ensure these files are NOT present
+            self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
+            self.assertNotIn("my_app_on_splunkbase/metadata/local.meta", names)
+            # self.assertRegex(ko.stdout, r"^diff ", "Missing diff header line")
 
     def test_package_simple_no_appname(self):
         """ automatically detect the correct appname of the input folder """
@@ -114,11 +111,10 @@ class CliPackageCmdTest(unittest.TestCase):
         tarball = twd.read_file("release_file")
         self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase.tgz")
         self.assertTrue(os.path.isfile(tarball))
-        tf = tarfile.open(tarball, "r:gz")
-        names = tf.getnames()
-        self.assertIn("my_app_on_splunkbase/default/app.conf", names)
-        self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
-        tf.close()  # PY3:  use context manager (with) instead
+        with tarfile.open(tarball, "r:gz") as tf:
+            names = tf.getnames()
+            self.assertIn("my_app_on_splunkbase/default/app.conf", names)
+            self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
 
     def test_package_simple_hidden_appname(self):
         """ app name is NOT given:  Extract from app/[package]/id """
@@ -132,9 +128,8 @@ class CliPackageCmdTest(unittest.TestCase):
             tarball = twd.read_file(".release")
             self.assertEqual(os.path.basename(tarball), "my_app_on_splunkbase-0.0.1.tgz")
             self.assertTrue(os.path.isfile(tarball))
-            tf = tarfile.open(tarball, "r:gz")
-            names = tf.getnames()
-            tf.close()  # PY3:  use context manager
+            with tarfile.open(tarball, "r:gz") as tf:
+                names = tf.getnames()
 
         self.assertIn("my_app_on_splunkbase/default/app.conf", names)
         self.assertNotIn("my_app_on_splunkbase/local/app.conf", names)
