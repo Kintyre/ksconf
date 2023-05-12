@@ -12,6 +12,7 @@ from os import fspath
 from pathlib import Path, PurePosixPath
 from typing import Iterable
 
+from build.lib.ksconf.deploy import AppManifestContentError
 from ksconf.archive import extract_archive
 from ksconf.compat import List
 from ksconf.consts import MANIFEST_HASH, UNSET
@@ -22,7 +23,8 @@ class AppArchiveError(Exception):
     pass
 
 
-class AppManifestContentError(Exception):
+class AppArchiveContentError(Exception):
+    """ Problem with the contents of an archive """
     pass
 
 
@@ -128,7 +130,6 @@ class AppManifest:
             h_ = hashlib.new(cls.hash_algorithm)
 
             def gethash(content):
-                # h = hashlib.new(MANIFEST_HASH)
                 h = h_.copy()
                 h.update(content)
                 return h.hexdigest()
@@ -182,6 +183,16 @@ class AppManifest:
         for f in self.files:
             if f.path.parts[0] == "local" or f.path.name == "local.meta":
                 yield f
+
+    def check_paths(self):
+        """ Check for dangerous paths in the archive. """
+        for file in self.files:
+            path = file.path
+            if path.is_absolute():
+                raise AppManifestContentError(f"Found an absolute path {file.path}")
+            if ".." in path.parts or "~" in path.parts or \
+                    path.parts[0].endswith("~"):
+                raise AppManifestContentError(f"Found questionable path manipulation in '{file.path}'")
 
 
 @dataclass

@@ -297,7 +297,7 @@ class DeployApply:
                         reverse=True):
             full_path = self.dest.joinpath(d)
             if full_path.stat().st_nlink == 2:
-                print(f"Cleaning empty directory {d}")
+                # print(f"Cleaning empty directory {d}")
                 full_path.rmdir()
 
 

@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import, annotations, unicode_literals
 
-import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from io import StringIO
@@ -10,7 +9,8 @@ from os import fspath
 from pathlib import Path
 from typing import ClassVar
 
-from ksconf.archive import extract_archive, gaf_filter_name_like, sanity_checker
+from ksconf.app.manifest import AppArchiveContentError
+from ksconf.archive import extract_archive, gaf_filter_name_like
 from ksconf.compat import List, Tuple
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
@@ -130,8 +130,7 @@ class AppFacts:
         app_confs = defaultdict(dict)
 
         is_app_conf = gaf_filter_name_like("app.conf")
-        for gaf in sanity_checker(extract_archive(archive,
-                                                  extract_filter=is_app_conf)):
+        for gaf in extract_archive(archive, extract_filter=is_app_conf):
             app_name, relpath = gaf.path.split("/", 1)
             if relpath.endswith("/app.conf") and gaf.payload:
                 conf_folder = relpath.rsplit("/")[0]
@@ -143,8 +142,9 @@ class AppFacts:
             del app_name, relpath
 
         if len(app_names) > 1:
-            raise AppArchiveError("Found multiple top-level app names!  "
-                                  f"Archive {archive} contains apps {', '.join(app_names)}")
+            raise AppArchiveContentError(
+                f"Found multiple top-level app names!  Archive {archive} "
+                f"contains apps {', '.join(app_names)}")
 
         # Merge default and local (in the correct order)
         conf = merge_conf_dicts(app_confs["default"], app_confs["local"])

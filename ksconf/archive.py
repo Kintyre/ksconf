@@ -70,6 +70,10 @@ def _extract_zip(path, extract_filter=None, mode=0o644, encoding="latin"):
 
 
 def sanity_checker(iterable: Iterable[GenArchFile]) -> Iterable[GenArchFile]:
+    # Keep this here for a few versions because some of the cdillc.splunk code references this.
+    from warnings import warn
+    warn("Please use AppManifest.check_paths() instead.  The sanity_checker() "
+         "function will be removed in 1.0 or sooner.", DeprecationWarning)
     for gaf in iterable:
         if gaf.path.startswith("/") or ".." in gaf.path:
             raise ValueError(f"Bad path found in archive:  {gaf.path}")

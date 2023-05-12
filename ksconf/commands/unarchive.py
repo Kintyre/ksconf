@@ -12,15 +12,17 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import re
-from io import StringIO
 from subprocess import list2cmdline
 
-from ksconf.archive import (extract_archive, gaf_filter_name_like,
-                            gen_arch_file_remapper, sanity_checker)
+from ksconf.app import get_facts_manifest_from_archive
+from ksconf.app.facts import AppFacts
+from ksconf.app.manifest import AppArchiveContentError, AppArchiveError
+from ksconf.archive import extract_archive, gen_arch_file_remapper
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, default_encoding, parse_conf
-from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_FAILED_SAFETY_CHECK,
-                           EXIT_CODE_GIT_FAILURE, KSCONF_DEBUG)
+from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, parse_conf
+from ksconf.consts import (EXIT_CODE_BAD_ARCHIVE_FILE, EXIT_CODE_BAD_ARGS,
+                           EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE,
+                           KSCONF_DEBUG)
 from ksconf.filter import create_filtered_list
 from ksconf.util.compare import _cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
@@ -29,7 +31,7 @@ from ksconf.vc.git import (git_cmd, git_cmd_iterable, git_is_clean,
                            git_is_working_tree, git_ls_files, git_status_ui,
                            git_version)
 
-allowed_extentions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
+allowed_extensions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
 
 # XXX:  Add a git status --ignored --porcelain APPNAME check to list out files/dirs that are excluded...
@@ -55,7 +57,7 @@ class UnarchiveCmd(KsconfCmd):
     def register_args(self, parser):
         parser.add_argument("tarball", metavar="SPL",
                             help="The path to the archive to install."
-                            ).completer = FilesCompleter(allowednames=allowed_extentions)
+                            ).completer = FilesCompleter(allowednames=allowed_extensions)
         parser.add_argument("--dest", metavar="DIR", default=".", help=dedent("""\
             Set the destination path where the archive will be extracted.
             By default, the current directory is used.  Sane values include: etc/apps,
@@ -132,7 +134,6 @@ class UnarchiveCmd(KsconfCmd):
         f_hash = file_hash(args.tarball)
         self.stdout.write("Inspecting archive:               {}\n".format(args.tarball))
 
-        # TODO: Find a way to share with ksconf_shared.py in https://github.com/Kintyre/ansible-collection-splunk
         new_app_name = args.app_name
 
         if new_app_name and "/" in new_app_name:
@@ -143,33 +144,19 @@ class UnarchiveCmd(KsconfCmd):
                 return EXIT_CODE_BAD_ARGS
 
         # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
-        # TODO: Use AppFacts and AppManifest objects here instead (preferably once we can build both simultaneously)
-        app_name = set()
-        app_conf = {}
-        files = 0
-        local_files = set()
-        a = extract_archive(args.tarball, extract_filter=gaf_filter_name_like("app.conf"))
-        for gaf in sanity_checker(a):
-            gaf_app, gaf_relpath = gaf.path.split("/", 1)
-            files += 1
-            if gaf.path.endswith("app.conf") and gaf.payload:
-                conffile = StringIO(gaf.payload.decode(default_encoding))
-                conffile.name = os.path.join(args.tarball, gaf.path)
-                app_conf = parse_conf(conffile, profile=PARSECONF_LOOSE)
-                del conffile
-            elif gaf_relpath.startswith("local" + os.path.sep) or \
-                    gaf_relpath.endswith("local.meta"):
-                local_files.add(gaf_relpath)
-            app_name.add(gaf_app)
-            del gaf_app, gaf_relpath
-        if len(app_name) > 1:
-            self.stderr.write("The 'unarchive' command only supports extracting a single splunk"
-                              " app at a time.\nHowever the archive {} contains {} apps:  {}\n"
-                              "".format(args.tarball, len(app_name), ", ".join(app_name)))
+        try:
+            app_facts, app_manifest = get_facts_manifest_from_archive(
+                args.tarball, calculate_hash=False, check_paths=True)
+        except AppArchiveError as e:
+            self.stderr.write(f"Failed to extract content from {args.tarball}\n{e}")
+            return EXIT_CODE_BAD_ARCHIVE_FILE
+        except AppArchiveContentError as e:
+            self.stderr.write(f"The 'unarchive' command does not support the given archive.\n{e}")
             return EXIT_CODE_FAILED_SAFETY_CHECK
-        else:
-            app_name = app_name.pop()
-        del a
+
+        local_files = set(app_manifest.find_local())
+        app_name = app_facts.name
+
         if local_files:
             self.stderr.write("Local {} files found in the archive.  ".format(len(local_files)))
             if args.allow_local:
@@ -203,7 +190,7 @@ class UnarchiveCmd(KsconfCmd):
         else:
             vc_msg = "without version control support"
 
-        old_app_conf = {}
+        existing_app = None
 
         if os.path.isdir(dest_app):
             mode = "upgrade"
@@ -213,6 +200,8 @@ class UnarchiveCmd(KsconfCmd):
                 # Ignoring the 'local' entries since distributed apps shouldn't contain local
                 old_app_conf_file = os.path.join(dest_app, args.default_dir, "app.conf")
                 old_app_conf = parse_conf(old_app_conf_file, profile=PARSECONF_LOOSE)
+                existing_app = AppFacts.from_conf(app_basename, old_app_conf)
+                del old_app_conf
             except (ConfParserException, FileNotFoundError):
                 self.stderr.write("Unable to read app.conf from existing install.\n")
                 # Assume upgrade form unknown version
@@ -230,17 +219,16 @@ class UnarchiveCmd(KsconfCmd):
             else:
                 app_name_msg = "{} (renamed from {})".format(new_app_name, app_name)
 
-        def show_pkg_info(conf, label):
-            self.stdout.write("{} packaging info:    '{}' by {} (version {})\n".format(
-                label,
-                conf.get("ui", {}).get("label", "Unknown"),
-                conf.get("launcher", {}).get("author", "Unknown"),
-                conf.get("launcher", {}).get("version", "Unknown")))
+        def show_pkg_info(facts: AppFacts, label):
+            self.stdout.write(f"{label} packaging info:    "
+                              f"'{facts.label or 'Unknown'}' by "
+                              f"{facts.author or 'Unknown'} "
+                              f"(version {facts.author or 'Unknown'})\n")
 
-        if old_app_conf:
-            show_pkg_info(old_app_conf, " Installed app")
-        if app_conf:
-            show_pkg_info(app_conf, "   Tarball app")
+        if existing_app:
+            show_pkg_info(existing_app, " Installed app")
+        if app_facts:
+            show_pkg_info(app_facts, "   Tarball app")
 
         self.stdout.write("About to {} the {} app {}.\n".format(mode, app_name_msg, vc_msg))
 
@@ -281,7 +269,7 @@ class UnarchiveCmd(KsconfCmd):
                             git_status_ui(dest_app)
                         return EXIT_CODE_FAILED_SAFETY_CHECK
             else:
-                for (root, dirs, filenames) in relwalk(dest_app):
+                for (root, _, filenames) in relwalk(dest_app):
                     for fn in filenames:
                         existing_files.add(os.path.join(root, fn))
             self.stdout.write("Before upgrade.  App has {} files\n".format(len(existing_files)))
@@ -318,8 +306,6 @@ class UnarchiveCmd(KsconfCmd):
         # Calculate path rewrite operations
         path_rewrites = []
         files_iter = extract_archive(args.tarball)
-        if True:
-            files_iter = sanity_checker(files_iter)
         if args.default_dir != DEFAULT_DIR:
             rep = r"\1/{}/".format(args.default_dir.strip("/"))
             path_rewrites.append((re.compile(r"^(/?[^/]+)/{}/".format(DEFAULT_DIR)), rep))
@@ -418,23 +404,18 @@ class UnarchiveCmd(KsconfCmd):
                 self.stderr.write("No changes detected.  Nothing to {}\n".format(args.git_mode))
                 return
 
-            git_commit_app_name = app_conf.get("ui", {}).get("label", os.path.basename(dest_app))
-            git_commit_new_version = app_conf.get("launcher", {}).get("version", None)
+            git_commit_app_name = app_facts.label or os.path.basename(dest_app)
             if mode == "install":
-                git_commit_message = "Install {}".format(git_commit_app_name)
-
-                if git_commit_new_version:
-                    git_commit_message += " version {}".format(git_commit_new_version)
+                git_commit_message = f"Install {git_commit_app_name}"
+                if app_facts.version:
+                    git_commit_message += f" version {app_facts.version}"
             else:
                 # Todo:  Specify Upgrade/Downgrade/Refresh
-                git_commit_message = "Upgrade {}".format(
-                    git_commit_app_name)
-                git_commit_old_version = old_app_conf.get("launcher", {}).get("version", None)
-                if git_commit_old_version and git_commit_new_version:
-                    git_commit_message += " version {} (was {})".format(git_commit_new_version,
-                                                                        git_commit_old_version)
-                elif git_commit_new_version:
-                    git_commit_message += " to version {}".format(git_commit_new_version)
+                git_commit_message = f"Upgrade {git_commit_app_name}"
+                if existing_app.version and app_facts.version:
+                    git_commit_message += f" version {app_facts.version} (was {existing_app.version})"
+                elif app_facts.version:
+                    git_commit_message += f" to version {app_facts.version}"
             # Could possibly include some CLI arg details, like what file patterns were excluded
             git_commit_message += "\n\nSHA256 {} {}\n\nSplunk-App-managed-by: ksconf" \
                 .format(f_hash, os.path.basename(args.tarball))

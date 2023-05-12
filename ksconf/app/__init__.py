@@ -16,7 +16,8 @@ from ksconf.compat import Tuple
 
 def get_facts_manifest_from_archive(
         archive: Path,
-        calculate_hash=True) -> Tuple[AppFacts, AppManifest]:
+        calculate_hash=True,
+        check_paths=True) -> Tuple[AppFacts, AppManifest]:
     """ Get both AppFacts and AppManifest from a single archive.
     If ``calculate_hash`` is True, then the manifest will contain checksums for
     all files in the archive.  Without this, it's not possible to calculate a
@@ -31,5 +32,7 @@ def get_facts_manifest_from_archive(
 
     facts = AppFacts.from_archive(archive)
     manifest = AppManifest.from_archive(archive, calculate_hash=calculate_hash)
+    if check_paths:
+        manifest.check_paths()
 
     return facts, manifest
