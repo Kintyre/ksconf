@@ -12,7 +12,10 @@ from pathlib import Path
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.app import AppArchiveError, AppInfo, AppManifest, get_info_manifest_from_archive
+
+from ksconf.app import get_facts_manifest_from_archive
+from ksconf.app.facts import AppFacts
+from ksconf.app.manifest import AppManifest
 from tests.cli_helper import TestWorkDir, static_data
 
 """
@@ -31,9 +34,9 @@ class AppTestCase(unittest.TestCase):
         # Cleanup test working directory
         self.twd.clean()
 
-    def test_appinfo_from_tarball(self):
+    def test_AppFacts_from_tarball(self):
         tarball_path = static_data("apps/modsecurity-add-on-for-splunk_11.tgz")
-        app_info = AppInfo.from_archive(tarball_path)
+        app_info = AppFacts.from_archive(tarball_path)
         self.assertEqual(app_info.description, "ModSecurity Add-on for Splunk.")
         self.assertEqual(app_info.name, "Splunk_TA_modsecurity")
         self.assertEqual(app_info.version, "1.1")
@@ -48,7 +51,7 @@ class AppTestCase(unittest.TestCase):
 
     def test_the_do_it_all_function(self):
         tarball_path = static_data("apps/modsecurity-add-on-for-splunk_12.tgz")
-        info, manifest = get_info_manifest_from_archive(tarball_path)
+        info, manifest = get_facts_manifest_from_archive(tarball_path)
 
         self.assertEqual(info.name, "Splunk_TA_modsecurity")
         self.assertEqual(manifest.hash, "7f9e7b63ed13befe24b12715b1e1e9202dc1186266497aad0b723fe27ca1de12")

@@ -143,7 +143,7 @@ class UnarchiveCmd(KsconfCmd):
                 return EXIT_CODE_BAD_ARGS
 
         # ARCHIVE PRE-CHECKS:  Archive must contain only one app, no weird paths, ...
-        # TODO: Use AppInfo and AppManifest objects here instead (preferably once we can build both simultaneously)
+        # TODO: Use AppFacts and AppManifest objects here instead (preferably once we can build both simultaneously)
         app_name = set()
         app_conf = {}
         files = 0

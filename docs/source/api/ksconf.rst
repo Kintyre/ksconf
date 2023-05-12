@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   ksconf.app
    ksconf.builder
    ksconf.commands
    ksconf.conf
@@ -15,14 +16,6 @@ Subpackages
 
 Submodules
 ----------
-
-ksconf.app module
------------------
-
-.. automodule:: ksconf.app
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ksconf.archive module
 ---------------------
@@ -60,14 +53,6 @@ ksconf.consts module
 --------------------
 
 .. automodule:: ksconf.consts
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ksconf.deploy module
---------------------
-
-.. automodule:: ksconf.deploy
    :members:
    :undoc-members:
    :show-inheritance:

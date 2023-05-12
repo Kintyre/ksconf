@@ -12,10 +12,10 @@ from pathlib import Path
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ksconf.deploy import (AppManifest, DeployApply, DeploySequence,
-                           StoredArchiveManifest, create_manifest_from_archive,
-                           expand_archive_by_manifest,
-                           load_manifest_for_archive)
+from ksconf.app.deploy import AppManifest, DeployApply, DeploySequence, expand_archive_by_manifest
+from ksconf.app.manifest import (StoredArchiveManifest,
+                                 create_manifest_from_archive,
+                                 load_manifest_for_archive)
 from tests.cli_helper import TestWorkDir, static_data
 
 """

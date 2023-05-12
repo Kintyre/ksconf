@@ -164,6 +164,7 @@ setup(name=package_name,
       },
       packages=[
           "ksconf",
+          "ksconf.app",
           "ksconf.builder",
           "ksconf.commands",
           "ksconf.conf",
