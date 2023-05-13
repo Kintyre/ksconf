@@ -6,7 +6,9 @@ import re
 import shutil
 import tarfile
 import tempfile
+from typing import TextIO
 
+from ksconf.app.manifest import AppManifest
 from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
@@ -52,7 +54,7 @@ class PackagingException(Exception):
 
 class AppPackager:
 
-    def __init__(self, src_path, app_name, output):
+    def __init__(self, src_path, app_name: str, output: TextIO):
         self.src_path = src_path
         self.app_name = app_name
         self.build_dir = None
@@ -227,6 +229,16 @@ class AppPackager:
         with tarfile.open(filename, mode="w:gz") as spl:
             spl.add(self.app_dir, arcname=self.app_name)
         return filename
+
+    def make_manifest(self, calculate_hash=True) -> AppManifest:
+        """
+        Create a manifest of the app's contents.
+        """
+        app_name = self.expand_var(self.app_name)
+        manifest = AppManifest.from_filesystem(self.app_dir, name=app_name,
+                                               calculate_hash=calculate_hash)
+        manifest.source = self.src_path
+        return manifest
 
     def __enter__(self):
         self.build_dir = tempfile.mkdtemp("-ksconf-package-build")

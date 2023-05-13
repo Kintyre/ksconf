@@ -188,10 +188,9 @@ class AppManifest:
         for file in self.files:
             path = file.path
             if path.is_absolute():
-                raise AppManifestContentError(f"Found an absolute path {file.path}")
-            if ".." in path.parts or "~" in path.parts or \
-                    path.parts[0].endswith("~"):
-                raise AppManifestContentError(f"Found questionable path manipulation in '{file.path}'")
+                raise AppArchiveContentError(f"Found an absolute path {file.path}")
+            if ".." in path.parts or path.parts[0].startswith("~"):
+                raise AppArchiveContentError(f"Found questionable path manipulation in '{file.path}'")
 
 
 @dataclass
@@ -238,7 +237,7 @@ class StoredArchiveManifest:
     def write_json_manifest(self, manifest_file: Path):
         data = self.to_dict()
         with open(manifest_file, "w") as fp:
-            json.dump(data, fp)
+            json.dump(data, fp, indent=1)
 
     @classmethod
     def read_json_manifest(cls, manifest_file: Path) -> "StoredArchiveManifest":
@@ -304,6 +303,8 @@ def create_manifest_from_archive(
     """
     Create a new stored manifest file based on a given archive.
     """
+    if manifest_file is None:
+        manifest_file = get_stored_manifest_name(archive_file)
     sam = StoredArchiveManifest.from_file(archive_file, manifest)
     sam.write_json_manifest(manifest_file)
     return sam
