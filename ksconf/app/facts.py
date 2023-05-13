@@ -1,4 +1,8 @@
+""" Splunk Application facts:
 
+Easily collect Splunk app name, version, label, and other nuggets from ``app.conf``
+
+"""
 
 from __future__ import absolute_import, annotations, unicode_literals
 

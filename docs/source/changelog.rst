@@ -5,6 +5,34 @@ Changelog
 
 
 
+Ksconf 0.11
+-----------
+
+**Highlights:**
+
+*  Ksconf is beginning to treat Splunk apps more holistically and not just as a collection of ``.conf`` files.
+*  Significant portions of this new code base is directly leveraged by the Ansible modules located in the `cdillc.splunk <https://github.com/Kintyre/ansible-collection-splunk>`__ collection, a sibling project to Ksconf.
+   some of the code code there has made it's way into the core ksconf project in this release.
+
+
+**API Changes**
+
+*  Added :py:class:`~ksconf.app.facts.AppFacts` to easily collect Splunk application name, version, label, and other nuggets from ``app.conf``.
+*  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
+*  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
+
+
+Ksconf v0.11.0 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  First release of all ``ksconf.app.*`` functionality!
+*  The ``unarchive`` command has been updated to use the new functionality.
+*  More embracing of Python 3, f-strings, and pathlib!
+
+NOTE:  If you don't need for the new Splunk app functionality, there's little value in upgrading to v0.11.  There's no new CLI features exposing this new functionality yet.
+
+
+
 Ksconf 0.10
 -----------
 
