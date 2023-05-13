@@ -21,7 +21,7 @@ Ksconf 0.10
    The :py:class:`~ksconf.command.combine.CombineCmd` now contains only the command line functionality.
 
 
-Ksconf v0.10.2 (DRAFT)
+Ksconf v0.10.2 (2023-05-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Fix an ``unarchive`` bug triggered by trailing slashes in ``--app-name``.
