@@ -12,7 +12,6 @@ from os import fspath
 from pathlib import Path, PurePosixPath
 from typing import Iterable
 
-from build.lib.ksconf.deploy import AppManifestContentError
 from ksconf.archive import extract_archive
 from ksconf.compat import List
 from ksconf.consts import MANIFEST_HASH, UNSET
@@ -144,8 +143,8 @@ class AppManifest:
             f = AppManifestFile(PurePosixPath(relpath), gaf.mode, gaf.size, hash)
             manifest.files.append(f)
         if len(app_names) > 1:
-            raise AppManifestContentError("Found multiple top-level app names!  "
-                                          f"Archive {archive} contains apps {', '.join(app_names)}")
+            raise AppArchiveContentError("Found multiple top-level app names!  "
+                                         f"Archive {archive} contains apps {', '.join(app_names)}")
         manifest.name = app_names.pop()
         return manifest
 

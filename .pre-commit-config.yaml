@@ -31,6 +31,11 @@ repos:
 
 - repo: local
   hooks:
+    - id: do-not-commit
+      name: Block commits with invalid lines
+      entry: ^(from build\.lib|import build\.)
+      language: pygrep
+      types: [python]
     - id: make-dynamic-docs
       name: Generating dynamic reference docs -> docs/source/cli.rst
       language: script
