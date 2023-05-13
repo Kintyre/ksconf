@@ -3,7 +3,7 @@
 from __future__ import absolute_import, annotations, unicode_literals
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from io import StringIO
 from os import fspath
 from pathlib import Path
@@ -31,17 +31,17 @@ class AppFacts:
     state: str = None
     build: int = None
 
-    is_configured: bool = field(init=False)
-    allows_disable: bool = field(init=False)
-    state_change_requires_restart: bool = field(init=False)
+    is_configured: bool = field(init=False, default=None)
+    allows_disable: bool = field(init=False, default=None)
+    state_change_requires_restart: bool = field(init=False, default=None)
 
-    install_source_checksum: str = field(init=False)
-    install_source_local_checksum: str = field(init=False)
-    check_for_updates: bool = field(init=False)
-    is_visible: bool = field(init=False)
+    install_source_checksum: str = field(init=False, default=None)
+    install_source_local_checksum: str = field(init=False, default=None)
+    check_for_updates: bool = field(init=False, default=None)
+    is_visible: bool = field(init=False, default=None)
 
-    deployer_lookups_push_mode: str = field(init=False)
-    deployer_push_mode: str = field(init=False)
+    deployer_lookups_push_mode: str = field(init=False, default=None)
+    deployer_push_mode: str = field(init=False, default=None)
 
     _conf_translate_pairs: ClassVar[List[Tuple[str, List[str]]]] = [
         ("launcher", [
@@ -72,6 +72,10 @@ class AppFacts:
     def to_dict(self) -> dict:
         return asdict(self)
 
+    def to_tiny_dict(self, *keep_attrs) -> dict:
+        """ Return dict representation, discarding the Nones """
+        return {k: v for k, v in asdict(self).items() if v is not None or k in keep_attrs}
+
     @classmethod
     def from_conf(cls, name, conf: ConfType) -> "AppFacts":
         """
@@ -79,9 +83,11 @@ class AppFacts:
         """
         new = cls(name)
 
+        type_mapping = {f.name: f.type for f in fields(cls) if f.type in ("bool", "int")}
+
         def convert_attr(attr_name, value):
             # XXX: Is there a better approach for dataclasses?  fields() returns a list
-            data_type = cls.__annotations__.get(attr_name, None)
+            data_type = type_mapping.get(attr_name, None)
             convert_function = None
             if data_type == "bool":
                 convert_function = conf_attr_boolean

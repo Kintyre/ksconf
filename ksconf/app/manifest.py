@@ -327,6 +327,7 @@ def load_manifest_for_archive(
     as ``archive``.
     """
     # XXX: Add optimization to check if archive is newer than manifest_file, assume old
+    archive = Path(archive)
     manifest = None
 
     if manifest_file is None and read_manifest or write_manifest:
@@ -342,6 +343,10 @@ def load_manifest_for_archive(
     if manifest is None:
         print(f"Calculating manifest for {archive}")
         manifest = AppManifest.from_archive(archive)
+
+        # We assume that a previously stored manifest has already undergone the
+        # path check.  Checks should be redone from within the extraction process.
+        manifest.check_paths()
 
         if write_manifest:
             create_manifest_from_archive(archive, manifest_file, manifest)
