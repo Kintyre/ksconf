@@ -299,11 +299,11 @@ class DeployApply:
                         key=_path_by_part_len,
                         reverse=True):
             full_path = self.dest.joinpath(d)
-            if full_path.stat().st_nlink == 2:
+            if full_path.is_dir() and full_path.stat().st_nlink == 2:
                 # print(f"Cleaning empty directory {d}")
                 try:
                     full_path.rmdir()
-                except IOError:
+                except OSError:
                     pass
 
 
