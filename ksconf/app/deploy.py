@@ -185,6 +185,8 @@ class DeploySequence:
             base: AppManifest,
             target: AppManifest) -> "DeploySequence":
         seq = cls()
+        if target is None:
+            return cls.from_manifest(base)
         if base.name != target.name:
             raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
         seq.add(DeployAction_SourceReference(target.source, target.hash))
@@ -289,7 +291,8 @@ class DeployApply:
         # Cleanup removed files
         for p in remove_path:
             full_path: Path = self.dest.joinpath(p)
-            full_path.unlink()
+            if full_path.is_file():
+                full_path.unlink()
 
         # Cleanup any empty directories (longest paths first)
         for d in sorted(set(f.parent for f in remove_path),
@@ -298,7 +301,10 @@ class DeployApply:
             full_path = self.dest.joinpath(d)
             if full_path.stat().st_nlink == 2:
                 # print(f"Cleaning empty directory {d}")
-                full_path.rmdir()
+                try:
+                    full_path.rmdir()
+                except IOError:
+                    pass
 
 
 def expand_archive_by_manifest(
