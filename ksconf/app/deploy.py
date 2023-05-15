@@ -185,8 +185,8 @@ class DeploySequence:
             base: AppManifest,
             target: AppManifest) -> "DeploySequence":
         seq = cls()
-        if target is None:
-            return cls.from_manifest(base)
+        if base is None:
+            return cls.from_manifest(target)
         if base.name != target.name:
             raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
         seq.add(DeployAction_SourceReference(target.source, target.hash))
