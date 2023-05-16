@@ -204,13 +204,14 @@ class LayerRootBase:
 
     def __init__(self, config=None):
         self._layers = []
-        self.layer_filter = None
         self.config = config or LayerConfig()
 
     def apply_filter(self, layer_filter):
         """
         Apply a destructive filter to all layers.  layer_filter(layer) will be called one for each
         layer, if the filter returns True than the layer is kept.  Root layers are always kept.
+
+        Returns True if layers were removed
         """
         layers = [l for l in self._layers if layer_filter(l)]
         result = self._layers != layers
