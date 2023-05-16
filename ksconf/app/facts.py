@@ -81,7 +81,7 @@ class AppFacts:
         return {k: v for k, v in asdict(self).items() if v is not None or k in keep_attrs}
 
     @classmethod
-    def from_conf(cls, name, conf: ConfType) -> "AppFacts":
+    def from_conf(cls, name, conf: ConfType) -> AppFacts:
         """
         Create AppFacts from an app.conf configuration content.
         """
@@ -114,7 +114,7 @@ class AppFacts:
         return new
 
     @classmethod
-    def from_app_dir(cls, app_path: Path) -> "AppFacts":
+    def from_app_dir(cls, app_path: Path) -> AppFacts:
         """
         Create an AppFacts from a local file system.  This expects a standard
         (non-layered) installed or extracted app folder.  Both ``default`` and

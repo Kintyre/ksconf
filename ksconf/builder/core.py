@@ -22,6 +22,8 @@ decorator used to implement caching:
                         (Cache "slot"), must be filesystem safe]
 """
 
+from __future__ import annotations
+
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -41,15 +43,15 @@ def _get_function_sourcecode_hash(f):
 
 
 class BuildManager:
-    """ Management of individual build steps
+    """ Supports an application building process by managing individual build steps
 
     .. versionadded:: v0.8.0
     """
 
     def __init__(self):
-        self.source_path = None
-        self.build_path = None
-        self.dist_path = None
+        self.source_path: Path = None
+        self.build_path: Path = None
+        self.dist_path: Path = None
         self.cache_path = None
         self._cache_enabled = True
         self._taint = False
@@ -61,14 +63,17 @@ class BuildManager:
     def disable_cache(self):
         self._cache_enabled = False
 
-    def get_build_step(self, output=None):
+    def get_build_step(self, output=None) -> BuildStep:
         kw = {}
         if output:
             kw["output"] = output
         step = BuildStep(self.build_path, self.source_path, self.dist_path, **kw)
         return step
 
-    def set_folders(self, source_path, build_path, dist_path=None):
+    def set_folders(self,
+                    source_path: Path,
+                    build_path: Path,
+                    dist_path: Path = None):
         self._folder_set = True
         self.source_path = Path(source_path).absolute()
         self.build_path = Path(build_path).absolute()
@@ -82,7 +87,7 @@ class BuildManager:
     def is_folders_set(self):
         return self._folder_set
 
-    def get_cache_info(self, name):
+    def get_cache_info(self, name: str) -> CachedRun:
         path = self.cache_path / name
         cache_info = CachedRun(path)
         if self._taint:

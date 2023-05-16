@@ -57,7 +57,7 @@ class DeployAction:
         return data
 
     @classmethod
-    def from_dict(self, data: dict) -> "DeployAction":
+    def from_dict(self, data: dict) -> DeployAction:
         data = data.copy()
         action = data.pop("action")
         action = DeployActionType(action)
@@ -155,7 +155,7 @@ class DeploySequence:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DeploySequence":
+    def from_dict(cls, data: dict) -> DeploySequence:
         seq = cls()
         for action in data["actions"]:
             da = DeployAction.from_dict(action)
@@ -165,7 +165,7 @@ class DeploySequence:
     @classmethod
     def from_manifest(
             cls,
-            manifest: AppManifest) -> "DeploySequence":
+            manifest: AppManifest) -> DeploySequence:
         """
         Fresh deploy of an app from scratch.
 
@@ -183,7 +183,7 @@ class DeploySequence:
     def from_manifest_transformation(
             cls,
             base: AppManifest,
-            target: AppManifest) -> "DeploySequence":
+            target: AppManifest) -> DeploySequence:
         seq = cls()
         if base is None:
             return cls.from_manifest(target)

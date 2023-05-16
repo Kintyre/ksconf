@@ -1,12 +1,13 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, annotations, unicode_literals
 
 import argparse
 import inspect
 import os
 import re
 import sys
+from pathlib import Path
 from subprocess import Popen
-from typing import Callable, List
+from typing import Callable, List, TextIO
 
 from ksconf.compat import handle_py3_kw_only_args
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
@@ -27,7 +28,11 @@ class BuildCacheException(Exception):
 class BuildStep:
     __slots__ = ["build_path", "source_path", "dist_path", "config", "verbosity", "_output"]
 
-    def __init__(self, build, source=None, dist=None, output=sys.stdout):
+    def __init__(self,
+                 build: Path,
+                 source: Path = None,
+                 dist: Path = None,
+                 output: TextIO = sys.stdout):
         self.build_path = build
         self.source_path = source
         self.dist_path = dist
@@ -35,7 +40,7 @@ class BuildStep:
         self.verbosity = 0
         self._output = output
 
-    def alternate_path(self, path):
+    def alternate_path(self, path) -> BuildStep:
         """ Construct a new BuildStep instance with only 'build_path' altered. """
         cls = self.__class__
         instance = cls(path)

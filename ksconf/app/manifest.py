@@ -51,7 +51,7 @@ class AppManifestFile:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AppManifestFile":
+    def from_dict(cls, data: dict) -> AppManifestFile:
         return cls(PurePosixPath(data["path"]), data["mode"], data["size"], data["hash"])
 
 
@@ -97,7 +97,7 @@ class AppManifest:
         return h.hexdigest()
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AppManifest":
+    def from_dict(cls, data: dict) -> AppManifest:
         files = [AppManifestFile.from_dict(f) for f in data["files"]]
         o = cls(data["name"], source=data["source"],
                 hash_algorithm=data["hash_algorithm"], files=files)
@@ -116,7 +116,7 @@ class AppManifest:
 
     @classmethod
     def from_archive(cls, archive: Path,
-                     calculate_hash=True) -> "AppManifest":
+                     calculate_hash=True) -> AppManifest:
         """
         Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
         False when only a file listing is needed.
@@ -152,7 +152,7 @@ class AppManifest:
     def from_filesystem(cls, path: Path,
                         name: str = None,
                         follow_symlinks=False,
-                        calculate_hash=True) -> "AppManifest":
+                        calculate_hash=True) -> AppManifest:
         """
         Create as new AppManifest from an existing directory structure.
         Set ``calculate_hash`` as False when only a file listing is needed.
@@ -220,7 +220,7 @@ class StoredArchiveManifest:
         return self._manifest
 
     @classmethod
-    def from_dict(cls, data: dict) -> "StoredArchiveManifest":
+    def from_dict(cls, data: dict) -> StoredArchiveManifest:
         o = cls(Path(data["archive"]), data["size"], data["mtime"], data["hash"])
         o._manifest_dict = data["manifest"]
         return o
@@ -240,7 +240,7 @@ class StoredArchiveManifest:
             json.dump(data, fp, indent=1)
 
     @classmethod
-    def read_json_manifest(cls, manifest_file: Path) -> "StoredArchiveManifest":
+    def read_json_manifest(cls, manifest_file: Path) -> StoredArchiveManifest:
         with open(manifest_file) as fp:
             data = json.load(fp)
         return cls.from_dict(data)
@@ -249,7 +249,7 @@ class StoredArchiveManifest:
     def from_file(cls,
                   archive: Path,
                   manifest: AppManifest
-                  ) -> "StoredArchiveManifest":
+                  ) -> StoredArchiveManifest:
         """
         Construct instance from a tarball.
         """
@@ -263,7 +263,7 @@ class StoredArchiveManifest:
     @classmethod
     def from_json_manifest(cls,
                            archive: Path,
-                           stored_file: Path) -> "StoredArchiveManifest":
+                           stored_file: Path) -> StoredArchiveManifest:
         """
         Attempt to load as stored manifest from archive & stored manifest paths.
         If the archive has changed since the manifest was stored, then an

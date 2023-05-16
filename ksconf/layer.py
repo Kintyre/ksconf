@@ -101,7 +101,7 @@ class LayerFilter:
             self._rules.append(first_filter)
         self._rules.append((action, pattern))
 
-    def evaluate(self, layer: "LayerRootBase.Layer") -> bool:
+    def evaluate(self, layer: LayerRootBase.Layer) -> bool:
         response = True
         layer_name = layer.name
         for rule_action, rule_pattern in self._rules:
@@ -127,7 +127,7 @@ class LayerRootBase:
     class File(PathLike):
         __slots__ = ["layer", "relative_path", "_stat"]
 
-        def __init__(self, layer, relative_path, stat=None):
+        def __init__(self, layer: LayerRootBase.Layer, relative_path, stat=None):
             self.layer = layer
             self.relative_path = relative_path
             self._stat = stat
