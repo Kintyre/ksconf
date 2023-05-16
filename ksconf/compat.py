@@ -8,10 +8,12 @@ import sys
 # We could just always import from typing, but that appears to cause some issues
 # with type hinting, and this appears to work correctly.
 if sys.version_info < (3, 8):
-    from typing import List, Tuple
+    from typing import Dict, List, Set, Tuple
 else:
     List = list
     Tuple = tuple
+    Dict = dict
+    Set = set
 
 
 try:

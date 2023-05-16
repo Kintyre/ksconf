@@ -4,19 +4,23 @@ XXX: Split out conf, spec, binary file handlers into separate registerable (and 
 XXX: Move the overwrite-as-necessary logic into a subclass; for several use cases we just don't care because 'target' is a brand new directory
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, annotations, unicode_literals
 
 import os
 import re
 import sys
 from io import open
+from os import fspath
+from pathlib import Path
 
 from ksconf.commands import ConfFileProxy
+from ksconf.compat import List
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerConfig, LayerFilter, LayerRootBase
+from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerConfig,
+                          LayerFilter, LayerRootBase, T_File)
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
 
@@ -78,12 +82,12 @@ class LayerCombiner:
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
-    def set_source_dirs(self, sources: list):
+    def set_source_dirs(self, sources: List[Path]):
         self.layer_root = DirectLayerRoot(config=self.config)
         for src in sources:
-            self.layer_root.add_layer(src)
+            self.layer_root.add_layer(Path(src))
 
-    def set_layer_root(self, root):
+    def set_layer_root(self, root: LayerRootBase.Layer):
         layer_root = DotDLayerRoot(config=self.config)
         layer_root.set_root(root)
         self.layer_root = layer_root
@@ -105,10 +109,11 @@ class LayerCombiner:
         self.combine_files(target, src_file_listing)
         self.post_combine(target)
 
-    def prepare(self, target):
+    def prepare(self, target: Path):
         """ Start the combine process.  This includes directory checking,
         applying layer filtering, and marker file handling. """
         layer_root, layer_filter = self.layer_root, self.layer_filter
+        target = Path(target)
 
         self.prepare_target_dir(target)
 
@@ -118,14 +123,14 @@ class LayerCombiner:
         else:
             self.layer_names_used.update(self.layer_names_all)
 
-    def prepare_target_dir(self, target):
+    def prepare_target_dir(self, target: Path):
         """ Hook to ensure destination directory is ready for use.  This can be overridden
         to adder marker file handling for use cases that need it (e.g., the 'combine' command)
         """
-        if not os.path.isdir(target):
-            os.mkdir(target)
+        if not target.is_dir():
+            target.mkdir()
 
-    def pre_combine_inventory(self, target, src_files):
+    def pre_combine_inventory(self, target: Path, src_files: List[T_File]) -> List[T_File]:
         """ Hook point for pre-processing before any files are copied/merged """
         del target
         return src_files
@@ -137,7 +142,7 @@ class LayerCombiner:
     def combine_files(self, target, src_files):
         layer_root = self.layer_root
 
-        def physical_paths(l: LayerRootBase.File):
+        def physical_paths(l: T_File):
             return [s.physical_path for s in l]
 
         for src_file in sorted(src_files):
@@ -148,32 +153,32 @@ class LayerCombiner:
             except IndexError:
                 raise LayerCombinerException("File disappeared during execution?  {src_file}\n")
 
-            dest_path = os.path.join(target, dest_fn)
+            dest_path: Path = target / dest_fn
 
             # Make missing destination folder, if missing
-            dest_dir = os.path.dirname(dest_path)
-            if not os.path.isdir(dest_dir) and not self.dry_run:
-                os.makedirs(dest_dir)
+            dest_dir: Path = dest_path.parent
+            if not dest_dir.is_dir() and not self.dry_run:
+                dest_dir.mkdir(parents=True)
 
             # Determine handling method based on source count and filename pattern
             if len(sources) == 1:
                 # Copy only file (most common case)
                 method = "copy"
-            elif self.spec_file_re.search(dest_fn):
+            elif self.spec_file_re.search(dest_fn.name):
                 method = "concatenate"
-            elif self.conf_file_re.search(dest_fn):
+            elif self.conf_file_re.search(dest_fn.name):
                 method = "merge"
             else:
                 # Copy highest precedence
                 method = "copy"
 
             if method == "copy":
-                # self.stderr.write(f"Considering {dest_fn:50}  NON-CONF Copy from source:  "
+                # self.stderr.write(f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
                 #                   f"{sources[-1].physical_path!r}\n")
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].physical_path
                 if self.dry_run:
-                    if os.path.isfile(dest_path):
+                    if dest_path.is_file():
                         if file_compare(src_file, dest_path):
                             smart_rc = SMART_NOCHANGE
                         else:
@@ -189,7 +194,7 @@ class LayerCombiner:
                     smart_rc = smart_copy(src_file, dest_path)
                 if smart_rc != SMART_NOCHANGE:
                     if not self.quiet:
-                        self.stderr.write(f"Copy <{smart_rc}>   {dest_path:50}  from {src_file}\n")
+                        self.stderr.write(f"Copy <{smart_rc}>   {fspath(dest_path):50}  from {src_file}\n")
                 del src_file
 
             elif method == "merge":
@@ -205,7 +210,7 @@ class LayerCombiner:
                                                 banner_comment=self.banner)
                     if smart_rc != SMART_NOCHANGE:
                         if not self.quiet:
-                            self.stderr.write(f"Merge <{smart_rc}>   {dest_path:50}  "
+                            self.stderr.write(f"Merge <{smart_rc}>   {fspath(dest_path):50}  "
                                               f"from {physical_paths(sources)!r}\n")
                 finally:
                     # Protect against any dangling open files:  (ResourceWarning: unclosed file)
@@ -218,16 +223,15 @@ class LayerCombiner:
                 combined_content = ""
                 last_mtime = max(src.mtime for src in sources)
                 for src in sources:
-                    with open(src, "r") as stream:
+                    with open(src.physical_path, "r") as stream:
                         content = stream.read()
                         if not content.endswith("\n"):
                             content += "\n"
                         combined_content += content
                         del content
                 smart_rc = SMART_CREATE
-                if os.path.isfile(dest_path):
-                    with open(dest_path) as stream:
-                        dest_content = stream.read()
+                if dest_path.is_file():
+                    dest_content = dest_path.read_text()
                     if dest_content == combined_content:
                         smart_rc = SMART_NOCHANGE
                     else:
@@ -235,12 +239,11 @@ class LayerCombiner:
                     del dest_content
 
                 if not self.dry_run:
-                    with open(dest_path, "w") as stream:
-                        stream.write(combined_content)
+                    dest_path.write_text(combined_content)
 
                 if smart_rc != SMART_NOCHANGE:
                     if not self.quiet:
-                        self.stderr.write(f"Concatenate <{smart_rc}>   {dest_path:50}  "
+                        self.stderr.write(f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  "
                                           f"from {physical_paths(sources)!r}\n")
                 os.utime(dest_path, (last_mtime, last_mtime))
                 del combined_content

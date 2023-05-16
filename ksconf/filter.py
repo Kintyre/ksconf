@@ -5,6 +5,7 @@ import os
 import re
 import sys
 from collections import Counter
+from pathlib import Path
 
 from ksconf.conf.parser import GLOBAL_STANZA
 from ksconf.util.file import splglob_to_regex
@@ -41,6 +42,9 @@ class FilteredList:
         return items
 
     def feed(self, item, filter=None):
+        if isinstance(item, Path):
+            item = os.fspath(item)
+
         if item.startswith("file://"):
             # File ingestion mode
             filename = item[7:]
@@ -86,6 +90,8 @@ class FilteredList:
             return result
 
     def match_path(self, path):
+        if isinstance(path, Path):
+            path = os.fspath(path)
         if os.path.sep != "/":
             path = path.replace(os.path.sep, "/")
         return self.match(path)

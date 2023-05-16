@@ -13,12 +13,15 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 from io import open
+from pathlib import Path
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
 from ksconf.commands import KsconfCmd, dedent
+from ksconf.compat import List
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
+from ksconf.layer import T_File
 from ksconf.util.completers import DirectoriesCompleter
 from ksconf.util.file import expand_glob_list, relwalk, splglob_simple
 
@@ -48,13 +51,13 @@ class RepeatableCombiner(LayerCombiner):
         self.disable_cleanup = disable_cleanup
         self.keep_existing = keep_existing
 
-    def prepare_target_dir(self, target):
+    def prepare_target_dir(self, target: Path):
         """
         Handle marker file and ensure that target directory gets created safely.
         """
-        marker_file = os.path.join(target, CONTROLLED_DIR_MARKER)
-        if os.path.isdir(target):
-            if not self.disable_marker and not os.path.isfile(marker_file):
+        marker_file: Path = target / CONTROLLED_DIR_MARKER
+        if target.is_dir():
+            if not self.disable_marker and not marker_file.is_file():
                 self.stderr.write("Target directory already exists, but it appears to have been "
                                   "created by some other means.  Marker file missing.\n")
                 raise LayerCombinerExceptionCode("Target directory exists without marker file",
@@ -64,17 +67,16 @@ class RepeatableCombiner(LayerCombiner):
             self.stderr.write("Skipping creating destination directory {target} (dry-run)\n")
         else:
             try:
-                os.mkdir(target)
+                target.mkdir()
             except OSError as e:
                 self.stderr.write(f"Unable to create destination directory {target}.  {e}\n")
                 raise LayerCombinerExceptionCode(f"Unable to create destination directory {target}",
                                                  EXIT_CODE_NO_SUCH_FILE)
             self.stderr.write(f"Created destination directory {target}\n")
             if not self.disable_marker:
-                with open(marker_file, "w") as f:
-                    f.write("This directory is managed by KSCONF.  Don't touch\n")
+                marker_file.write_text("This directory is managed by KSCONF.  Don't touch\n")
 
-    def pre_combine_inventory(self, target, src_files):
+    def pre_combine_inventory(self, target: Path, src_files: List[T_File]) -> List[T_File]:
         """
         Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         """
@@ -87,16 +89,17 @@ class RepeatableCombiner(LayerCombiner):
         # Convert src_files to a set to speed up
         src_files = set(src_files)
         self.target_extra_files = set()
-        for (root, dirs, files) in relwalk(target, followlinks=config.follow_symlink):
+        for (root, _, files) in relwalk(target, followlinks=config.follow_symlink):
+            root = Path(root)
             for fn in files:
-                tgt_file = os.path.join(root, fn)
+                tgt_file = root / fn
                 if tgt_file not in src_files:
                     if fn == CONTROLLED_DIR_MARKER or config.block_files.search(fn):
                         continue  # pragma: no cover (peephole optimization)
                     self.target_extra_files.add(tgt_file)
         return src_files
 
-    def post_combine(self, target):
+    def post_combine(self, target: Path):
         """
         Handle cleanup of extra files
         """
@@ -118,7 +121,8 @@ class RepeatableCombiner(LayerCombiner):
                     self.stderr.write(f"Skip cleanup of unwanted file {dest_fn}\n")
                 else:
                     self.stderr.write(f"Remove unwanted file {dest_fn}\n")
-                    os.unlink(os.path.join(target, dest_fn))
+                    f: Path = target / dest_fn
+                    f.unlink()
 
 
 class CombineCmd(KsconfCmd):

@@ -190,7 +190,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         description = The app is Splunk
         version = 7.0.0
         """)
-        # Make partent diretories
+        # Make parent directories
         os.makedirs(twd.get_path("etc/deployment-apps"))
 
         # First run (creates maker file)

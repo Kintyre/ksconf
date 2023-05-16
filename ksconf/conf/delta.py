@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from io import open
-from os import PathLike
+from os import PathLike, fspath
 from typing import List, NamedTuple, Sequence, TextIO, Union
 
 from ksconf.conf.parser import GLOBAL_STANZA, ConfType, StanzaType, _format_stanza, default_encoding
@@ -89,7 +89,7 @@ class DiffHeader:
             ts = datetime.datetime.fromtimestamp(self.mtime)
         else:
             ts = self.mtime
-        return "{0:50} {1}".format(self.name, ts)
+        return f"{fspath(self.name):50} {ts}"
 
 
 def compare_stanzas(a: StanzaType, b: StanzaType,

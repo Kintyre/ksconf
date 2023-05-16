@@ -9,6 +9,8 @@ import os
 import sys
 import unittest
 from glob import glob
+from os import fspath
+from pathlib import Path
 
 # Allow interactive execution from CLI,  cd tests; ./test_layer.py
 if __package__ is None:
@@ -31,13 +33,17 @@ def npl(iterable, nominal="/"):
     return [np(i, nominal) for i in iterable]
 
 
+def fspaths(iterable):
+    return (fspath(p) for p in iterable)
+
+
 class HelperFunctionsTestCase(unittest.TestCase):
 
     def test_path_in_layer_01(self):
-        path = np("default/data/ui/nav/default.xml")
-        self.assertEqual(path_in_layer("default", path), np("data/ui/nav/default.xml"))
-        self.assertEqual(path_in_layer("bin", path), False)
-        self.assertEqual(path_in_layer(np("a/path/longer/than/the/given/path"), path), False)
+        path = Path(np("default/data/ui/nav/default.xml"))
+        self.assertEqual(path_in_layer(Path("default"), path), Path(np("data/ui/nav/default.xml")))
+        self.assertEqual(path_in_layer(Path("bin"), path), None)
+        self.assertEqual(path_in_layer(Path(np("a/path/longer/than/the/given/path")), path), None)
 
     def test_path_in_layer_nulls(self):
         self.assertEqual(path_in_layer(None, "path"), "path")
@@ -145,7 +151,7 @@ class DefaultLayerTestCase(unittest.TestCase):
         dlr = DirectLayerRoot()
         # Take CLI args and apply to root
         for src in sorted(glob(os.path.join(default + ".d", "*"))):
-            dlr.add_layer(src)
+            dlr.add_layer(Path(src))
         # Note: Layer order matters
         layers = list([l.name for l in dlr.list_layers()])
         self.assertListEqual(layers, ["10-upstream", "20-corp", "60-dept"])
@@ -155,7 +161,7 @@ class DefaultLayerTestCase(unittest.TestCase):
             "props.conf",
             "transforms.conf",
         ]
-        self.assertListEqual(sorted(dlr.list_files()), sorted(expect_files))
+        self.assertListEqual(sorted(fspaths(dlr.list_files())), sorted(expect_files))
 
     def test_dotd_simple01(self):
         twd = self.common_data01()
@@ -176,7 +182,7 @@ class DefaultLayerTestCase(unittest.TestCase):
             "default/transforms.conf",
         ])
         expect_files = sorted([np(f) for f in expect_files])
-        self.assertListEqual(sorted(dlr.list_files()), sorted(expect_files))
+        self.assertListEqual(sorted(fspaths(dlr.list_files())), sorted(expect_files))
 
 
 if __name__ == '__main__':  # pragma: no cover

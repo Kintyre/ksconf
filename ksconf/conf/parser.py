@@ -19,6 +19,7 @@ import re
 from enum import Enum
 from io import StringIO, open
 from os import PathLike
+from pathlib import Path
 from typing import Dict, Generator, Iterable, List, TextIO, Tuple, Union
 
 from ..consts import SmartEnum
@@ -31,7 +32,7 @@ default_encoding = "utf-8"
 
 StanzaType = Dict[str, str]
 ConfType = Dict[str, StanzaType]
-PathType = Union[PathLike, str]
+PathType = Union[Path, str]
 _StreamInput = Union[TextIO, Iterable[str]]
 _StreamOutput = Union[PathType, TextIO]
 _StreamNameFile = Union[PathType, _StreamInput]
@@ -388,7 +389,8 @@ def smart_write_conf(filename: PathType,
                      sort: bool = True,
                      temp_suffix: str = ".tmp",
                      mtime: float = None) -> SmartEnum:
-    if os.path.isfile(filename):
+    filename = Path(filename)
+    if filename.is_file():
         temp = StringIO()
         write_conf_stream(temp, conf, stanza_delim, sort)
         with open(filename, encoding=default_encoding) as dest:
@@ -396,21 +398,20 @@ def smart_write_conf(filename: PathType,
         if file_diff:
             return SmartEnum.NOCHANGE
         else:
-            tempfile = filename + temp_suffix
-            with open(tempfile, "w", encoding=default_encoding) as dest:
-                dest.write(temp.getvalue())
+            tempfile: Path = filename.with_name(filename.name + temp_suffix)
+            tempfile.write_text(temp.getvalue(), encoding=default_encoding)
             if mtime:
                 os.utime(tempfile, (mtime, mtime))
             os.unlink(filename)
             os.rename(tempfile, filename)
             return SmartEnum.UPDATE
     else:
-        tempfile = filename + temp_suffix
+        tempfile = filename.with_name(filename.name + temp_suffix)
         with open(tempfile, "w", encoding=default_encoding) as dest:
             write_conf_stream(dest, conf, stanza_delim, sort)
-        if mtime:
-            os.utime(tempfile, (mtime, mtime))
         os.rename(tempfile, filename)
+        if mtime:
+            os.utime(filename, (mtime, mtime))
         return SmartEnum.CREATE
 
 
