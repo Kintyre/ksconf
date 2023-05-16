@@ -92,10 +92,10 @@ def build_cli_parser(do_formatter=False):
     parser_kwargs = dict(
         fromfile_prefix_chars="@",
         description=_cli_description,
-        prog="ksconf")
-    if sys.version_info > (3, 5):
         # Disable abbreviations as they could lead to accidental assignment as the CLI grows.
-        parser_kwargs["allow_abbrev"] = False
+        allow_abbrev=False,
+        prog="ksconf")
+
     if do_formatter:
         parser_kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
     parser = argparse.ArgumentParser(**parser_kwargs)
