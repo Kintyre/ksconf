@@ -342,7 +342,7 @@ def load_manifest_for_archive(
             print(f"WARN:   loading stored manifest failed:  {e}")
 
     if manifest is None:
-        print(f"Calculating manifest for {archive}")
+        # print(f"Calculating manifest for {archive}")
         manifest = AppManifest.from_archive(archive)
 
         # We assume that a previously stored manifest has already undergone the

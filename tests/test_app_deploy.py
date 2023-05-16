@@ -41,7 +41,6 @@ class ManifestTestCase(unittest.TestCase):
         self.assertEqual(len(manifest.files), 15)
 
         create_manifest_from_archive(tgz, tgz.with_suffix(".cache"), manifest)
-        print(manifest.files)
 
     def test_load_metadata(self):
         tgz = self.twd.copy_static("apps/modsecurity-add-on-for-splunk_11.tgz", "modsecurity-add-on-for-splunk_11.tgz")
