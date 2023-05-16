@@ -21,7 +21,7 @@ from ksconf.compat import List
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
-from ksconf.layer import T_File
+from ksconf.layer import LayerFile
 from ksconf.util.completers import DirectoriesCompleter
 from ksconf.util.file import expand_glob_list, relwalk, splglob_simple
 
@@ -76,7 +76,7 @@ class RepeatableCombiner(LayerCombiner):
             if not self.disable_marker:
                 marker_file.write_text("This directory is managed by KSCONF.  Don't touch\n")
 
-    def pre_combine_inventory(self, target: Path, src_files: List[T_File]) -> List[T_File]:
+    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> List[LayerFile]:
         """
         Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         """

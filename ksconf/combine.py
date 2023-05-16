@@ -20,7 +20,7 @@ from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerConfig,
-                          LayerFilter, LayerRootBase, T_File)
+                          LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
 
@@ -130,7 +130,7 @@ class LayerCombiner:
         if not target.is_dir():
             target.mkdir()
 
-    def pre_combine_inventory(self, target: Path, src_files: List[T_File]) -> List[T_File]:
+    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> List[LayerFile]:
         """ Hook point for pre-processing before any files are copied/merged """
         del target
         return src_files
@@ -142,7 +142,7 @@ class LayerCombiner:
     def combine_files(self, target, src_files):
         layer_root = self.layer_root
 
-        def physical_paths(l: T_File):
+        def physical_paths(l: LayerFile):
             return [s.physical_path for s in l]
 
         for src_file in sorted(src_files):
