@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-XXX: Split out conf, spec, binary file handlers into separate registerable (and therefore easily extendable) functions (using decorators, possibly)
 XXX: Move the overwrite-as-necessary logic into a subclass; for several use cases we just don't care because 'target' is a brand new directory
 """
 
@@ -12,9 +11,10 @@ import sys
 from io import open
 from os import fspath
 from pathlib import Path
+from typing import Callable
 
 from ksconf.commands import ConfFileProxy
-from ksconf.compat import List
+from ksconf.compat import List, Tuple
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
@@ -60,6 +60,8 @@ class LayerCombiner:
     conf_file_re = re.compile(r"([a-z_-]+\.conf|(default|local)\.meta)$")
     spec_file_re = re.compile(r"\.conf\.spec$")
 
+    filetype_handlers: List[Tuple[Callable, Callable]] = []
+
     def __init__(self,
                  follow_symlink: bool = False,
                  banner: str = "",
@@ -81,6 +83,24 @@ class LayerCombiner:
         # Not a great long-term design, but good enough for initial conversion from command-based design
         self.stdout = sys.stdout
         self.stderr = sys.stderr
+
+    @classmethod
+    def register_regex(cls, regex_match):
+        """ Decorator that matches a filename regex and if it matches, it
+        executes the decorator handler.
+        """
+        cre = re.compile(regex_match)
+
+        def match_f(file: Path):
+            if cre.search(file.name):
+                return True
+            return False
+
+        def wrapper(handle_f):
+            cls.filetype_handlers.append((match_f, handle_f))
+            return handle_f
+
+        return wrapper
 
     def set_source_dirs(self, sources: List[Path]):
         self.layer_root = DirectLayerRoot(config=self.config)
@@ -141,12 +161,8 @@ class LayerCombiner:
 
     def combine_files(self, target, src_files):
         layer_root = self.layer_root
-
-        def physical_paths(l: LayerFile):
-            return [s.physical_path for s in l]
-
         for src_file in sorted(src_files):
-            # Source file must be in sort order (10-x is lower prio and therefore replaced by 90-z)
+            do_copy = True
             sources = list(layer_root.get_file(src_file))
             try:
                 dest_fn = sources[0].logical_path
@@ -161,18 +177,15 @@ class LayerCombiner:
                 dest_dir.mkdir(parents=True)
 
             # Determine handling method based on source count and filename pattern
-            if len(sources) == 1:
-                # Copy only file (most common case)
-                method = "copy"
-            elif self.spec_file_re.search(dest_fn.name):
-                method = "concatenate"
-            elif self.conf_file_re.search(dest_fn.name):
-                method = "merge"
-            else:
-                # Copy highest precedence
-                method = "copy"
+            if len(sources) > 1:
+                for matcher, handler in self.filetype_handlers:
+                    if matcher(dest_fn):
+                        msg = handler(self, dest_path, sources, self.dry_run)
+                        if msg and not self.quiet:
+                            self.stderr.write(f"{msg}\n")
+                        do_copy = False
 
-            if method == "copy":
+            if do_copy:
                 # self.stderr.write(f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
                 #                   f"{sources[-1].physical_path!r}\n")
                 # Always use the last file in the list (since last directory always wins)
@@ -197,55 +210,57 @@ class LayerCombiner:
                         self.stderr.write(f"Copy <{smart_rc}>   {fspath(dest_path):50}  from {src_file}\n")
                 del src_file
 
-            elif method == "merge":
-                try:
-                    # Handle merging conf files
-                    dest = ConfFileProxy(dest_path, "r+",
-                                         parse_profile=PARSECONF_MID)
-                    srcs = [ConfFileProxy(s.physical_path, "r",
-                                          parse_profile=PARSECONF_STRICT) for s in sources]
-                    # self.stderr.write(f"Considering {dest_fn:50}  CONF MERGE from source:  "
-                    #                   f"{1!sources[0].physical_path}\n")
-                    smart_rc = merge_conf_files(dest, srcs, dry_run=self.dry_run,
-                                                banner_comment=self.banner)
-                    if smart_rc != SMART_NOCHANGE:
-                        if not self.quiet:
-                            self.stderr.write(f"Merge <{smart_rc}>   {fspath(dest_path):50}  "
-                                              f"from {physical_paths(sources)!r}\n")
-                finally:
-                    # Protect against any dangling open files:  (ResourceWarning: unclosed file)
-                    dest.close()
-                    for src in srcs:
-                        src.close()
-                    del srcs, dest
 
-            elif method == "concatenate":
-                combined_content = ""
-                last_mtime = max(src.mtime for src in sources)
-                for src in sources:
-                    with open(src.physical_path, "r") as stream:
-                        content = stream.read()
-                        if not content.endswith("\n"):
-                            content += "\n"
-                        combined_content += content
-                        del content
-                smart_rc = SMART_CREATE
-                if dest_path.is_file():
-                    dest_content = dest_path.read_text()
-                    if dest_content == combined_content:
-                        smart_rc = SMART_NOCHANGE
-                    else:
-                        smart_rc = SMART_UPDATE
-                    del dest_content
+@LayerCombiner.register_regex(r"([a-z_-]+\.conf|(default|local)\.meta)$")
+def handle_merge_conf_files(context: LayerCombiner,
+                            dest_path: Path,
+                            sources: List[LayerFile],
+                            dry_run):
+    sources_physical = [fspath(p.physical_path) for p in sources]
+    message = None
+    # Note that latest mtime logic is handled by merge_conf_files()
+    try:
+        # Handle merging conf files
+        dest = ConfFileProxy(dest_path, "r+", parse_profile=PARSECONF_MID)
+        srcs = [ConfFileProxy(s, "r", parse_profile=PARSECONF_STRICT) for s in sources_physical]
+        # self.stderr.write(f"Considering {dest_fn:50}  CONF MERGE from source:  "
+        #                   f"{1!sources[0].physical_path}\n")
+        smart_rc = merge_conf_files(dest, srcs, dry_run=dry_run,
+                                    banner_comment=context.banner)
+        if smart_rc != SMART_NOCHANGE:
+            message = f"Merge <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}"
+    finally:
+        # Protect against any dangling open files:  (ResourceWarning: unclosed file)
+        dest.close()
+        for src in srcs:
+            src.close()
+    return message
 
-                if not self.dry_run:
-                    dest_path.write_text(combined_content)
 
-                if smart_rc != SMART_NOCHANGE:
-                    if not self.quiet:
-                        self.stderr.write(f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  "
-                                          f"from {physical_paths(sources)!r}\n")
-                os.utime(dest_path, (last_mtime, last_mtime))
-                del combined_content
-            else:
-                raise AssertionError(f"Internal implementation error.  Unknown method={method}")
+@LayerCombiner.register_regex(r"\.conf\.spec$")
+def handle_spec_concatenate(context: LayerCombiner,
+                            dest_path: Path,
+                            sources: List[LayerFile],
+                            dry_run):
+    sources_physical = [fspath(p.physical_path) for p in sources]
+    combined_content = ""
+    last_mtime = max(src.mtime for src in sources)
+    for src in sources:
+        content = src.physical_path.read_text()
+        if not content.endswith("\n"):
+            content += "\n"
+        combined_content += content
+    smart_rc = SMART_CREATE
+    if dest_path.is_file():
+        dest_content = dest_path.read_text()
+        if dest_content == combined_content:
+            smart_rc = SMART_NOCHANGE
+        else:
+            smart_rc = SMART_UPDATE
+
+    if not dry_run:
+        dest_path.write_text(combined_content)
+
+    os.utime(dest_path, (last_mtime, last_mtime))
+    if smart_rc != SMART_NOCHANGE:
+        return f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}"

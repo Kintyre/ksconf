@@ -46,7 +46,7 @@ class ConfDirProxy:
 
 class ConfFileProxy:
     def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
-        self.name = name
+        self.name = os.fspath(name)
         self._mode = mode
         if is_file is not None:
             self._is_file = is_file

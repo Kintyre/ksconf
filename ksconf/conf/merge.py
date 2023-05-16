@@ -80,7 +80,7 @@ def merge_conf_files(dest: ConfFileProxy,
         else:
             dest_cfg = {}
         show_diff(sys.stdout, compare_cfgs(dest_cfg, merged_cfg),
-                  headers=(dest.name, fspath(dest.name) + "-new"))
+                  headers=(dest.name, dest.name + "-new"))
         return SMART_UPDATE
     return dest.dump(merged_cfg, mtime=newest_mtime)
 
