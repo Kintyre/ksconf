@@ -6,14 +6,29 @@ import sys
 
 # Since 'list' in Python 3.7 doesn't support __class_getitem__ (See PEP 560)
 # We could just always import from typing, but that appears to cause some issues
-# with type hinting, and this appears to work correctly.
-if sys.version_info < (3, 8):
+# with type hinting, and this appears to work correctly.  Most of this appears
+# to have changed in Python 3.8 and 3.9 (differs by type. hence the test-and-see approach)
+
+''' # Alternate, needs more testing; not sure about the assignment part
+# Another option would be to just assign directly into the typing module, what could go wrong?
+
+from typing import Dict, List, Set, Tuple
+for t in ("dict", "list", "set", "tuple"):
+    try:
+        T = t.capitalize()
+        eval(f"{t}[str]")
+        globals()[T] = globals[t]
+    except TypeError:
+        pass
+'''
+
+if sys.version_info < (3, 9):
     from typing import Dict, List, Set, Tuple
 else:
-    List = list
-    Tuple = tuple
     Dict = dict
+    List = list
     Set = set
+    Tuple = tuple
 
 
 try:
@@ -68,7 +83,9 @@ def handle_py3_kw_only_args(kw, *default_args):
 del sys
 
 __all__ = [
+    "Dict",
     "List",
+    "Set",
     "Tuple",
     "cache",
     "handle_py3_kw_only_args",
