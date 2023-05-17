@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import tempfile
 from functools import wraps
+from os import fspath
 from typing import TextIO
 
 from ksconf.app.manifest import AppManifest
@@ -56,7 +57,7 @@ class PackagingException(Exception):
 class AppPackager:
 
     def __init__(self, src_path, app_name: str, output: TextIO):
-        self.src_path = src_path
+        self.src_path = fspath(src_path)
         self.app_name = app_name
         self.build_dir = None
         self.app_dir = None
@@ -290,13 +291,13 @@ class AppVarMagic:
         self.build_dir = build_dir
         self.meta = meta or {}
 
-    def expand(self, value):
+    def expand(self, value: str) -> str:
         """ A simple Jinja2 like {{VAR}} substitution mechanism. """
-        # type (str) -> str
         def replace(match_obj):
             var = match_obj.group(1)
             return self[var]
         if value:
+            value = str(value)
             return re.sub(r"\{\{\s*([\w_]+)\s*\}\}", replace, value)
         return value
 
