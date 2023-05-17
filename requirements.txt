@@ -1,4 +1,5 @@
 entrypoints
 splunk-sdk>=1.7.0
+jinja2
 
 lxml>=4.6.5
