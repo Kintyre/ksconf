@@ -222,7 +222,7 @@ def handle_merge_conf_files(context: LayerCombiner,
     try:
         # Handle merging conf files
         dest = ConfFileProxy(dest_path, "r+", parse_profile=PARSECONF_MID)
-        srcs = [ConfFileProxy(s, "r", parse_profile=PARSECONF_STRICT) for s in sources_physical]
+        srcs = [ConfFileProxy(s.resource_path, "r", parse_profile=PARSECONF_STRICT) for s in sources]
         # self.stderr.write(f"Considering {dest_fn:50}  CONF MERGE from source:  "
         #                   f"{1!sources[0].physical_path}\n")
         smart_rc = merge_conf_files(dest, srcs, dry_run=dry_run,
@@ -242,11 +242,12 @@ def handle_spec_concatenate(context: LayerCombiner,
                             dest_path: Path,
                             sources: List[LayerFile],
                             dry_run):
-    sources_physical = [fspath(p.physical_path) for p in sources]
+    sources_physical = []
     combined_content = ""
     last_mtime = max(src.mtime for src in sources)
     for src in sources:
-        content = src.physical_path.read_text()
+        sources_physical.append(src.physical_path)
+        content = src.resource_path.read_text()
         if not content.endswith("\n"):
             content += "\n"
         combined_content += content
