@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, annotations, unicode_literals
 
 import hashlib
 import os
@@ -6,6 +6,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+from functools import wraps
 from typing import TextIO
 
 from ksconf.app.manifest import AppManifest
@@ -62,10 +63,21 @@ class AppPackager:
         self.output = output
         self._var_magic = None
 
+    def require_active_context(funct):
+        """ Decorator to mark member functions that cannot be used until the
+        context manager has been activated.
+        """
+        @wraps(funct)
+        def wrapper(self: AppPackager, *args, **kwargs):
+            assert self.build_dir, "Context manager not yet active"
+            return funct(self, *args, **kwargs)
+        return wrapper
+
     def cleanup(self):
         # Do we need  https://stackoverflow.com/a/21263493/315892  (Windows): -- See tests/cli_helper
         shutil.rmtree(self.build_dir)
         self.build_dir = None
+        self.app_dir = None
 
     def expand_var(self, value):
         """ Expand a variable, if present
@@ -86,6 +98,7 @@ class AppPackager:
         new_value = self._var_magic.expand(value)
         return new_value if new_value != value else False
 
+    @require_active_context
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
         combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
         if layer_method == "dir.d":
@@ -100,6 +113,7 @@ class AppPackager:
         combiner.combine(self.app_dir)
         self._var_magic.meta["layers"] = combiner.layer_names_used
 
+    @require_active_context
     def blocklist(self, patterns):
         # XXX: Rewrite explicitly blocklist '.git' dir, because '.git*' wasn't working here. :=(
 
@@ -123,6 +137,7 @@ class AppPackager:
                         shutil.rmtree(path)
                         break
 
+    @require_active_context
     def merge_local(self):
         # XXX:  Rename this "promote_local()" ?
         """
@@ -133,6 +148,7 @@ class AppPackager:
         # Cleanup anything remaining in local
         self.block_local(report=False)
 
+    @require_active_context
     def block_local(self, report=True):
         local_dir = os.path.join(self.app_dir, "local")
         if os.path.isdir(local_dir):
@@ -145,6 +161,7 @@ class AppPackager:
                 self.output.write("Removing local.meta\n")
             os.unlink(local_meta)
 
+    @require_active_context
     def update_app_conf(self, version: str = None, build: str = None):
         """ Update version and/or build in ``apps.conf`` """
         app_settings = [
@@ -171,6 +188,7 @@ class AppPackager:
                                           f"{attr} = {value}\n")
                     conf[stanza][attr] = value
 
+    @require_active_context
     def check(self):
         """ Run safety checks prior to building archive:
 
@@ -206,6 +224,7 @@ class AppPackager:
                     if name[0] == ".":
                         self.output.write(f"Found hidden {t}:  {root}/{name}\n")
 
+    @require_active_context
     def make_archive(self, filename):
         """ Create a compressed tarball of the build directory.
         """
@@ -230,6 +249,7 @@ class AppPackager:
             spl.add(self.app_dir, arcname=self.app_name)
         return filename
 
+    @require_active_context
     def make_manifest(self, calculate_hash=True) -> AppManifest:
         """
         Create a manifest of the app's contents.
@@ -251,7 +271,10 @@ class AppPackager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
+        try:
+            self.cleanup()
+        finally:
+            self.app_dir = None
 
 
 class AppVarMagicException(KeyError):
