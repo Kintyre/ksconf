@@ -5,6 +5,7 @@ from collections import defaultdict
 from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
+from tempfile import NamedTemporaryFile
 from typing import Any, Callable, Iterator
 
 from ksconf.compat import Dict, List, Set, Tuple
@@ -96,7 +97,7 @@ class LayerFile(PathLike):
         self._stat = stat
 
     def __fspath__(self) -> str:
-        return self.physical_path
+        return self.resource_path
 
     @staticmethod
     def match(path: PurePath):
@@ -109,6 +110,8 @@ class LayerFile(PathLike):
     @property
     def logical_path(self) -> Path:
         return _path_join(self.layer.logical_path, self.relative_path)
+
+    resource_path = physical_path
 
     @property
     def stat(self) -> stat_result:
@@ -127,6 +130,17 @@ class LayerFile(PathLike):
 
 class TemplatedLayerFile(LayerFile):
 
+    __slots__ = ["_temp_resource"]
+    template_context: dict = {}
+
+    def __init__(self, *args, **kwargs):
+        super(TemplatedLayerFile, self).__init__(*args, **kwargs)
+        self._temp_resource = None
+
+    def __del__(self):
+        if getattr(self, "_temp_resource", None) and self._temp_resource.is_file():
+            self._temp_resource.unlink()
+
     @staticmethod
     def match(path: PurePath):
         return path.suffix == ".j2"
@@ -135,18 +149,30 @@ class TemplatedLayerFile(LayerFile):
     def transform_name(path: PurePath):
         return path.with_name(path.name[:-3])
 
-    def __init__(self,
-                 layer: LayerRootBase.Layer,
-                 relative_path: PurePath,
-                 stat: stat_result = None,
-                 template_context: Any = None):
-        super(TemplatedLayerFile, self).__init__(layer, relative_path, stat)
-        self.template_context = template_context
+    def render(self, template_path: Path) -> str:
+        from jinja2 import Environment, StrictUndefined
+        environment = Environment(undefined=StrictUndefined)
+        # TODO:  Use file system loader; allowing other file imports
+        template = environment.from_string(template_path.read_text())
+        return template.render(**self.template_context)
 
     @property
     def logical_path(self) -> Path:
         return _path_join(self.layer.logical_path,
                           self.transform_name(self.relative_path))
+
+    @property
+    def physical_path(self) -> Path:
+        return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
+
+    @property
+    def resource_path(self) -> Path:
+        if not self._temp_resource:
+            # Temporary file will be removed in instance destructor
+            tf = NamedTemporaryFile(delete=False)
+            self._temp_resource = Path(tf.name)
+            self._temp_resource.write_text(self.render(self.physical_path))
+        return self._temp_resource
 
 
 def layer_file_factory(layer, path: PurePath, *args, **kwargs) -> LayerFile:
@@ -207,7 +233,8 @@ class LayerRootBase:
 
     class Layer:
         """ Basic layer Container:   Connects logical and physical paths. """
-        __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_factory"]
+        __slots__ = ["name", "root", "logical_path", "physical_path", "config",
+                     "_file_factory", "_cache_files"]
 
         def __init__(self, name: str,
                      root: Path,
@@ -221,6 +248,7 @@ class LayerRootBase:
             self.logical_path = logical
             self.config = config
             self._file_factory = file_factory
+            self._cache_files: List[LayerFile] = []
 
         def walk(self) -> R_walk:
             # In the simple case, this is good enough.   Some subclasses will need to override
@@ -239,10 +267,21 @@ class LayerRootBase:
                     yield self._file_factory(self, top / file)
 
         def list_files(self) -> List[LayerFile]:
-            return list(self.iter_files())
+            if not self._cache_files:
+                self._cache_files = list(self.iter_files())
+            return self._cache_files
 
         def get_file(self, path: Path) -> LayerFile:
             """ Return file object (by logical path), if it exists in this layer. """
+            # TODO:  Optimize by making a dict with a logical_path as the key
+            for file in self.list_files():
+                if file.logical_path == path:
+                    if file.physical_path.is_file():
+                        return file
+                    else:
+                        return None
+
+            '''
             # XXX: There's probably ways to optimize this.  fine for now (correctness over speed)
             rel_path = path_in_layer(self.logical_path, path)
             if not rel_path:
@@ -250,10 +289,6 @@ class LayerRootBase:
             file_ = self._file_factory(self, rel_path)
             if file_.physical_path.is_file():
                 return file_
-            '''
-            path_p = _path_join(self.root, self.physical_path, rel_path)
-            if os.path.isfile(path_p):
-                return File(self, rel_path)
             '''
 
     # LayerRootBase
@@ -283,6 +318,11 @@ class LayerRootBase:
 
     def list_layers(self) -> List[Layer]:
         return self._layers
+
+    def get_layers_by_name(self, name: str) -> Iterator[LayerRootBase.Layer]:
+        for layer in self.list_layers():
+            if layer.name == name:
+                yield layer
 
     def list_layer_names(self) -> List[str]:
         return [l.name for l in self.list_layers()]

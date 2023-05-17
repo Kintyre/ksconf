@@ -5,12 +5,14 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import contextlib
 import os
 import sys
 import unittest
 from glob import glob
+from io import StringIO
 from os import fspath
-from pathlib import Path
+from pathlib import Path, PurePath
 
 # Allow interactive execution from CLI,  cd tests; ./test_layer.py
 if __package__ is None:
@@ -18,7 +20,8 @@ if __package__ is None:
 
 
 # Stuff for testing
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, path_in_layer
+from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerFilter,
+                          TemplatedLayerFile, path_in_layer)
 from tests.cli_helper import TestWorkDir
 
 
@@ -35,6 +38,14 @@ def npl(iterable, nominal="/"):
 
 def fspaths(iterable):
     return (fspath(p) for p in iterable)
+
+
+@contextlib.contextmanager
+def set_template_context(d):
+    _prev_context = TemplatedLayerFile.template_context
+    TemplatedLayerFile.template_context = d
+    yield
+    TemplatedLayerFile.template_context = _prev_context
 
 
 class HelperFunctionsTestCase(unittest.TestCase):
@@ -88,9 +99,15 @@ class HelperFunctionsTestCase(unittest.TestCase):
 
 
 class LayerTemplateTestCase(unittest.TestCase):
-
     def test_simple_mapping(self):
-        with TestWorkDir() as twd:
+        t_context = {
+            "max_size": 83830,
+            "happy": {
+                "things": "YO!"
+            }
+        }
+        with TestWorkDir() as twd, set_template_context(t_context):
+            print(f"CONTEXT:  {TemplatedLayerFile.template_context}")
             app_dir = twd.makedir("app01")
             twd.write_file("app01/default.d/10-upstream/props.conf", """\
                 [mysourcetype]
@@ -102,15 +119,34 @@ class LayerTemplateTestCase(unittest.TestCase):
                 """)
             twd.write_file("app01/default.d/75-custom-magic/props.conf.j2", """\
                 [yoursourcetype]
-                TRUNCATE = {{ max_size }}
+                # {{ happy }}
+                TRUNCATE = {{ max_size | default('99') }}
                 """)
-        layer_root = DotDLayerRoot()
-        layer_root.set_root(Path(app_dir))
-        self.assertListEqual(layer_root.list_layer_names(),
-                             ["10-upstream", "20-common", "75-custom-magic"])
-        self.assertEqual(len(layer_root.list_logical_files()), 1)
-        self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
-        self.assertEqual(len(layer_root.list_physical_files()), 3)
+
+            layer_root = DotDLayerRoot()
+            layer_root.set_root(Path(app_dir))
+            self.assertListEqual(layer_root.list_layer_names(),
+                                 ["10-upstream", "20-common", "75-custom-magic"])
+            self.assertEqual(len(layer_root.list_logical_files()), 1)
+            self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
+            self.assertEqual(len(layer_root.list_physical_files()), 3)
+
+            print(layer_root.list_logical_files()[0])
+            print(list(layer_root.get_file(PurePath("default/props.conf"))))
+
+            layer = list(layer_root.get_layers_by_name("75-custom-magic"))[0]
+            # the .j2; extension has been removed for the logical path
+            f = layer.get_file(PurePath("default/props.conf"))
+
+            print("OUTPUT!")
+            print(f.resource_path.read_text())
+            conf_text = f.resource_path.read_text()
+
+            from ksconf.conf.parser import parse_conf
+            conf = parse_conf(StringIO(conf_text))
+            # Can't figure out why this isn't working
+            #conf = twd.read_conf(f.resource_path)
+            self.assertEqual(conf["yoursourcetype"]["TRUNCATE"], "83830")
 
 
 class DefaultLayerTestCase(unittest.TestCase):

@@ -225,6 +225,7 @@ class TestWorkDir:
 
     def get_path(self, rel_path):
         # Always using unix/URL style paths internally.  But we want this to be OS agnostic
+        rel_path = os.fspath(rel_path)
         rel_parts = rel_path.split("/")
         return os.path.join(self._path, *rel_parts)
 
