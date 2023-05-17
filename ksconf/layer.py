@@ -5,7 +5,7 @@ from collections import defaultdict
 from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
-from typing import Iterator
+from typing import Any, Callable, Iterator
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.util.file import relwalk
@@ -98,6 +98,10 @@ class LayerFile(PathLike):
     def __fspath__(self) -> str:
         return self.physical_path
 
+    @staticmethod
+    def match(path: PurePath):
+        return True
+
     @property
     def physical_path(self) -> Path:
         return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
@@ -119,6 +123,41 @@ class LayerFile(PathLike):
     @property
     def mtime(self):
         return self.stat.st_mtime
+
+
+class TemplatedLayerFile(LayerFile):
+
+    @staticmethod
+    def match(path: PurePath):
+        return path.suffix == ".j2"
+
+    @staticmethod
+    def transform_name(path: PurePath):
+        return path.with_name(path.name[:-3])
+
+    def __init__(self,
+                 layer: LayerRootBase.Layer,
+                 relative_path: PurePath,
+                 stat: stat_result = None,
+                 template_context: Any = None):
+        super(TemplatedLayerFile, self).__init__(layer, relative_path, stat)
+        self.template_context = template_context
+
+    @property
+    def logical_path(self) -> Path:
+        return _path_join(self.layer.logical_path,
+                          self.transform_name(self.relative_path))
+
+
+def layer_file_factory(layer, path: PurePath, *args, **kwargs) -> LayerFile:
+    # XXX: Add a dynamic registration process; decorators, subclass init hook?
+    classes = [
+        TemplatedLayerFile,
+        LayerFile,
+    ]
+    for cls in classes:
+        if cls.match(path):
+            return cls(layer, path, *args, **kwargs)
 
 
 class LayerFilter:
@@ -168,20 +207,20 @@ class LayerRootBase:
 
     class Layer:
         """ Basic layer Container:   Connects logical and physical paths. """
-        __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_cls"]
+        __slots__ = ["name", "root", "logical_path", "physical_path", "config", "_file_factory"]
 
         def __init__(self, name: str,
                      root: Path,
                      physical: PurePath,
                      logical: PurePath,
                      config: LayerConfig,
-                     file_cls: LayerFile):
+                     file_factory: Callable):
             self.name = name
             self.root = root
             self.physical_path = physical
             self.logical_path = logical
             self.config = config
-            self._file_cls = file_cls
+            self._file_factory = file_factory
 
         def walk(self) -> R_walk:
             # In the simple case, this is good enough.   Some subclasses will need to override
@@ -194,20 +233,21 @@ class LayerRootBase:
                         dirs.remove(d)
                 yield (root, dirs, files)
 
-        def list_files(self) -> Iterator[LayerFile]:
-            File = self._file_cls
+        def iter_files(self) -> Iterator[LayerFile]:
             for (top, _, files) in self.walk():
                 for file in files:
-                    yield File(self, top / file)
+                    yield self._file_factory(self, top / file)
+
+        def list_files(self) -> List[LayerFile]:
+            return list(self.iter_files())
 
         def get_file(self, path: Path) -> LayerFile:
             """ Return file object (by logical path), if it exists in this layer. """
             # XXX: There's probably ways to optimize this.  fine for now (correctness over speed)
-            File = self._file_cls
             rel_path = path_in_layer(self.logical_path, path)
             if not rel_path:
                 return None
-            file_ = File(self, rel_path)
+            file_ = self._file_factory(self, rel_path)
             if file_.physical_path.is_file():
                 return file_
             '''
@@ -247,12 +287,22 @@ class LayerRootBase:
     def list_layer_names(self) -> List[str]:
         return [l.name for l in self.list_layers()]
 
-    def list_files(self) -> List[LayerFile]:
+    def iter_all_files(self) -> Iterator[LayerFile]:
+        """ Iterator over all physical files. """
+        for layer in self._layers:
+            yield from layer.iter_files()
+
+    def list_physical_files(self) -> List[LayerFile]:
+        files = set()
+        for file_ in self.iter_all_files():
+            files.add(file_.physical_path)
+        return list(files)
+
+    def list_logical_files(self) -> List[LayerFile]:
         """ Return a list of logical paths. """
         files = set()
-        for layer in self._layers:
-            for file_ in layer.list_files():
-                files.add(file_.logical_path)
+        for file_ in self.iter_all_files():
+            files.add(file_.logical_path)
         return list(files)
 
     def get_file(self, path) -> Iterator[LayerFile]:
@@ -261,6 +311,9 @@ class LayerRootBase:
             file_ = layer.get_file(path)
             if file_:
                 yield file_
+
+    # Legacy names
+    list_files = list_logical_files
 
 
 class DirectLayerRoot(LayerRootBase):
@@ -277,7 +330,8 @@ class DirectLayerRoot(LayerRootBase):
         if not path.is_dir():
             raise LayerUsageException("Layers must be directories.  "
                                       f"Given path '{path}' is not a directory.")
-        layer = Layer(layer_name, path, None, None, config=self.config, file_cls=LayerFile)
+        layer = Layer(layer_name, path, None, None, config=self.config,
+                      file_factory=layer_file_factory)
         super(DirectLayerRoot, self).add_layer(layer)
 
     def order_layers(self):
@@ -337,10 +391,10 @@ class DotDLayerRoot(LayerRootBase):
                      physical: PurePath,
                      logical: PurePath,
                      config: LayerConfig,
-                     file_cls: LayerFile,
+                     file_factory: Callable,
                      prune_points: Set[Path] = None):
             super(DotDLayerRoot.Layer, self).__init__(name, root, physical, logical, config=config,
-                                                      file_cls=file_cls)
+                                                      file_factory=file_factory)
             self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
 
         def walk(self) -> R_walk:
@@ -386,7 +440,7 @@ class DotDLayerRoot(LayerRootBase):
         Note:  We currently only support '.d/<layer>' directories, a file like
         `default.d/10-props.conf` won't be handled here.
         """
-        Layer, File = self.Layer, LayerFile
+        Layer = self.Layer
         root = Path(root)
         if follow_symlinks is None:
             follow_symlinks = self.config.follow_symlink
@@ -405,7 +459,7 @@ class DotDLayerRoot(LayerRootBase):
                                       physical=top / dir_,
                                       logical=top.parent / mount_mo.group("realname"),
                                       config=self.config,
-                                      file_cls=File)
+                                      file_factory=layer_file_factory)
                         self.add_layer(layer)
                         self._mount_points[top].append(dir_)
                     else:
@@ -427,7 +481,8 @@ class DotDLayerRoot(LayerRootBase):
         prune_points = [mount / layer
                         for mount, layers in self._mount_points.items()
                         for layer in layers]
-        layer = Layer("<root>", root, None, None, config=self.config, file_cls=File,
+        layer = Layer("<root>", root, None, None, config=self.config,
+                      file_factory=layer_file_factory,
                       prune_points=prune_points)
         self.add_layer(layer, do_sort=False)
         self._root_layer = layer

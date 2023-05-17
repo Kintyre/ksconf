@@ -87,6 +87,32 @@ class HelperFunctionsTestCase(unittest.TestCase):
                              ["10-upstream", "20-kintyre", "30-indexers", "30-searchhead", "30-cloudinputs"])
 
 
+class LayerTemplateTestCase(unittest.TestCase):
+
+    def test_simple_mapping(self):
+        with TestWorkDir() as twd:
+            app_dir = twd.makedir("app01")
+            twd.write_file("app01/default.d/10-upstream/props.conf", """\
+                [mysourcetype]
+                SHOULD_LINEBREAK = false
+                """)
+            twd.write_file("app01/default.d/20-common/props.conf", """\
+                [yoursourcetype]
+                TIME_FORMAT = %s
+                """)
+            twd.write_file("app01/default.d/75-custom-magic/props.conf.j2", """\
+                [yoursourcetype]
+                TRUNCATE = {{ max_size }}
+                """)
+        layer_root = DotDLayerRoot()
+        layer_root.set_root(Path(app_dir))
+        self.assertListEqual(layer_root.list_layer_names(),
+                             ["10-upstream", "20-common", "75-custom-magic"])
+        self.assertEqual(len(layer_root.list_logical_files()), 1)
+        self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
+        self.assertEqual(len(layer_root.list_physical_files()), 3)
+
+
 class DefaultLayerTestCase(unittest.TestCase):
     """ Test the DefaultLayerRoot class """
 

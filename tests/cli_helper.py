@@ -188,6 +188,7 @@ class TestWorkDir:
     def __enter__(self):
         self._working_dir = os.getcwd()
         os.chdir(self._path)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.chdir(self._working_dir)
