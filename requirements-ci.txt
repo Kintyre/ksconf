@@ -1,4 +1,5 @@
 coverage
 codecov
 coveralls
+jinja2
 -r requirements.txt

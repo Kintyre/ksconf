@@ -14,6 +14,11 @@ from ksconf.consts import EXIT_CODE_COMBINE_MARKER_MISSING, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
 from tests.test_layer import set_template_context
 
+try:
+    import jinja2
+except ImportError:
+    jinja2 = None
+
 
 class CliKsconfCombineTestCase(unittest.TestCase):
 
@@ -175,6 +180,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertEqual(alert_action["aws_sns_modular_alert"]["param.account"], "DeptAwsAccount")  # layer 10
             self.assertEqual(alert_action["aws_sns_modular_alert"]["label"], "AWS SNS Alert")  # layer 60
 
+    @unittest.skipIf(jinja2 is None, "Test requires 'jinja2'")
     def test_combine_dird_with_JINJA(self):
         twd = TestWorkDir()
         self.build_test01(twd)

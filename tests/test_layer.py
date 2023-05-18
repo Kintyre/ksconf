@@ -18,6 +18,12 @@ if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+try:
+    import jinja2
+except ImportError:
+    jinja2 = None
+
+
 # Stuff for testing
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerFilter,
                           TemplatedLayerFile, path_in_layer)
@@ -98,6 +104,8 @@ class HelperFunctionsTestCase(unittest.TestCase):
 
 
 class LayerTemplateTestCase(unittest.TestCase):
+
+    @unittest.skipIf(jinja2 is None, "Test requires 'jinja2'")
     def test_simple_mapping(self):
         t_context = {
             "max_size": 83830

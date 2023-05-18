@@ -1,4 +1,5 @@
 # Extra stuff that VS code sometimes complains about not having
 isort
 rstcheck
+jinja2
 -r requirements-dev.txt

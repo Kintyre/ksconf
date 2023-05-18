@@ -22,7 +22,19 @@ Ksconf 0.11
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
 
 
-Ksconf v0.11.0 (DRAFT)
+Ksconf v0.11.3 (2023-05-17)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Initial support for rendering Jinja2 templates in app layers, which can be used for app packaging and combine operations.
+   This isn't really exposed via the CLI yet.
+   Notice that if you have ``*.j2`` files in your apps that are NOT Jinja2 templates, this could cause problems for you.
+   There's no way to disable this functionality as of yet.
+*  Move ``.conf`` and ``.spec`` combine handlers into handler functions.
+   This makes it easier to supporting additional file types with special merge-handling logic in the future and simplifies the code into smaller units.
+*  More internal embracing of pathlib and typing.
+
+
+Ksconf v0.11.0 (2023-05-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  First release of all ``ksconf.app.*`` functionality!
@@ -30,6 +42,8 @@ Ksconf v0.11.0 (DRAFT)
 *  More embracing of Python 3, f-strings, and pathlib!
 
 NOTE:  If you don't need for the new Splunk app functionality, there's little value in upgrading to v0.11.  There's no new CLI features exposing this new functionality yet.
+
+Disregard version v0.11.1, and v0.11.2 has minor internal fixes and shouldn't be broadly used.  They were also released on 2023-05-13.
 
 
 

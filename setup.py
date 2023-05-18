@@ -184,6 +184,7 @@ setup(name=package_name,
       # Not required, but useful.
       extras_require={
           "bash": ["argcomplete"],
+          "jinja": ["jinja2"],
           "thirdparty": [
               "splunk-sdk>=1.7.0"
           ],
