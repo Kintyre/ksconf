@@ -6,7 +6,7 @@ from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Iterator
+from typing import Callable, Iterator
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.util.file import relwalk
@@ -150,11 +150,13 @@ class TemplatedLayerFile(LayerFile):
         return path.with_name(path.name[:-3])
 
     def render(self, template_path: Path) -> str:
-        from jinja2 import Environment, StrictUndefined
-        environment = Environment(undefined=StrictUndefined)
-        # TODO:  Use file system loader; allowing other file imports
-        template = environment.from_string(template_path.read_text())
-        return template.render(**self.template_context)
+        from jinja2 import Environment, FileSystemLoader, StrictUndefined
+        environment = Environment(undefined=StrictUndefined,
+                                  loader=FileSystemLoader(template_path.parent),
+                                  auto_reload=False)
+        template = environment.get_template(template_path.name)
+        value = template.render(**self.template_context)
+        return value
 
     @property
     def logical_path(self) -> Path:

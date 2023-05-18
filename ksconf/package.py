@@ -8,7 +8,7 @@ import tarfile
 import tempfile
 from functools import wraps
 from os import fspath
-from typing import TextIO
+from typing import TextIO, Union
 
 from ksconf.app.manifest import AppManifest
 from ksconf.combine import LayerCombiner
@@ -80,7 +80,7 @@ class AppPackager:
         self.build_dir = None
         self.app_dir = None
 
-    def expand_var(self, value):
+    def expand_var(self, value: str) -> str:
         """ Expand a variable, if present
 
         :param str value:  String that main contain ``{{variable}}`` substitution.
@@ -89,7 +89,7 @@ class AppPackager:
         """
         return self._var_magic.expand(value)
 
-    def expand_new_only(self, value):
+    def expand_new_only(self, value: str) -> Union[str, None]:
         """ Expand a variable but return False if no substitution occurred
 
         :param str value:  String that may contain ``{{variable}}`` substitution.
@@ -261,7 +261,7 @@ class AppPackager:
         manifest.source = self.src_path
         return manifest
 
-    def __enter__(self):
+    def __enter__(self) -> AppPackager:
         self.build_dir = tempfile.mkdtemp("-ksconf-package-build")
         if self.app_name == "." or "{{" in self.app_name:
             # Use a placeholder app name, otherwise build_dir == app_dir
@@ -272,10 +272,7 @@ class AppPackager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self.cleanup()
-        finally:
-            self.app_dir = None
+        self.cleanup()
 
 
 class AppVarMagicException(KeyError):

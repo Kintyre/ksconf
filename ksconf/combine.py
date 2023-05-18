@@ -8,7 +8,6 @@ from __future__ import absolute_import, annotations, unicode_literals
 import os
 import re
 import sys
-from io import open
 from os import fspath
 from pathlib import Path
 from typing import Callable
@@ -159,7 +158,7 @@ class LayerCombiner:
         """ Hook point for post-processing after all copy/merge operations have been completed. """
         del target
 
-    def combine_files(self, target, src_files):
+    def combine_files(self, target: Path, src_files: List[LayerFile]):
         layer_root = self.layer_root
         for src_file in sorted(src_files):
             do_copy = True
@@ -189,7 +188,7 @@ class LayerCombiner:
                 # self.stderr.write(f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
                 #                   f"{sources[-1].physical_path!r}\n")
                 # Always use the last file in the list (since last directory always wins)
-                src_file = sources[-1].physical_path
+                src_file = sources[-1].resource_path
                 if self.dry_run:
                     if dest_path.is_file():
                         if file_compare(src_file, dest_path):

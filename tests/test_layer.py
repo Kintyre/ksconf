@@ -10,7 +10,6 @@ import os
 import sys
 import unittest
 from glob import glob
-from io import StringIO
 from os import fspath
 from pathlib import Path, PurePath
 
@@ -101,10 +100,7 @@ class HelperFunctionsTestCase(unittest.TestCase):
 class LayerTemplateTestCase(unittest.TestCase):
     def test_simple_mapping(self):
         t_context = {
-            "max_size": 83830,
-            "happy": {
-                "things": "YO!"
-            }
+            "max_size": 83830
         }
         with TestWorkDir() as twd, set_template_context(t_context):
             print(f"CONTEXT:  {TemplatedLayerFile.template_context}")
@@ -119,7 +115,6 @@ class LayerTemplateTestCase(unittest.TestCase):
                 """)
             twd.write_file("app01/default.d/75-custom-magic/props.conf.j2", """\
                 [yoursourcetype]
-                # {{ happy }}
                 TRUNCATE = {{ max_size | default('99') }}
                 """)
 
@@ -138,14 +133,7 @@ class LayerTemplateTestCase(unittest.TestCase):
             # the .j2; extension has been removed for the logical path
             f = layer.get_file(PurePath("default/props.conf"))
 
-            print("OUTPUT!")
-            print(f.resource_path.read_text())
-            conf_text = f.resource_path.read_text()
-
-            from ksconf.conf.parser import parse_conf
-            conf = parse_conf(StringIO(conf_text))
-            # Can't figure out why this isn't working
-            #conf = twd.read_conf(f.resource_path)
+            conf = twd.read_conf(f.resource_path)
             self.assertEqual(conf["yoursourcetype"]["TRUNCATE"], "83830")
 
 
