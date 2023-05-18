@@ -111,7 +111,6 @@ class LayerTemplateTestCase(unittest.TestCase):
             "max_size": 83830
         }
         with TestWorkDir() as twd, set_template_context(t_context):
-            print(f"CONTEXT:  {TemplatedLayerFile.template_context}")
             app_dir = twd.makedir("app01")
             twd.write_file("app01/default.d/10-upstream/props.conf", """\
                 [mysourcetype]
@@ -133,9 +132,6 @@ class LayerTemplateTestCase(unittest.TestCase):
             self.assertEqual(len(layer_root.list_logical_files()), 1)
             self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
             self.assertEqual(len(layer_root.list_physical_files()), 3)
-
-            print(layer_root.list_logical_files()[0])
-            print(list(layer_root.get_file(PurePath("default/props.conf"))))
 
             layer = list(layer_root.get_layers_by_name("75-custom-magic"))[0]
             # the .j2; extension has been removed for the logical path
