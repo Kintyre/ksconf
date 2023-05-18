@@ -5,6 +5,7 @@ omit =
     */virtualenv/*
     */venv*/*
     */ksconf/ext/*
+    *.j2
 
 [report]
 exclude_lines =
