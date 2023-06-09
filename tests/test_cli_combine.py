@@ -12,7 +12,6 @@ if __package__ is None:
 from ksconf.conf.parser import PARSECONF_LOOSE, parse_conf
 from ksconf.consts import EXIT_CODE_COMBINE_MARKER_MISSING, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
-from tests.test_layer import set_template_context
 
 try:
     import jinja2
@@ -184,14 +183,18 @@ class CliKsconfCombineTestCase(unittest.TestCase):
     def test_combine_dird_with_JINJA(self):
         twd = TestWorkDir()
         self.build_test01(twd)
+        template_vars = '{"big_ole_number": 8383}'
         twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-dynamic-magic/props.conf.j2", """
         [aws:config]
         TRUNCATE = {{ big_ole_number }}
         """)
         default = twd.get_path("etc/apps/Splunk_TA_aws")
         target = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT")
-        with ksconf_cli, set_template_context({"big_ole_number": 8383}):
-            ko = ksconf_cli("combine", "--layer-method", "dir.d", "--target", target, default)
+        with ksconf_cli:
+
+            ko = ksconf_cli("combine", "--layer-method", "dir.d",
+                            "--template-vars", template_vars,
+                            "--target", target, default)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             cfg = parse_conf(target + "/default/props.conf")
             self.assertIn("aws:config", cfg)

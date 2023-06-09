@@ -197,6 +197,11 @@ class CombineCmd(KsconfCmd):
         parser.add_argument("-E", "--exclude", action="append", default=[], dest="layer_filter",
                             type=wb_type("exclude"), metavar="PATTERN",
                             help="Name or pattern of layers to exclude from the target.")
+
+        parser.add_argument("--template-vars",
+                            default=None, action="store",
+                            help="Set template variables as key=value or YAML/JSON, if filename prepend with @")
+
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes as a 'diff'.
@@ -229,6 +234,9 @@ class CombineCmd(KsconfCmd):
         # For now, just copy all settings from 'args' to class instance... needs work
         combiner.stdout = self.stdout
         combiner.stderr = self.stderr
+
+        if args.template_vars:
+            combiner.config.template_variables = self.parse_extra_vars(args.template_vars, "template-")
 
         for (action, pattern) in args.layer_filter:
             combiner.add_layer_filter(action, pattern)

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 from fnmatch import fnmatch
-from os import PathLike, stat_result
+from os import PathLike, fspath, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Match
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.util.file import relwalk
@@ -85,6 +86,19 @@ class LayerUsageException(LayerException):
     pass
 
 
+@dataclass
+class LayerContext:
+    follow_symlink: bool = False
+    block_files: Match = re.compile(r"\.(bak|swp)$")
+    block_dirs: set = field(default_factory=lambda: {".git"})
+    template_variables: dict = field(default_factory=dict)
+
+
+# Legacy name (for backwards compatibility, keep until v1.0)
+# Can't find anything outside of ksconf core that actually uses this name (so we could change it sooner)
+LayerConfig = LayerContext
+
+
 class LayerFile(PathLike):
     __slots__ = ["layer", "relative_path", "_stat"]
 
@@ -131,7 +145,6 @@ class LayerFile(PathLike):
 class TemplatedLayerFile(LayerFile):
 
     __slots__ = ["_temp_resource"]
-    template_context: dict = {}
 
     def __init__(self, *args, **kwargs):
         super(TemplatedLayerFile, self).__init__(*args, **kwargs)
@@ -149,13 +162,26 @@ class TemplatedLayerFile(LayerFile):
     def transform_name(path: PurePath):
         return path.with_name(path.name[:-3])
 
-    def render(self, template_path: Path) -> str:
+    @property
+    def jinja2_env(self):
+        if not hasattr(self.layer.config, "jinja2_environment"):
+            self.layer.config.jinja2_environment = self._build_jinja2_env()
+        return self.layer.config.jinja2_environment
+
+    def _build_jinja2_env(self):
         from jinja2 import Environment, FileSystemLoader, StrictUndefined
-        environment = Environment(undefined=StrictUndefined,
-                                  loader=FileSystemLoader(template_path.parent),
-                                  auto_reload=False)
-        template = environment.get_template(template_path.name)
-        value = template.render(**self.template_context)
+        environment = Environment(
+            undefined=StrictUndefined,
+            loader=FileSystemLoader(self.layer.root),
+            auto_reload=False)
+        environment.globals.update(self.layer.config.template_variables)
+        return environment
+
+    def render(self, template_path: Path) -> str:
+        self.jinja2_env
+        rel_template_path = fspath(template_path.relative_to(self.layer.root))
+        template = self.jinja2_env.get_template(rel_template_path)
+        value = template.render()
         return value
 
     @property
@@ -218,15 +244,6 @@ class LayerFilter:
     __call__ = evaluate
 
 
-class LayerConfig:
-
-    def __init__(self):
-        # Set defaults
-        self.follow_symlink = False
-        self.block_files = re.compile(r"\.(bak|swp)$")
-        self.block_dirs = {".git"}
-
-
 R_walk = Iterator[Tuple[Path, List[str], List[str]]]
 
 
@@ -275,7 +292,7 @@ class LayerRootBase:
 
         def get_file(self, path: Path) -> LayerFile:
             """ Return file object (by logical path), if it exists in this layer. """
-            # TODO:  Optimize by making a dict with a logical_path as the key
+            # TODO:  Optimize by caching.  Use a dict with a logical_path as the key
             for file in self.list_files():
                 if file.logical_path == path:
                     if file.physical_path.is_file():
@@ -481,6 +498,7 @@ class DotDLayerRoot(LayerRootBase):
 
         Note:  We currently only support '.d/<layer>' directories, a file like
         `default.d/10-props.conf` won't be handled here.
+        A valid name would be ``default.d/10-name/props.conf``.
         """
         Layer = self.Layer
         root = Path(root)

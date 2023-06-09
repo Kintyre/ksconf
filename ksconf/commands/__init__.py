@@ -8,7 +8,7 @@ import sys
 import textwrap
 from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
-from io import open
+from io import StringIO, open
 from textwrap import dedent
 from warnings import warn
 
@@ -17,7 +17,8 @@ from ksconf.compat import cache
 from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 detect_by_bom, parse_conf, smart_write_conf,
                                 write_conf)
-from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum
+from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_BAD_CONF_FILE,
+                           EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum)
 from ksconf.util import debug_traceback
 
 __all__ = [
@@ -340,12 +341,12 @@ class KsconfCmd:
             self.stdout = stdout
         if stderr is not None:
             self.stderr = stderr
+    '''
 
     def exit(self, exit_code):
         """ Allow overriding for unittesting or other high-level functionality, like an
         interactive interface. """
         sys.exit(exit_code)
-    '''
 
     def add_parser(self, subparser):
         # Passing in the object return by 'ArgumentParser.add_subparsers()'
@@ -441,6 +442,59 @@ class KsconfCmd:
             self.stderr.write(f"Parser config error '{path}': {e}\n")
             # I guess bad conf file.... can't remember what this one is for.
             raise KsconfCmdReadConfException(EXIT_CODE_BAD_CONF_FILE)
+
+    def parse_extra_vars(self, vars: str, arg_name="argument") -> dict:
+        """ Argument can be either a string, or a @file """
+        # XXX: Add more error checking and better user feedback!
+        if vars.startswith("@"):
+            filename = vars[1:]
+            payload = ""
+        else:
+            filename = ""
+            payload = vars
+
+        # I'm not sure this really makes sense, but why not?
+        if filename.endswith(".conf"):
+            return self.parse_conf(filename)
+
+        if not payload:
+            payload = open(filename).read()
+
+        try:
+            import json
+            data = json.loads(payload)
+            if not isinstance(data, dict):
+                self.stderr.write(f"Provided {arg_name} must contain a dict, not a {type(data)}\n")
+                return self.exit(EXIT_CODE_BAD_ARGS)
+        except ValueError:
+            # Couldn't parse as JSON; move on ...
+            pass
+
+        try:
+            import yaml
+            if filename:
+                with open(filename) as fp:
+                    data = yaml.safe_load(fp)
+            else:
+                data = yaml.safe_load(StringIO(payload))
+
+            if not isinstance(data, dict):
+                self.stderr.write(f"Provided {arg_name} must contain a dict, not a {type(data)}\n")
+                return self.exit(EXIT_CODE_BAD_ARGS)
+            return data
+        except ValueError:
+            # Not YAML?....
+            pass
+        except ImportError:
+            # PyYAML not installed
+            self.stderr.write("Unable to load from YAML as PyYAML not installed")
+            pass
+
+        if filename:
+            self.stderr.write(f"Unable to parse {arg_name} from file {filename}\n")
+        else:
+            self.stdout.write(f"Unable to parse {arg_name} from:\n{payload}\n\n")
+        self.exit(EXIT_CODE_BAD_ARGS)
 
 
 def add_splunkd_access_args(parser: ArgumentParser) -> ArgumentParser:

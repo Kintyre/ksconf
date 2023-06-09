@@ -56,13 +56,15 @@ class PackagingException(Exception):
 
 class AppPackager:
 
-    def __init__(self, src_path, app_name: str, output: TextIO):
+    def __init__(self, src_path, app_name: str, output: TextIO,
+                 template_variables: dict = None):
         self.src_path = fspath(src_path)
         self.app_name = app_name
         self.build_dir = None
         self.app_dir = None
         self.output = output
         self._var_magic = None
+        self.template_variables = template_variables
 
     def require_active_context(funct):
         """ Decorator to mark member functions that cannot be used until the
@@ -102,6 +104,8 @@ class AppPackager:
     @require_active_context
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
         combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
+        if self.template_variables:
+            combiner.config.template_variables = self.template_variables
         if layer_method == "dir.d":
             combiner.set_layer_root(src)
         elif layer_method == "disable":

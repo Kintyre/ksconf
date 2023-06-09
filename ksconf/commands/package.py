@@ -20,6 +20,7 @@ Build system example:
 """
 
 import argparse
+import json
 import os
 
 from ksconf.commands import KsconfCmd, dedent
@@ -38,9 +39,13 @@ class PackageCmd(KsconfCmd):
     Note that some arguments, like the ``FILE`` support special values that can be automatically
     evaluated at runtime.  For example the placeholders ``{{version}}`` or ``{{git_tag}}`` can be
     expanded into the output tarball filename.
+
+    If both layering and templating are in use at the same time, be aware that templates are
+    rendered prior to layering operations.  This allows, for example, one layer to include a simple
+    ``indexes.conf`` file and another layer to include an ``indexes.conf.j2`` template.
     """)
     # format = "manual"
-    maturity = "alpha"
+    maturity = "beta"
 
     default_blocklist = [
         ".git*",
@@ -98,6 +103,11 @@ class PackageCmd(KsconfCmd):
         player.add_argument("-E", "--exclude", action="append", default=[], dest="layer_filter",
                             type=wb_type("exclude"), metavar="PATTERN",
                             help="Name or pattern of layers to exclude from the target.")
+
+        parser.add_argument("--template-vars",
+                            default=None, action="store",
+                            help="Set template variables as key=value or YAML/JSON, "
+                            "if filename prepend with @")
 
         parser.add_argument("--follow-symlink", "-l", action="store_true", default=False,
                             help="Follow symbolic links pointing to directories.  "
@@ -185,7 +195,14 @@ class PackageCmd(KsconfCmd):
                 app_name_source = "extracted from source directory"
         '''
         self.stdout.write(f"Packaging {app_name}   (App name {app_name_source})\n")
-        packager = AppPackager(args.source, app_name, output=self.stderr)
+
+        template_vars = None
+        if args.template_vars:
+            template_vars = self.parse_extra_vars(args.template_vars, "template-vars")
+            self.stdout.write(f"Using variables: \n{json.dumps(template_vars, indent=2)}\n")
+
+        packager = AppPackager(args.source, app_name, output=self.stderr,
+                               template_variables=template_vars)
 
         if args.layer_method == "auto":
             # There'd no way to make this option legal but not shown in argparse.  :-(
@@ -196,8 +213,6 @@ class PackageCmd(KsconfCmd):
             if __version__.startswith("0.11."):
                 return EXIT_CODE_CLI_ARG_DEPRECATED
 
-        # XXX:  Make the combine step optional.  Either via detection (no .d folders/layers) OR manually opt-out
-        #       for faster packaging in simple scenarios (this may not matter once this is done in memory)
         with packager:
             packager.combine(args.source, args.layer_filter,
                              layer_method=args.layer_method,

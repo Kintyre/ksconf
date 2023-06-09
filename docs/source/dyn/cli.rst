@@ -97,9 +97,10 @@ ksconf combine
  .. code-block:: none
 
     usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
-                          [-I PATTERN] [-E PATTERN] [--dry-run] [--follow-symlink]
-                          [--banner BANNER] [-K KEEP_EXISTING] [--disable-marker]
-                          [--disable-cleanup]
+                          [-I PATTERN] [-E PATTERN]
+                          [--template-vars TEMPLATE_VARS] [--dry-run]
+                          [--follow-symlink] [--banner BANNER] [-K KEEP_EXISTING]
+                          [--disable-marker] [--disable-cleanup]
                           source [source ...]
     
     Merge .conf settings from multiple source directories into a combined target
@@ -153,6 +154,9 @@ ksconf combine
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN
                             Name or pattern of layers to exclude from the target.
+      --template-vars TEMPLATE_VARS
+                            Set template variables as key=value or YAML/JSON, if
+                            filename prepend with @
       --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
                             preview changes as a 'diff'. If TARGET doesn't exist,
                             then show the merged file.
@@ -226,7 +230,8 @@ ksconf package
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
                           [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
                           [--layer-method {dir.d,disable,auto}] [-I PATTERN]
-                          [-E PATTERN] [--follow-symlink] [--set-version VERSION]
+                          [-E PATTERN] [--template-vars TEMPLATE_VARS]
+                          [--follow-symlink] [--set-version VERSION]
                           [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
                           [--release-file RELEASE_FILE]
@@ -238,7 +243,10 @@ ksconf package
     'local' directory into 'default'. Note that some arguments, like the 'FILE'
     support special values that can be automatically evaluated at runtime. For
     example the placeholders '{{version}}' or '{{git_tag}}' can be expanded into
-    the output tarball filename.
+    the output tarball filename. If both layering and templating are in use at the
+    same time, be aware that templates are rendered prior to layering operations.
+    This allows, for example, one layer to include a simple 'indexes.conf' file
+    and another layer to include an 'indexes.conf.j2' template.
     
     positional arguments:
       SOURCE                Source directory for the Splunk app.
@@ -261,6 +269,9 @@ ksconf package
       --allowlist ALLOWLIST, -a ALLOWLIST
                             Remove a pattern that was previously added to the
                             blocklist.
+      --template-vars TEMPLATE_VARS
+                            Set template variables as key=value or YAML/JSON, if
+                            filename prepend with @
       --follow-symlink, -l  Follow symbolic links pointing to directories.
                             Symlinks to files are always followed.
       --set-version VERSION

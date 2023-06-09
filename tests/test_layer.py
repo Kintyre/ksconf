@@ -5,7 +5,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import contextlib
 import os
 import sys
 import unittest
@@ -43,14 +42,6 @@ def npl(iterable, nominal="/"):
 
 def fspaths(iterable):
     return (fspath(p) for p in iterable)
-
-
-@contextlib.contextmanager
-def set_template_context(d):
-    _prev_context = TemplatedLayerFile.template_context
-    TemplatedLayerFile.template_context = d
-    yield
-    TemplatedLayerFile.template_context = _prev_context
 
 
 class HelperFunctionsTestCase(unittest.TestCase):
@@ -110,7 +101,7 @@ class LayerTemplateTestCase(unittest.TestCase):
         t_context = {
             "max_size": 83830
         }
-        with TestWorkDir() as twd, set_template_context(t_context):
+        with TestWorkDir() as twd:
             app_dir = twd.makedir("app01")
             twd.write_file("app01/default.d/10-upstream/props.conf", """\
                 [mysourcetype]
@@ -127,6 +118,7 @@ class LayerTemplateTestCase(unittest.TestCase):
 
             layer_root = DotDLayerRoot()
             layer_root.set_root(Path(app_dir))
+            layer_root.config.template_variables = t_context
             self.assertListEqual(layer_root.list_layer_names(),
                                  ["10-upstream", "20-common", "75-custom-magic"])
             self.assertEqual(len(layer_root.list_logical_files()), 1)
