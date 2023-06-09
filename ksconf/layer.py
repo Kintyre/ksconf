@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
-from os import PathLike, fspath, stat_result
+from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
 from typing import Callable, Iterator, Match
@@ -267,8 +267,8 @@ class LayerFile_Jinja2(LayerRenderedFile):
 
     def render(self, template_path: Path) -> str:
         self.jinja2_env
-        rel_template_path = fspath(template_path.relative_to(self.layer.root))
-        template = self.jinja2_env.get_template(rel_template_path)
+        rel_template_path = template_path.relative_to(self.layer.root)
+        template = self.jinja2_env.get_template("/".join(rel_template_path.parts))
         value = template.render()
         return value
 
