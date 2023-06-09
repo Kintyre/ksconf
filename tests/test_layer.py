@@ -24,7 +24,7 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, layer_file_factory
 from tests.cli_helper import TestWorkDir
 
 
@@ -91,7 +91,8 @@ class LayerTemplateTestCase(unittest.TestCase):
         t_context = {
             "max_size": 83830
         }
-        with TestWorkDir() as twd:
+        with TestWorkDir() as twd, layer_file_factory:
+            layer_file_factory.enable("jinja")
             app_dir = twd.makedir("app01")
             twd.write_file("app01/default.d/10-upstream/props.conf", """\
                 [mysourcetype]

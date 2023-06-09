@@ -523,6 +523,15 @@ def add_splunkd_namespace(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
+def add_file_handler(parser: ArgumentParser) -> ArgumentParser:
+    from ksconf.layer import layer_file_factory
+    handlers = layer_file_factory.list_available_handlers()
+
+    parser.add_argument("--enable-handler", action="append", default=[], choices=handlers,
+                        help="Enable optional file handling support")
+    return parser
+
+
 def _get_entrypoints_lib(group, name=None):
     import entrypoints
 

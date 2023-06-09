@@ -5,6 +5,8 @@ import os
 import sys
 import unittest
 
+from ksconf.layer import layer_file_factory
+
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -190,10 +192,10 @@ class CliKsconfCombineTestCase(unittest.TestCase):
         """)
         default = twd.get_path("etc/apps/Splunk_TA_aws")
         target = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT")
-        with ksconf_cli:
-
+        with ksconf_cli, layer_file_factory:
             ko = ksconf_cli("combine", "--layer-method", "dir.d",
                             "--template-vars", template_vars,
+                            "--enable-handler", "jinja",
                             "--target", target, default)
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             cfg = parse_conf(target + "/default/props.conf")

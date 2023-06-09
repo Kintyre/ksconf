@@ -97,7 +97,7 @@ ksconf combine
  .. code-block:: none
 
     usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
-                          [-I PATTERN] [-E PATTERN]
+                          [-I PATTERN] [-E PATTERN] [--enable-handler {jinja}]
                           [--template-vars TEMPLATE_VARS] [--dry-run]
                           [--follow-symlink] [--banner BANNER] [-K KEEP_EXISTING]
                           [--disable-marker] [--disable-cleanup]
@@ -154,6 +154,8 @@ ksconf combine
                             Name or pattern of layers to include.
       -E PATTERN, --exclude PATTERN
                             Name or pattern of layers to exclude from the target.
+      --enable-handler {jinja}
+                            Enable optional file handling support
       --template-vars TEMPLATE_VARS
                             Set template variables as key=value or YAML/JSON, if
                             filename prepend with @
@@ -230,9 +232,9 @@ ksconf package
     usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
                           [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
                           [--layer-method {dir.d,disable,auto}] [-I PATTERN]
-                          [-E PATTERN] [--template-vars TEMPLATE_VARS]
-                          [--follow-symlink] [--set-version VERSION]
-                          [--set-build BUILD]
+                          [-E PATTERN] [--enable-handler {jinja}]
+                          [--template-vars TEMPLATE_VARS] [--follow-symlink]
+                          [--set-version VERSION] [--set-build BUILD]
                           [--allow-local | --block-local | --merge-local]
                           [--release-file RELEASE_FILE]
                           SOURCE
@@ -269,6 +271,8 @@ ksconf package
       --allowlist ALLOWLIST, -a ALLOWLIST
                             Remove a pattern that was previously added to the
                             blocklist.
+      --enable-handler {jinja}
+                            Enable optional file handling support
       --template-vars TEMPLATE_VARS
                             Set template variables as key=value or YAML/JSON, if
                             filename prepend with @

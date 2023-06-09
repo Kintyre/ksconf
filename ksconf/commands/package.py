@@ -23,8 +23,9 @@ import argparse
 import json
 import os
 
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.commands import KsconfCmd, add_file_handler, dedent
 from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_CLI_ARG_DEPRECATED, EXIT_CODE_SUCCESS
+from ksconf.layer import layer_file_factory
 from ksconf.package import AppPackager
 
 
@@ -104,6 +105,7 @@ class PackageCmd(KsconfCmd):
                             type=wb_type("exclude"), metavar="PATTERN",
                             help="Name or pattern of layers to exclude from the target.")
 
+        add_file_handler(parser)
         parser.add_argument("--template-vars",
                             default=None, action="store",
                             help="Set template variables as key=value or YAML/JSON, "
@@ -195,6 +197,9 @@ class PackageCmd(KsconfCmd):
                 app_name_source = "extracted from source directory"
         '''
         self.stdout.write(f"Packaging {app_name}   (App name {app_name_source})\n")
+
+        for handler in args.enable_handler:
+            layer_file_factory.enable(handler)
 
         template_vars = None
         if args.template_vars:

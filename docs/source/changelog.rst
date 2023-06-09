@@ -21,6 +21,17 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
 
+Ksconf v0.11.4 (2023-06-09)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Updated Jinja2 support to allow variables to be passed in for the ``combine`` and ``package`` operations.
+   To use Jinja2 rendering feature, use the ``--enable-handler=jinja`` option.
+   Forcing users to op-in to this behavior seems to be safest option moving forward.
+   To feed variables into the Jinja2 rendering process, use the ``--template-vars `` option.
+   Either pass a literal value or ``@filename``.
+   Currently JSON literals as well as ``.json``, ``.yaml`` and ``.conf`` files.
+*  Minor output fixes for ``combine`` (failed variable substitution)
+
 
 Ksconf v0.11.3 (2023-05-17)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

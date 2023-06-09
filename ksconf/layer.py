@@ -77,6 +77,73 @@ class LayerContext:
 LayerConfig = LayerContext
 
 
+@dataclass
+class _FileFactoryHandler:
+    name: str
+    handler: LayerFile
+    priority: int = 0
+    enabled: bool = False
+
+
+class FileFactory:
+    _registered_handlers: Dict[str, _FileFactoryHandler] = {}
+    _enabled_handlers: List[Callable] = []
+
+    def __init__(self):
+        # Make this class a singleton?
+        self._context_state = None
+
+    def _recalculate(self):
+        self._enabled_handlers = [
+            h.handler for h in sorted(self._registered_handlers.values(),
+                                      key=lambda h: (-h.priority, h.name)) if h.enabled]
+
+    def enable(self, name, _enabled=True):
+        handler = self._registered_handlers[name]
+        handler.enabled = _enabled
+        self._recalculate()
+
+    def disable(self, name):
+        self.enable(name, False)
+
+    def list_available_handlers(self) -> List[str]:
+        return [h.name for h in self._registered_handlers.values() if not h.enabled]
+
+    def __call__(self, layer, path: PurePath, *args, **kwargs) -> LayerFile:
+        """
+        Factory thats finds the appropriate LayerFile class and returns a new instance.
+        """
+        for cls in self._enabled_handlers:
+            if cls.match(path):
+                return cls(layer, path, *args, **kwargs)
+
+    def register_handler(self, name: str, **kwargs):
+        def wrapper(handler_class: LayerFile):
+            handler = _FileFactoryHandler(name, handler_class, **kwargs)
+            self._registered_handlers[handler.name] = handler
+            self._recalculate()
+            return handler_class
+        return wrapper
+
+    def __enter__(self) -> FileFactory:
+        # The primary use case is for clean unit testing
+        assert not self._context_state, "Nested contexts are not supported"
+        from copy import deepcopy
+        self._context_state = (deepcopy(self._registered_handlers),
+                               deepcopy(self._enabled_handlers))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._registered_handlers, self._enabled_handlers = self._context_state
+        self._context_state = None
+
+
+# Single shared instance
+layer_file_factory = FileFactory()
+register_file_handler = layer_file_factory.register_handler
+
+
+@register_file_handler("default", priority=-100, enabled=True)
 class LayerFile(PathLike):
     '''
     Abstraction of a file within a Layer
@@ -177,6 +244,7 @@ class LayerRenderedFile(LayerFile):
         return self._rendered_resource
 
 
+@register_file_handler("jinja", priority=50, enabled=False)
 class LayerFile_Jinja2(LayerRenderedFile):
     @staticmethod
     def match(path: PurePath):
@@ -208,17 +276,6 @@ class LayerFile_Jinja2(LayerRenderedFile):
         template = self.jinja2_env.get_template(rel_template_path)
         value = template.render()
         return value
-
-
-def layer_file_factory(layer, path: PurePath, *args, **kwargs) -> LayerFile:
-    # XXX: Add a dynamic registration process; decorators, subclass init hook?
-    classes = [
-        LayerFile_Jinja2,
-        LayerFile,
-    ]
-    for cls in classes:
-        if cls.match(path):
-            return cls(layer, path, *args, **kwargs)
 
 
 class LayerFilter:

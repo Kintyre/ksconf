@@ -14,12 +14,12 @@ from __future__ import absolute_import, unicode_literals
 from pathlib import Path
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.commands import KsconfCmd, add_file_handler, dedent
 from ksconf.compat import List
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
-from ksconf.layer import LayerFile
+from ksconf.layer import LayerFile, layer_file_factory
 from ksconf.util.completers import DirectoriesCompleter
 from ksconf.util.file import expand_glob_list, relwalk, splglob_simple
 
@@ -198,6 +198,7 @@ class CombineCmd(KsconfCmd):
                             type=wb_type("exclude"), metavar="PATTERN",
                             help="Name or pattern of layers to exclude from the target.")
 
+        add_file_handler(parser)
         parser.add_argument("--template-vars",
                             default=None, action="store",
                             help="Set template variables as key=value or YAML/JSON, if filename prepend with @")
@@ -234,6 +235,9 @@ class CombineCmd(KsconfCmd):
         # For now, just copy all settings from 'args' to class instance... needs work
         combiner.stdout = self.stdout
         combiner.stderr = self.stderr
+
+        for handler in args.enable_handler:
+            layer_file_factory.enable(handler)
 
         if args.template_vars:
             combiner.config.template_variables = self.parse_extra_vars(args.template_vars, "template-")
