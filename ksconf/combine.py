@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-XXX: Move the overwrite-as-necessary logic into a subclass; for several use cases we just don't care because 'target' is a brand new directory
 """
 
 from __future__ import absolute_import, annotations, unicode_literals
@@ -101,6 +100,15 @@ class LayerCombiner:
 
         return wrapper
 
+    def log(self, message):
+        # For historic reasons (idk) we send all messages to stderr, and diffs to stdout
+        if message:
+            self.stderr.write(f"{message}\n")
+
+    def debug(self, message):
+        if not self.quiet:
+            self.log(message)
+
     def set_source_dirs(self, sources: List[Path]):
         self.layer_root = DirectLayerRoot(config=self.config)
         for src in sources:
@@ -166,7 +174,7 @@ class LayerCombiner:
             try:
                 dest_fn = sources[0].logical_path
             except IndexError:
-                raise LayerCombinerException("File disappeared during execution?  {src_file}\n")
+                raise LayerCombinerException(f"File disappeared during execution?  {src_file}\n")
 
             dest_path: Path = target / dest_fn
 
@@ -179,14 +187,12 @@ class LayerCombiner:
             if len(sources) > 1:
                 for matcher, handler in self.filetype_handlers:
                     if matcher(dest_fn):
-                        msg = handler(self, dest_path, sources, self.dry_run)
-                        if msg and not self.quiet:
-                            self.stderr.write(f"{msg}\n")
+                        handler(self, dest_path, sources, self.dry_run)
                         do_copy = False
 
             if do_copy:
-                # self.stderr.write(f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
-                #                   f"{sources[-1].physical_path!r}\n")
+                # self.debug((f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
+                #             f"{sources[-1].physical_path!r}")
                 # Always use the last file in the list (since last directory always wins)
                 src_file = sources[-1].resource_path
                 if self.dry_run:
@@ -205,8 +211,7 @@ class LayerCombiner:
                 else:
                     smart_rc = smart_copy(src_file, dest_path)
                 if smart_rc != SMART_NOCHANGE:
-                    if not self.quiet:
-                        self.stderr.write(f"Copy <{smart_rc}>   {fspath(dest_path):50}  from {src_file}\n")
+                    self.debug(f"Copy <{smart_rc}>   {fspath(dest_path):50}  from {src_file}")
                 del src_file
 
 
@@ -219,7 +224,7 @@ register_handler = LayerCombiner.register_handler
 #
 
 @register_handler(r"([a-z_-]+\.conf|(default|local)\.meta)$")
-def handle_merge_conf_files(context: LayerCombiner,
+def handle_merge_conf_files(combiner: LayerCombiner,
                             dest_path: Path,
                             sources: List[LayerFile],
                             dry_run):
@@ -227,28 +232,28 @@ def handle_merge_conf_files(context: LayerCombiner,
     Handle merging two or more ``.conf`` files.
     """
     sources_physical = [fspath(p.physical_path) for p in sources]
-    message = None
     # Note that latest mtime logic is handled by merge_conf_files()
+    srcs = []
     try:
         # Handle merging conf files
         dest = ConfFileProxy(dest_path, "r+", parse_profile=PARSECONF_MID)
         srcs = [ConfFileProxy(s.resource_path, "r", parse_profile=PARSECONF_STRICT) for s in sources]
-        # self.stderr.write(f"Considering {dest_fn:50}  CONF MERGE from source:  "
-        #                   f"{1!sources[0].physical_path}\n")
+        # combiner.debug(f"Considering {dest_fn:50}  CONF MERGE from source:  "
+        #                f"{1!sources[0].physical_path}")
         smart_rc = merge_conf_files(dest, srcs, dry_run=dry_run,
-                                    banner_comment=context.banner)
+                                    banner_comment=combiner.banner)
         if smart_rc != SMART_NOCHANGE:
-            message = f"Merge <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}"
+            combiner.debug(f"Merge <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}")
+        return smart_rc
     finally:
         # Protect against any dangling open files:  (ResourceWarning: unclosed file)
         dest.close()
         for src in srcs:
             src.close()
-    return message
 
 
 @register_handler(r"\.conf\.spec$")
-def handle_spec_concatenate(context: LayerCombiner,
+def handle_spec_concatenate(combiner: LayerCombiner,
                             dest_path: Path,
                             sources: List[LayerFile],
                             dry_run):
@@ -277,4 +282,5 @@ def handle_spec_concatenate(context: LayerCombiner,
 
     os.utime(dest_path, (last_mtime, last_mtime))
     if smart_rc != SMART_NOCHANGE:
-        return f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}"
+        combiner.debug(f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}")
+    return smart_rc

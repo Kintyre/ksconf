@@ -11,8 +11,6 @@ Usage example:
 """
 from __future__ import absolute_import, unicode_literals
 
-import os
-from io import open
 from pathlib import Path
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
@@ -58,21 +56,21 @@ class RepeatableCombiner(LayerCombiner):
         marker_file: Path = target / CONTROLLED_DIR_MARKER
         if target.is_dir():
             if not self.disable_marker and not marker_file.is_file():
-                self.stderr.write("Target directory already exists, but it appears to have been "
-                                  "created by some other means.  Marker file missing.\n")
+                self.log("Target directory already exists, but it appears to have been "
+                         "created by some other means.  Marker file missing.")
                 raise LayerCombinerExceptionCode("Target directory exists without marker file",
                                                  EXIT_CODE_COMBINE_MARKER_MISSING)
 
         elif self.dry_run:
-            self.stderr.write(f"Skipping creating destination directory {target} (dry-run)\n")
+            self.log(f"Skipping creating destination directory {target} (dry-run)")
         else:
             try:
                 target.mkdir()
             except OSError as e:
-                self.stderr.write(f"Unable to create destination directory {target}.  {e}\n")
+                self.log(f"Unable to create destination directory {target}.  {e}")
                 raise LayerCombinerExceptionCode(f"Unable to create destination directory {target}",
                                                  EXIT_CODE_NO_SUCH_FILE)
-            self.stderr.write(f"Created destination directory {target}\n")
+            self.log(f"Created destination directory {target}")
             if not self.disable_marker:
                 marker_file.write_text("This directory is managed by KSCONF.  Don't touch\n")
 
@@ -82,9 +80,9 @@ class RepeatableCombiner(LayerCombiner):
         """
         config = self.config
 
-        self.stderr.write(f"Layers detected:  {self.layer_names_all}\n")
+        self.log(f"Layers detected:  {self.layer_names_all}")
         if self.layer_names_all != self.layer_names_used:
-            self.stderr.write(f"Layers after filter: {self.layer_names_used}\n")
+            self.log(f"Layers after filter: {self.layer_names_used}")
 
         # Convert src_files to a set to speed up
         src_files = set(src_files)
@@ -106,21 +104,21 @@ class RepeatableCombiner(LayerCombiner):
         target_extra_files = self.target_extra_files
         if target_extra_files:
             if self.disable_cleanup:
-                self.stderr.write("Cleanup operations disabled by user.\n")
+                self.log("Cleanup operations disabled by user.")
             else:
-                self.stderr.write("Found extra files not part of source tree(s):  "
-                                  f"{len(target_extra_files)} files.\n")
+                self.log("Found extra files not part of source tree(s):  "
+                         f"{len(target_extra_files)} files.")
 
             keep_existing = create_filtered_list("splunk", default=False)
             # splglob_simple:  Either full paths, or simple file-only match
             keep_existing.feedall(self.keep_existing, filter=splglob_simple)
             for dest_fn in target_extra_files:
                 if keep_existing.match_path(dest_fn):
-                    self.stderr.write(f"Keep existing file {dest_fn}\n")
+                    self.log(f"Keep existing file {dest_fn}")
                 elif self.disable_cleanup:
-                    self.stderr.write(f"Skip cleanup of unwanted file {dest_fn}\n")
+                    self.log(f"Skip cleanup of unwanted file {dest_fn}")
                 else:
-                    self.stderr.write(f"Remove unwanted file {dest_fn}\n")
+                    self.log(f"Remove unwanted file {dest_fn}")
                     f: Path = target / dest_fn
                     f.unlink()
 
