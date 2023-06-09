@@ -17,7 +17,7 @@ from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
-from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerConfig,
+from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
@@ -66,13 +66,13 @@ class LayerCombiner:
                  dry_run: bool = False,
                  quiet: bool = False):
         self.layer_root: LayerRootBase = None
-        self.config = LayerConfig()
+        self.context = LayerContext()
         self.layer_filter = LayerFilter()
         self.banner = banner
         self.dry_run = dry_run
         self.quiet = quiet
 
-        self.config.follow_symlink = follow_symlink
+        self.context.follow_symlink = follow_symlink
 
         # Internal tracking variables
         self.layer_names_all = set()
@@ -110,12 +110,12 @@ class LayerCombiner:
             self.log(message)
 
     def set_source_dirs(self, sources: List[Path]):
-        self.layer_root = DirectLayerRoot(config=self.config)
+        self.layer_root = DirectLayerRoot(context=self.context)
         for src in sources:
             self.layer_root.add_layer(Path(src))
 
     def set_layer_root(self, root: LayerRootBase.Layer):
-        layer_root = DotDLayerRoot(config=self.config)
+        layer_root = DotDLayerRoot(context=self.context)
         layer_root.set_root(root)
         self.layer_root = layer_root
 

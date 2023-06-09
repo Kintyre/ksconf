@@ -109,7 +109,7 @@ class LayerTemplateTestCase(unittest.TestCase):
 
             layer_root = DotDLayerRoot()
             layer_root.set_root(Path(app_dir))
-            layer_root.config.template_variables = t_context
+            layer_root.context.template_variables = t_context
             self.assertListEqual(layer_root.list_layer_names(),
                                  ["10-upstream", "20-common", "75-custom-magic"])
             self.assertEqual(len(layer_root.list_logical_files()), 1)

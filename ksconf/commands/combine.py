@@ -78,7 +78,7 @@ class RepeatableCombiner(LayerCombiner):
         """
         Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         """
-        config = self.config
+        context = self.context
 
         self.log(f"Layers detected:  {self.layer_names_all}")
         if self.layer_names_all != self.layer_names_used:
@@ -87,12 +87,12 @@ class RepeatableCombiner(LayerCombiner):
         # Convert src_files to a set to speed up
         src_files = set(src_files)
         self.target_extra_files = set()
-        for (root, _, files) in relwalk(target, followlinks=config.follow_symlink):
+        for (root, _, files) in relwalk(target, followlinks=context.follow_symlink):
             root = Path(root)
             for fn in files:
                 tgt_file = root / fn
                 if tgt_file not in src_files:
-                    if fn == CONTROLLED_DIR_MARKER or config.block_files.search(fn):
+                    if fn == CONTROLLED_DIR_MARKER or context.block_files.search(fn):
                         continue  # pragma: no cover (peephole optimization)
                     self.target_extra_files.add(tgt_file)
         return src_files
@@ -240,7 +240,7 @@ class CombineCmd(KsconfCmd):
             layer_file_factory.enable(handler)
 
         if args.template_vars:
-            combiner.config.template_variables = self.parse_extra_vars(args.template_vars, "template-")
+            combiner.context.template_variables = self.parse_extra_vars(args.template_vars, "template-vars")
 
         for (action, pattern) in args.layer_filter:
             combiner.add_layer_filter(action, pattern)

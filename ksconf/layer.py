@@ -72,11 +72,6 @@ class LayerContext:
     template_variables: dict = field(default_factory=dict)
 
 
-# Legacy name (for backwards compatibility, keep until v1.0)
-# Can't find anything outside of ksconf core that actually uses this name (so we could change it sooner)
-LayerConfig = LayerContext
-
-
 @dataclass
 class _FileFactoryHandler:
     name: str
@@ -257,9 +252,9 @@ class LayerFile_Jinja2(LayerRenderedFile):
     @property
     def jinja2_env(self):
         # Use context object to 'cache' the jinja2 environment
-        if not hasattr(self.layer.config, "jinja2_environment"):
-            self.layer.config.jinja2_environment = self._build_jinja2_env()
-        return self.layer.config.jinja2_environment
+        if not hasattr(self.layer.context, "jinja2_environment"):
+            self.layer.context.jinja2_environment = self._build_jinja2_env()
+        return self.layer.context.jinja2_environment
 
     def _build_jinja2_env(self):
         from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -267,7 +262,7 @@ class LayerFile_Jinja2(LayerRenderedFile):
             undefined=StrictUndefined,
             loader=FileSystemLoader(self.layer.root),
             auto_reload=False)
-        environment.globals.update(self.layer.config.template_variables)
+        environment.globals.update(self.layer.context.template_variables)
         return environment
 
     def render(self, template_path: Path) -> str:
@@ -316,31 +311,31 @@ class LayerRootBase:
 
     class Layer:
         """ Basic layer Container:   Connects logical and physical paths. """
-        __slots__ = ["name", "root", "logical_path", "physical_path", "config",
+        __slots__ = ["name", "root", "logical_path", "physical_path", "context",
                      "_file_factory", "_cache_files"]
 
         def __init__(self, name: str,
                      root: Path,
                      physical: PurePath,
                      logical: PurePath,
-                     config: LayerConfig,
+                     context: LayerContext,
                      file_factory: Callable):
             self.name = name
             self.root = root
             self.physical_path = physical
             self.logical_path = logical
-            self.config = config
+            self.context = context
             self._file_factory = file_factory
             self._cache_files: List[LayerFile] = []
 
         def walk(self) -> R_walk:
             # In the simple case, this is good enough.   Some subclasses will need to override
             for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
-                                               followlinks=self.config.follow_symlink):
+                                               followlinks=self.context.follow_symlink):
                 root = Path(root)
-                files = [f for f in files if not self.config.block_files.search(f)]
+                files = [f for f in files if not self.context.block_files.search(f)]
                 for d in list(dirs):
-                    if d in self.config.block_dirs:
+                    if d in self.context.block_dirs:
                         dirs.remove(d)
                 yield (root, dirs, files)
 
@@ -365,9 +360,9 @@ class LayerRootBase:
                         return None
 
     # LayerRootBase
-    def __init__(self, config: LayerConfig = None):
+    def __init__(self, context: LayerContext = None):
         self._layers: List[LayerRootBase.Layer] = []
-        self.config = config or LayerConfig()
+        self.context = context or LayerContext()
 
     def apply_filter(self, layer_filter: LayerFilter) -> bool:
         """
@@ -443,7 +438,7 @@ class DirectLayerRoot(LayerRootBase):
         if not path.is_dir():
             raise LayerUsageException("Layers must be directories.  "
                                       f"Given path '{path}' is not a directory.")
-        layer = Layer(layer_name, path, None, None, config=self.config,
+        layer = Layer(layer_name, path, None, None, context=self.context,
                       file_factory=layer_file_factory)
         super(DirectLayerRoot, self).add_layer(layer)
 
@@ -503,10 +498,10 @@ class DotDLayerRoot(LayerRootBase):
                      root: Path,
                      physical: PurePath,
                      logical: PurePath,
-                     config: LayerConfig,
+                     context: LayerContext,
                      file_factory: Callable,
                      prune_points: Set[Path] = None):
-            super(DotDLayerRoot.Layer, self).__init__(name, root, physical, logical, config=config,
+            super(DotDLayerRoot.Layer, self).__init__(name, root, physical, logical, context=context,
                                                       file_factory=file_factory)
             self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
 
@@ -535,8 +530,8 @@ class DotDLayerRoot(LayerRootBase):
     mount_regex = re.compile(r"(?P<realname>[\w_.-]+)\.d$")
     layer_regex = re.compile(r"(?P<layer>\d\d-[\w_.-]+)")
 
-    def __init__(self, config=None):
-        super(DotDLayerRoot, self).__init__(config)
+    def __init__(self, context=None):
+        super(DotDLayerRoot, self).__init__(context)
         # self.root = None
         self._root_layer: LayerRootBase.Layer = None
         self._mount_points: Dict[Path, List[str]] = defaultdict(list)
@@ -557,7 +552,7 @@ class DotDLayerRoot(LayerRootBase):
         Layer = self.Layer
         root = Path(root)
         if follow_symlinks is None:
-            follow_symlinks = self.config.follow_symlink
+            follow_symlinks = self.context.follow_symlink
 
         for (top, dirs, files) in relwalk(root, topdown=False, followlinks=follow_symlinks):
             del files
@@ -572,7 +567,7 @@ class DotDLayerRoot(LayerRootBase):
                                       root,
                                       physical=top / dir_,
                                       logical=top.parent / mount_mo.group("realname"),
-                                      config=self.config,
+                                      context=self.context,
                                       file_factory=layer_file_factory)
                         self.add_layer(layer)
                         self._mount_points[top].append(dir_)
@@ -595,7 +590,7 @@ class DotDLayerRoot(LayerRootBase):
         prune_points = [mount / layer
                         for mount, layers in self._mount_points.items()
                         for layer in layers]
-        layer = Layer("<root>", root, None, None, config=self.config,
+        layer = Layer("<root>", root, None, None, context=self.context,
                       file_factory=layer_file_factory,
                       prune_points=prune_points)
         self.add_layer(layer, do_sort=False)

@@ -105,7 +105,7 @@ class AppPackager:
     def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
         combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
         if self.template_variables:
-            combiner.config.template_variables = self.template_variables
+            combiner.context.template_variables = self.template_variables
         if layer_method == "dir.d":
             combiner.set_layer_root(src)
         elif layer_method == "disable":

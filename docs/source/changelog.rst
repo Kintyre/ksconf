@@ -31,6 +31,7 @@ Ksconf v0.11.4 (2023-06-09)
    Either pass a literal value or ``@filename``.
    Currently JSON literals as well as ``.json``, ``.yaml`` and ``.conf`` files.
 *  Minor output fixes for ``combine`` (failed variable substitution)
+*  Rename LayerConfig to :py:class:`~ksconf.layer.LayerContext`.  I doubt anyone is using this, but just in case.
 
 
 Ksconf v0.11.3 (2023-05-17)
