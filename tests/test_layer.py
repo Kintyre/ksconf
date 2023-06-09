@@ -24,8 +24,7 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerFilter,
-                          TemplatedLayerFile, path_in_layer)
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, path_in_layer
 from tests.cli_helper import TestWorkDir
 
 

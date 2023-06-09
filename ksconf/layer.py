@@ -142,47 +142,24 @@ class LayerFile(PathLike):
         return self.stat.st_mtime
 
 
-class TemplatedLayerFile(LayerFile):
-
+class LayerRenderedFile(LayerFile):
     __slots__ = ["_temp_resource"]
 
     def __init__(self, *args, **kwargs):
-        super(TemplatedLayerFile, self).__init__(*args, **kwargs)
+        super(LayerRenderedFile, self).__init__(*args, **kwargs)
         self._temp_resource = None
 
     def __del__(self):
         if getattr(self, "_temp_resource", None) and self._temp_resource.is_file():
             self._temp_resource.unlink()
 
-    @staticmethod
-    def match(path: PurePath):
-        return path.suffix == ".j2"
+    def render(self, template_path: Path) -> str:
+        raise NotImplementedError
 
     @staticmethod
     def transform_name(path: PurePath):
-        return path.with_name(path.name[:-3])
-
-    @property
-    def jinja2_env(self):
-        if not hasattr(self.layer.config, "jinja2_environment"):
-            self.layer.config.jinja2_environment = self._build_jinja2_env()
-        return self.layer.config.jinja2_environment
-
-    def _build_jinja2_env(self):
-        from jinja2 import Environment, FileSystemLoader, StrictUndefined
-        environment = Environment(
-            undefined=StrictUndefined,
-            loader=FileSystemLoader(self.layer.root),
-            auto_reload=False)
-        environment.globals.update(self.layer.config.template_variables)
-        return environment
-
-    def render(self, template_path: Path) -> str:
-        self.jinja2_env
-        rel_template_path = fspath(template_path.relative_to(self.layer.root))
-        template = self.jinja2_env.get_template(rel_template_path)
-        value = template.render()
-        return value
+        # Remove trailing suffix
+        return path.with_name(path.stem)
 
     @property
     def logical_path(self) -> Path:
@@ -203,10 +180,43 @@ class TemplatedLayerFile(LayerFile):
         return self._temp_resource
 
 
+class LayerFile_Jinja2(LayerRenderedFile):
+    @staticmethod
+    def match(path: PurePath):
+        return path.suffix == ".j2"
+
+    @staticmethod
+    def transform_name(path: PurePath):
+        return path.with_name(path.name[:-3])
+
+    @property
+    def jinja2_env(self):
+        # Use context object to 'cache' the jinja2 environment
+        if not hasattr(self.layer.config, "jinja2_environment"):
+            self.layer.config.jinja2_environment = self._build_jinja2_env()
+        return self.layer.config.jinja2_environment
+
+    def _build_jinja2_env(self):
+        from jinja2 import Environment, FileSystemLoader, StrictUndefined
+        environment = Environment(
+            undefined=StrictUndefined,
+            loader=FileSystemLoader(self.layer.root),
+            auto_reload=False)
+        environment.globals.update(self.layer.config.template_variables)
+        return environment
+
+    def render(self, template_path: Path) -> str:
+        self.jinja2_env
+        rel_template_path = fspath(template_path.relative_to(self.layer.root))
+        template = self.jinja2_env.get_template(rel_template_path)
+        value = template.render()
+        return value
+
+
 def layer_file_factory(layer, path: PurePath, *args, **kwargs) -> LayerFile:
     # XXX: Add a dynamic registration process; decorators, subclass init hook?
     classes = [
-        TemplatedLayerFile,
+        LayerFile_Jinja2,
         LayerFile,
     ]
     for cls in classes:
