@@ -100,6 +100,19 @@ LayerConfig = LayerContext
 
 
 class LayerFile(PathLike):
+    '''
+    Abstraction of a file within a Layer
+
+    Paths:
+        * ``logical_path``:  Conceptual file path.  This is the final path after all layers are resolved.
+          Think of this as the 'destination' file.
+        * ``physical_path``:  Actual file path.  The location of the physical file found within a source layer.
+          Most of the time this is the 'source' file, however this doesn't take into considerations layer combining or
+          template expansion requirements.  (In the case of a template, this would be the template file)
+        * ``resource_path``:  Content location.  Often this the ``physical_path``, but in the case of abstracted layers
+          (like templates, or archived layers), this would be the location of a temporary resource that contains
+          the expanded/rendered content.
+    '''
     __slots__ = ["layer", "relative_path", "_stat"]
 
     def __init__(self,
@@ -125,6 +138,7 @@ class LayerFile(PathLike):
     def logical_path(self) -> Path:
         return _path_join(self.layer.logical_path, self.relative_path)
 
+    # For "normal" files, the resource_path is the physical_path (not true for rendered files)
     resource_path = physical_path
 
     @property
@@ -143,15 +157,19 @@ class LayerFile(PathLike):
 
 
 class LayerRenderedFile(LayerFile):
-    __slots__ = ["_temp_resource"]
+    """
+    Abstract LayerFile for rendered scenarios, such as template scenarios.
+    A subclass really only needs to implement ``match()`` ``render()``
+    """
+    __slots__ = ["_rendered_resource"]
 
     def __init__(self, *args, **kwargs):
         super(LayerRenderedFile, self).__init__(*args, **kwargs)
-        self._temp_resource = None
+        self._rendered_resource = None
 
     def __del__(self):
-        if getattr(self, "_temp_resource", None) and self._temp_resource.is_file():
-            self._temp_resource.unlink()
+        if getattr(self, "_rendered_resource", None) and self._rendered_resource.is_file():
+            self._rendered_resource.unlink()
 
     def render(self, template_path: Path) -> str:
         raise NotImplementedError
@@ -172,12 +190,13 @@ class LayerRenderedFile(LayerFile):
 
     @property
     def resource_path(self) -> Path:
-        if not self._temp_resource:
-            # Temporary file will be removed in instance destructor
+        if not self._rendered_resource:
+            # Temporary file will be removed in instance destructor.  Multiple opens expected.
             tf = NamedTemporaryFile(delete=False)
-            self._temp_resource = Path(tf.name)
-            self._temp_resource.write_text(self.render(self.physical_path))
-        return self._temp_resource
+            self._rendered_resource = Path(tf.name)
+            content = self.render(self.physical_path)
+            self._rendered_resource.write_text(content)
+        return self._rendered_resource
 
 
 class LayerFile_Jinja2(LayerRenderedFile):
