@@ -2,4 +2,5 @@ coverage
 codecov
 coveralls
 jinja2
+pyyaml
 -r requirements.txt
