@@ -24,7 +24,7 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, path_in_layer
+from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter
 from tests.cli_helper import TestWorkDir
 
 
@@ -44,15 +44,6 @@ def fspaths(iterable):
 
 
 class HelperFunctionsTestCase(unittest.TestCase):
-
-    def test_path_in_layer_01(self):
-        path = Path(np("default/data/ui/nav/default.xml"))
-        self.assertEqual(path_in_layer(Path("default"), path), Path(np("data/ui/nav/default.xml")))
-        self.assertEqual(path_in_layer(Path("bin"), path), None)
-        self.assertEqual(path_in_layer(Path(np("a/path/longer/than/the/given/path")), path), None)
-
-    def test_path_in_layer_nulls(self):
-        self.assertEqual(path_in_layer(None, "path"), "path")
 
     def test_layerfilter_include(self):
         class mocklayer:

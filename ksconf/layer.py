@@ -54,28 +54,6 @@ def _path_join(*parts):
     return Path(*filter(None, parts))
 
 
-def path_in_layer(layer: Path, path: Path) -> Path:
-    """ Check to see if path exist within layer.
-    Returns either None, or the path without the shared prefix with layer.
-    """
-    # Using 'sep' over os.path.join / os.path.split should be okay here as we should only ever be
-    # given relative paths (no Windows UNC/drive letters)
-    if layer is None:
-        # Return as-is, since layer is root
-        return path
-    # layer_parts = layer.split(sep)
-    layer_parts = layer.parts
-    layer_count = len(layer_parts)
-    path_parts = path.parts
-    if len(path_parts) < layer_count:
-        return None
-    # Q: Are we recreating path.relative_to()?
-    path_suffix = path_parts[:layer_count]
-    if layer_parts != path_suffix:
-        return None
-    return Path(*path_parts[layer_count:])
-
-
 # Exceptions
 
 class LayerException(Exception):
@@ -328,16 +306,6 @@ class LayerRootBase:
                         return file
                     else:
                         return None
-
-            '''
-            # XXX: There's probably ways to optimize this.  fine for now (correctness over speed)
-            rel_path = path_in_layer(self.logical_path, path)
-            if not rel_path:
-                return None
-            file_ = self._file_factory(self, rel_path)
-            if file_.physical_path.is_file():
-                return file_
-            '''
 
     # LayerRootBase
     def __init__(self, config: LayerConfig = None):
