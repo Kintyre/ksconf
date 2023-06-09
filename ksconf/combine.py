@@ -84,9 +84,9 @@ class LayerCombiner:
         self.stderr = sys.stderr
 
     @classmethod
-    def register_regex(cls, regex_match):
-        """ Decorator that matches a filename regex and if it matches, it
-        executes the decorator handler.
+    def register_handler(cls, regex_match):
+        """ Decorator that registers a new file type handler.  The handler is
+        used if a file name matches a regex.  Regex 'search' mode is used.
         """
         cre = re.compile(regex_match)
 
@@ -210,11 +210,22 @@ class LayerCombiner:
                 del src_file
 
 
-@LayerCombiner.register_regex(r"([a-z_-]+\.conf|(default|local)\.meta)$")
+# registration decorator
+register_handler = LayerCombiner.register_handler
+
+
+#
+# Combine handlers for specific file types
+#
+
+@register_handler(r"([a-z_-]+\.conf|(default|local)\.meta)$")
 def handle_merge_conf_files(context: LayerCombiner,
                             dest_path: Path,
                             sources: List[LayerFile],
                             dry_run):
+    """
+    Handle merging two or more ``.conf`` files.
+    """
     sources_physical = [fspath(p.physical_path) for p in sources]
     message = None
     # Note that latest mtime logic is handled by merge_conf_files()
@@ -236,11 +247,14 @@ def handle_merge_conf_files(context: LayerCombiner,
     return message
 
 
-@LayerCombiner.register_regex(r"\.conf\.spec$")
+@register_handler(r"\.conf\.spec$")
 def handle_spec_concatenate(context: LayerCombiner,
                             dest_path: Path,
                             sources: List[LayerFile],
                             dry_run):
+    """
+    Concatenate multiple ``.spec`` files.  Likely a ``README.d`` situation.
+    """
     sources_physical = []
     combined_content = ""
     last_mtime = max(src.mtime for src in sources)
