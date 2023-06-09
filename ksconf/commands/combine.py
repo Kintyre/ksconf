@@ -64,7 +64,7 @@ class RepeatableCombiner(LayerCombiner):
                                                  EXIT_CODE_COMBINE_MARKER_MISSING)
 
         elif self.dry_run:
-            self.stderr.write("Skipping creating destination directory {target} (dry-run)\n")
+            self.stderr.write(f"Skipping creating destination directory {target} (dry-run)\n")
         else:
             try:
                 target.mkdir()
