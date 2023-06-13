@@ -143,15 +143,23 @@ class LayerFile(PathLike):
     '''
     Abstraction of a file within a Layer
 
-    Paths:
-        * ``logical_path``:  Conceptual file path.  This is the final path after all layers are resolved.
-          Think of this as the 'destination' file.
-        * ``physical_path``:  Actual file path.  The location of the physical file found within a source layer.
-          Most of the time this is the 'source' file, however this doesn't take into considerations layer combining or
-          template expansion requirements.  (In the case of a template, this would be the template file)
-        * ``resource_path``:  Content location.  Often this the ``physical_path``, but in the case of abstracted layers
-          (like templates, or archived layers), this would be the location of a temporary resource that contains
-          the expanded/rendered content.
+    Path definitions
+
+    ..
+
+    ``logical_path``
+        Conceptual file path.  This is the final path after all layers are resolved.
+        Think of this as the 'destination' file.
+
+    ``physical_path``
+        Actual file path.  The location of the physical file found within a source layer.
+        Most of the time this is the 'source' file, however this doesn't take into considerations layer combining or
+        template expansion requirements.  (In the case of a template, this would be the template file)
+
+    ``resource_path``
+        Content location.  Often this the ``physical_path``, but in the case of abstracted layers
+        (like templates, or archived layers), this would be the location of a temporary resource that contains
+        the expanded/rendered content.
     '''
     __slots__ = ["layer", "relative_path", "_stat"]
 
@@ -366,7 +374,7 @@ class LayerRootBase:
 
     def apply_filter(self, layer_filter: LayerFilter) -> bool:
         """
-        Apply a destructive filter to all layers.  layer_filter(layer) will be called one for each
+        Apply a destructive filter to all layers.  ``layer_filter(layer)`` will be called one for each
         layer, if the filter returns True than the layer is kept.  Root layers are always kept.
 
         Returns True if layers were removed
@@ -545,8 +553,8 @@ class DotDLayerRoot(LayerRootBase):
     def set_root(self, root: Path, follow_symlinks=None):
         """ Set a root path, and auto discover all '.d' directories.
 
-        Note:  We currently only support '.d/<layer>' directories, a file like
-        `default.d/10-props.conf` won't be handled here.
+        Note:  We currently only support ``.d/<layer>`` directories, a file like
+        ``default.d/10-props.conf`` won't be handled here.
         A valid name would be ``default.d/10-name/props.conf``.
         """
         Layer = self.Layer

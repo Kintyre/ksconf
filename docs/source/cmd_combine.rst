@@ -52,37 +52,37 @@ Here's an example, truncated for brevity, to further demonstrate how this can be
     Splunk_TA_nix/
     ├── README.txt
     ├── bin
-    │   ├── bandwidth.sh
-    │   ├── common.sh
+    │   ├── bandwidth.sh
+    │   ├── common.sh
     ├── default.d
-    │   ├── 10-upstream
-    │   │   ├── app.conf
-    │   │   ├── data
-    │   │   │   └── ui
-    │   │   │       ├── nav
-    │   │   │       │   └── default.xml
-    │   │   │       └── views
-    │   │   │           └── setup.xml
-    │   │   ├── eventtypes.conf
-    │   │   ├── inputs.conf
-    │   │   ├── props.conf
-    │   │   ├── tags.conf
-    │   │   ├── transforms.conf
-    │   │   └── web.conf
-    │   ├── 20-common
-    │   │   ├── inputs.conf
-    │   │   ├── props.conf
-    │   │   └── transforms.conf
-    │   ├── 30-master-apps
-    │   │   └── inputs.conf
-    │   └── 30-shcluster-apps
-    │       ├── inputs.conf
-    │       └── web.conf
+    │   ├── 10-upstream
+    │   │   ├── app.conf
+    │   │   ├── data
+    │   │   │   └── ui
+    │   │   │       ├── nav
+    │   │   │       │   └── default.xml
+    │   │   │       └── views
+    │   │   │           └── setup.xml
+    │   │   ├── eventtypes.conf
+    │   │   ├── inputs.conf
+    │   │   ├── props.conf
+    │   │   ├── tags.conf
+    │   │   ├── transforms.conf
+    │   │   └── web.conf
+    │   ├── 20-common
+    │   │   ├── inputs.conf
+    │   │   ├── props.conf
+    │   │   └── transforms.conf
+    │   ├── 30-master-apps
+    │   │   └── inputs.conf
+    │   └── 30-shcluster-apps
+    │       ├── inputs.conf
+    │       └── web.conf
     ├── lookups
-    │   ├── nix_da_update_status.csv
-    │   ├── nix_da_version_ranges.csv
+    │   ├── nix_da_update_status.csv
+    │   ├── nix_da_version_ranges.csv
     └── metadata
-        └── default.meta
+        └── default.meta
 
 Here we have several named layers in play:
 
@@ -183,40 +183,40 @@ This example features the Cisco Security Suite.
    Splunk_CiscoSecuritySuite/
    ├── README
    ├── default.d
-   │   ├── 10-upstream
-   │   │   ├── app.conf
-   │   │   ├── data
-   │   │   │   └── ui
-   │   │   │       ├── nav
-   │   │   │       │   └── default.xml
-   │   │   │       └── views
-   │   │   │           ├── authentication_metrics.xml
-   │   │   │           ├── cisco_security_overview.xml
-   │   │   │           ├── getting_started.xml
-   │   │   │           ├── search_ip_profile.xml
-   │   │   │           ├── upgrading.xml
-   │   │   │           └── user_tracking.xml
-   │   │   ├── eventtypes.conf
-   │   │   ├── macros.conf
-   │   │   ├── savedsearches.conf
-   │   │   └── transforms.conf
-   │   ├── 20-my-org
-   │   │   └── savedsearches.conf
-   │   ├── 50-splunk-admin
-   │   │   ├── indexes.conf
-   │   │   ├── macros.conf
-   │   │   └── transforms.conf
-   │   └── 70-firewall-admins
-   │       ├── data
-   │       │   └── ui
-   │       │       └── views
-   │       │           ├── attacks_noc_bigscreen.xml
-   │       │           ├── device_health.xml
-   │       │           └── user_tracking.xml
-   │       └── eventtypes.conf
+   │   ├── 10-upstream
+   │   │   ├── app.conf
+   │   │   ├── data
+   │   │   │   └── ui
+   │   │   │       ├── nav
+   │   │   │       │   └── default.xml
+   │   │   │       └── views
+   │   │   │           ├── authentication_metrics.xml
+   │   │   │           ├── cisco_security_overview.xml
+   │   │   │           ├── getting_started.xml
+   │   │   │           ├── search_ip_profile.xml
+   │   │   │           ├── upgrading.xml
+   │   │   │           └── user_tracking.xml
+   │   │   ├── eventtypes.conf
+   │   │   ├── macros.conf
+   │   │   ├── savedsearches.conf
+   │   │   └── transforms.conf
+   │   ├── 20-my-org
+   │   │   └── savedsearches.conf
+   │   ├── 50-splunk-admin
+   │   │   ├── indexes.conf
+   │   │   ├── macros.conf
+   │   │   └── transforms.conf
+   │   └── 70-firewall-admins
+   │       ├── data
+   │       │   └── ui
+   │       │       └── views
+   │       │           ├── attacks_noc_bigscreen.xml
+   │       │           ├── device_health.xml
+   │       │           └── user_tracking.xml
+   │       └── eventtypes.conf
    ├── lookups
    ├── metadata
-   └─── static
+   └── static
 
 
 

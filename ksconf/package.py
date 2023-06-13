@@ -293,7 +293,7 @@ class AppVarMagic:
         self.meta = meta or {}
 
     def expand(self, value: str) -> str:
-        """ A simple Jinja2 like {{VAR}} substitution mechanism. """
+        """ A simple Jinja2 like ``{{VAR}}`` substitution mechanism. """
         def replace(match_obj):
             var = match_obj.group(1)
             return self[var]
