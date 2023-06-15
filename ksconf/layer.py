@@ -274,7 +274,6 @@ class LayerFile_Jinja2(LayerRenderedFile):
         return environment
 
     def render(self, template_path: Path) -> str:
-        self.jinja2_env
         rel_template_path = template_path.relative_to(self.layer.root)
         template = self.jinja2_env.get_template("/".join(rel_template_path.parts))
         value = template.render()

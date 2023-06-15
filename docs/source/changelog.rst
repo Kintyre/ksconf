@@ -24,7 +24,7 @@ Ksconf 0.11
 Ksconf v0.11.5 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Add new :py:func:`~ksconf.conf.parse.parse_string` function to enable simple parsing from a string.
+*  Add new :py:func:`~ksconf.conf.parser.parse_string` function to enable simple parsing from a string.
    (I'm not sure why it took me so long to add this; it's so simple; and I've looked for this function dozens of times over the years, and always came up with a new StringIO workaround.)
 
 

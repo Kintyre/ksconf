@@ -18,7 +18,6 @@ import os
 import re
 from enum import Enum
 from io import StringIO, open
-from os import PathLike
 from pathlib import Path
 from typing import Dict, Generator, Iterable, List, TextIO, Tuple, Union
 

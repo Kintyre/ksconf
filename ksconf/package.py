@@ -57,7 +57,8 @@ class PackagingException(Exception):
 class AppPackager:
 
     def __init__(self, src_path, app_name: str, output: TextIO,
-                 template_variables: dict = None):
+                 template_variables: dict = None,
+                 predictable_mtime: bool = True):
         self.src_path = fspath(src_path)
         self.app_name = app_name
         self.build_dir = None
@@ -65,6 +66,7 @@ class AppPackager:
         self.output = output
         self._var_magic = None
         self.template_variables = template_variables
+        self.predictable_mtime = predictable_mtime
 
     def require_active_context(funct):
         """ Decorator to mark member functions that cannot be used until the
@@ -249,7 +251,9 @@ class AppPackager:
         else:
             self.output.write(f"Creating archive:  {filename}\n")
 
-        normalize_directory_mtime(self.app_dir)
+        if self.predictable_mtime:
+            normalize_directory_mtime(self.app_dir)
+
         with tarfile.open(filename, mode="w:gz") as spl:
             spl.add(self.app_dir, arcname=self.app_name)
         return filename
