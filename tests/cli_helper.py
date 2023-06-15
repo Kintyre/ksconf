@@ -267,7 +267,7 @@ class TestWorkDir:
     def write_conf(self, rel_path, conf):
         path = self.get_path(rel_path)
         self.makedir(None, path=os.path.dirname(path))
-        write_conf(path, conf)
+        write_conf(path, conf, temp_suffix=None)
         return path
 
     def read_conf(self, rel_path, profile=PARSECONF_MID):

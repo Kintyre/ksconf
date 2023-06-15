@@ -23,6 +23,7 @@ from typing import Dict, Generator, Iterable, List, TextIO, Tuple, Union
 
 from ..consts import SmartEnum
 from ..util.compare import fileobj_compare
+from ..util.file import atomic_open, atomic_writer
 
 default_encoding = "utf-8"
 
@@ -353,10 +354,12 @@ def write_conf(stream: _StreamOutput,
                conf: ConfType,
                stanza_delim: str = "\n",
                sort: bool = True,
+               temp_suffix: str = ".tmp",
                mtime: float = None):
     if not hasattr(stream, "write"):
         # Assume it's a filename
-        with open(stream, "w", encoding=default_encoding) as stream:
+        with atomic_open(stream, temp_suffix, mode="w",
+                         encoding=default_encoding) as stream:
             write_conf_stream(stream, conf, stanza_delim, sort)
             if mtime:
                 os.utime(stream, (mtime, mtime))
@@ -405,6 +408,10 @@ def smart_write_conf(filename: PathType,
                      sort: bool = True,
                      temp_suffix: str = ".tmp",
                      mtime: float = None) -> SmartEnum:
+    """ Write conf data to a specific file, but only when necessary.
+    This function is essentially the same as :func:`write_conf`, except that it
+    avoids updating the file if it already exists and has the desired content.
+    """
     filename = Path(filename)
     if filename.is_file():
         temp = StringIO()
@@ -414,18 +421,14 @@ def smart_write_conf(filename: PathType,
         if file_diff:
             return SmartEnum.NOCHANGE
         else:
-            tempfile: Path = filename.with_name(filename.name + temp_suffix)
-            tempfile.write_text(temp.getvalue(), encoding=default_encoding)
-            if mtime:
-                os.utime(tempfile, (mtime, mtime))
-            os.unlink(filename)
-            os.rename(tempfile, filename)
+            with atomic_writer(filename, temp_suffix) as tempfile:
+                tempfile.write_text(temp.getvalue(), encoding=default_encoding)
+                if mtime:
+                    os.utime(tempfile, (mtime, mtime))
             return SmartEnum.UPDATE
     else:
-        tempfile = filename.with_name(filename.name + temp_suffix)
-        with open(tempfile, "w", encoding=default_encoding) as dest:
+        with atomic_open(filename, temp_suffix, mode="w") as dest:
             write_conf_stream(dest, conf, stanza_delim, sort)
-        os.rename(tempfile, filename)
         if mtime:
             os.utime(filename, (mtime, mtime))
         return SmartEnum.CREATE

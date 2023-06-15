@@ -15,6 +15,7 @@ from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
+from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
 
 
@@ -232,7 +233,7 @@ class AppPackager:
                         self.output.write(f"Found hidden {t}:  {root}/{name}\n")
 
     @require_active_context
-    def make_archive(self, filename):
+    def make_archive(self, filename, temp_suffix: str = ".tmp"):
         """ Create a compressed tarball of the build directory.
         """
         # type: (str) -> str
@@ -254,8 +255,9 @@ class AppPackager:
         if self.predictable_mtime:
             normalize_directory_mtime(self.app_dir)
 
-        with tarfile.open(filename, mode="w:gz") as spl:
-            spl.add(self.app_dir, arcname=self.app_name)
+        with atomic_writer(filename, temp_name=temp_suffix) as tmp_filename:
+            with tarfile.open(tmp_filename, mode="w:gz") as spl:
+                spl.add(self.app_dir, arcname=self.app_name)
         return filename
 
     @require_active_context

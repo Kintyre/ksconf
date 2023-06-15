@@ -24,6 +24,10 @@ Ksconf 0.11
 Ksconf v0.11.5 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+*  Use atomic file operations for more updates (such as most ``.conf`` writing and app packaging).
+   This is enabled by the new context managers :py:func:`~ksconf.util.file.atomic_writer` and :py:func:`~ksconf.util.file.atomic_open`.
+   Under the covers temporary files are written to and then renamed into place to ensure that the output file is either fully updated or not touched at all.
+   This should reduce possible data loss and/or confusion during some difficult to handle corner cases (i.e., disk full, or interrupted execution).
 *  Add new :py:func:`~ksconf.conf.parser.parse_string` function to enable simple parsing from a string.
    (I'm not sure why it took me so long to add this; it's so simple; and I've looked for this function dozens of times over the years, and always came up with a new StringIO workaround.)
 

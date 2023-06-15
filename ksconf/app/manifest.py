@@ -15,7 +15,7 @@ from typing import Iterable
 from ksconf.archive import extract_archive
 from ksconf.compat import List
 from ksconf.consts import MANIFEST_HASH, UNSET
-from ksconf.util.file import file_hash, relwalk
+from ksconf.util.file import atomic_open, file_hash, relwalk
 
 
 class AppArchiveError(Exception):
@@ -236,7 +236,7 @@ class StoredArchiveManifest:
 
     def write_json_manifest(self, manifest_file: Path):
         data = self.to_dict()
-        with open(manifest_file, "w") as fp:
+        with atomic_open(manifest_file, ".tmp", "w") as fp:
             json.dump(data, fp, indent=1)
 
     @classmethod

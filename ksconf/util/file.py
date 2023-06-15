@@ -5,8 +5,11 @@ import os
 import re
 import shutil
 import sys
+from contextlib import contextmanager
 from glob import glob
 from io import open
+from pathlib import Path
+from typing import IO, Callable, Union
 
 from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
@@ -139,6 +142,79 @@ def _samefile(file1, file2):
         file1 = os.path.normpath(os.path.normcase(file1))
         file2 = os.path.normpath(os.path.normcase(file2))
         return file1 == file2
+
+
+@contextmanager
+def atomic_writer(dest: Path, temp_name: Union[str, Path, Callable, None]) -> str:
+    """
+    Context manager to atomically update a destination.  When entering the context, a temporary file
+    name is returned.  When the context is successfully exited, the temporary file is renamed into
+    place.  Either way, the temporary file is removed.
+
+    The name of the temporary file can be controlled via ``temp_name``.  If a ``str`` is provided,
+    it will be used as a suffix.  If a Path is provided, that will be used as the literal temporary
+    file name.  If a callable is given, the ``dest`` path will be passed into the callable to
+    determine the temporary file.  Alternatively, the entire _atomic_ nature of this function can be
+    disabled by passing temp_name=None.
+    """
+    dest = Path(dest)
+
+    if temp_name is None:
+        # Opt-out of temp file handling.  Just write directly to the real destination.
+        yield dest
+        return
+
+    if isinstance(temp_name, str):
+        # Suffix mode:  Concatenate 'temp_name' to existing name
+        if not temp_name.startswith("."):
+            temp_name = "." + temp_name
+        temp_dest: Path = dest.with_name(dest.name + temp_name)
+    elif isinstance(temp_name, Path):
+
+        # The actual temp file name was created by the caller
+        temp_dest = temp_name
+    elif callable(temp_name):
+        # Temp filename to be generated via function call
+        temp_dest = Path(temp_name(dest))
+    else:
+        raise TypeError("Unsupported type for 'temp_name'.  "
+                        f"Expected str, Path, or callable but received {type(temp_name).__name__}")
+
+    if dest == temp_dest:
+        # If you want to write directly to the output file, use temp_name=None
+        # Having dest==temp_dest will result in all files being removed.
+        raise ValueError(f"Invalid options.  Both dest and temp_dest are the same:  {dest}")
+
+    # Remove any existing temporary files.
+    temp_dest.unlink(missing_ok=True)
+
+    try:
+        yield temp_dest
+        assert temp_dest.is_file(), f"No file written to the temporary path {temp_dest}, " \
+                                    f"therefore we cannot rename it to {dest}"
+        dest.unlink(missing_ok=True)
+        temp_dest.replace(dest)
+    finally:
+        temp_dest.unlink(missing_ok=True)
+
+
+@contextmanager
+def atomic_open(name: Path,
+                temp_name: Union[str, Path, Callable, None],
+                mode="w",
+                **open_kwargs) -> IO:
+    """
+    Context manager to atomically write to a file stream.  Like the open() context manager, a file
+    handle returned when the context is entered.  Upon successful completion, the temporary file is
+    renamed into place; thus providing an atomic update operation.
+
+    See :func:`atomic_writer` for behaviors regarding the ``temp_name`` parameter option.
+
+    This function can be used nearly any place that ``with open(myfile, mode="w") as stream``
+    """
+    with atomic_writer(name, temp_name) as tmp_filename:
+        with open(tmp_filename, mode=mode, **open_kwargs) as stream:
+            yield stream
 
 
 class ReluctantWriter:
