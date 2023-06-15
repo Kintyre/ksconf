@@ -186,16 +186,19 @@ def atomic_writer(dest: Path, temp_name: Union[str, Path, Callable, None]) -> st
         raise ValueError(f"Invalid options.  Both dest and temp_dest are the same:  {dest}")
 
     # Remove any existing temporary files.
-    temp_dest.unlink(missing_ok=True)
+    if temp_dest.is_file():
+        temp_dest.unlink()
 
     try:
         yield temp_dest
         assert temp_dest.is_file(), f"No file written to the temporary path {temp_dest}, " \
                                     f"therefore we cannot rename it to {dest}"
-        dest.unlink(missing_ok=True)
+        if dest.is_file():
+            dest.unlink()
         temp_dest.replace(dest)
     finally:
-        temp_dest.unlink(missing_ok=True)
+        if temp_dest.is_file():
+            temp_dest.unlink()
 
 
 @contextmanager
