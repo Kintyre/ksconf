@@ -16,8 +16,8 @@ from ksconf.util.compare import file_compare
 
 
 def _is_binary_file(filename, peek=2048):
-    # https://stackoverflow.com/a/7392391/315892; modified for Python 2.6 compatibility
-    textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
+    # https://stackoverflow.com/a/7392391/315892
+    textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
     with open(filename, "rb") as f:
         b = f.read(peek)
         return bool(b.translate(None, textchars))
