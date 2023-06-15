@@ -21,6 +21,13 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
 
+Ksconf v0.11.5 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Add new :py:func:`~ksconf.conf.parse.parse_string` function to enable simple parsing from a string.
+   (I'm not sure why it took me so long to add this; it's so simple; and I've looked for this function dozens of times over the years, and always came up with a new StringIO workaround.)
+
+
 Ksconf v0.11.4 (2023-06-09)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

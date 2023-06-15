@@ -276,6 +276,18 @@ def parse_conf(stream: _StreamNameFile,
         raise ConfParserException(f"Encoding error encountered: {e}")
 
 
+def parse_string(s: str,
+                 name: str = None,
+                 profile: ParserConfig = PARSECONF_MID) -> ConfType:
+    """
+    Parse a .conf file that's already in memory, as a string.
+    """
+    stream = StringIO(s)
+    if name:
+        stream.name = name
+    return parse_conf_stream(stream, **profile)
+
+
 def parse_conf_stream(stream: _StreamInput,
                       keys_lower: bool = False,
                       handle_conts: bool = True,
@@ -283,6 +295,11 @@ def parse_conf_stream(stream: _StreamInput,
                       dup_stanza: DuplicateEnum = DUP_EXCEPTION,
                       dup_key: DuplicateEnum = DUP_OVERWRITE,
                       strict: bool = False) -> ConfType:
+    """
+    Low-level conf parsing functionality.
+
+    Most often, either :func:`parse_conf` or :func:`parse_string` are better options.
+    """
     if hasattr(stream, "name"):
         stream_name = stream.name
     else:

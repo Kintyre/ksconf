@@ -8,7 +8,6 @@ from __future__ import absolute_import, annotations, unicode_literals
 
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field, fields
-from io import StringIO
 from os import fspath
 from pathlib import Path
 from typing import ClassVar
@@ -18,7 +17,7 @@ from ksconf.archive import extract_archive, gaf_filter_name_like
 from ksconf.compat import List, Tuple
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
-                                default_encoding, parse_conf)
+                                default_encoding, parse_conf, parse_string)
 
 
 @dataclass
@@ -144,10 +143,9 @@ class AppFacts:
             app_name, relpath = gaf.path.split("/", 1)
             if relpath.endswith("/app.conf") and gaf.payload:
                 conf_folder = relpath.rsplit("/")[0]
-                tmp = StringIO(gaf.payload.decode(default_encoding))
-                tmp.name = fspath(archive.joinpath(gaf.path))
-                app_confs[conf_folder] = parse_conf(tmp, profile=PARSECONF_LOOSE)
-                del tmp
+                app_confs[conf_folder] = parse_string(gaf.payload.decode(default_encoding),
+                                                      name=fspath(archive.joinpath(gaf.path)),
+                                                      profile=PARSECONF_LOOSE)
             app_names.add(app_name)
             del app_name, relpath
 
