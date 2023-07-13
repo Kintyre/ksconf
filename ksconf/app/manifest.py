@@ -47,12 +47,21 @@ class AppManifestFile:
 
     def to_dict(self):
         d = asdict(self)
+        d["mode"] = f"0{self.mode:03o}"
         d["path"] = fspath(self.path)
         return d
 
     @classmethod
     def from_dict(cls, data: dict) -> AppManifestFile:
-        return cls(PurePosixPath(data["path"]), data["mode"], data["size"], data["hash"])
+        # v1: 'mode' is int
+        # v2: 'mode' is octal string
+        mode = data["mode"]
+        try:
+            mode = int(mode, 8)
+        except TypeError:
+            if not isinstance(mode, int):
+                raise ValueError(f"Unable to handle mode value {mode!r}")
+        return cls(PurePosixPath(data["path"]), mode, data["size"], data["hash"])
 
 
 @dataclass
@@ -97,7 +106,7 @@ class AppManifest:
             # If one or more hash is None, then refuse to calculate hash
             if f.hash is None:
                 return None
-            parts.append(f"{f.hash} 0{f.mode:o} {'/'.join(f.path.parts)}")
+            parts.append(f"{f.hash} 0{f.mode:03o} {'/'.join(f.path.parts)}")
         parts.insert(0, self.name)
         payload = "\n".join(parts)
         h = hashlib.new(self.hash_algorithm)
@@ -224,7 +233,8 @@ class StoredArchiveManifest:
                     self._manifest = AppManifest.from_dict(self._manifest_dict)
                 except KeyError as e:
                     raise AppManifestStorageError(f"Error loading manifest {e}")
-
+            if self._manifest.recalculate_hash():
+                raise AppManifestStorageError("Manifest failed internal hash consistency test")
         return self._manifest
 
     @classmethod
@@ -322,7 +332,8 @@ def load_manifest_for_archive(
         archive: Path,
         manifest_file: Path = None,
         read_manifest=True,
-        write_manifest=True) -> AppManifest:
+        write_manifest=True,
+        log_callback=print) -> AppManifest:
     """
     Load manifest for ``archive`` and create a stored copy of the manifest in
     ``manifest_file``.  On subsequent calls the manifest data stored to disk
@@ -335,7 +346,6 @@ def load_manifest_for_archive(
     will be applied where the ``manifest_file`` is stored in the same directory
     as ``archive``.
     """
-    # XXX: Add optimization to check if archive is newer than manifest_file, assume old
     archive = Path(archive)
     manifest = None
 
@@ -347,7 +357,7 @@ def load_manifest_for_archive(
             sam = StoredArchiveManifest.from_json_manifest(archive, manifest_file)
             manifest = sam.manifest
         except AppManifestStorageError as e:
-            print(f"WARN:   loading stored manifest failed:  {e}")
+            log_callback(f"Loading stored manifest failed:  {e}")
 
     if manifest is None:
         # print(f"Calculating manifest for {archive}")

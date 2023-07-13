@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import json
 import os
 import sys
 import unittest
@@ -119,10 +120,58 @@ class ManifestFormatTestCase(unittest.TestCase):
          }
         }
         """)
-        # Confirm that manifest file can still be read
+        # Confirm that v1 manifest file can be read
         stored_manifest = StoredArchiveManifest.read_json_manifest(manifest_v1)
         # Confirm that stored hash value matches the on-disk value
         self.assertFalse(stored_manifest.manifest.recalculate_hash())
+
+    def test_format_v2(self):
+        # v0.11.5:  file 'mode' transitioned to octal (string) vs integer
+        manifest_v2 = self.twd.write_file(".org_all_indexes.manifest", r"""
+        {
+         "archive": "/opt/org_repo/splunk/tarred-apps/org_all_indexes-4d69ae148b6c832c.tgz",
+         "size": 3411,
+         "mtime": 1687465674.7253132,
+         "hash": "9e6c28cd95a0ae61894d9feb656a6e8827450ed8ca9fc2328ba81037c6a31c27",
+         "manifest": {
+          "name": "org_all_indexes",
+          "source": "/opt/org_repo/apps/org_all_indexes",
+          "hash_algorithm": "sha256",
+          "hash": "23c716241bf4268a407c50f235ec075a9afefdb3246070a58eaf778f4892367a",
+          "files": [
+           {
+            "path": "local/app.conf",
+            "mode": "0644",
+            "size": 110,
+            "hash": "62d0bc373a5692d5be91b48e08bee3bafb2cfda0edf6b0246aa2b2241f337a53"
+           },
+           {
+            "path": "local/indexes.conf",
+            "mode": "0644",
+            "size": 27110,
+            "hash": "82466c170232a2c42831667302f687dda0f6141f0a9f4c45d39904416cd24150"
+           },
+           {
+            "path": "metadata/local.meta",
+            "mode": "0644",
+            "size": 60,
+            "hash": "8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea"
+           }
+          ]
+         }
+        }
+        """)
+        # Confirm that v2 manifest file can be read
+        stored_manifest = StoredArchiveManifest.read_json_manifest(manifest_v2)
+        # Confirm that stored hash value matches the on-disk value
+        self.assertFalse(stored_manifest.manifest.recalculate_hash())
+
+        # Current version:  Ensure that the current manifest save matches the JSON above
+        new_manifest = Path(self.twd.get_path("current.manifest"))
+        stored_manifest.write_json_manifest(new_manifest)
+
+        self.assertEqual(json.loads(Path(manifest_v2).read_text()),
+                         json.loads(new_manifest.read_text()))
 
 
 if __name__ == '__main__':  # pragma: no cover
