@@ -76,6 +76,14 @@ class AppManifest:
             self._hash = self._calculate_hash()
         return self._hash
 
+    def recalculate_hash(self) -> bool:
+        """ Recalculate hash and indicate if hash has changed. """
+        assert self._hash is not UNSET, "Hash has not been calculated or provided"
+        assert self._hash is not None, "Hash cannot be calculated"
+        first_hash = self._hash
+        self._hash = UNSET
+        return first_hash != self.hash
+
     def _calculate_hash(self) -> str:
         """ Build unique hash based on file content """
         # Path sort order notes.  Sorting based on Path objects is different

@@ -15,7 +15,7 @@ if __package__ is None:
 
 from ksconf.app import get_facts_manifest_from_archive
 from ksconf.app.facts import AppFacts
-from ksconf.app.manifest import AppManifest
+from ksconf.app.manifest import AppManifest, StoredArchiveManifest
 from tests.cli_helper import TestWorkDir, static_data
 
 """
@@ -74,6 +74,55 @@ class AppTestCase(unittest.TestCase):
 
         # No local files
         self.assertEqual(len(list(manifest.find_local())), 0)
+
+
+class ManifestFormatTestCase(unittest.TestCase):
+    def setUp(self):
+        self.twd = TestWorkDir()
+
+    def tearDown(self):
+        # Cleanup test working directory
+        self.twd.clean()
+
+    def test_format_v1(self):
+        manifest_v1 = self.twd.write_file(".org_all_indexes.manifest", r"""
+        {
+         "archive": "/opt/org_repo/splunk/tarred-apps/org_all_indexes-4d69ae148b6c832c.tgz",
+         "size": 3411,
+         "mtime": 1687465674.7253132,
+         "hash": "9e6c28cd95a0ae61894d9feb656a6e8827450ed8ca9fc2328ba81037c6a31c27",
+         "manifest": {
+          "name": "org_all_indexes",
+          "source": "/opt/org_repo/apps/org_all_indexes",
+          "hash_algorithm": "sha256",
+          "hash": "23c716241bf4268a407c50f235ec075a9afefdb3246070a58eaf778f4892367a",
+          "files": [
+           {
+            "path": "local/app.conf",
+            "mode": 420,
+            "size": 110,
+            "hash": "62d0bc373a5692d5be91b48e08bee3bafb2cfda0edf6b0246aa2b2241f337a53"
+           },
+           {
+            "path": "local/indexes.conf",
+            "mode": 420,
+            "size": 27110,
+            "hash": "82466c170232a2c42831667302f687dda0f6141f0a9f4c45d39904416cd24150"
+           },
+           {
+            "path": "metadata/local.meta",
+            "mode": 420,
+            "size": 60,
+            "hash": "8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea"
+           }
+          ]
+         }
+        }
+        """)
+        # Confirm that manifest file can still be read
+        stored_manifest = StoredArchiveManifest.read_json_manifest(manifest_v1)
+        # Confirm that stored hash value matches the on-disk value
+        self.assertFalse(stored_manifest.manifest.recalculate_hash())
 
 
 if __name__ == '__main__':  # pragma: no cover
