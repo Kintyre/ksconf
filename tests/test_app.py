@@ -6,7 +6,6 @@ import json
 import os
 import sys
 import unittest
-from io import open
 from pathlib import Path
 
 # Allow interactive execution from CLI,  cd tests; ./test_app.py
@@ -170,8 +169,12 @@ class ManifestFormatTestCase(unittest.TestCase):
         new_manifest = Path(self.twd.get_path("current.manifest"))
         stored_manifest.write_json_manifest(new_manifest)
 
+        # Normalize path on windows
+        new_manifest_data = json.loads(new_manifest.read_text())
+        new_manifest_data["archive"] = new_manifest_data["archive"].replace("\\", "/")
+
         self.assertEqual(json.loads(Path(manifest_v2).read_text()),
-                         json.loads(new_manifest.read_text()))
+                         new_manifest_data)
 
 
 if __name__ == '__main__':  # pragma: no cover
