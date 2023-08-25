@@ -349,7 +349,7 @@ def load_manifest_for_archive(
     archive = Path(archive)
     manifest = None
 
-    if manifest_file is None and read_manifest or write_manifest:
+    if manifest_file is None and (read_manifest or write_manifest):
         manifest_file = get_stored_manifest_name(archive)
 
     if read_manifest and manifest_file.exists():
