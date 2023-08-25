@@ -172,6 +172,7 @@ class DeploySequence:
         (There should probably be a new
         op-code for this, eventually instead of listing every single file.)
         """
+        manifest.check_paths()
         dc = cls()
         dc.add(DeployAction_SourceReference(manifest.source, manifest.hash))
         dc.add(DeployAction_SetAppName(manifest.name))
@@ -191,6 +192,10 @@ class DeploySequence:
             raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
         seq.add(DeployAction_SourceReference(target.source, target.hash))
         seq.add(DeployAction_SetAppName(target.name))
+
+        # Run safety checks before any path-level processing
+        base.check_paths()
+        target.check_paths()
 
         base_files = {f.path: f for f in base.files}
         target_files = {f.path: f for f in target.files}
@@ -236,6 +241,10 @@ class DeployApply:
     def apply_sequence(self, deployment_sequence: DeploySequence):
         '''
         Apply a pre-calculated deployment sequence to the local file system.
+
+        Note that we implicitly trust paths contained within ``deployment_sequence``
+        as all constructors run the check_paths() method on all input manifests.
+        Deployment sequences are created locally and never persisted or transmitted.
         '''
         #
         '''
@@ -330,6 +339,10 @@ def expand_archive_by_manifest(
     keep_paths = set()
     make_dirs = set()
     app_path = Path(manifest.name)
+
+    # Run path safety checks before processing
+    manifest.check_paths()
+
     for f in manifest.files:
         path = app_path.joinpath(f.path)
         keep_paths.add(path)

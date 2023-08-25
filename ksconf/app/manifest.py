@@ -363,8 +363,10 @@ def load_manifest_for_archive(
         # print(f"Calculating manifest for {archive}")
         manifest = AppManifest.from_archive(archive)
 
-        # We assume that a previously stored manifest has already undergone the
-        # path check.  Checks should be redone from within the extraction process.
+        # Assume stored manifest have already undergone path checks, so existing
+        # manifest are not rechecked.  As path checking is done before extraction,
+        # where bad paths can actually cause damage, the check is is just a
+        # precaution to promote early detection of malicious behavior.
         manifest.check_paths()
 
         if write_manifest:
