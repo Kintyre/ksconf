@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from glob import glob
 from io import open
 from pathlib import Path
+from random import randint
 from typing import IO, Callable, Union
 
 from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
@@ -142,6 +143,33 @@ def _samefile(file1, file2):
         file1 = os.path.normpath(os.path.normcase(file1))
         file2 = os.path.normpath(os.path.normcase(file2))
         return file1 == file2
+
+
+def secure_delete(path: Path, passes=3):
+    """
+    A simple file shred technique.  If there's demand, this could be expanded.
+    But for now, 'secure' means just slightly more secure that unlink().
+
+    Adapted from from Ansible's _shred_file_custom()
+    """
+    path = Path(path)
+    file_len = path.stat().st_size
+    if file_len == 0:
+        # avoid work when empty
+        return
+    max_chunk_len = min(1024 * 1024 * 2, file_len)
+    with open(path, "wb") as fh:
+        for _ in range(passes):
+            fh.seek(0, 0)
+            # get a random chunk of data, each pass with other length
+            chunk_len = randint(max_chunk_len // 2, max_chunk_len)
+            data = os.urandom(chunk_len)
+
+            for _ in range(0, file_len // chunk_len):
+                fh.write(data)
+            fh.write(data[:file_len % chunk_len])
+            os.fsync(fh)
+    path.unlink()
 
 
 @contextmanager

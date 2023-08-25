@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from typing import Callable, Iterator, Match
 
 from ksconf.compat import Dict, List, Set, Tuple
-from ksconf.util.file import relwalk
+from ksconf.util.file import relwalk, secure_delete
 
 """
 
@@ -211,13 +211,21 @@ class LayerRenderedFile(LayerFile):
     """
     __slots__ = ["_rendered_resource"]
 
+    use_secure_delete = False
+
     def __init__(self, *args, **kwargs):
         super(LayerRenderedFile, self).__init__(*args, **kwargs)
         self._rendered_resource = None
 
     def __del__(self):
         if getattr(self, "_rendered_resource", None) and self._rendered_resource.is_file():
-            self._rendered_resource.unlink()
+            if self.use_secure_delete:
+                # Use (slightly-more) secure deletion.
+                # Note that in a packaging operation, for example, there are many temporary files
+                # that could contain sensitive data.  This is very imperfect.
+                secure_delete(self._rendered_resource)
+            else:
+                self._rendered_resource.unlink()
 
     def render(self, template_path: Path) -> str:
         raise NotImplementedError
