@@ -124,7 +124,7 @@ class AppManifest:
     def to_dict(self):
         d = {
             "name": self.name,
-            "source": self.source,
+            "source": fspath(self.source),
             "hash_algorithm": self.hash_algorithm,
             "hash": self.hash,
             "files": [f.to_dict() for f in self.files]
@@ -281,7 +281,9 @@ class StoredArchiveManifest:
     @classmethod
     def from_json_manifest(cls,
                            archive: Path,
-                           stored_file: Path) -> StoredArchiveManifest:
+                           stored_file: Path,
+                           *,
+                           permanent_archive: Path = None) -> StoredArchiveManifest:
         """
         Attempt to load as stored manifest from archive & stored manifest paths.
         If the archive has changed since the manifest was stored, then an
@@ -291,11 +293,14 @@ class StoredArchiveManifest:
         if not stored_file:
             raise AppManifestStorageInvalid("No stored manifest found")
 
+        if permanent_archive is None:
+            permanent_archive = archive
+
         try:
             stored = cls.read_json_manifest(stored_file)
 
-            if stored.archive != archive:
-                raise AppManifestStorageInvalid(f"Archive name differs: {stored.archive!r} != {archive!r}")
+            if stored.archive != permanent_archive:
+                raise AppManifestStorageInvalid(f"Archive name differs: {stored.archive!r} != {permanent_archive!r}")
             stat = archive.stat()
             if stored.size != stat.st_size:
                 raise AppManifestStorageInvalid(f"Archive file size differs:  {stored.size} != {stat.st_size}")
@@ -331,8 +336,10 @@ def create_manifest_from_archive(
 def load_manifest_for_archive(
         archive: Path,
         manifest_file: Path = None,
+        *,
         read_manifest=True,
         write_manifest=True,
+        permanent_archive: Path = None,
         log_callback=print) -> AppManifest:
     """
     Load manifest for ``archive`` and create a stored copy of the manifest in
@@ -354,14 +361,17 @@ def load_manifest_for_archive(
 
     if read_manifest and manifest_file.exists():
         try:
-            sam = StoredArchiveManifest.from_json_manifest(archive, manifest_file)
+            sam = StoredArchiveManifest.from_json_manifest(archive, manifest_file,
+                                                           permanent_archive=permanent_archive)
             manifest = sam.manifest
         except AppManifestStorageError as e:
             log_callback(f"Loading stored manifest failed:  {e}")
 
     if manifest is None:
-        # print(f"Calculating manifest for {archive}")
+        # log_callback(f"Calculating manifest for {archive} to be written to {manifest_file}")
         manifest = AppManifest.from_archive(archive)
+        if permanent_archive:
+            manifest.source = permanent_archive
 
         # Assume stored manifest have already undergone path checks, so existing
         # manifest are not rechecked.  As path checking is done before extraction,
