@@ -30,7 +30,8 @@ Ksconf v0.11.5 (DRAFT)
    This should reduce possible data loss and/or confusion during some difficult to handle corner cases (i.e., disk full, or interrupted execution).
 *  Add new :py:func:`~ksconf.conf.parser.parse_string` function to enable simple parsing from a string.
    (I'm not sure why it took me so long to add this; it's so simple; and I've looked for this function dozens of times over the years, and always came up with a new StringIO workaround.)
-
+*  App manifest file format was updated to report file mode as as octal (string) instead of an integer.
+   This is easier to read in most cases.
 
 Ksconf v0.11.4 (2023-06-09)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
