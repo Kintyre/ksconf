@@ -224,7 +224,8 @@ class AppPackager:
                                   f"package id: {package_id}\n")
                 if target_splunkbase:
                     raise PackagingException("Aborting build due to app name and package id "
-                                             "discrepancy for public app")
+                                             "discrepancy for public app:  "
+                                             f"{package_id} != {self.app_name}")
 
         for root, dirs, files in os.walk(self.app_dir):
             for items, t in [(dirs, "directory"), (files, "file")]:
