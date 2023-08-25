@@ -4,9 +4,27 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
+from typing import List
 
 from ksconf.builder import BuildCacheException
 from ksconf.util.file import file_hash
+
+# Finger print functions for a FileSet operations
+
+
+def fingerprint_hash(path: Path) -> dict:
+    return {
+        "hash": file_hash(path)
+    }
+
+
+def fingerprint_stat(path: Path) -> dict:
+    stat = path.stat()
+    return {
+        "mtime": stat.st_mtime,
+        "ctime": stat.st_ctime,
+        "size": stat.st_size,
+    }
 
 
 class FileSet:
@@ -14,23 +32,24 @@ class FileSet:
 
     Currently the fingerprint is only a SHA256 hash.
 
-    Two constructors are provided for building an instance from either file that
+    Two constructors are provided for building an instance from either files that
     live on the filesystem, via :py:meth:`from_filesystem` or from a persisted
     cached record available from the :py:meth:`from_cache`.
     The filesystem version actively reads all inputs files at object creation
     time, so this can be costly, especially if repeated.
     """
     # XXX: Do we need both files (set), and file_meta (dict)?  Try to make this work with just files_meta
-    __slots__ = ["files", "files_meta"]
+    __slots__ = ["files", "files_meta", "get_fingerprint"]
 
-    def __init__(self):
+    def __init__(self, fingerprint=fingerprint_hash):
         self.files = set()
         self.files_meta = {}
+        self.get_fingerprint = fingerprint
 
-    def __eq__(self, other: "FileSet") -> bool:
+    def __eq__(self, other: FileSet) -> bool:
         return self.files_meta == other.files_meta
 
-    def __ne__(self, other: "FileSet") -> bool:
+    def __ne__(self, other: FileSet) -> bool:
         return self.files_meta != other.files_meta
 
     '''
@@ -53,11 +72,18 @@ class FileSet:
         return len(self.files)
 
     @classmethod
-    def from_filesystem(cls, root, files):
+    def from_filesystem(cls, root: Path, files: List[str] = None) -> FileSet:
+        """
+        Create a new FileSet instance based on a filesystem location.
+        If ``files`` is None, then the entire directory is added recursively.
+        """
         instance = cls()
         root = Path(root)
+        if files is None:
+            # Add root recursively
+            instance.add_glob(root, "**/*")
+            return instance
         for file_name in files:
-            # XXX: Support globs
             if file_name.endswith("/"):
                 # Recursive directory walk
                 instance.add_glob(root, file_name + "**/*")
@@ -76,7 +102,7 @@ class FileSet:
             instance.files_meta[file_name] = meta
         return instance
 
-    def add_file(self, root, relative_path):
+    def add_file(self, root: Path, relative_path: str):
         """ Add a simple relative path to a file to the FileSet. """
         relative_path = PurePath(relative_path)
         p = root / relative_path
@@ -92,7 +118,7 @@ class FileSet:
         self.files.add(relative_path)
         self.files_meta[relative_path] = fp
 
-    def add_glob(self, root, pattern):
+    def add_glob(self, root: Path, pattern: str):
         """ Recursively add all files matching glob pattern. """
         for p in root.glob(pattern):
             if p.is_file():
@@ -102,13 +128,7 @@ class FileSet:
                 self.files.add(relative_path)
                 self.files_meta[relative_path] = fp
 
-    @staticmethod
-    def get_fingerprint(path):
-        return {
-            "hash": file_hash(path)
-        }
-
-    def copy_all(self, src_dir, dest_dir):
+    def copy_all(self, src_dir: Path, dest_dir: Path):
         """ Copy a the given set of files from one location to another. """
         src_dir = Path(src_dir)
         dest_dir = Path(dest_dir)
