@@ -285,12 +285,12 @@ class StoredArchiveManifest:
                            *,
                            permanent_archive: Path = None) -> StoredArchiveManifest:
         """
-        Attempt to load as stored manifest from archive & stored manifest paths.
+        Attempt to load an archive stored manifest from ``archive`` and ``stored_file`` paths.
         If the archive has changed since the manifest was stored, then an
         exception will be raised indicating the reason for invalidation.
         """
         # XXX: Optimization: tests if archive is newer than stored_file.  No need to open/parse JSON.
-        if not stored_file:
+        if not stored_file.exists():
             raise AppManifestStorageInvalid("No stored manifest found")
 
         if permanent_archive is None:
@@ -352,12 +352,21 @@ def load_manifest_for_archive(
     If no ``manifest_file`` is provided, the default manifest naming convention
     will be applied where the ``manifest_file`` is stored in the same directory
     as ``archive``.
+
+    If ``permanent_archive`` is provided, then we assume it is the persistent
+    name and ``archive`` is a temporary resource.  In this mode, the default
+    ``manifest_file`` is also based on ``permanent_archive`` not ``archive``.
     """
     archive = Path(archive)
+    if permanent_archive:
+        permanent_archive = Path(permanent_archive)
     manifest = None
 
     if manifest_file is None and (read_manifest or write_manifest):
-        manifest_file = get_stored_manifest_name(archive)
+        if permanent_archive is None:
+            manifest_file = get_stored_manifest_name(archive)
+        else:
+            manifest_file = get_stored_manifest_name(permanent_archive)
 
     if read_manifest and manifest_file.exists():
         try:

@@ -21,7 +21,7 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
 
-Ksconf v0.11.5 (DRAFT)
+Ksconf v0.11.5 (2023-08-25)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Use atomic file operations for more updates (such as most ``.conf`` writing and app packaging).
@@ -34,7 +34,7 @@ Ksconf v0.11.5 (DRAFT)
    *  App manifest file format was updated to v2 which reports file mode as as familiar octal (string) instead of an integer.
       This is easier to read in most cases.
    *  Add API level improvements to support reading/writing manifests when the archive is using a temporary filename.
-*  Improved various error messages, minor optimizations, and some minor security tweaks.
+*  Improved various error messages, minor optimizations, and some minor security improvements.
 
 Ksconf v0.11.4 (2023-06-09)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
