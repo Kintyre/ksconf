@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from typing import Callable, Iterator, Match
 
 from ksconf.compat import Dict, List, Set, Tuple
-from ksconf.hooks import get_plugin_manager
+from ksconf.hook import get_plugin_manager
 from ksconf.util.file import relwalk, secure_delete
 
 """

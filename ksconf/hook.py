@@ -9,7 +9,7 @@ ksconf_hook = HookimplMarker(PLUGGY_HOOK)
 _pm = None
 
 
-def get_plugin_manager() -> PluginManager:   # noqa: E302
+def get_plugin_manager() -> PluginManager:
     """
     Return the shared pluggy PluginManager (singleton) instance.
     """

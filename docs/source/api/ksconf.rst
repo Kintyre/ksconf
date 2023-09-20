@@ -65,10 +65,10 @@ ksconf.filter module
    :undoc-members:
    :show-inheritance:
 
-ksconf.hooks module
+ksconf.hook module
 -------------------
 
-.. automodule:: ksconf.hooks
+.. automodule:: ksconf.hook
    :members:
    :undoc-members:
    :show-inheritance:

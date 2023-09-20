@@ -25,7 +25,7 @@ import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
-from ksconf.hooks import get_plugin_manager
+from ksconf.hook import get_plugin_manager
 from ksconf.util.completers import autocomplete
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly

@@ -19,7 +19,7 @@ from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 write_conf)
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_BAD_CONF_FILE,
                            EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum)
-from ksconf.hooks import get_plugin_manager
+from ksconf.hook import get_plugin_manager
 from ksconf.util import debug_traceback
 
 __all__ = [

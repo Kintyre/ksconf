@@ -21,7 +21,7 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
 *  Added :py:mod:`ksconf.hookspec` to define all available pluggy integration points.
-   Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hooks` module.
+   Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hook` module.
 
 
 Ksconf v0.11.6 (DRAFT)

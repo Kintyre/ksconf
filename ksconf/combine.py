@@ -17,7 +17,7 @@ from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
-from ksconf.hooks import get_plugin_manager
+from ksconf.hook import get_plugin_manager
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare

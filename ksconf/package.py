@@ -16,7 +16,7 @@ from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
-from ksconf.hooks import get_plugin_manager
+from ksconf.hook import get_plugin_manager
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
