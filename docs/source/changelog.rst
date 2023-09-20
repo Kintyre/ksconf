@@ -24,7 +24,7 @@ Ksconf 0.11
    Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hook` module.
 
 
-Ksconf v0.11.7 (DRAFT)
+Ksconf v0.11.7 (2023-09-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Support disabling of plugins by name via ``KSCONF_PLUGIN_DISABLE`` environment variable.  This expects a space separated lists of plugin names.
