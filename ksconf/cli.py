@@ -125,7 +125,7 @@ def build_cli_parser(do_formatter=False):
         else:
             version_info.append("Git support:  'git' not found in PATH")
     except Exception as e:
-        # Shouldn't happen, but we really don't blowup!
+        # Shouldn't happen, but we really don't want to blowup!
         version_info.append(f"Git support:  Detection failed!  {e}")
     # XXX:  Grab splunk version and home, if running as a splunk app
     version_info.append(f"Written by {ksconf.__author__}.")
@@ -228,7 +228,6 @@ def cli(argv=None, _unittest=False):
     except Exception as e:  # pragma: no cover
         # Set KSCONF_DEBUG=1 to enable a traceback
         if _unittest:
-            from ksconf.consts import KSCONF_DEBUG
             os.environ[KSCONF_DEBUG] = "1"
         sys.stderr.write(f"Unhandled top-level exception ({type(e).__name__}):  {e}\n")
         ksconf.util.debug_traceback()
