@@ -24,13 +24,12 @@ Ksconf 0.11
    Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hook` module.
 
 
-Ksconf v0.11.6 (DRAFT)
+Ksconf v0.11.6 (2023-09-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Introducing plugin functionality using `pluggy <https://pluggy.readthedocs.io/en/latest/>`__ plugin management system.
    This adds a small, single-package dependency that can greatly increase customization potential of ksconf.
    The first demo of this can be seen in the ``ksconf-jinja-markdown`` package that enables ``.j2`` payloads to be rendered by registering a custom Jinja filter named ``markdown2html``.
-
 
 
 Ksconf v0.11.5 (2023-08-25)
@@ -49,6 +48,7 @@ Ksconf v0.11.5 (2023-08-25)
    *  Add API level improvements to support reading/writing manifests when the archive is using a temporary filename.
 
 *  Improved various error messages, minor optimizations, and some minor security improvements.
+
 
 Ksconf v0.11.4 (2023-06-09)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

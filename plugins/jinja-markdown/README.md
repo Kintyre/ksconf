@@ -42,6 +42,5 @@ Contents of `inputs.json`:
 ```
 
 ```sh
-ksconf package my_app --template_vars @inputs.conf
+ksconf package --enable-handler=jinja --template_vars @inputs.conf my_app
 ```
-

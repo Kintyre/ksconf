@@ -11,7 +11,7 @@ setup(
     install_requires=[
         "commonmark>=0.9",
         "jinja2>=3.0",
-        "ksconf>=0.11.5",  # XXX: Update when new release supporting pluggy!
+        "ksconf>=0.11.6",
     ],
     entry_points={
         "ksconf_plugin": [
@@ -32,6 +32,6 @@ setup(
     keywords='ksconf splunk jinja markdown',
     author="Lowell Alleman",
     author_email="lowell.alleman@cdillc.com",
-    url="https://github.com/Kintyre/ksconf",
+    url="https://github.com/Kintyre/ksconf/tree/devel/plugins/jinja-markdown",
     zip_safe=True,
 )
