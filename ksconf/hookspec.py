@@ -1,8 +1,10 @@
 """
-This module contains all the plugin definitions (or hook "specifications") for various customization or integration points with ksconf.
-Not all of these have been fully tested so please let us know if something is not working as expected, or if additional arguments are needed.
+This module contains all the plugin definitions (or hook "specifications") for various customization
+or integration points with ksconf.  Not all of these have been fully tested so please let us know if
+something is not working as expected, or if additional arguments are needed.
 
-Certainly the list of supported hooks will grow over time.
+See `ksconf plugins <https://pypi.org/search/?q=ksconf&o=&c=Environment+%3A%3A+Plugins>`__ on pypi
+for a list of currently available plugins.
 """
 
 from pathlib import Path
