@@ -24,8 +24,8 @@ from typing import List
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
-from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, is_debug, KSCONF_DEBUG
-from ksconf.hook import get_plugin_manager
+from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG, is_debug
+from ksconf.hook import plugin_manager
 from ksconf.util.completers import autocomplete
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
@@ -102,8 +102,6 @@ def build_cli_parser(do_formatter=False):
         parser_kwargs["formatter_class"] = DescriptionHelpFormatterPreserveLayout
     parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
-
-    plugin_manager = get_plugin_manager()
 
     # XXX: Lazyload version information; this launches 'git' which is expensive.
     version_info = []
@@ -257,8 +255,6 @@ def build_cli_parser(do_formatter=False):
 def cli(argv=None, _unittest=False):
     # TODO:  Rename '_unitest' to something more appropriate, maybe _exit=True?
     check_py()
-
-    plugin_manager = get_plugin_manager()
 
     parser = build_cli_parser(True)
     if not _unittest:

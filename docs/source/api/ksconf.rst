@@ -66,7 +66,7 @@ ksconf.filter module
    :show-inheritance:
 
 ksconf.hook module
--------------------
+------------------
 
 .. automodule:: ksconf.hook
    :members:

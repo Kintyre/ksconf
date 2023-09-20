@@ -19,7 +19,7 @@ from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 write_conf)
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_BAD_CONF_FILE,
                            EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum)
-from ksconf.hook import get_plugin_manager
+from ksconf.hook import plugin_manager
 from ksconf.util import debug_traceback
 
 __all__ = [
@@ -362,7 +362,6 @@ class KsconfCmd:
         self.parser = subparser.add_parser(self.name, **kwargs)
         self.parser.set_defaults(funct=self.launch)
         self.register_args(self.parser)
-        plugin_manager = get_plugin_manager()
         plugin_manager.hook.ksconf_cli_modify_argparse(parser=self.parser, name=self.name)
 
     def register_args(self, parser: ArgumentParser):        # pragma: no cover

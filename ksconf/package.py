@@ -16,7 +16,7 @@ from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import is_debug
-from ksconf.hook import get_plugin_manager
+from ksconf.hook import plugin_manager
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
@@ -288,11 +288,19 @@ class AppPackager:
         return manifest
 
     def freeze(self, caller_name):
+        """
+        Initiate a content freeze by restricting mutable methods.
+        The "package_pre_archive" hook is invoked before freeze operation.
+        Such hooks may choose to mutate the filesystem at ``app_dir``, the only
+        assumption is that all work is done before the hook returns.
+
+        Freeze can be safely called multiple times. ``caller_name`` is simply a
+        label used in an exception message if the programmer screwed up.
+        """
         if self._mutable:
-            plugin_manager = get_plugin_manager()
             plugin_manager.hook.package_pre_archive(app_dir=Path(self.app_dir),
                                                     app_name=self.expand_var(self.app_name))
-            # Forbid any additional changes to the package
+            # Forbid any additional internal changes to the package
             self._mutable = False
             self._frozen_by = caller_name
 

@@ -5,15 +5,16 @@
 ..  _GitHub Releases: https://github.com/Kintyre/ksconf/releases
 ..  _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 ..  _gitlint: https://jorisroovers.github.io/gitlint/
-..  _ksconf-wheel:  https://pypi.org/project/ksconf/#files
-..  _ksconf:  https://pypi.org/project/ksconf
 ..  _ksconf app for splunk: https://splunkbase.splunk.com/app/4383/
 ..  _ksconf repo: https://github.com/Kintyre/ksconf
+..  _ksconf-wheel:  https://pypi.org/project/ksconf/#files
+..  _ksconf:  https://pypi.org/project/ksconf
+..  _pluggy: https://pluggy.readthedocs.io/en/latest/
 ..  _pre-commit: https://pre-commit.com/
 ..  _pyenv: https://github.com/pyenv/pyenv
 ..  _python: https://www.python.org/downloads/
 ..  _tox: https://tox.readthedocs.io/en/latest/
 ..  _virtualenv: https://virtualenv.pypa.io/en/stable/
-
+..  _cdillc.splunk: https://github.com/Kintyre/ansible-collection-splunk
 
 .. vim:ft=rst:

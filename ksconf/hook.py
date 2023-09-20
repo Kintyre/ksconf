@@ -1,28 +1,94 @@
+import os
+import sys
+
 from pluggy import HookimplMarker, PluginManager
 
-from ksconf.consts import PLUGGY_HOOK
+from ksconf.consts import PLUGGY_DISABLE_HOOK, PLUGGY_HOOK, is_debug
+from ksconf.hookspec import KsconfHookSpecs
 
 # decorator to mark ksconf hooks
 ksconf_hook = HookimplMarker(PLUGGY_HOOK)
 
 
-_pm = None
+class _plugin_manager:
+    """
+    Lazy loading PluginManager proxy that allows simple module-level access to
+    'plugin_manager.hook.x' with typing.  This follows the singleton pattern.
+    Everything is loaded upon first use.
+    """
+
+    def __init__(self):
+        self.__plugin_manager = None
+        self.__output = sys.stderr
+        self.__revert_funct = None
+
+    def log(self, message):
+        self.__output.write(f"ksconf-plugin: {message}\n")
+
+    def _startup(self):
+        # This runs on demand, exactly once.
+        pm = PluginManager(PLUGGY_HOOK)
+
+        if PLUGGY_DISABLE_HOOK in os.environ:
+            disabled_hooks = os.environ[PLUGGY_DISABLE_HOOK].split()
+            for hook in disabled_hooks:
+                self.log(f"Disabling {hook} by request!\n")
+                pm.set_blocked(hook)
+
+        pm.add_hookspecs(KsconfHookSpecs)
+        pm.load_setuptools_entrypoints("ksconf_plugin")
+        self.__plugin_manager = pm
+        # Maybe this should be it's own setting someday?  (disconnected from KSCONF_DEBUG)
+        if is_debug():
+            self.enable_monitoring()
+
+    def enable_monitoring(self):
+        def before(hook_name, hook_impls, kwargs):
+            if hook_impls:
+                self.log(f"call start {hook_name}, impl={hook_impls} kwargs={kwargs}")
+
+        def after(outcome, hook_name, hook_impls, kwargs):
+            if hook_impls:
+                self.log(f"call-end   {hook_name}, impl={hook_impls} kwargs={kwargs} "
+                         f"return={outcome}\n")
+        self.__revert_funct = self._plugin_manager.add_hookcall_monitoring(before, after)
+
+    def disable_monitoring(self):
+        if callable(self.__revert_funct):
+            self.__revert_funct()
+            return True
+        return False
+
+    @property
+    def _plugin_manager(self) -> PluginManager:
+        if self.__plugin_manager is None:
+            self._startup()
+        return self.__plugin_manager
+
+    @property
+    def hook(self) -> KsconfHookSpecs:
+        return self._plugin_manager.hook
+
+    def __getattr__(self, name: str):
+        # Proxy all other content to PluginManager
+        return getattr(self._plugin_manager, name)
 
 
-def get_plugin_manager() -> PluginManager:
+# Shared singleton
+plugin_manager = _plugin_manager()
+
+
+def get_plugin_manager() -> _plugin_manager:
     """
     Return the shared pluggy PluginManager (singleton) instance.
+
+    This is for backwards compatibility.  This was only added in v0.11.6; and replaced immediately after.
     """
-    import ksconf.hookspec
-    global _pm
-    if _pm is None:
-        pm = PluginManager(PLUGGY_HOOK)
-        pm.add_hookspecs(ksconf.hookspec)
-        pm.load_setuptools_entrypoints("ksconf_plugin")
-        _pm = pm
-    return _pm
+    from warnings import warn
+    warn("Please use 'plugin_manager' directly and not 'get_plugin_manager()'. "
+         "This function will be removed in v0.13 or sooner.", DeprecationWarning)
+    return plugin_manager
 
 
 if __name__ == '__main__':
-    pm = get_plugin_manager()
-    print(pm.list_name_plugin())
+    print(plugin_manager.list_name_plugin())

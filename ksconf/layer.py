@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from typing import Callable, Iterator, Match
 
 from ksconf.compat import Dict, List, Set, Tuple
-from ksconf.hook import get_plugin_manager
+from ksconf.hook import plugin_manager
 from ksconf.util.file import relwalk, secure_delete
 
 """
@@ -281,8 +281,7 @@ class LayerFile_Jinja2(LayerRenderedFile):
             auto_reload=False)
 
         # Call plugin for jinja environment tweaking
-        pm = get_plugin_manager()
-        pm.hook.modify_jinja_env(env=environment)
+        plugin_manager.hook.modify_jinja_env(env=environment)
 
         environment.globals.update(self.layer.context.template_variables)
         return environment

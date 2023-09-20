@@ -17,7 +17,7 @@ from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
-from ksconf.hook import get_plugin_manager
+from ksconf.hook import plugin_manager
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare
@@ -126,6 +126,8 @@ class LayerCombiner:
     def combine(self, target: Path, *, hook_label=""):
         """
         Combine layers into ``target`` directory.
+        Any ``hook_label`` given will be passed to the plugin system via the
+        ``usage`` field.
         """
         layer_root = self.layer_root
         if layer_root is None:
@@ -137,8 +139,7 @@ class LayerCombiner:
         self.combine_files(target, src_file_listing)
         self.post_combine(target)
 
-        pm = get_plugin_manager()
-        pm.hook.post_combine(target=target, usage=hook_label)
+        plugin_manager.hook.post_combine(target=target, usage=hook_label)
 
     def prepare(self, target: Path):
         """ Start the combine process.  This includes directory checking,

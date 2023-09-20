@@ -65,6 +65,7 @@ User Guide
     install
     cmd
     cheatsheet
+    plugins
     contrib
     devel
     git

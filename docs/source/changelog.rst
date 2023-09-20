@@ -11,7 +11,7 @@ Ksconf 0.11
 **Highlights:**
 
 *  Ksconf is beginning to treat Splunk apps more holistically and not just as a collection of ``.conf`` files.
-*  Significant portions of this new code base is directly leveraged by the Ansible modules located in the `cdillc.splunk <https://github.com/Kintyre/ansible-collection-splunk>`__ collection, a sibling project to Ksconf.
+*  Significant portions of this new code base is directly leveraged by the Ansible modules located in the `cdillc.splunk`_ collection, a sibling project to Ksconf.
    some of the code code there has made it's way into the core ksconf project in this release.
 
 
@@ -20,14 +20,21 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.facts.AppFacts` to easily collect Splunk application name, version, label, and other nuggets from ``app.conf``.
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
-*  Added :py:mod:`ksconf.hookspec` to define all available pluggy integration points.
+*  Added :py:class:`ksconf.hookspec.KsconfHookSpecs` to define all available `pluggy`_  integration points.
    Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hook` module.
+
+
+Ksconf v0.11.7 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Support disabling of plugins by name via ``KSCONF_PLUGIN_DISABLE`` environment variable.  This expects a space separated lists of plugin names.
+*  Add new plugins documentation.
 
 
 Ksconf v0.11.6 (2023-09-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Introducing plugin functionality using `pluggy <https://pluggy.readthedocs.io/en/latest/>`__ plugin management system.
+*  Introducing plugin functionality using `pluggy`_ plugin management system.
    This adds a small, single-package dependency that can greatly increase customization potential of ksconf.
    The first demo of this can be seen in the ``ksconf-jinja-markdown`` package that enables ``.j2`` payloads to be rendered by registering a custom Jinja filter named ``markdown2html``.
 
@@ -99,7 +106,7 @@ Ksconf 0.10
 
 **API Changes**
 
-*  Core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombine`.
+*  Core layer combining logic now lives in :py:class:`~ksconf.combine.LayerCombiner`.
    The new :py:class:`~ksconf.command.combine.RepeatableCombiner` class has logic for marker safety checks and settings for removing or preserving existing files.
    The :py:class:`~ksconf.command.combine.CombineCmd` now contains only the command line functionality.
 
@@ -745,3 +752,6 @@ Release legacy-v1.0.0 (2018-04-16)
 -  Unit test coverage over 85%
 -  Includes pre-commit hook configuration (so that other repos can use this to run ``ksconf sort``
    and ``ksconf check`` against their conf files.
+
+
+..  include:: common
