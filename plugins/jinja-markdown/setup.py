@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name="ksconf-jinja-markdown",
-    version="0.9.0",
+    version="1.0.0",
     install_requires=[
         "commonmark>=0.9",
         "jinja2>=3.0",
