@@ -8,7 +8,6 @@ from pathlib import Path
 from subprocess import Popen
 from typing import Callable, List, TextIO
 
-from ksconf.compat import handle_py3_kw_only_args
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, is_debug
 
 QUIET = -1
@@ -76,8 +75,7 @@ class BuildStep:
             self._output.write(message)
             self._output.write("\n")
 
-    def run(self, executable, *args, **kw_only):
-        # PY38 signature:  run(self, executable, /, *args, cwd=None)
+    def run(self, executable, *args, cwd=None):
         """ Execute an OS-level command regarding the build process.
         The process will run withing the working directory of the build folder.
 
@@ -86,7 +84,6 @@ class BuildStep:
         :param str cwd:  Optional kw arg to change the working directory.  This
                          defaults to the build folder.
         """
-        (cwd,) = handle_py3_kw_only_args(kw_only, ("cwd", None))
         # XXX: Update the external pip call to detach stdout / stderr if self.is_quiet
         args = [executable] + [str(s) for s in args]
         cwd = cwd or str(self.build_path)
