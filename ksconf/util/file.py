@@ -12,7 +12,7 @@ from pathlib import Path
 from random import randint
 from typing import IO, Callable, Union
 
-from ksconf.consts import is_debug, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, is_debug
 from ksconf.util.compare import file_compare
 
 
