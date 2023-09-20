@@ -19,11 +19,13 @@ import os
 import platform
 import sys
 from collections import defaultdict
+from typing import List
 
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
+from ksconf.hooks import get_plugin_manager
 from ksconf.util.completers import autocomplete
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
@@ -101,6 +103,8 @@ def build_cli_parser(do_formatter=False):
     parser = argparse.ArgumentParser(**parser_kwargs)
     subparsers = parser.add_subparsers()
 
+    plugin_manager = get_plugin_manager()
+
     # XXX: Lazyload version information; this launches 'git' which is expensive.
     version_info = []
 
@@ -127,6 +131,48 @@ def build_cli_parser(do_formatter=False):
     except Exception as e:
         # Shouldn't happen, but we really don't want to blowup!
         version_info.append(f"Git support:  Detection failed!  {e}")
+
+    plugins = plugin_manager.get_plugins()
+    distinfo_plugins = dict(plugin_manager.list_plugin_distinfo())
+
+    if plugins:
+        version_info.append("Plugins:")
+
+        # from pluggy._hooks import HookImpl, _HookCaller
+
+        for plugin in plugins:
+            dist = distinfo_plugins.get(plugin, None)
+            if dist:
+                version_info.append(f"  package {dist.project_name} ({dist.version}) from {plugin.__file__}")
+                '''
+                for ep in dist.entry_points:
+                    if ep.group == "ksconf_plugin":
+                        version_info.append(f"         {ep.name} {ep.value}")
+                '''
+            else:
+                version_info.append(f"  plugins:  {getattr(plugin, '__name__', repr(plugin))}")
+
+            workaround_dups = set()
+            hookcallers = plugin_manager.get_hookcallers(plugin)    # type: List[_HookCaller]
+            for caller in hookcallers:
+                hookimpls = caller.get_hookimpls()   # type: List[HookImpl]
+                parts = []
+                show = False
+                if len(hookimpls) > 1 or hookimpls[0].function.__name__ != caller.name:
+                    for hook_impl in hookimpls:
+                        k = (caller.name, hook_impl.function.__name__)
+                        if k not in workaround_dups:
+                            parts.append(hook_impl.function.__name__)
+                            workaround_dups.add(k)
+                            show = True
+                else:
+                    show = True
+                if show:
+                    if parts:
+                        version_info.append(f"    hook    {caller.name} via {', '.join(parts)}")
+                    else:
+                        version_info.append(f"    hook    {caller.name}")
+
     # XXX:  Grab splunk version and home, if running as a splunk app
     version_info.append(f"Written by {ksconf.__author__}.")
     version_info.append(f"Copyright {ksconf.__copyright__}, all rights reserved.")
@@ -204,6 +250,7 @@ def build_cli_parser(do_formatter=False):
     # Logging settings -- not really necessary for simple things like 'diff', 'merge', and 'sort';
     # more useful for 'patch', very important for 'combine'
 
+    plugin_manager.hook.ksconf_cli_modify_argparse(parser=parser, name=None)
     return parser
 
 
@@ -211,11 +258,15 @@ def cli(argv=None, _unittest=False):
     # TODO:  Rename '_unitest' to something more appropriate, maybe _exit=True?
     check_py()
 
+    plugin_manager = get_plugin_manager()
+
     parser = build_cli_parser(True)
     if not _unittest:
         autocomplete(parser)
+        plugin_manager.hook.ksconf_cli_init()
 
     args = parser.parse_args(argv)
+    plugin_manager.hook.ksconf_cli_process_args(args=args)
 
     ksconf.util.terminal.TTY_COLOR_MODE = args.tty_mode
 

@@ -20,6 +20,18 @@ Ksconf 0.11
 *  Added :py:class:`~ksconf.app.facts.AppFacts` to easily collect Splunk application name, version, label, and other nuggets from ``app.conf``.
 *  Added :py:class:`~ksconf.app.manifest.AppManifest` to inventory the contents of a Splunk application and create a unique content fingerprint that can be used to quickly identify application changes.
 *  Added :py:mod:`ksconf.app.deploy` to assist with Splunk application deployment planning and execution.
+*  Added :py:mod:`ksconf.hookspec` to define all available pluggy integration points.
+   Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hooks` module.
+
+
+Ksconf v0.11.6 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Introducing plugin functionality using `pluggy <https://pluggy.readthedocs.io/en/latest/>`__ plugin management system.
+   This adds a small, single-package dependency that can greatly increase customization potential of ksconf.
+   The first demo of this can be seen in the ``ksconf-jinja-markdown`` package that enables ``.j2`` payloads to be rendered by registering a custom Jinja filter named ``markdown2html``.
+
+
 
 Ksconf v0.11.5 (2023-08-25)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

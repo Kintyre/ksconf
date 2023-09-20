@@ -177,6 +177,8 @@ setup(name=package_name,
       ],
       install_requires=[
           "entrypoints",
+          "pluggy>=1.2.0,<1.3.0; python_version<'3.8'",
+          "pluggy>=1.3.0; python_version>='3.8'",
           "lxml",         # Added as a hard requirement to allow pre-commit to work out of the box
       ],
       # Wacky reason for this explained in ksconf/setup_entrypoints.py

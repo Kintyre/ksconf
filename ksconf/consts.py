@@ -23,6 +23,7 @@ UNSET = _UNSET()
 
 MANIFEST_HASH = "sha256"
 
+PLUGGY_HOOK = "ksconf"
 
 # Legacy names
 SMART_CREATE = SmartEnum.CREATE

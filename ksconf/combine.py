@@ -17,6 +17,7 @@ from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ksconf.hooks import get_plugin_manager
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare
@@ -122,7 +123,7 @@ class LayerCombiner:
     def add_layer_filter(self, action, pattern):
         self.layer_filter.add_rule(action, pattern)
 
-    def combine(self, target):
+    def combine(self, target: Path, *, hook_label=""):
         """
         Combine layers into ``target`` directory.
         """
@@ -135,6 +136,9 @@ class LayerCombiner:
         src_file_listing = self.pre_combine_inventory(target, src_file_listing)
         self.combine_files(target, src_file_listing)
         self.post_combine(target)
+
+        pm = get_plugin_manager()
+        pm.hook.post_combine(target=target, usage=hook_label)
 
     def prepare(self, target: Path):
         """ Start the combine process.  This includes directory checking,

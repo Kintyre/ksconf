@@ -65,6 +65,22 @@ ksconf.filter module
    :undoc-members:
    :show-inheritance:
 
+ksconf.hooks module
+-------------------
+
+.. automodule:: ksconf.hooks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ksconf.hookspec module
+----------------------
+
+.. automodule:: ksconf.hookspec
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.layer module
 -------------------
 

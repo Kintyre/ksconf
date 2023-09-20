@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 from functools import wraps
 from os import fspath
+from pathlib import Path
 from typing import TextIO, Union
 
 from ksconf.app.manifest import AppManifest
@@ -15,6 +16,8 @@ from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import KSCONF_DEBUG
+from ksconf.hooks import get_plugin_manager
+from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
 
@@ -66,16 +69,23 @@ class AppPackager:
         self.app_dir = None
         self.output = output
         self._var_magic = None
+        self._mutable = None
+        self._frozen_by = str
         self.template_variables = template_variables
         self.predictable_mtime = predictable_mtime
 
-    def require_active_context(funct):
+    @decorator_with_opt_kwargs
+    def require_active_context(funct, mutable=True):
         """ Decorator to mark member functions that cannot be used until the
         context manager has been activated.
         """
         @wraps(funct)
         def wrapper(self: AppPackager, *args, **kwargs):
             assert self.build_dir, "Context manager not yet active"
+            if mutable:
+                # Ensure make_archive() and make_manifest() are called last
+                assert self._mutable, "App content already frozen. " \
+                    f"Must call {funct.__name__}() before {self._frozen_by}()"
             return funct(self, *args, **kwargs)
         return wrapper
 
@@ -84,6 +94,7 @@ class AppPackager:
         shutil.rmtree(self.build_dir)
         self.build_dir = None
         self.app_dir = None
+        self._mutable = None
 
     def expand_var(self, value: str) -> str:
         """ Expand a variable, if present
@@ -118,7 +129,7 @@ class AppPackager:
                                       "Please use 'dir.d' or 'disable'.")
         for action, path in filters:
             combiner.add_layer_filter(action, path)
-        combiner.combine(self.app_dir)
+        combiner.combine(self.app_dir, hook_label="package")
         self._var_magic.meta["layers"] = combiner.layer_names_used
 
     @require_active_context
@@ -196,7 +207,7 @@ class AppPackager:
                                           f"{attr} = {value}\n")
                     conf[stanza][attr] = value
 
-    @require_active_context
+    @require_active_context(mutable=False)
     def check(self):
         """ Run safety checks prior to building archive:
 
@@ -204,6 +215,8 @@ class AppPackager:
             id and top-level folder names align.
         2.  Check for files or directories starting with ``.``, makes AppInspect very grumpy!
         """
+        # Should this force a freeze?  (Disable if this breaks anything...)
+        self.freeze("check")
         app_conf = get_merged_conf(self.app_dir, "app.conf")
         try:
             package_id = app_conf["package"]["id"]
@@ -233,11 +246,12 @@ class AppPackager:
                     if name[0] == ".":
                         self.output.write(f"Found hidden {t}:  {root}/{name}\n")
 
-    @require_active_context
+    @require_active_context(mutable=False)
     def make_archive(self, filename, temp_suffix: str = ".tmp"):
         """ Create a compressed tarball of the build directory.
         """
         # type: (str) -> str
+        self.freeze("make_archive")
         # if os.path.isfile(filename):
         #    raise ValueError(f"Destination file already exists:  {filename}")
         app_name = self.expand_var(self.app_name)
@@ -261,19 +275,30 @@ class AppPackager:
                 spl.add(self.app_dir, arcname=self.app_name)
         return filename
 
-    @require_active_context
+    @require_active_context(mutable=False)
     def make_manifest(self, calculate_hash=True) -> AppManifest:
         """
         Create a manifest of the app's contents.
         """
+        self.freeze("make_manifest")
         app_name = self.expand_var(self.app_name)
         manifest = AppManifest.from_filesystem(self.app_dir, name=app_name,
                                                calculate_hash=calculate_hash)
         manifest.source = self.src_path
         return manifest
 
+    def freeze(self, caller_name):
+        if self._mutable:
+            plugin_manager = get_plugin_manager()
+            plugin_manager.hook.package_pre_archive(app_dir=Path(self.app_dir),
+                                                    app_name=self.expand_var(self.app_name))
+            # Forbid any additional changes to the package
+            self._mutable = False
+            self._frozen_by = caller_name
+
     def __enter__(self) -> AppPackager:
         self.build_dir = tempfile.mkdtemp("-ksconf-package-build")
+        self._mutable = True
         if self.app_name == "." or "{{" in self.app_name:
             # Use a placeholder app name, otherwise build_dir == app_dir
             self.app_dir = os.path.join(self.build_dir, "app")

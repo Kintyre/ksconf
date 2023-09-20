@@ -285,6 +285,6 @@ class CombineCmd(KsconfCmd):
         self.stderr.write(f"Combining files into directory {args.target}\n")
 
         try:
-            combiner.combine(args.target)
+            combiner.combine(args.target, hook_label="combine")
         except LayerCombinerExceptionCode as e:
             return e.return_code

@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+from functools import partial, wraps
+from typing import Callable
+
 from ksconf.consts import KSCONF_DEBUG
 
 
@@ -18,6 +21,23 @@ def _xargs(iterable, cmd_len=1024):
         fn_len += l
     if buf:
         yield buf
+
+
+def decorator_with_opt_kwargs(decorator: Callable) -> Callable:
+    """
+    Make a decorator that can work with or without args.
+    Heavily borrowed from:  https://gist.github.com/ramonrosa/402af55633e9b6c273882ac074760426
+    Thanks to GitHub user ramonrosa
+    """
+    @wraps(decorator)
+    def decorator_wrapper(*args, **kwargs):
+        if len(kwargs) == 0 and len(args) == 1 and callable(args[0]):
+            return decorator(args[0])
+        if len(args) == 0:
+            return partial(decorator, **kwargs)
+        raise TypeError(f"{decorator.__name__} expects either a single Callable "
+                        "or keyword arguments")
+    return decorator_wrapper
 
 
 def debug_traceback():  # pragma: no cover
