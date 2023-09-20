@@ -23,7 +23,7 @@ from ksconf.commands import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, parse_conf
 from ksconf.consts import (EXIT_CODE_BAD_ARCHIVE_FILE, EXIT_CODE_BAD_ARGS,
                            EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE,
-                           KSCONF_DEBUG)
+                           is_debug)
 from ksconf.filter import create_filtered_list
 from ksconf.util.compare import cmp_sets
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter
@@ -121,7 +121,7 @@ class UnarchiveCmd(KsconfCmd):
         """ Install / upgrade a Splunk app from an archive file """
         # Handle ignored files by preserving them as much as possible.
         # Add --dry-run mode?  j/k - that's what git is for!
-        DEBUG = KSCONF_DEBUG in os.environ
+        DEBUG = is_debug()
 
         tarball = Path(args.tarball)
         if not tarball.is_file():

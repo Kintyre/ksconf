@@ -15,7 +15,7 @@ from ksconf.app.manifest import AppManifest
 from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
-from ksconf.consts import KSCONF_DEBUG
+from ksconf.consts import is_debug
 from ksconf.hook import get_plugin_manager
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
@@ -419,7 +419,7 @@ class AppVarMagic:
                 funct = getattr(self, get_funct_name)
                 return funct()
             except AppVarMagicException as e:
-                if KSCONF_DEBUG in os.environ:
+                if is_debug():
                     raise e
                 return f"VAR-{item}-ERROR"
         else:

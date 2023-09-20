@@ -24,7 +24,7 @@ from typing import List
 import ksconf
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
-from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
+from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, is_debug, KSCONF_DEBUG
 from ksconf.hook import get_plugin_manager
 from ksconf.util.completers import autocomplete
 
@@ -300,7 +300,7 @@ def check_py():
         sys.stderr.write("\n\n")  # Often there's crap on the console from warnings.  Whitespace!
         sys.stderr.write("Try running this command first:  source $SPLUNK_HOME/bin/setSplunkEnv\n")
         # Allow   `KSCONF_DEBUG=1 ksconf --version` to run, even if environmental issues exist
-        if KSCONF_DEBUG not in os.environ:
+        if not is_debug():
             sys.exit(EXIT_CODE_ENV_BUSTED)
     # Okay, now NEVER call this code again....   (helpful for unit-testing & nested calls)
     globals()["check_py"] = lambda: None

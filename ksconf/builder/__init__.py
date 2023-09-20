@@ -2,7 +2,6 @@ from __future__ import absolute_import, annotations, unicode_literals
 
 import argparse
 import inspect
-import os
 import re
 import sys
 from pathlib import Path
@@ -10,7 +9,7 @@ from subprocess import Popen
 from typing import Callable, List, TextIO
 
 from ksconf.compat import handle_py3_kw_only_args
-from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG
+from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, is_debug
 
 QUIET = -1
 NORMAL = 0
@@ -138,7 +137,7 @@ def default_cli(build_manager: BuildManager,
     try:
         return build_funct(step, args)
     except Exception as e:
-        if KSCONF_DEBUG in os.environ:
+        if is_debug():
             # XXX: instead of re-raising; write out traceback (with this final frame removed)?
             # Allow stack track to be dumped to screen for developer review/debugging
             raise

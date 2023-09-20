@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import os
 import re
 import sys
 from enum import Enum
@@ -80,6 +81,10 @@ RegexType = type(re.compile(r'.'))
 
 
 KSCONF_DEBUG = "KSCONF_DEBUG"
+
+
+def is_debug():
+    return KSCONF_DEBUG in os.environ
 
 
 # Cleanup namespace for wildcard imports

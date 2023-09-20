@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from functools import partial, wraps
 from typing import Callable
 
-from ksconf.consts import KSCONF_DEBUG
+from ksconf.consts import is_debug
 
 
 def _xargs(iterable, cmd_len=1024):
@@ -43,8 +43,7 @@ def decorator_with_opt_kwargs(decorator: Callable) -> Callable:
 def debug_traceback():  # pragma: no cover
     """ If the 'KSCONF_DEBUG' environmental variable is set, then show a stack trace. """
     level = 10
-    from os import environ
-    if KSCONF_DEBUG in environ:
+    if is_debug():
         # TODO:  Pop one off the top of the stack to hide THIS function
         import traceback
         traceback.print_exc(level)

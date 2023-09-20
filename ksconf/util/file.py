@@ -12,7 +12,7 @@ from pathlib import Path
 from random import randint
 from typing import IO, Callable, Union
 
-from ksconf.consts import KSCONF_DEBUG, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
+from ksconf.consts import is_debug, SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.util.compare import file_compare
 
 
@@ -275,7 +275,7 @@ class ReluctantWriter:
         except Exception:
             raise
         if exc_type:
-            if KSCONF_DEBUG in os.environ:
+            if is_debug():
                 # LOG that temp file is being kept
                 pass
             else:
