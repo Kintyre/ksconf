@@ -175,3 +175,14 @@ jobs:
           draft: false
           prerelease: false
           files: ${{ steps.buildpkg.outputs.path }}
+
+      - name: Bump latest version in the ksconf-pre-commit repo
+        if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.PRE_COMMIT_PAT }}
+          repository: Kintyre/ksconf-pre-commit
+          event-type: bumpversion-event
+          client-payload: >
+            {"ref": "${{ github.ref }}",
+             "sha": "${{ github.sha }}"}
