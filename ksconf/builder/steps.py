@@ -97,6 +97,7 @@ def _get_python_info_rename(path: str) -> str:
 def pip_install(step: BuildStep,
                 requirements_file: str = "requirements.txt",
                 dest: str = "lib",
+                *,
                 python_path: str = None,
                 isolated: bool = True,
                 dependencies: bool = True,
