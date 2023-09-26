@@ -38,11 +38,10 @@ Three hooks are currently defined by the ksconf repository:
 
     ksconf-xml-format:
         Runs :ref:`ksconf_cmd_xml-format` to apply consistency to your XML representations of Simple XML dashboards and navigation files.
+        Dashboard Studio views can also be formatted too, along with the nested JSON payload.
         Formatting includes appropriate indention and the automatic addition of ``<![CDATA[ ... ]]>`` blocks, as needed,
         to reduce the need for XML escaping, resulting in more readable source file.
         By default, this hook looks at standard locations where XML views and navigation typically live.
-        So if you use Advanced XML, proceed with caution, as they share the same path and haven't been tested.
-
 
 Configuring pre-commit hooks in you repo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,7 +55,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
 
     repos:
     - repo: https://github.com/Kintyre/ksconf
-      rev: v0.7.7
+      rev: v0.11.8
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
@@ -84,7 +83,7 @@ For general reference, here's a copy of what we frequently use for our repos.
         - id: mixed-line-ending
           args: [ '--fix=lf' ]
     - repo: https://github.com/Kintyre/ksconf
-      rev: v0.7.7
+      rev: v0.11.8
       hooks:
         - id: ksconf-check
         - id: ksconf-sort

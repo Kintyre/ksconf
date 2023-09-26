@@ -28,6 +28,10 @@ jobs:
           - os: ubuntu-latest
             python-version: 3.9
             build_sdist: true
+            build_splunk_app: true  # Building docs against python 3.7 results in old Sphnix package, and very bloated output
+          # - os: ubuntu-latest
+          #   python-version: 3.7
+          #   build_splunk_app: true
           - os: ubuntu-latest
             python-version: 3.8
             extra_packages: argcomplete
@@ -153,7 +157,7 @@ jobs:
 
       - name: Build Splunk app
         id: buildpkg
-        if: matrix.build_sdist
+        if: matrix.build_splunk_app == true
         run: |
           python -m pip install -r requirements-doc.txt
           python splunk_app/build.py -vv
@@ -165,7 +169,7 @@ jobs:
 
       - name: Create release and upload GitHub artifact
         uses: softprops/action-gh-release@v1
-        if: contains(github.ref, 'tags/v') && matrix.build_sdist == true
+        if: contains(github.ref, 'tags/v') && matrix.build_splunk_app == true
         with:
           name: Release ${{ github.ref_name }}
           draft: false

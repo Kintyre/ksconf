@@ -1,0 +1,26 @@
+# Python packages included in the Splunk app
+
+# Complexities
+#  1. lxml - platform specific & already included by Splunk's python environment
+#  2. Some versions must be pinned, as the latest versions are not Python 3.7 compatible
+#  3. Python package is built with 3.9 (so we don't rely on a really old version of Sphinx with bloated output)
+#  4. Don't use references here because this file is read in by build.py and filtered as a simple list.
+
+# Item 1 could/should be addressed by making a separate repo for pre-commit hooks, but that's a painful transition, and should include some CI/CD magic to automatically update a secondary repo whenever a new release occurs.
+# Item 2 & 3 could be resolved by splitting the doc creation and splunk app packaging steps.  Requires some CI/CD magic.
+# Item 5 could be resolved by resolving item 1.
+
+
+# These are copied from requirements.txt
+# NOTE:  We copy instead of reference because this list is used by build.py.
+entrypoints
+splunk-sdk>=1.7.0
+# 1.3.0 Drops Python 3.7 support
+pluggy>=1.2.0,<1.3
+
+
+
+# Pluggy support for legacy python versions (3.7)
+importlib-metadata
+typing-extensions>=4.7
+zipp>=3.15

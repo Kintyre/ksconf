@@ -24,6 +24,12 @@ Ksconf 0.11
    Anyone wanting to implement a new plugin should use the public-facing :py:mod:`ksconf.hook` module.
 
 
+Ksconf v0.11.8 (2023-09-26)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Fix packaging bug impacting the Ksconf Splunk app.  This issue was introduced in v0.11.6.
+
+
 Ksconf v0.11.7 (2023-09-20)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

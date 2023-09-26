@@ -39,6 +39,7 @@ manager = BuildManager()
 
 APP_FOLDER = PurePath("ksconf")
 SPL_NAME = "ksconf-app_for_splunk-{{version}}.tgz"
+REQUIREMENTS = "requirements-app.txt"
 
 
 def make_wheel(step):
@@ -65,7 +66,7 @@ def make_docs(step):
                     str(docs_build))
 
 
-def filter_requirements(step: BuildStep, src: str, re_block: str, extra: str):
+def filter_requirements(step: BuildStep, src: Path, re_block: str, *extras: str):
     """ Copy a filtered version of requirements.txt """
     log = step.get_logger()
     dest = step.build_path / src.name
@@ -74,7 +75,7 @@ def filter_requirements(step: BuildStep, src: str, re_block: str, extra: str):
     with open(src) as f_src, open(dest, "w") as f_dest:
         for line in f_src:
             line = line.strip()
-            if re.search(re_block, line):
+            if re_block and re.search(re_block, line):
                 log("Block entry: {}".format(line), VERBOSE)
                 continue
             if not line or line.startswith("#"):
@@ -83,16 +84,19 @@ def filter_requirements(step: BuildStep, src: str, re_block: str, extra: str):
             line = line.split(";", 1)[0]
             log("Keep entry: {}".format(line), VERBOSE * 2)
             f_dest.write(line + "\n")
-        log("Adding extra package: {}".format(extra), VERBOSE)
-        f_dest.write("{}\n".format(extra))
+        log("Adding extra package: {}".format(extras), VERBOSE)
+        for extra in extras:
+            f_dest.write("{}\n".format(extra))
 
 
 # XXX: this breaks when cache is enabled.  Figured this out, some path handling is busted
 # @manager.cache(["requirements.txt"], ["bin/lib/"], timeout=7200)
 def python_packages(step):
     # Reuse shared function from ksconf.build.steps
-    pip_install(step, "requirements.txt", APP_FOLDER / "bin/lib",
+    pip_install(step, REQUIREMENTS, APP_FOLDER / "bin/lib",
                 handle_dist_info="rename",
+                # Explicitly listing all dependencies; just to avoid lxml :-(
+                # the core issue is that we haven't separate out the pre-commit hook use-case
                 dependencies=False)  # managing dependencies manually
 
 
@@ -107,8 +111,10 @@ def package_spl(step):
              "--file", step.dist_path / SPL_NAME,
              "--set-version", "{{git_tag}}",
              "--set-build", build_no,
+             "--blocklist", "fonts",       # From build docs
              "--blocklist", ".buildinfo",  # From build docs
-             "--blocklist", "requirements.txt",
+             "--blocklist", ".doctrees",   # From build docs
+             "--blocklist", REQUIREMENTS,
              "--block-local",
              "--layer-method=disable",
              "--release-file", str(release_path),
@@ -131,9 +137,8 @@ def build(step, args):
     # Copy splunk app template bits into build folder
     copy_files(step, ["{}/".format(APP_FOLDER)])
 
-    # Re-write normal requirements file: Remove some, install all PY2 backports
-    filter_requirements(step, GIT_ROOT / "requirements.txt",
-                        r"^(lxml|mock)",    # Skip these packages
+    # Re-write normal requirements file: Remove some
+    filter_requirements(step, GIT_ROOT / REQUIREMENTS, None,
                         ksconf_wheel)       # Install ksconf (from wheel)
 
     # Install Python package dependencies
