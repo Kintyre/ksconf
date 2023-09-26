@@ -20,7 +20,7 @@ pluggy>=1.2.0,<1.3
 
 
 
-# Pluggy support for legacy python versions (3.7)
-importlib-metadata
-typing-extensions>=4.7
-zipp>=3.15
+# Pluggy support for legacy python versions (max to limit for Python 3.7)
+importlib-metadata>=6.0,<6.8
+typing-extensions>=4.7,<4.8
+zipp>=3.15,<3.16

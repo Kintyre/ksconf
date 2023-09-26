@@ -55,7 +55,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
 
     repos:
     - repo: https://github.com/Kintyre/ksconf
-      rev: v0.11.8
+      rev: v0.11.9
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
@@ -83,7 +83,7 @@ For general reference, here's a copy of what we frequently use for our repos.
         - id: mixed-line-ending
           args: [ '--fix=lf' ]
     - repo: https://github.com/Kintyre/ksconf
-      rev: v0.11.8
+      rev: v0.11.9
       hooks:
         - id: ksconf-check
         - id: ksconf-sort
