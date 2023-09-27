@@ -25,13 +25,13 @@ Overview
 |Install  | Advantages                                    | Potential pitfalls                             |
 +=========+===============================================+================================================+
 |Python   | - Most 'pure' and flexible install            | - Lots of potential variations and pitfalls    |
-|package  | - One command install.  (ideal)               | - Many Linux distro's don't ship with ``pip``  |
+|package  | - One command install.  (ideal)               | - Many Linux distros don't ship with ``pip``   |
 |         | - Easy upgrades                               | - Must consider/coordinate installation user.  |
 |         | - More extendable (plugins)                   | - Often requires some admin access.            |
 |         | - :ref:`install_python`                       | - Too many install options (complexity)        |
 +---------+-----------------------------------------------+------------------------------------------------+
 |Splunk   | - Quick installation (single download)        | - Crippled Python install (no ``pip``)         |
-|app      | - Requires one time bootstrap command         | - Can't add custom extensions (entrypoints)    |
+|app      | - Requires one time bootstrap command         | - Can't add custom extensions or plugins       |
 |         | - Self contained; no admin access require     | - No CLI completion (yet)                      |
 |         | - Fast demo; fight with ``pip`` later         | - :ref:`Grandfather paradox`                   |
 |         | - :ref:`install_splunk_app`                   |                                                |
