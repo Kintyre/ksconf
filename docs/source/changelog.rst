@@ -27,10 +27,10 @@ Ksconf 0.12
    In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
-Ksconf v0.12.0 (DRAFT)
+Ksconf v0.12.0 (2023-09-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Drop ``lxml`` dependency.
+*  Drop ``lxml`` and ``endpoints`` dependencies.
 *  Moved pre-commit hooks to `ksconf pre-commit repo <ksconf-pre-commit>`_, and started deprecation of the hooks in the main `ksconf repo <ksconf>`_ repo.
 
 
