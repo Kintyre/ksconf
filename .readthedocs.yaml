@@ -10,6 +10,14 @@ build:
   tools:
     python: "3.11"
 
+  jobs:
+    post_install:
+      - echo "Post-install"
+      - python -m pip install -U pip wheel setuptools
+      - python setup.py install
+
+
+
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py

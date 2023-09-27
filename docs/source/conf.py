@@ -26,6 +26,9 @@ copyright = u'2020, Kintyre Solutions'
 from ksconf import __author__ as author  # noqa
 from ksconf import __version__ as release  # noqa
 
+if release is None:
+    release = "0.0.0"
+
 # The short X.Y version
 version = ".".join(release.split(".")[:-1])
 # The full version, including alpha/beta/rc tags
