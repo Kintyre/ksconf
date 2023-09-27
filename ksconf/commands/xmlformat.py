@@ -10,6 +10,7 @@ Usage example:   (Nice pre-commit script)
 from __future__ import absolute_import, unicode_literals
 
 import os
+from argparse import SUPPRESS
 from collections import Counter
 
 from ksconf.commands import KsconfCmd, dedent
@@ -59,7 +60,53 @@ class XmlFormatCmd(KsconfCmd):
         parser.add_argument("--quiet", "-q", default=False, action="store_true",
                             help="Reduce the volume of output.")
 
+        # Hidden arguments
+        parser.add_argument("--disable-pre-commit-migration-check",
+                            default=False, action="store_true", help=SUPPRESS)
+
+    def pre_commit_repo_migration_warning(self, args):
+        r"""
+        Issue migration warning if (1) running hooks from the old repo (missing
+        arg), and (2) parent process is from pre-commit (env var).
+
+
+        Another workaround is to use:
+
+        ..  code-block:: yaml
+
+            - repo: https://github.com/Kintyre/ksconf
+            rev: v0.11.8
+            hooks:
+                - id: ksconf-check
+                - id: ksconf-sort
+                exclude: logging\.conf
+                - id: ksconf-xml-format
+                  args: --disable-pre-commit-migration-check
+            additional_dependencies: [lxml]
+
+        But honestly, isn't it just easy to add ``-pre-commit`` to the repo?
+
+        Remove this after Dec 2024 or v0.13.0
+        """
+        # New repo uses the following config:
+        # entry: ksconf xml-format -q --disable-pre-commit-migration-check
+        # If this flag has been used, assume we're running from the correct repo
+        if args.disable_pre_commit_migration_check:
+            return
+
+        # See if pre-commit is my parent.  Assume this based on env variable.
+        if os.environ.get("PRE_COMMIT", "") != "1":
+            return
+
+        from warnings import warn
+        warn("You appear to be using the 'ksconf-xml-format' pre-commit hook from the ksconf repo. "
+             "The ksconf pre-commit hooks have been moved to a new repo.  "
+             "This configuration will stop working after v0.13.0 "
+             "Please update '.pre-commit-config.yaml' to use the new "
+             "repo: https://github.com/Kintyre/ksconf-pre-commit.git")
+
     def run(self, args):
+        self.pre_commit_repo_migration_warning(args)
         formatter = SplunkSimpleXmlFormatter()
         # Should we read a list of conf files from STDIN?
         if len(args.xml) == 1 and args.xml[0] == "-":

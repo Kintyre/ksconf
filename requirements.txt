@@ -1,4 +1,3 @@
 entrypoints
 splunk-sdk>=1.7.0
 pluggy>=1.2.0
-lxml>=4.6.5

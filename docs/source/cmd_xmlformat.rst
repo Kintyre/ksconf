@@ -28,10 +28,9 @@ Specific awareness of various Simple XML tags is baked into this product.
     (2) already ships with Splunk's embedded Python.
 
     This is an optional requirement, unless you want to use the ``xml-format`` command.
-    However, due to packaging limitations and pre-commit hook support, installation of the python package
-    will result in an attempt to install lxml as well.
-    Please :ref:`reach out <contact_us>` if this is causing issues for you; I'm looking into other options too.
 
+    As of v0.12.0, this is not longer installed by the ``ksconf`` package.
+    However, if you are using pre-commit hooks from the `ksconf-pre-commit repo`_ for the ``ksconf-xml-format`` hook.
 
 
 

@@ -20,7 +20,7 @@ The ksconf project uses the pre-commit_ hook to enable the following checks:
 
 ..  note:: Multiple uses of pre-commit
 
-    Be aware, that the `ksconf repo`_ both uses pre-commit for validation of it's own content, and it provides a pre-commit hook service definition for other repos.
+    Be aware, that the `ksconf repo`_ uses pre-commit for validation of it's own content, and `ksconf-pre-commit repo`_ provides a pre-commit hook service definition for other repos.
     The first scenario is discussed in this section of the guide.
     The second scenario is for repositories that house Splunk apps to use :ref:`ksconf_cmd_check` and :ref:`ksconf_cmd_sort`
     as easy to use hooks against their own ``.conf`` files which is discussed further in :ref:`ksconf_pre_commit`.
@@ -35,7 +35,7 @@ Install:
 
 ..  code-block:: sh
 
-    sudo pip install pre-commit
+    pip install pre-commit
 
     # Register the pre-commit hooks (one time setup)
     cd ksconf
@@ -101,7 +101,7 @@ File path                           Description / purpose
 ``tests/tests/test_cli_CMD.py``     Add new unit test here
 ``docs/source/cmd_CMD.rst``         Command line documentation.  Make sure to include the `argparse` module
 ``ksconf/setup_entrypoints.py``     Addd a new entrypoint line here, or the new command won't be registered
-``.pre-commit-hooks.yaml``          Only needed if the new command is a command is pre-commit hook
+``.pre-commit-hooks.yaml``          If a new command is applicable, add this to the `ksconf pre-commit repo`_.
 ``setup.py``                        Update if there are any new external dependencies
 ``requirements.txt``                Same as above
 ``make_splunk_app``                 If there's new dependencies that need to go into the Splunk app
@@ -129,7 +129,7 @@ The following example assume we're make a new command called ``asciiart``:
     vim ksconf/setup_entrypoints*.py
     git add kconf/setup_entrypoints.py
 
-    # Now run pre-commit to ensure that the new command is found sucessfully and is importable
+    # Now run pre-commit to ensure that the new command is found successfully and is importable
 
     pre-commit
     # Now go write code, tests, docs and commit ...

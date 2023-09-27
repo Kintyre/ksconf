@@ -19,8 +19,7 @@ We suggest that you read the pre-commit docs and review this section when you ar
 Hooks provided by ksconf
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Three hooks are currently defined by the ksconf repository:
-
+Three hooks are currently defined by the `ksconf-pre-commit repo <ksconf-pre-commit>`_ repository:
 
     ksconf-check
         Runs :ref:`ksconf_cmd_check` to perform basic validation tests against all files
@@ -43,6 +42,54 @@ Three hooks are currently defined by the ksconf repository:
         to reduce the need for XML escaping, resulting in more readable source file.
         By default, this hook looks at standard locations where XML views and navigation typically live.
 
+
+Repository Change
+~~~~~~~~~~~~~~~~~
+
+As of October 2023 (v0.12), the ksconf pre-commit hooks have been moved into their own repository to simplify packing and dependency complexities.
+This will impact users whenever upgrading their pre-commit configs to use the latest version of ksconf.
+This will happen, for example, when running ``pre-commit autoupdate``.
+
+To be clear, this change will not break any existing pre-commit configuration.
+But to avoid any disruption, we suggest you start using this new repository now, while you're thinking about it.
+The change is easy.
+
+
+Migration Steps
++++++++++++++++
+
+Edit your ``.pre-commit-config.yaml`` file to (1) use the new ``repo`` location, and (2) use a recent version in ``rev`` (v0.11.7+)
+
+Replace this:
+
+..  code-block:: yaml
+
+  - repo: https://github.com/Kintyre/ksconf
+    rev: v0.9.5
+
+with this:
+
+..  code-block:: yaml
+
+  - repo: https://github.com/Kintyre/ksconf-pre-commit
+    rev: v0.11.9
+
+
+Alternately, you could run the following shell commands:
+
+..  code-block:: sh
+
+    # Update pre-commit config in-place
+    sed -e 's~https://github.com/Kintyre/ksconf$~https://github.com/Kintyre/ksconf-pre-commit~' -i.bak .pre-commit-config.yaml
+
+    # Update to latest release
+    pre-commit autoupdate --repo https://github.com/Kintyre/ksconf-pre-commit
+
+
+..  If you have dozens of app repos laying around, you can use a set of commands like so:
+..  find . -name '.pre-commit-config.yaml' -maxdepth 2 | xargs fgrep -l https://github.com/Kintyre/ksconf | head -2 | (r=$PWD; while read cfg; do echo "$cfg"; ( cd $(dirname "$cfg") && sed -e 's~https://github.com/Kintyre/ksconf~https://github.com/Kintyre/ksconf-pre-commit~' -i.bak "$(basename $cfg)" && pre-commit autoupdate --repo https://github.com/Kintyre/ksconf-pre-commit -c "$(basename $cfg)"; ) done; )
+
+
 Configuring pre-commit hooks in you repo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -54,7 +101,7 @@ To add ksconf pre-commit hooks to your repository, add the following content to 
     :name: .pre-commit-config.yaml
 
     repos:
-    - repo: https://github.com/Kintyre/ksconf
+    - repo: https://github.com/Kintyre/ksconf-pre-commit
       rev: v0.11.9
       hooks:
         - id: ksconf-check
@@ -82,7 +129,7 @@ For general reference, here's a copy of what we frequently use for our repos.
         - id: detect-private-key
         - id: mixed-line-ending
           args: [ '--fix=lf' ]
-    - repo: https://github.com/Kintyre/ksconf
+    - repo: https://github.com/Kintyre/ksconf-pre-commit
       rev: v0.11.9
       hooks:
         - id: ksconf-check

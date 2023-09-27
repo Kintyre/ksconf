@@ -228,7 +228,11 @@ If you want the packages, install the "thirdparty" extras using the following co
     pip install ksconf[thirdparty]
 
 
+If you want *all* the goodies:
 
+..  code-block:: sh
+
+    pip install ksconf[fully-loaded]
 
 
 Other issues

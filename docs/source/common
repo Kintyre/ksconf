@@ -7,6 +7,7 @@
 ..  _gitlint: https://jorisroovers.github.io/gitlint/
 ..  _ksconf app for splunk: https://splunkbase.splunk.com/app/4383/
 ..  _ksconf repo: https://github.com/Kintyre/ksconf
+..  _ksconf-pre-commit repo: https://github.com/Kintyre/ksconf-pre-commit
 ..  _ksconf-wheel:  https://pypi.org/project/ksconf/#files
 ..  _ksconf:  https://pypi.org/project/ksconf
 ..  _pluggy: https://pluggy.readthedocs.io/en/latest/

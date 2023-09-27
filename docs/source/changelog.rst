@@ -4,6 +4,27 @@ Changelog
 .. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
 
 
+Ksconf 0.12
+-----------
+
+**Highlights:**
+
+*  Pre-commit hooks have been moved into their own `ksconf pre-commit repo <ksconf-pre-commit>`_ repository.
+   To allow time for migration to the new repo, the existing hooks will remain for a few release before being removed.
+   To migrate, simply add ``-pre-commit`` to the end of the ``repo`` field, and update ``rev`` to ``v0.12.0`` or later.
+*  Dropped hard ``lxml`` from requirements.
+   This is still handled automatically when using the pre-commit hooks (from the new repository).
+   But this may be missing.
+   To get access to all CLI functionality, run ``pip install ksconf[thirdparty]``,
+   or for the full experience use ``pip install ksconf[fully-loaded]``
+
+
+Ksconf v0.12.0 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Drop ``lxml`` dependency.
+*  Moved pre-commit hooks to `ksconf pre-commit repo <ksconf-pre-commit>`_, and started deprecation of the hooks in the main `ksconf repo <ksconf>`_ repo.
+
 
 Ksconf 0.11
 -----------

@@ -9,6 +9,7 @@ from setuptools import setup
 
 from ksconf.setup_entrypoints import get_entrypoints_setup
 
+PRE_COMMIT = os.getenv("PRE_COMMIT")
 package_name = "kintyre-splunk-conf" if os.getenv("BUILD_OLD_PACKAGE") == "1" else "ksconf"
 
 if package_name == "ksconf":
@@ -56,6 +57,8 @@ def get_ver(_allow_git_fetch=True):
     version = gitout.stdout.strip()
     version = version.lstrip("v")   # Tags format is v0.0.0
     del gitout
+
+    # NOTE:  pre-commit building complexities go away after v0.13.0
 
     # If version is hex string, assume there's an issue (aka running from pre-commit's install)
     # Pre-commit has it's own shallow clone that doesn't check out that tags we need to build the
@@ -129,6 +132,14 @@ Please see the [Official docs](https://ksconf.readthedocs.io/en/latest/) for mor
 
 """
 
+install_requires = [req for req in open("requirements.txt") if req and not req[0] == "#"]
+
+# Temporary hack.  Remove in v0.13 and migrate to kintyre/ksconf-pre-commit
+if PRE_COMMIT:
+    print("Build from within pre-commit detected.  "
+          "Please switch to using the ksconf-pre-commit repo instead!")
+    install_requires.append("lxml>=4.6.5")
+
 
 setup(name=package_name,
       version=get_ver(),
@@ -175,20 +186,24 @@ setup(name=package_name,
       setup_requires=[
           "wheel",
       ],
-      install_requires=[
-          "entrypoints",
-          "pluggy",
-          "lxml",         # Added as a hard requirement to allow pre-commit to work out of the box
-      ],
+      install_requires=install_requires,
       # Wacky reason for this explained in ksconf/setup_entrypoints.py
       entry_points=get_entrypoints_setup(),
       # Not required, but useful.
       extras_require={
+          "xml": ["lxml"],
           "bash": ["argcomplete"],
           "jinja": ["jinja2"],
           "thirdparty": [
-              "splunk-sdk>=1.7.0"
+              "splunk-sdk>=1.7.0",
+              "lxml",
           ],
+          "fully-loaded": [
+              "lxml",
+              "argcomplete",
+              "jinja2",
+              "splunk-sdk",
+          ]
       },
       include_package_data=True,
       zip_safe=True

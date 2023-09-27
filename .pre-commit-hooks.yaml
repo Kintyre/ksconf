@@ -1,3 +1,19 @@
+# REPO MOVE!
+#
+# Please update your '.pre-commit-config.yaml' files.
+# The new purpose-built repository is located here:  https://github.com/Kintyre/ksconf-pre-commit
+#
+# Support for running pre-commit directly against *this* repository will
+# continue to through 2024, but will be subject to increasingly aggressive reminders ;-)
+#
+# Note tha the 'lxml' requirement will be dropped much sooner and therefore may require tweaking,
+# so you may as well go ahead and switch repos!
+#
+# After v0.13, we'll sunset these hooks using the technique descried here:  https://github.com/pre-commit/pre-commit/issues/2003#issuecomment-895375482
+#
+#   name: {OLDNAME} Migrated to {REPO}
+#   language: fail
+
 - id: ksconf-check
   name: Ksconf Splunk CONF - Check syntax
   description: Check that all .conf files are syntactically valid
@@ -13,10 +29,8 @@
   files: (\.conf|(local|default)\.meta)$
 
 - id: ksconf-xml-format
-  ### WORST CASE:  Move this into it's own ksconf-precommit repo, that intalls 'ksconf' and 'lxml'....   ;-(  Probably easier than making pre-commit specific tags/branches or some junk like that...
-  # Apparently additional_dependencies only works on pre-commit-config not in hooks?!
-  #additional_dependencies: lxml  (unclear if this is supported for all languages)
-  # I wonder what would happen if I set lxml as a build requirement instead of an install requirement.   Since 'pip install .' would likely install both?!?!
+  # If you intend to use this, you must add: additional_dependencies: [lxml] to your .pre-commit-config.yaml
+  # Even better.  Migrate to 'ksconf-pre-commit'!
   name: Ksconf Splunk CONF - Normalize XML
   description: Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and navigation files.
   entry: ksconf xml-format -q
