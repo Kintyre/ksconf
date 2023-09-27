@@ -187,10 +187,7 @@ def build_cli_parser(do_formatter=False):
         if hasattr(dist, "version"):
             if hasattr(dist, "name"):
                 # entrypoints (required by ksconf)
-                distro = f"{dist.name}  ({ep.entry.dist.version})"
-            elif hasattr(dist, "location") and hasattr(dist, "project_name"):   # pragma: no cover
-                # Attributes per pkg_resource  (currently disabled)
-                distro = f"{dist.project_name}  ({dist.version})  @{dist.location}"
+                distro = f"{dist.name}  ({dist.version})"
 
         subcommands[distro].append((ep.name, ep.cmd_cls, ep.error))
         if ep.cmd_cls:

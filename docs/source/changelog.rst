@@ -12,11 +12,19 @@ Ksconf 0.12
 *  Pre-commit hooks have been moved into their own `ksconf pre-commit repo <ksconf-pre-commit>`_ repository.
    To allow time for migration to the new repo, the existing hooks will remain for a few release before being removed.
    To migrate, simply add ``-pre-commit`` to the end of the ``repo`` field, and update ``rev`` to ``v0.12.0`` or later.
+
+
+**Packaging changes:**
+
 *  Dropped hard ``lxml`` from requirements.
    This is still handled automatically when using the pre-commit hooks (from the new repository).
    But this may be missing.
    To get access to all CLI functionality, run ``pip install ksconf[thirdparty]``,
    or for the full experience use ``pip install ksconf[fully-loaded]``
+*  Remove the use of the ``endpoints`` python package and shift to using ``importlib.metadata`` (or the equivalent backport), as it suggested by the original author of that package.
+   The original necessity of this library was to workaround performance issues in ``pkg_resources`` (and the fact that it's no present in Splunk's embedded python.
+   This move reduces code complexity but it does mean some additional runtime dependencies on older versions of Python.
+   In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
 Ksconf v0.12.0 (DRAFT)

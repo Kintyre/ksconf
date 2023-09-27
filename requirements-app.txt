@@ -13,7 +13,6 @@
 
 # These are copied from requirements.txt
 # NOTE:  We copy instead of reference because this list is used by build.py.
-entrypoints
 splunk-sdk>=1.7.0
 # 1.3.0 Drops Python 3.7 support
 pluggy>=1.2.0,<1.3

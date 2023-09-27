@@ -534,6 +534,7 @@ def add_file_handler(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
+'''
 def _get_entrypoints_lib(group, name=None):
     import entrypoints
 
@@ -544,10 +545,21 @@ def _get_entrypoints_lib(group, name=None):
         return entrypoints.get_single(group, name)
     else:
         return entrypoints.get_group_named(group)
+'''
+
+# TODO:  Find out if Splunk ships with importlib.metadata  A: No, neither is present (no surprise)
 
 
-# TODO:  Switch to importlib.metadata once ksconf is Python 3.8+ (Could use importlib_metadata backport)
-# TODO:  Find out if Splunk ships with importlib.metadata
+@cache
+def _get_importlib_entrypoints(group, name=None) -> list:
+    # Using a backport library to get Python 3.10 EntryPoints.select() functionality.
+    # But practically, if the backport is available, use it.  It's likely newer than stdlib.
+    try:
+        from importlib_metadata import entry_points
+    except ImportError:
+        from importlib.metadata import entry_points
+    return entry_points(group=group, name=name)
+
 
 """ Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
 function is called outside of our control.   Going with 'entrypoints' module or local fallback,
@@ -578,8 +590,11 @@ def _get_fallback(group, name=None):
         return entrypoints[name]
 
 
-# Removed _get_pkgresources_lib as middle option
-__get_entity_resolvers = [_get_entrypoints_lib, _get_fallback]
+__get_entity_resolvers = [
+    _get_importlib_entrypoints,
+    # _get_entrypoints_lib,
+    _get_fallback,
+]
 
 if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):    # pragma: no cover
     # Only use the fallback built in mechanism.  This is helpful when unittesting and building docs

@@ -2,7 +2,7 @@
 
 This is a silly hack allows for fallback mechanism when
     (a) running unit tests (can happen before install)
-    (b) if entrypoints or pkg_resources are not available at run time (Splunk's embedded python)
+    (b) unexpected issues with importlib.metadata or backport
 """
 
 from __future__ import absolute_import, unicode_literals
@@ -44,6 +44,7 @@ _entry_points = {
 
 
 def get_entrypoints_setup():
+    """ Build entry point text descriptions for ksconf packaging """
     setup = {}
     for (group, entries) in _entry_points.items():
         setup[group] = [f"{ep.name} = {ep.module_name}:{ep.object_name}" for ep in entries]
