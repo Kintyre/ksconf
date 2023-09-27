@@ -114,6 +114,7 @@ def package_spl(step):
              "--blocklist", "fonts",       # From build docs
              "--blocklist", ".buildinfo",  # From build docs
              "--blocklist", ".doctrees",   # From build docs
+             "--blocklist", "build.py",    # docs; AppInspect triggers manual_check / code review
              "--blocklist", REQUIREMENTS,
              "--block-local",
              "--layer-method=disable",
