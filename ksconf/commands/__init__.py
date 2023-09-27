@@ -534,23 +534,6 @@ def add_file_handler(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
-'''
-def _get_entrypoints_lib(group, name=None):
-    import entrypoints
-
-    # Monkey patch some attributes for better API compatibility
-    entrypoints.EntryPoint.dist = property(lambda self: self.distro)
-
-    if name:
-        return entrypoints.get_single(group, name)
-    else:
-        return entrypoints.get_group_named(group)
-'''
-
-# TODO:  Find out if Splunk ships with importlib.metadata  A: No, neither is present (no surprise)
-
-
-@cache
 def _get_importlib_entrypoints(group, name=None) -> list:
     # Using a backport library to get Python 3.10 EntryPoints.select() functionality.
     # But practically, if the backport is available, use it.  It's likely newer than stdlib.
@@ -559,26 +542,6 @@ def _get_importlib_entrypoints(group, name=None) -> list:
     except ImportError:
         from importlib.metadata import entry_points
     return entry_points(group=group, name=name)
-
-
-""" Disabling this.   Because the DistributionNotFound isn't thrown until the entrypoint.load()
-function is called outside of our control.   Going with 'entrypoints' module or local fallback,
-giving up on the built-in utility...
-
-def _get_pkgresources_lib(group, name=None):
-    # Part of setuptools (widely used but quite slow); It's presence can't be assumed
-    if name: raise NotImplementedError
-    import pkg_resources
-    d = {}
-    try:
-        for entrypoint in pkg_resources.iter_entry_points(group):
-            d[entrypoint.name] = entrypoint
-    except pkg_resources.DistributionNotFound:
-        # Not really the same thing, but for our purposes; it's close enough, and we can't catch
-        # this directly as we can't guarantee pkg_resources is available in the first place...
-        raise ImportError
-    return d
-"""
 
 
 def _get_fallback(group, name=None):
@@ -592,7 +555,6 @@ def _get_fallback(group, name=None):
 
 __get_entity_resolvers = [
     _get_importlib_entrypoints,
-    # _get_entrypoints_lib,
     _get_fallback,
 ]
 
