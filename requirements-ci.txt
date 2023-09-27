@@ -3,4 +3,5 @@ codecov
 coveralls
 jinja2
 pyyaml
+lxml
 -r requirements.txt
