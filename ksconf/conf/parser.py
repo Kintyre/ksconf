@@ -552,9 +552,10 @@ class update_conf:
             return
         if self.make_missing:
             parent = os.path.dirname(self.path)
-            if not os.path.isdir(parent):
+            if parent and not os.path.isdir(parent):
                 os.makedirs(parent)
-        smart_write_conf(self.path, self._data, sort=True)
+        if self._data is not None:
+            smart_write_conf(self.path, self._data, sort=True)
 
     def __getitem__(self, item: str) -> StanzaType:
         return self._data[item]
@@ -574,3 +575,7 @@ class update_conf:
 
     def update(self, *args, **kwargs):
         self._data.update(*args, **kwargs)
+
+    def abort_update(self):
+        """ Indicate that no updates were made. """
+        self._data = None

@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color] [--disable-color]
-                  {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+                  {check,combine,diff,package,filter,get-value,set-value,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
     KSCONF: Ksconf Splunk CONFig tool
@@ -25,7 +25,7 @@ ksconf
     "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
-      {check,combine,diff,package,filter,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+      {check,combine,diff,package,filter,get-value,set-value,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -36,6 +36,8 @@ ksconf
                             ignoring spacing and sort order
         package             Create a Splunk app .spl file from a source directory
         filter              A stanza-aware GREP tool for conf files
+        get-value           Get the value from a specific stanzas and attribute
+        set-value           Set the value of a specific stanzas and attribute
         promote             Promote .conf settings between layers using either
                             batch or interactive mode. Frequently this is used to
                             promote conf changes made via the UI (stored in the
@@ -415,6 +417,71 @@ ksconf filter
                             Select which attribute(s) will be discarded. This
                             space separated list of attributes indicates what to
                             discard. Supports wildcards.
+
+
+
+.. _ksconf_cli_get-value:
+
+ksconf get-value
+****************
+
+ .. code-block:: none
+
+    usage: ksconf get-value [-h] [--missing-okay] [-o FILE]
+                            STANZA ATTR FILE [FILE ...]
+    
+    Get a specific stanza and attribute value from a Splunk .conf file.
+    
+    positional arguments:
+      STANZA                Name of the conf file stanza to retrieve.
+      ATTR                  Name of the conf file attribute to retrieve.
+      FILE                  Input file to sort, or standard input.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --missing-okay        Ignore missing stanzas and attributes.
+      -o FILE, --output FILE
+                            File where the filtered results are written. Defaults
+                            to standard out.
+
+
+
+.. _ksconf_cli_set-value:
+
+ksconf set-value
+****************
+
+ .. code-block:: none
+
+    usage: ksconf set-value [-h] [--value-type TYPE] [--create-missing]
+                            [--no-overwrite]
+                            FILE STANZA ATTR VALUE
+    
+    Set a specific stanza and attribute value of a Splunk .conf file.
+    The value can be provided as a command line argument, file, or
+    environment variable
+    
+    This command does not support preserving leading or trailing whitespace.
+    Normally this is desireable.
+    
+    positional arguments:
+      FILE                  Configuration file to update.
+      STANZA                Name of the conf file stanza to retrieve.
+      ATTR                  Name of the conf file attribute to retrieve.
+      VALUE                 Value to apply to the conf file. Note that this can be
+                            a raw text string, or the name of the file, or an
+                            environment variable
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --value-type TYPE, -t TYPE
+                            Select the type of VALUE. The default is a string.
+                            Alternatively, the real value can be provided within a
+                            file, or an environment variable.
+      --create-missing      Create a new conf file if it doesn't currently exist.
+      --no-overwrite        Only set VALUE if none currently exists. This can be
+                            used to safely set a one-time default, but don't
+                            update overwrite an existing value.
 
 
 

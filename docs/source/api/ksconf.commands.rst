@@ -36,6 +36,14 @@ ksconf.commands.filter module
    :undoc-members:
    :show-inheritance:
 
+ksconf.commands.getvalue module
+-------------------------------
+
+.. automodule:: ksconf.commands.getvalue
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.commands.merge module
 ----------------------------
 

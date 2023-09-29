@@ -30,6 +30,8 @@ Ksconf 0.12
 Ksconf v0.12.1 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+*  Introducing `ksconf_cmd_get-value` and `ksconf_cmd_set-value` - the newest and simplest ksconf commands ever!
+   Use this to quickly grab and/or update a specific stanzas, attribute combination from a conf file.
 *  Add new attribute-level matching logic to ``ksconf filter``.
    Use ``--attr-matches`` and/or ``--attr-not-matches`` to match specific attribute and value combinations for stanza matching.
    This can be used to find props with a specific ``KV_MODE``, find saved search containing a specific search command, or list indexes not using ``volume:`` designation.

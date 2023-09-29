@@ -29,6 +29,8 @@ _entry_points = {
         Ep("diff",          "ksconf.commands.diff",         "DiffCmd"),
         Ep("package",       "ksconf.commands.package",      "PackageCmd"),
         Ep("filter",        "ksconf.commands.filter",       "FilterCmd"),
+        Ep("get-value",     "ksconf.commands.getsetvalue",  "GetValueCmd"),
+        Ep("set-value",     "ksconf.commands.getsetvalue",  "SetValueCmd"),
         Ep("promote",       "ksconf.commands.promote",      "PromoteCmd"),
         Ep("merge",         "ksconf.commands.merge",        "MergeCmd"),
         Ep("minimize",      "ksconf.commands.minimize",     "MinimizeCmd"),

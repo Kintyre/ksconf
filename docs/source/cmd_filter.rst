@@ -55,6 +55,7 @@ In many other cases, the usage of both ``ksconf filter`` and ``btool`` differ si
 
 
     ..  code-block:: sh
+
         ksconf merge search/{default,local}/savedsearches.conf | ksconf filter --stanza "* last 3 hours"
 
 
