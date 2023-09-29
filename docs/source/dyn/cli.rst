@@ -325,12 +325,13 @@ ksconf filter
 
  .. code-block:: none
 
-    usage: ksconf filter [-h] [-o FILE] [--comments] [--verbose]
+    usage: ksconf filter [-h] [-o FILE] [--comments] [--verbose] [--skip-broken]
                          [--match {regex,wildcard,string}] [--ignore-case]
                          [--invert-match] [--files-with-matches]
                          [--count | --brief] [--stanza PATTERN]
-                         [--attr-present ATTR] [-e | -d] [--keep-attrs WC-ATTR]
-                         [--reject-attrs WC-ATTR]
+                         [--attr-present ATTR] [--attr-matches ATTR PATTERN]
+                         [--attr-not-matches ATTR PATTERN] [-e | -d]
+                         [--keep-attrs WC-ATTR] [--reject-attrs WC-ATTR]
                          CONF [CONF ...]
     
     Filter the contents of a conf file in various ways. Stanzas can be included or
@@ -348,6 +349,9 @@ ksconf filter
                             to standard out.
       --comments, -C        Preserve comments. Comments are discarded by default.
       --verbose             Enable additional output.
+      --skip-broken         Skip broken input files. Without this things like
+                            duplicate stanzas and invalid entries will cause
+                            processing to stop.
       --match {regex,wildcard,string}, -m {regex,wildcard,string}
                             Specify pattern matching mode. Defaults to 'wildcard'
                             allowing for '*' and '?' matching. Use 'regex' for
@@ -381,6 +385,18 @@ ksconf filter
       --attr-present ATTR   Match any stanza that includes the ATTR attribute.
                             ATTR supports bulk attribute patterns via the
                             'file://' prefix.
+      --attr-matches ATTR PATTERN, --attr-eq ATTR PATTERN
+                            Match any stanza containing ATTR == PATTERN. PATTERN
+                            supports the special 'file://filename' syntax.
+                            Matching can be a direct string comparison (equals),
+                            or a regex and wildcard match. Note that all '--attr-
+                            match' and '--attr-not-match' arguments are matched
+                            together. For a stanza to match, all rules must apply.
+                            If attr is missing from a stanza, the value becomes an
+                            empty string for matching purposes.
+      --attr-not-matches ATTR PATTERN, --attr-ne ATTR PATTERN
+                            Match any stanza containing ATTR != PATTERN. See '--
+                            attr-matches' for additional details.
       -e, --enabled-only    Keep only enabled stanzas. Any stanza containing
                             'disabled = 1' will be removed. The value of
                             'disabled' is assumed to be false by default.

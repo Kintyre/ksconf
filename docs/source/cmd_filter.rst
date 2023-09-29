@@ -37,8 +37,63 @@ installed yet, then you'll understand the value of this.
 
 In many other cases, the usage of both ``ksconf filter`` and ``btool`` differ significantly.
 
+
+..  note::  What if I want a filter default & local at the same time?
+
+    In situations where it would be beneficial to filter based on the combined view of default and local, then simply use `ksconf_cmd_merge` first.
+    Here are two options.
+
+
+    *Option 1:*  Use a named temporary file
+
+    ..  code-block:: sh
+
+        ksconf merge search/{default,local}/savedsearches.conf > savedsearches.conf
+        ksconf filter savedsearches.conf - --stanza "* last 3 hours"
+
+    *Option 2:*  Chain both commands together
+
+
+    ..  code-block:: sh
+        ksconf merge search/{default,local}/savedsearches.conf | ksconf filter --stanza "* last 3 hours"
+
+
+
 Examples
 --------
+
+
+Searching for attribute/values combinations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Find all enabled input stanzas with a sourcetype prefixed with ``apache:``.
+
+..  code-block:: sh
+
+    ksconf filter etc/apps/*/{default,local}/inputs.conf \
+        --enabled-only --attr-eq sourcetype 'apache:*'
+
+
+List the names of saved searches using potentially expensive search commands:
+
+..  code-block:: sh
+
+    ksconf filter etc/apps/*/{default,local}/savedsearches.conf \
+        -b --match regex \
+        --attr-eq search '.*\|\s*(streamstats|transaction) .*'
+
+
+Show sourcetype stanzas where ``EVENT_BREAKER`` is defined but not enabled:
+
+..  code-block:: sh
+
+    ksconf filter etc/deployment-apps/*/{default,local}/props.conf \
+        --skip-broken --match regex \
+        --attr-match-equals EVENT_BREAKER '.+' \
+        --attr-match-not-equals EVENT_BREAKER_ENABLE '(true|1)'
+
+Note that both conditions listed must match for a stanza to match.  Logical 'AND' not an 'OR'.  Also note the use of ``--skip-broken`` because sometimes Splunk base apps have invalid conf files.
+
 
 Lift and shift
 ~~~~~~~~~~~~~~

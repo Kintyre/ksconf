@@ -20,10 +20,12 @@ from __future__ import absolute_import, unicode_literals
 import argparse
 import sys
 from argparse import ArgumentParser
+from typing import List, Tuple
 
 from ksconf.commands import ConfFileType, KsconfCmd, dedent
-from ksconf.conf.parser import PARSECONF_MID_NC, conf_attr_boolean, write_conf_stream
-from ksconf.consts import EXIT_CODE_SUCCESS
+from ksconf.conf.parser import (PARSECONF_MID_NC, ConfParserException,
+                                conf_attr_boolean, write_conf_stream)
+from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SUCCESS
 from ksconf.filter import FilteredList, FilteredListWildcard, create_filtered_list
 from ksconf.util.completers import conf_files_completer
 
@@ -63,6 +65,10 @@ class FilterCmd(KsconfCmd):
                             help="Preserve comments.  Comments are discarded by default.")
         parser.add_argument("--verbose", action="store_true", default=False,
                             help="Enable additional output.")
+
+        parser.add_argument("--skip-broken", action="store_true", default=False,
+                            help="Skip broken input files.  Without this things like duplicate "
+                            "stanzas and invalid entries will cause processing to stop.")
 
         parser.add_argument("--match", "-m",  # metavar="MODE",
                             choices=["regex", "wildcard", "string"],
@@ -112,20 +118,26 @@ class FilterCmd(KsconfCmd):
             Match any stanza that includes the ATTR attribute.
             ATTR supports bulk attribute patterns via the ``file://`` prefix."""))
 
-        '''# Add next
-        pg_sel.add_argument("--attr-eq", metavar=("ATTR", "PATTERN"), nargs=2, action="append",
+        pg_sel.add_argument("--attr-matches",
+                            "--attr-eq",
+                            metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
-                            help="""
-            Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special ``file://filename`` syntax.""")
-        '''
-        ''' # This will be more difficult
-        pg_sel.add_argument("--attr-ne",  metavar=("ATTR", "PATTERN"), nargs=2, action="append",
+                            help=dedent("""
+            Match any stanza containing ATTR == PATTERN.
+            PATTERN supports the special ``file://filename`` syntax.  Matching can be a direct
+            string comparison (equals), or a regex and wildcard match.
+
+            Note that all ``--attr-match`` and ``--attr-not-match`` arguments are matched together.
+            For a stanza to match, all rules must apply.
+            If attr is missing from a stanza, the value becomes an empty string for matching purposes."""))
+
+        pg_sel.add_argument("--attr-not-matches",
+                            "--attr-ne",
+                            metavar=("ATTR", "PATTERN"), nargs=2, action="append",
                             default=[],
-                            help="""
-            Match any stanza that includes an attribute matching the pattern.
-            PATTERN supports the special ``file://`` syntax.""")
-        '''
+                            help=dedent("""
+            Match any stanza containing ATTR != PATTERN.
+            See ``--attr-matches`` for additional details."""))
 
         pg_eod = pg_sel.add_mutually_exclusive_group()
         pg_eod.add_argument("-e", "--enabled-only", action="store_true",
@@ -167,6 +179,20 @@ class FilterCmd(KsconfCmd):
         self.attr_presence_filters = create_filtered_list(args.match, flags)
         self.attr_presence_filters.feedall(args.attr_present)
 
+        # Q:  Should we check to see if the same attribute is used more than once (likely a typo?)
+        # A:  No, let's trust the user; and avoid code bloat for hypothetical mistakes.
+        self.attr_value_filters: List[Tuple[str, FilteredList]] = []
+        if args.attr_matches:
+            for attr, value in args.attr_matches:
+                value_filter = create_filtered_list(args.match, flags)
+                value_filter.feed(value)
+                self.attr_value_filters.append((attr, value_filter))
+        if args.attr_not_matches:
+            for attr, value in args.attr_not_matches:
+                value_filter = create_filtered_list(args.match, flags | FilteredList.INVERT)
+                value_filter.feed(value)
+                self.attr_value_filters.append((attr, value_filter))
+
         if args.enabled_only:
             self.disabled_filter = lambda attrs: not is_disabled(attrs)
         elif args.disabled_only:
@@ -190,6 +216,14 @@ class FilterCmd(KsconfCmd):
             # Exclude based on value of 'disabled' attribute
             if not self.disabled_filter(attributes):
                 return False
+
+            # If attr matching is in use, then test all attribute/match.  All must match.
+            if self.attr_value_filters:
+                for attr_name, attr_filter in self.attr_value_filters:
+                    value = attributes.get(attr_name, "")
+                    if not attr_filter.match(value):
+                        return False
+                return True
 
             # If there are no attribute level filters, automatically keep (preserves empty stanzas)
             if not self.attr_presence_filters.has_rules:
@@ -249,8 +283,18 @@ class FilterCmd(KsconfCmd):
         # Still would be helpful for a quick "grep" of a large number of files
 
         for conf in args.conf:
-            conf.set_parser_option(keep_comments=args.comments)
-            cfg = conf.data
+            try:
+                conf.set_parser_option(keep_comments=args.comments)
+                cfg = conf.data
+            except ConfParserException as e:
+                action = "Aborting"
+                if args.skip_broken:
+                    action = "Skipping"
+                self.stderr.write(f"{action} due to parsing error during {conf.name} due to {e}\n")
+                if action == "Aborting":
+                    return EXIT_CODE_BAD_CONF_FILE
+                continue
+
             cfg_out = dict()
             for stanza_name, attributes in cfg.items():
                 keep = self._test_stanza(stanza_name, attributes) ^ args.invert_match

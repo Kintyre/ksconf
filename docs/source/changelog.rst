@@ -27,6 +27,17 @@ Ksconf 0.12
    In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
+Ksconf v0.12.1 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Add new attribute-level matching logic to ``ksconf filter``.
+   Use ``--attr-matches`` and/or ``--attr-not-matches`` to match specific attribute and value combinations for stanza matching.
+   This can be used to find props with a specific ``KV_MODE``, find saved search containing a specific search command, or list indexes not using ``volume:`` designation.
+   See the `ksconf_cmd_filter` docs for example usage.
+*  Fixed documentation generation bug that prevented command line options from showing up in the docs.
+
+
+
 Ksconf v0.12.0 (2023-09-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

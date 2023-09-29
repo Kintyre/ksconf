@@ -16,6 +16,10 @@ from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_SUCCESS
 from tests.cli_helper import FakeStdin, TestWorkDir, ksconf_cli
 
 
+def get_brief(stdout: str, ret_type=set):
+    return ret_type(f for f in stdout.split("\n") if f)
+
+
 class CliKsconfFilter(unittest.TestCase):
 
     _sample01 = """\
@@ -292,8 +296,8 @@ class CliKsconfFilter(unittest.TestCase):
     def test_output_brief(self):
         with ksconf_cli:
             ko = ksconf_cli("filter", self.sample01, "--stanza", "Errors in *", "-b")
-            self.assertRegex(ko.stdout, r"Errors in the last hour[\r\n]")
-            self.assertRegex(ko.stdout, r"Errors in the last 24 hours[\r\n]")
+            stanzas = get_brief(ko.stdout, set)
+            self.assertSetEqual(stanzas, {"Errors in the last hour", "Errors in the last 24 hours"})
 
     def test_output_list_combos(self):
         with ksconf_cli:
@@ -484,6 +488,23 @@ class CliKsconfFilter(unittest.TestCase):
             self.assertIn("ADD_EXTRA_TIME_FIELDS", keys)
             self.assertIn("DATETIME_CONFIG", keys)
             self.assertEqual(len(out["iis"]), 0)
+
+    def test_attr_eq_ne_savedsearch_match(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "-b",
+                            "--attr-eq", "search", "*sourcetype=access_*")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            stanzas = get_brief(ko.stdout, set)
+            self.assertSetEqual(stanzas, {"Errors in the last hour", "Errors in the last 24 hours"})
+
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample01, "-b",
+                            "--attr-ne", "search", "*metrics.log*")
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            stanzas = get_brief(ko.stdout, set)
+            self.assertSetEqual(stanzas, {"Errors in the last hour",
+                                          "Errors in the last 24 hours",
+                                          "Splunk errors last 24 hours"})
 
 
 if __name__ == '__main__':  # pragma: no cover
