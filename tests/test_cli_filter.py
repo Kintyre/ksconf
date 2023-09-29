@@ -198,7 +198,7 @@ class CliKsconfFilter(unittest.TestCase):
         with ksconf_cli:
             # Test multiple '--stanza'
             ko = ksconf_cli("filter", "--verbose", self.sample01, "--match", "string",
-                            "--stanza", "file://{}".format(flatfile))
+                            "--stanza", f"file://{flatfile}")
             self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
             out = ko.get_conf()
             self.assertEqual(len(out), 2, "Expecting 2 stanzas")
@@ -340,7 +340,7 @@ class CliKsconfFilter(unittest.TestCase):
             return os.path.isfile(path)
         '''
         f = open(self.sample01)
-        fd_dev = "/dev/fd/{}".format(f.fileno())
+        fd_dev = f"/dev/fd/{f.fileno()}"
         try:
             with mock.patch("ksconf.commands.os.path.isfile") as m, ksconf_cli:
                 m.return_value = False
@@ -369,12 +369,12 @@ class CliKsconfFilter(unittest.TestCase):
         from subprocess import PIPE, Popen
         p = Popen(["cat", self.sample01], stdout=PIPE)
         fd = p.stdout.fileno()
-        fd_dev = "/dev/fd/{}".format(fd)
+        fd_dev = f"/dev/fd/{fd}"
         try:
             with ksconf_cli:
                 ko = ksconf_cli("filter", fd_dev, "--stanza", "Errors in the last hour")
                 self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-                out = ko.get_conf(PARSECONF_STRICT)     # explict profile to boost coverage
+                out = ko.get_conf(PARSECONF_STRICT)     # explicit profile to boost coverage
                 self.assertIn("Errors in the last hour", out)
         finally:
             # Do we need this?

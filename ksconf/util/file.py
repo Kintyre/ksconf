@@ -96,7 +96,7 @@ def splglob_to_regex(pattern, re_flags=None):
     regex = re.sub(_glob_to_regex_find, lambda m: glob_to_regex[m.group()], pattern)
     # If NO anchors have been explicitly given, then assume full-match mode:
     if not re.search(r'(?<![\[\\])[$^]', regex):
-        regex = "^{}$".format(regex)
+        regex = f"^{regex}$"
     return re.compile(regex, flags=re_flags)
 
 
@@ -104,9 +104,9 @@ def splglob_simple(pattern):
     """ Return a splglob that either matches a full path or match a simple file """
     if "/" not in pattern:
         # Assume we've been given a simple file name:   app.conf, *.tgz
-        pattern = "^.../{}$".format(pattern)
+        pattern = f"^.../{pattern}$"
     else:
-        pattern = "^{}$".format(pattern)
+        pattern = f"^{pattern}$"
     return pattern
 
 

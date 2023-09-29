@@ -46,7 +46,7 @@ class CliPackageCmdTest(unittest.TestCase):
         </dashboard>
         """)
         if metadata:
-            twd.write_file("metadata/{}.meta".format(metadata), r"""
+            twd.write_file(f"metadata/{metadata}.meta", r"""
             []
             system = export
             """)

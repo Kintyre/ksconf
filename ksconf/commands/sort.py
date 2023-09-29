@@ -87,7 +87,7 @@ class SortCmd(KsconfCmd):
                 try:
                     if not args.force and _has_nosort_marker(conf):
                         if not args.quiet:
-                            self.stderr.write("Skipping no-sort file {}\n".format(conf))
+                            self.stderr.write(f"Skipping no-sort file {conf}\n")
                         continue
                     c = self.parse_conf(conf, mode='r+', raw_exec=True)
                     # c = parse_conf(conf, profile=PARSECONF_STRICT)
@@ -97,16 +97,16 @@ class SortCmd(KsconfCmd):
                     #                            sort=True)
                 except ConfParserException as e:
                     smart_rc = None
-                    self.stderr.write("Error trying to process file {0}.  "
-                                      "Error:  {1}\n".format(conf, e))
+                    self.stderr.write(f"Error trying to process file {conf}.  "
+                                      f"Error:  {e}\n")
                     failure = True
                     continue
                 if smart_rc == SMART_NOCHANGE:
                     if not args.quiet:
                         self.stderr.write("Nothing to update.  "
-                                          "File {0} is already sorted\n".format(conf))
+                                          f"File {conf} is already sorted\n")
                 else:
-                    self.stderr.write("Replaced file {0} with sorted content.\n".format(conf))
+                    self.stderr.write(f"Replaced file {conf} with sorted content.\n")
                     changes += 1
             if failure:
                 return EXIT_CODE_BAD_CONF_FILE
@@ -115,8 +115,7 @@ class SortCmd(KsconfCmd):
         else:
             for conf in args.conf:
                 if len(args.conf) > 1:
-                    args.target.write("---------------- [ {0} ] ----------------\n\n"
-                                      .format(conf))
+                    args.target.write(f"---------------- [ {conf} ] ----------------\n\n")
                 data = self.parse_conf(conf).data
                 write_conf(args.target, data, stanza_delim=stanza_delims, sort=True)
             return EXIT_CODE_SUCCESS

@@ -18,6 +18,7 @@ LEVELS:
 from __future__ import absolute_import, unicode_literals
 
 import re
+from typing import TextIO
 from urllib.parse import quote, unquote
 
 from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
@@ -108,7 +109,7 @@ class MetaData:
         if "access" in stanza:
             access = stanza["access"]
             for match in re.finditer(cls.regex_access, access):
-                stanza_name = "access.{}".format(match.group("action"))
+                stanza_name = f"access.{ match.group('action') }"
                 values = [role.strip() for role in match.group("roles").split(",")]
                 stanza[stanza_name] = values
         return stanza
@@ -127,7 +128,7 @@ class MetaData:
             layers.append(node.data)
         d = self.expand_layers(layers)
         # Parser access:   split out 'read' vs 'write', return as list
-        # d["acesss"]
+        # d["access"]
         return self.parse_meta(d)
 
     def feed_file(self, stream):
@@ -153,7 +154,7 @@ class MetaData:
         for path in self._meta.walk():
             yield (path, self.get(*path))
 
-    def write_stream(self, stream, sort=True):
+    def write_stream(self, stream: TextIO, sort=True):
         if sort:
             # Prefix level # to list for sorting purposes
             data = [(len(parts), parts, payload) for parts, payload in self.iter_raw()]
@@ -165,12 +166,12 @@ class MetaData:
 
         for parts, payload in raw:
             stanza = "/".join(quote(p, "") for p in parts)
-            stream.write("[{}]\n".format(stanza))
+            stream.write(f"[{stanza}]\n")
             for attr in sorted(payload):
                 value = payload[attr]
                 if attr.startswith("#"):
-                    stream.write("{0}\n".format(value))
+                    stream.write(f"{value}\n")
                 else:
-                    stream.write("{} = {}\n".format(attr, value))
+                    stream.write(f"{attr} = {value}\n")
             # Trailing EOL, oh well...  fix that later
             stream.write("\n")

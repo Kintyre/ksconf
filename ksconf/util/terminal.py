@@ -37,7 +37,7 @@ class TermColor:
 
     def color(self, *codes):
         if codes and self.color_enabled:
-            self.stream.write("\x1b[{}m".format(";".join([str(i) for i in codes])))
+            self.stream.write(f"\x1b[{';'.join([str(i) for i in codes])}m")
 
     def reset(self):
         self.color(ANSI_RESET)

@@ -196,7 +196,7 @@ class_mapping = {
 }
 
 
-def create_filtered_list(match_mode, flags=0, default=True):
+def create_filtered_list(match_mode: str, flags=0, default=True) -> FilteredList:
     try:
         class_ = class_mapping[match_mode]
     except KeyError:

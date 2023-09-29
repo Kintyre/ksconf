@@ -372,7 +372,8 @@ ksconf filter
       Include or exclude entire stanzas using these filter options. All filter
       options can be provided multiple times. If you have a long list of
       filters, they can be saved in a file and referenced using the special
-      'file://' prefix. One entry per line.
+      'file://' prefix. One entry per line. Entries can be either a literal
+      strings, wildcards, or regexes, depending on MATCH.
     
       --stanza PATTERN      Match any stanza who's name matches the given pattern.
                             PATTERN supports bulk patterns via the 'file://'

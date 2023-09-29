@@ -46,7 +46,7 @@ class XmlFormatCmd(KsconfCmd):
         if globals()["etree"]:
             return
         from lxml import etree
-        cls.version_extra = "lxml {}".format(etree.__version__)
+        cls.version_extra = f"lxml {etree.__version__}"
         g["etree"] = etree
 
     def register_args(self, parser):
@@ -118,26 +118,26 @@ class XmlFormatCmd(KsconfCmd):
         for fn in files:
             c["checked"] += 1
             if not os.path.isfile(fn):
-                self.stderr.write("Skipping missing file:  {0}\n".format(fn))
+                self.stderr.write(f"Skipping missing file:  {fn}\n")
                 c["missing"] += 1
                 continue
             try:
                 if formatter.format_xml(fn, fn, args.indent):
-                    self.stderr.write("Replaced file {0} with formatted content\n".format(fn))
+                    self.stderr.write(f"Replaced file {fn} with formatted content\n")
                     c["changed"] += 1
                 else:
                     if not args.quiet:
-                        self.stderr.write("Already formatted {0}\n".format(fn))
+                        self.stderr.write(f"Already formatted {fn}\n")
                     c["no-action"] += 1
                 self.stderr.flush()
             except etree.ParseError as e:
-                self.stderr.write("Error parsing file {0}:  {1}\n".format(fn, e))
+                self.stderr.write(f"Error parsing file {fn}:  {e}\n")
                 self.stderr.flush()
                 c["error"] += 1
                 exit_code = EXIT_CODE_BAD_CONF_FILE
             except Exception as e:  # pragma: no cover
-                self.stderr.write("Unhandled top-level exception while parsing {0}.  "
-                                  "Aborting.\n{1}\n".format(fn, e))
+                self.stderr.write(f"Unhandled top-level exception while parsing {fn}.  "
+                                  f"Aborting.\n{e}\n")
                 debug_traceback()
                 c["error"] += 1
                 exit_code = EXIT_CODE_INTERNAL_ERROR
@@ -147,8 +147,9 @@ class XmlFormatCmd(KsconfCmd):
             exit_code = EXIT_CODE_FORMAT_APPLIED
 
         if True:  # show stats or verbose
-            self.stdout.write("Completed formatting {0[checked]} files.  rc={1} Breakdown:\n"
-                              "   {0[changed]} files were formatted successfully.\n"
-                              "   {0[no-action]} files were already formatted.\n"
-                              "   {0[error]} files failed.\n".format(c, exit_code))
+            self.stdout.write(f"Completed formatting {c['checked']} files.  "
+                              f"rc={exit_code} Breakdown:\n"
+                              f"   {c['changed']} files were formatted successfully.\n"
+                              f"   {c['no-action']} files were already formatted.\n"
+                              f"   {c['error']} files failed.\n")
         return exit_code

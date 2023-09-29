@@ -410,9 +410,9 @@ class PromoteCmd(KsconfCmd):
                 # Q:  Should we simply remove everything from the source file that already lines
                 #     up with the target?  Just ask
                 if isinstance(op.location, DiffStzKey):
-                    msg = "[{0.stanza}]  {0.key}".format(op.location)
+                    msg = f"[{op.location.stanza}]  {op.location.key}"
                 elif isinstance(op.location, DiffStanza):
-                    msg = "[{0.stanza}]".format(op.location)
+                    msg = f"[{op.location.stanza}]"
                 if prompt_yes_no(f"Remove matching entry {msg}  "):
                     if isinstance(op.location, DiffStanza):
                         del out_src[op.location.stanza]

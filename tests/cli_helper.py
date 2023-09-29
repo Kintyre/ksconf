@@ -36,7 +36,7 @@ def _debug_file(flag, fn):  # pragma: no cover
         content = fp.read()
     length = len(content)
     hash = file_hash(fn)
-    print("\n{flag} {fn}  len={length} hash={hash} \n{content}".format(**vars()))
+    print(f"\n{flag} {fn}  len={length} hash={hash} \n{content}")
     del flag, hash, length
 
 
@@ -130,9 +130,9 @@ class _KsconfCli():
             ko = self._last_output
             if ko:
                 if ko.stdout:
-                    sys.stderr.write("STDOUT:\n{0}\n".format(ko.stdout))
+                    sys.stderr.write(f"STDOUT:\n{ko.stdout}\n")
                 if ko.stderr:
-                    sys.stderr.write("STDERR:\n{0}\n".format(ko.stderr))
+                    sys.stderr.write(f"STDERR:\n{ko.stderr}\n")
             # Re-raise exception
             return False
 
@@ -215,9 +215,9 @@ class TestWorkDir:
         if o.returncode != 0:  # pragma: no cover
             # Because, if we're using ksconf_cli, then we may be redirecting these...
             stderr = sys.__stderr__
-            stderr.write("Git command 'git {0}' failed with exit code {1}\n{2}\n"
-                         .format(" ".join(args), o.returncode, o.stderr))
-            raise RuntimeError("Failed git command (return code {0})".format(o.returncode))
+            stderr.write(f"Git command 'git {' '.join(args)}' failed with "
+                         f"exit code {o.returncode}\n{o.stderr}\n")
+            raise RuntimeError(f"Failed git command (return code {o.returncode})")
 
     def get_path(self, rel_path):
         # Always using unix/URL style paths internally.  But we want this to be OS agnostic

@@ -37,8 +37,8 @@ def git_cmd_iterable(args, iterable, cwd=None, cmd_len=1024):
     for chunk in _xargs(iterable, cmd_len - base_len):
         p = git_cmd(args + chunk, cwd=cwd)
         if p.returncode != 0:  # pragma: no cover
-            raise RuntimeError("git exited with code {}.  Command: {}".format(
-                p.returncode, list2cmdline(args + chunk)))
+            raise RuntimeError(f"git exited with code {p.returncode}.  "
+                               f"Command: {list2cmdline(args + chunk)}")
 
 
 # Shave time off of unit testing; or anything that does CLI calls from the API
@@ -61,7 +61,7 @@ def git_status_summary(path):
     c = Counter()
     cmd = git_cmd(["status", "--porcelain", "--ignored", "."], cwd=path)
     if cmd.returncode != 0:  # pragma: no cover
-        raise RuntimeError("git command returned exit code {}.".format(cmd.returncode))
+        raise RuntimeError(f"git command returned exit code {cmd.returncode}.")
     # XY:  X=index, Y=working tree.   For our simplistic approach we consider them together.
     for line in cmd.stdout.splitlines():
         state = line[0:2]
@@ -98,10 +98,6 @@ def git_is_clean(path=None, check_untracked=True, check_ignored=False):
         total_changes += c["untracked"]
     if check_ignored:
         total_changes += c["ignored"]
-    '''
-    print "GIT IS CLEAN?:   path={} check_untracked={} check_ignored={} total_changes={} c={}".format(
-        path, check_untracked, check_ignored, total_changes, c)
-    '''
     return total_changes == 0
 
 
@@ -112,8 +108,7 @@ def git_ls_files(path, *modifiers):
         args.append("--" + m)
     proc = git_cmd(args, cwd=path)
     if proc.returncode != 0:  # pragma: no cover
-        raise RuntimeError("Bad return code from git... {} add better exception handling here.."
-                           .format(proc.returncode))
+        raise RuntimeError(f"Bad return code from git... {proc.returncode} add better exception handling here..")
     return proc.stdout.splitlines()
 
 

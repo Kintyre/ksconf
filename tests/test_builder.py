@@ -55,15 +55,15 @@ class BuilderTestCase(unittest.TestCase):
         install_package(step)
 
         six_py = os.path.join(self.build, "lib", "six.py")
-        self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+        self.assertTrue(os.path.exists(six_py), f"Missing {six_py}")
         os.unlink(six_py)
         # Run for second time, with same path
         install_package(step)
         self.assertEqual(call_count[0], 1, "install_package() was run run too many times")
-        self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+        self.assertTrue(os.path.exists(six_py), f"Missing {six_py}")
 
     def test_cache_expire(self):
-        """Mock datetime object to ensure that cache expires so that wrapped funcion is re-run. """
+        """Mock datetime object to ensure that cache expires so that wrapped function is re-run. """
         self.twd.write_file("src/requirements.txt", "six==1.14.0")
         step = self.build_step
         call_count = [0]
@@ -88,13 +88,13 @@ class BuilderTestCase(unittest.TestCase):
             install_package(step)
 
         six_py = os.path.join(self.build, "lib", "six.py")
-        self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+        self.assertTrue(os.path.exists(six_py), f"Missing {six_py}")
         os.unlink(six_py)
 
         # Run for second time, with same path; cache should expire and therefore re-run the install_package()
         install_package(step)
         self.assertEqual(call_count[0], 2, "install_package() should have run 2 times due to cache expiration")
-        self.assertTrue(os.path.exists(six_py), "Missing {}".format(six_py))
+        self.assertTrue(os.path.exists(six_py), f"Missing {six_py}")
         self.assertIn("Cache expired", self.out_stream.getvalue())
 
     def test_change_inputs(self):

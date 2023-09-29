@@ -99,7 +99,8 @@ class FilterCmd(KsconfCmd):
 
             All filter options can be provided multiple times.
             If you have a long list of filters, they can be saved in a file and referenced using
-            the special ``file://`` prefix.  One entry per line."""))
+            the special ``file://`` prefix.  One entry per line.  Entries can be either a
+            literal strings, wildcards, or regexes, depending on MATCH."""))
 
         pg_sel.add_argument("--stanza", metavar="PATTERN", action="append", default=[],
                             help=dedent("""
@@ -184,7 +185,7 @@ class FilterCmd(KsconfCmd):
             # Bypass filter
             self.filter_attrs = lambda x: x
 
-    def _test_stanza(self, stanza, attributes):
+    def _test_stanza(self, stanza: str, attributes: dict) -> bool:
         if self.stanza_filters.match_stanza(stanza):
             # Exclude based on value of 'disabled' attribute
             if not self.disabled_filter(attributes):
@@ -199,40 +200,43 @@ class FilterCmd(KsconfCmd):
                     return True
         return False
 
-    def filter_attrs(self, content):
+    def filter_attrs(self, content: dict) -> dict:
         d = {}
         for (attr, value) in content.items():
             if self.attrs_keep_filter.match(attr) and self.attrs_reject_filter.match(attr):
                 d[attr] = content[attr]
         return d
 
-    def output(self, args, matches, filename):
+    def output(self, args, matches: dict, filename):
+        """
+        Process output for a single input file.
+        """
         if args.files_with_matches:
             if matches:
                 if args.count:
-                    args.output.write("{} has {} matching stanza(s)\n".format(filename, len(matches)))
+                    args.output.write(f"{filename} has {len(matches)} matching stanza(s)\n")
                 elif args.brief:
                     for stanza_name in matches:
-                        args.output.write("{}: {}\n".format(filename, stanza_name))
+                        args.output.write(f"{filename}: {stanza_name}\n")
                 else:
                     # Just show a single file
-                    args.output.write("{}\n".format(filename))
+                    args.output.write(f"{filename}\n")
             elif args.verbose:
-                self.stderr.write("No matching stanzas in {}\n".format(filename))
+                self.stderr.write(f"No matching stanzas in {filename}\n")
         elif args.count:
-            args.output.write("{}\n".format(len(matches)))
+            args.output.write(f"{len(matches)}\n")
         elif args.brief:
             for stanza_name in matches:
-                args.output.write("{}\n".format(stanza_name))
+                args.output.write(f"{stanza_name}\n")
         else:
             if len(args.conf) > 1:
-                args.output.write("#  {}\n".format(filename))
+                args.output.write(f"#  {filename}\n")
             if matches:
                 write_conf_stream(args.output, matches)
             elif args.verbose:
-                self.stderr.write("No matching stanzas in {}\n".format(filename))
+                self.stderr.write(f"No matching stanzas in {filename}\n")
             if args.verbose:
-                sys.stderr.write("Matched {} stanzas from {}\n".format(len(matches), filename))
+                sys.stderr.write(f"Matched {len(matches)} stanzas from {filename}\n")
 
     def run(self, args):
         ''' Filter configuration files. '''
@@ -247,7 +251,6 @@ class FilterCmd(KsconfCmd):
         for conf in args.conf:
             conf.set_parser_option(keep_comments=args.comments)
             cfg = conf.data
-            # Should this be an ordered dict?
             cfg_out = dict()
             for stanza_name, attributes in cfg.items():
                 keep = self._test_stanza(stanza_name, attributes) ^ args.invert_match

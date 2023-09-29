@@ -169,8 +169,8 @@ class PackageCmd(KsconfCmd):
             if pattern.startswith("file://"):
                 blocklist_file = pattern[7:]
                 expanded = list(self.load_blocklist(blocklist_file))
-                self.stderr.write("Extended blocklist from {} with {:d} entries\n"
-                                  .format(blocklist_file, len(expanded)))
+                self.stderr.write(f"Extended blocklist from {blocklist_file} "
+                                  f"with {len(expanded)} entries\n")
                 blocklist.extend(expanded)
             else:
                 blocklist.append(pattern)

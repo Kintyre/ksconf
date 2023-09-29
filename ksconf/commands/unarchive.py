@@ -282,7 +282,7 @@ class UnarchiveCmd(KsconfCmd):
             for pattern in patterns:
                 if pattern.startswith("./"):
                     if prefix:
-                        pattern = "{0}/{1}".format(prefix, pattern[2:])
+                        pattern = f"{prefix}/{pattern[2:]}"
                     else:
                         pattern = pattern[2:]
                     modified.append(pattern)
@@ -300,7 +300,7 @@ class UnarchiveCmd(KsconfCmd):
             for pattern in local_files:
                 excludes.append("./" + pattern)
         excludes = fixup_pattern_bw(excludes, app_basename)
-        self.stderr.write("Extraction exclude patterns:  {!r}\n".format(excludes))
+        self.stderr.write(f"Extraction exclude patterns:  {excludes!r}\n")
         exclude_filter = create_filtered_list("splunk", default=False)
         exclude_filter.feedall(excludes)
 
@@ -308,8 +308,8 @@ class UnarchiveCmd(KsconfCmd):
         path_rewrites = []
         files_iter = extract_archive(args.tarball)
         if args.default_dir != DEFAULT_DIR:
-            rep = r"\1/{}/".format(args.default_dir.strip("/"))
-            path_rewrites.append((re.compile(r"^(/?[^/]+)/{}/".format(DEFAULT_DIR)), rep))
+            rep = rf"\1/{ args.default_dir.strip('/') }/"
+            path_rewrites.append((re.compile(rf"^(/?[^/]+)/{DEFAULT_DIR}/"), rep))
             del rep
         if new_app_name:
             regex = re.compile(r'^([^/]+)(?=/)')
@@ -323,7 +323,7 @@ class UnarchiveCmd(KsconfCmd):
         self.stdout.write("Extracting app now...\n")
         for gaf in files_iter:
             if exclude_filter.match(gaf.path):
-                self.stdout.write("Skipping [blocklist] {}\n".format(gaf.path))
+                self.stdout.write(f"Skipping [blocklist] {gaf.path}\n")
                 continue
             if not is_git or args.git_mode in ("nochange", "stage"):
                 self.stdout.write(f"{gaf.path:60s} {gaf.mode:o} {gaf.size:-6d}\n")
@@ -338,9 +338,12 @@ class UnarchiveCmd(KsconfCmd):
         files_new, files_upd, files_del = cmp_sets(installed_files, existing_files)
 
         if DEBUG:
-            print("New: \n\t{}".format("\n\t".join(sorted(files_new))))
-            print("Existing: \n\t{}".format("\n\t".join(sorted(files_upd))))
-            print("Removed:  \n\t{}".format("\n\t".join(sorted(files_del))))
+            def dbg_fmt(l):
+                return "\n\t".join(sorted(l))
+
+            print(f"New:      \n\t{dbg_fmt(files_new)}")
+            print(f"Existing: \n\t{dbg_fmt(files_upd)}")
+            print(f"Removed:  \n\t{dbg_fmt(files_del)}")
 
         self.stdout.write(f"Extracted {len(installed_files)} files:  "
                           f"{len(files_new)} new, {len(files_upd)} existing, "
@@ -395,10 +398,10 @@ class UnarchiveCmd(KsconfCmd):
         if is_git:
             if args.git_mode in ("stage", "commit"):
                 git_cmd(["add", "--all", dest_app.name], cwd=dest_app.parent)
-                # self.stdout.write("git add {}\n".format(os.path.basename(dest_app)))
+                # self.stdout.write(f"git add {os.path.basename(dest_app)}\n")
             '''
             else:
-                self.stdout.write("git add {}\n".format(dest_app))
+                self.stdout.write(f"git add {dest_app}\n")
             '''
 
             # Is there anything to stage/commit?

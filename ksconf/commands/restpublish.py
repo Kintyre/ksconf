@@ -174,12 +174,11 @@ class RestPublishCmd(KsconfCmd):
             else:
                 action, info = self.publish_conf(stanza_name, stanza_data, config_file)
 
-            print("{:50} {:8}   (delta size: {})".format("[{}]".format(stanza_name),
-                                                         action, len(info.get("delta", []))))
+            print(f"{stanza_name:50} {action:8}   (delta size: { len(info.get('delta', [])) })")
 
             update_time = info.get("updated", 0)
-            # headers = (conf_proxy.name, "{}/{}".format(args.url, config_file.path))
-            # rest_header = DiffHeader("{}/{}".format(args.url, info.get("path", config_file.path), update_time))
+            # headers = (conf_proxy.name, f"{args.url}/{config_file.path}")
+            # rest_header = DiffHeader(f"{args.url}/{info.get('path', config_file.path)}", update_time)
             rest_header = DiffHeader(info.get("path", config_file.path), update_time)
             if action != "nochange" and "delta" in info:
                 show_diff(self.stdout, info["delta"], headers=(conf_proxy.name, rest_header))

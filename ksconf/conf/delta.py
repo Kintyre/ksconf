@@ -257,12 +257,11 @@ def summarize_cfg_diffs(delta: List[DiffOp], stream: TextIO):
             key_stats[op.tag][op.location.stanza][op.location.key].add(op.location.key)
 
     for tag in sorted(c.keys()):
-        stream.write("Have {0} '{1}' operations:\n".format(c[tag], tag))
+        stream.write(f"Have {c[tag]} '{tag}' operations:\n")
         for entry in sorted(stanza_stats[tag]):
-            stream.write("\t[{0}]\n".format(_format_stanza(entry)))
+            stream.write(f"\t[{_format_stanza(entry)}]\n")
         for entry in sorted(key_stats[tag]):
-            stream.write("\t[{0}]  {1} keys\n".format(_format_stanza(entry),
-                                                      len(key_stats[tag][entry])))
+            stream.write(f"\t[{_format_stanza(entry)}]  {len(key_stats[tag][entry])} keys\n")
         stream.write("\n")
 
 
