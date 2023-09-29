@@ -98,4 +98,4 @@ What does Splunk have to say about this?   (From the docs)
 
 .. [SPLKDOC1] https://docs.splunk.com/Documentation/Splunk/7.2.3/Admin/Configurationfiledirectories
 
-.. include:: common
+..  include:: common

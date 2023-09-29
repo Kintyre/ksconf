@@ -5,7 +5,7 @@ ksconf xml-format
 
 
 ..  argparse::
-    :module: ksconf.__main__
+    :module: ksconf.cli
     :func: build_cli_parser
     :path: xml-format
     :nodefault:
@@ -50,3 +50,6 @@ To recursively format xml files
 ..  code-block:: sh
 
     find . -path '*/data/ui/views/*.xml' -o -path '*/data/ui/nav/*.xml' | ksconf xml-format -
+
+
+..  include:: common

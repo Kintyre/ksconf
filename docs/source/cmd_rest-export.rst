@@ -14,7 +14,7 @@ ksconf rest-export
     But for **ALL** other use cases, the ``rest-publish`` command is superior.
 
 ..  argparse::
-    :module: ksconf.__main__
+    :module: ksconf.cli
     :func: build_cli_parser
     :path: rest-export
     :nodefault:
