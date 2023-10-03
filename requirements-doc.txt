@@ -1,5 +1,6 @@
 sphinx
 sphinx-autobuild
 sphinx-argparse
+sphinx_rtd_theme
 lxml
 -r requirements.txt
