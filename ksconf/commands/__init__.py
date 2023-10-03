@@ -6,10 +6,12 @@ import os
 import re
 import sys
 import textwrap
+import time
 from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
 from io import StringIO, open
 from textwrap import dedent
+from typing import TextIO
 from warnings import warn
 
 from ksconf import KsconfPluginWarning
@@ -47,7 +49,10 @@ class ConfDirProxy:
 
 
 class ConfFileProxy:
-    def __init__(self, name, mode, stream=None, parse_profile=None, is_file=None):
+    def __init__(self, name: str, mode: str, stream: TextIO = None,
+                 *,
+                 parse_profile: ParserConfig = None,
+                 is_file: bool = None):
         self.name = os.fspath(name)
         self._mode = mode
         if is_file is not None:
@@ -67,9 +72,6 @@ class ConfFileProxy:
     def __del__(self):
         if self.is_file():
             self.close()
-
-    def exists(self):
-        return os.path.isfile(self.name)
 
     def readable(self):
         return "r" in self._mode
@@ -133,7 +135,10 @@ class ConfFileProxy:
 
     @property
     def mtime(self):
-        return os.stat(self.name).st_mtime
+        if self._is_file:
+            return os.stat(self.name).st_mtime
+        else:
+            return time.time()
 
     def load(self, profile=None):
         if not self.readable():
@@ -240,7 +245,7 @@ class ConfFileType:
         else:
             try:
                 # Another possible option is using:  seekable()  but that only works ONCE the stream is open
-                if os.path.isfile(string):
+                if os.path.isfile(string) and not string.startswith("/dev/fd/"):
                     encoding = detect_by_bom(string)
                     stream = open(string, self._mode, encoding=encoding)
                     cfp = ConfFileProxy(string, self._mode, stream=stream,
