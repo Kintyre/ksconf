@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color] [--disable-color]
-                  {check,combine,diff,package,filter,attr-get,attr-set,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+                  {attr-get,attr-set,check,combine,diff,filter,merge,minimize,package,promote,rest-export,rest-publish,snapshot,sort,unarchive,xml-format}
                   ...
     
     KSCONF: Ksconf Splunk CONFig tool
@@ -25,7 +25,9 @@ ksconf
     "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
-      {check,combine,diff,package,filter,attr-get,attr-set,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+      {attr-get,attr-set,check,combine,diff,filter,merge,minimize,package,promote,rest-export,rest-publish,snapshot,sort,unarchive,xml-format}
+        attr-get            Get the value from a specific stanzas and attribute
+        attr-set            Set the value of a specific stanzas and attribute
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -34,26 +36,24 @@ ksconf
                             ongoing merge and one-time ad-hoc use.
         diff                Compare settings differences between two .conf files
                             ignoring spacing and sort order
-        package             Create a Splunk app .spl file from a source directory
         filter              A stanza-aware GREP tool for conf files
-        attr-get            Get the value from a specific stanzas and attribute
-        attr-set            Set the value of a specific stanzas and attribute
+        merge               Merge two or more .conf files
+        minimize            Minimize the target file by removing entries
+                            duplicated in the default conf(s)
+        package             Create a Splunk app .spl file from a source directory
         promote             Promote .conf settings between layers using either
                             batch or interactive mode. Frequently this is used to
                             promote conf changes made via the UI (stored in the
                             'local' folder) to a version-controlled directory,
                             such as 'default'.
-        merge               Merge two or more .conf files
-        minimize            Minimize the target file by removing entries
-                            duplicated in the default conf(s)
-        snapshot            Snapshot .conf file directories into a JSON dump
-                            format
-        sort                Sort a Splunk .conf file creating a normalized format
-                            appropriate for version control
         rest-export         Export .conf settings as a curl script to apply to a
                             Splunk instance later (via REST)
         rest-publish        Publish .conf settings to a live Splunk instance via
                             REST
+        snapshot            Snapshot .conf file directories into a JSON dump
+                            format
+        sort                Sort a Splunk .conf file creating a normalized format
+                            appropriate for version control
         unarchive           Install or upgrade an existing app in a git-friendly
                             and safe way
         xml-format          Normalize XML view and nav files
@@ -65,6 +65,71 @@ ksconf
                             color-aware pager, like 'less -R'
       --disable-color       Disable TTY color mode. This can also be setup as
                             environmental variable: 'export KSCONF_TTY_COLOR=off'
+
+
+
+.. _ksconf_cli_attr-get:
+
+ksconf attr-get
+***************
+
+ .. code-block:: none
+
+    usage: ksconf attr-get [-h] [--missing-okay] [-o FILE]
+                           STANZA ATTR FILE [FILE ...]
+    
+    Get a specific stanza and attribute value from a Splunk .conf file.
+    
+    positional arguments:
+      STANZA                Name of the conf file stanza to retrieve.
+      ATTR                  Name of the conf file attribute to retrieve.
+      FILE                  Input file to sort, or standard input.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --missing-okay        Ignore missing stanzas and attributes.
+      -o FILE, --output FILE
+                            File where the filtered results are written. Defaults
+                            to standard out.
+
+
+
+.. _ksconf_cli_attr-set:
+
+ksconf attr-set
+***************
+
+ .. code-block:: none
+
+    usage: ksconf attr-set [-h] [--value-type TYPE] [--create-missing]
+                           [--no-overwrite]
+                           FILE STANZA ATTR VALUE
+    
+    Set a specific stanza and attribute value of a Splunk .conf file.
+    The value can be provided as a command line argument, file, or
+    environment variable
+    
+    This command does not support preserving leading or trailing whitespace.
+    Normally this is desireable.
+    
+    positional arguments:
+      FILE                  Configuration file to update.
+      STANZA                Name of the conf file stanza to retrieve.
+      ATTR                  Name of the conf file attribute to retrieve.
+      VALUE                 Value to apply to the conf file. Note that this can be
+                            a raw text string, or the name of the file, or an
+                            environment variable
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --value-type TYPE, -t TYPE
+                            Select the type of VALUE. The default is a string.
+                            Alternatively, the real value can be provided within a
+                            file, or an environment variable.
+      --create-missing      Create a new conf file if it doesn't currently exist.
+      --no-overwrite        Only set VALUE if none currently exists. This can be
+                            used to safely set a one-time default, but don't
+                            update overwrite an existing value.
 
 
 
@@ -224,102 +289,6 @@ ksconf diff
 
 
 
-.. _ksconf_cli_package:
-
-ksconf package
-**************
-
- .. code-block:: none
-
-    usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
-                          [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
-                          [--layer-method {dir.d,disable,auto}] [-I PATTERN]
-                          [-E PATTERN] [--enable-handler {jinja}]
-                          [--template-vars TEMPLATE_VARS] [--follow-symlink]
-                          [--set-version VERSION] [--set-build BUILD]
-                          [--allow-local | --block-local | --merge-local]
-                          [--release-file RELEASE_FILE]
-                          SOURCE
-    
-    Create a Splunk app or add on tarball ('.spl') file from an app directory.
-    'ksconf package' can do useful things like, exclude unwanted files, combine
-    layers, set the application version and build number, drop or promote the
-    'local' directory into 'default'. Note that some arguments, like the 'FILE'
-    support special values that can be automatically evaluated at runtime. For
-    example the placeholders '{{version}}' or '{{git_tag}}' can be expanded into
-    the output tarball filename. If both layering and templating are in use at the
-    same time, be aware that templates are rendered prior to layering operations.
-    This allows, for example, one layer to include a simple 'indexes.conf' file
-    and another layer to include an 'indexes.conf.j2' template.
-    
-    positional arguments:
-      SOURCE                Source directory for the Splunk app.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      -f SPL, --file SPL    Name of splunk app file (tarball) to create.
-                            Placeholder variables in '{{var}}' syntax can be used
-                            here.
-      --app-name APP_NAME   Specify the top-level app folder name. If this is not
-                            given, the app folder name is automatically extracted
-                            from the basename of SOURCE. Placeholder variables,
-                            such as '{{app_id}}' can be used here.
-      --blocklist BLOCKLIST, -b BLOCKLIST
-                            Pattern for files/directories to exclude. Can be given
-                            multiple times. You can load multiple exclusions from
-                            disk by using 'file://path' which can be used with
-                            '.gitignore' for example. (Default includes: '.git*',
-                            '*.py[co]', '__pycache__', '.DS_Store')
-      --allowlist ALLOWLIST, -a ALLOWLIST
-                            Remove a pattern that was previously added to the
-                            blocklist.
-      --enable-handler {jinja}
-                            Enable optional file handling support
-      --template-vars TEMPLATE_VARS
-                            Set template variables as key=value or YAML/JSON, if
-                            filename prepend with @
-      --follow-symlink, -l  Follow symbolic links pointing to directories.
-                            Symlinks to files are always followed.
-      --set-version VERSION
-                            Set application version. By default the application
-                            version is read from default/app.conf. Placeholder
-                            variables such as '{{git_tag}}' can be used here.
-      --set-build BUILD     Set application build number.
-      --allow-local         Allow the 'local' folder to be kept as-is WARNING:
-                            This goes against Splunk packaging practices, and will
-                            cause AppInspect to fail. However, this option can be
-                            useful for private package transfers between servers,
-                            app backups, or other admin-like tasks.
-      --block-local         Block the 'local' folder and 'local.meta' from the
-                            package.
-      --merge-local         Merge any files in 'local' into the 'default' folder
-                            during packaging. This is the default behavior.
-    
-    Layer filtering:
-      If the app being packaged includes multiple layers, these arguments can be
-      used to control which ones should be included in the final app file. If no
-      layer options are specified, then all layers will be included.
-    
-      --layer-method {dir.d,disable,auto}
-                            Set the layer type used by SOURCE. Additional
-                            description provided in in the 'combine' command.Note
-                            that 'auto' is no longer supported as of v0.10.
-      -I PATTERN, --include PATTERN
-                            Name or pattern of layers to include.
-      -E PATTERN, --exclude PATTERN
-                            Name or pattern of layers to exclude from the target.
-    
-    Advanced Build Options:
-      The following options are for more advanced app building workflows.
-    
-      --release-file RELEASE_FILE
-                            Write the path of the newly generated archive file
-                            (SPL) after the archive is written. This is useful in
-                            build scripts when the SPL contains variables so the
-                            final name may not be known ahead of time.
-
-
-
 .. _ksconf_cli_filter:
 
 ksconf filter
@@ -420,68 +389,176 @@ ksconf filter
 
 
 
-.. _ksconf_cli_attr-get:
+.. _ksconf_cli_merge:
 
-ksconf attr-get
+ksconf merge
+************
+
+ .. code-block:: none
+
+    usage: ksconf merge [-h] [--target FILE] [--ignore-missing] [--dry-run]
+                        [--banner BANNER]
+                        FILE [FILE ...]
+    
+    Merge two or more .conf files into a single combined .conf file. This is
+    similar to the way that Splunk logically combines the 'default' and 'local'
+    folders at runtime.
+    
+    positional arguments:
+      FILE                  The source configuration file(s) to collect settings
+                            from.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --target FILE, -t FILE
+                            Save the merged configuration files to this target
+                            file. If not provided, the merged conf is written to
+                            standard output.
+      --ignore-missing, -s  Silently ignore any missing CONF files.
+      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
+                            preview changes in 'diff' format. If TARGET doesn't
+                            exist, then show the merged file.
+      --banner BANNER, -b BANNER
+                            A banner or warning comment added to the top of the
+                            TARGET file. Used to discourage Splunk admins from
+                            editing an auto-generated file.
+
+
+
+.. _ksconf_cli_minimize:
+
+ksconf minimize
 ***************
 
  .. code-block:: none
 
-    usage: ksconf attr-get [-h] [--missing-okay] [-o FILE]
-                           STANZA ATTR FILE [FILE ...]
+    usage: ksconf minimize [-h] [--target TARGET] [--dry-run | --output OUTPUT]
+                           [--explode-default] [-k PRESERVE_KEY]
+                           CONF [CONF ...]
     
-    Get a specific stanza and attribute value from a Splunk .conf file.
+    Minimize a conf file by removing any duplicated default settings. Reduce a
+    local conf file to only your intended changes without manually tracking which
+    entries you've edited. Minimizing local conf files makes your local
+    customizations easier to read and often results in cleaner upgrades.
     
     positional arguments:
-      STANZA                Name of the conf file stanza to retrieve.
-      ATTR                  Name of the conf file attribute to retrieve.
-      FILE                  Input file to sort, or standard input.
+      CONF                  The default configuration file(s) used to determine
+                            what base settings are. The base settings determine
+                            what is unnecessary to repeat in target file.
     
     optional arguments:
       -h, --help            show this help message and exit
-      --missing-okay        Ignore missing stanzas and attributes.
-      -o FILE, --output FILE
-                            File where the filtered results are written. Defaults
-                            to standard out.
+      --target TARGET, -t TARGET
+                            The local file that you wish to remove duplicate
+                            settings from. This file will be read from and then
+                            replaced with a minimized version.
+      --dry-run, -D         Enable dry-run mode. Instead of writing and minimizing
+                            the TARGET file, preview what would be removed as a
+                            'diff'.
+      --output OUTPUT       Write the minimized output to a separate file instead
+                            of updating TARGET.
+      --explode-default, -E
+                            Enable minimization across stanzas for special use-
+                            cases. Helpful when dealing with stanzas downloaded
+                            from a REST endpoint or 'btool list' output.
+      -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
+                            Specify attributes that should always be kept.
 
 
 
-.. _ksconf_cli_attr-set:
+.. _ksconf_cli_package:
 
-ksconf attr-set
-***************
+ksconf package
+**************
 
  .. code-block:: none
 
-    usage: ksconf attr-set [-h] [--value-type TYPE] [--create-missing]
-                           [--no-overwrite]
-                           FILE STANZA ATTR VALUE
+    usage: ksconf package [-h] [-f SPL] [--app-name APP_NAME]
+                          [--blocklist BLOCKLIST] [--allowlist ALLOWLIST]
+                          [--layer-method {dir.d,disable,auto}] [-I PATTERN]
+                          [-E PATTERN] [--enable-handler {jinja}]
+                          [--template-vars TEMPLATE_VARS] [--follow-symlink]
+                          [--set-version VERSION] [--set-build BUILD]
+                          [--allow-local | --block-local | --merge-local]
+                          [--release-file RELEASE_FILE]
+                          SOURCE
     
-    Set a specific stanza and attribute value of a Splunk .conf file.
-    The value can be provided as a command line argument, file, or
-    environment variable
-    
-    This command does not support preserving leading or trailing whitespace.
-    Normally this is desireable.
+    Create a Splunk app or add on tarball ('.spl') file from an app directory.
+    'ksconf package' can do useful things like, exclude unwanted files, combine
+    layers, set the application version and build number, drop or promote the
+    'local' directory into 'default'. Note that some arguments, like the 'FILE'
+    support special values that can be automatically evaluated at runtime. For
+    example the placeholders '{{version}}' or '{{git_tag}}' can be expanded into
+    the output tarball filename. If both layering and templating are in use at the
+    same time, be aware that templates are rendered prior to layering operations.
+    This allows, for example, one layer to include a simple 'indexes.conf' file
+    and another layer to include an 'indexes.conf.j2' template.
     
     positional arguments:
-      FILE                  Configuration file to update.
-      STANZA                Name of the conf file stanza to retrieve.
-      ATTR                  Name of the conf file attribute to retrieve.
-      VALUE                 Value to apply to the conf file. Note that this can be
-                            a raw text string, or the name of the file, or an
-                            environment variable
+      SOURCE                Source directory for the Splunk app.
     
     optional arguments:
       -h, --help            show this help message and exit
-      --value-type TYPE, -t TYPE
-                            Select the type of VALUE. The default is a string.
-                            Alternatively, the real value can be provided within a
-                            file, or an environment variable.
-      --create-missing      Create a new conf file if it doesn't currently exist.
-      --no-overwrite        Only set VALUE if none currently exists. This can be
-                            used to safely set a one-time default, but don't
-                            update overwrite an existing value.
+      -f SPL, --file SPL    Name of splunk app file (tarball) to create.
+                            Placeholder variables in '{{var}}' syntax can be used
+                            here.
+      --app-name APP_NAME   Specify the top-level app folder name. If this is not
+                            given, the app folder name is automatically extracted
+                            from the basename of SOURCE. Placeholder variables,
+                            such as '{{app_id}}' can be used here.
+      --blocklist BLOCKLIST, -b BLOCKLIST
+                            Pattern for files/directories to exclude. Can be given
+                            multiple times. You can load multiple exclusions from
+                            disk by using 'file://path' which can be used with
+                            '.gitignore' for example. (Default includes: '.git*',
+                            '*.py[co]', '__pycache__', '.DS_Store')
+      --allowlist ALLOWLIST, -a ALLOWLIST
+                            Remove a pattern that was previously added to the
+                            blocklist.
+      --enable-handler {jinja}
+                            Enable optional file handling support
+      --template-vars TEMPLATE_VARS
+                            Set template variables as key=value or YAML/JSON, if
+                            filename prepend with @
+      --follow-symlink, -l  Follow symbolic links pointing to directories.
+                            Symlinks to files are always followed.
+      --set-version VERSION
+                            Set application version. By default the application
+                            version is read from default/app.conf. Placeholder
+                            variables such as '{{git_tag}}' can be used here.
+      --set-build BUILD     Set application build number.
+      --allow-local         Allow the 'local' folder to be kept as-is WARNING:
+                            This goes against Splunk packaging practices, and will
+                            cause AppInspect to fail. However, this option can be
+                            useful for private package transfers between servers,
+                            app backups, or other admin-like tasks.
+      --block-local         Block the 'local' folder and 'local.meta' from the
+                            package.
+      --merge-local         Merge any files in 'local' into the 'default' folder
+                            during packaging. This is the default behavior.
+    
+    Layer filtering:
+      If the app being packaged includes multiple layers, these arguments can be
+      used to control which ones should be included in the final app file. If no
+      layer options are specified, then all layers will be included.
+    
+      --layer-method {dir.d,disable,auto}
+                            Set the layer type used by SOURCE. Additional
+                            description provided in in the 'combine' command.Note
+                            that 'auto' is no longer supported as of v0.10.
+      -I PATTERN, --include PATTERN
+                            Name or pattern of layers to include.
+      -E PATTERN, --exclude PATTERN
+                            Name or pattern of layers to exclude from the target.
+    
+    Advanced Build Options:
+      The following options are for more advanced app building workflows.
+    
+      --release-file RELEASE_FILE
+                            Write the path of the newly generated archive file
+                            (SPL) after the archive is written. This is useful in
+                            build scripts when the SPL contains variables so the
+                            final name may not be known ahead of time.
 
 
 
@@ -560,151 +637,6 @@ ksconf promote
       --stanza PATTERN      Promote any stanza with a name matching the given
                             pattern. PATTERN supports bulk patterns via the
                             'file://' prefix.
-
-
-
-.. _ksconf_cli_merge:
-
-ksconf merge
-************
-
- .. code-block:: none
-
-    usage: ksconf merge [-h] [--target FILE] [--ignore-missing] [--dry-run]
-                        [--banner BANNER]
-                        FILE [FILE ...]
-    
-    Merge two or more .conf files into a single combined .conf file. This is
-    similar to the way that Splunk logically combines the 'default' and 'local'
-    folders at runtime.
-    
-    positional arguments:
-      FILE                  The source configuration file(s) to collect settings
-                            from.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            Save the merged configuration files to this target
-                            file. If not provided, the merged conf is written to
-                            standard output.
-      --ignore-missing, -s  Silently ignore any missing CONF files.
-      --dry-run, -D         Enable dry-run mode. Instead of writing to TARGET,
-                            preview changes in 'diff' format. If TARGET doesn't
-                            exist, then show the merged file.
-      --banner BANNER, -b BANNER
-                            A banner or warning comment added to the top of the
-                            TARGET file. Used to discourage Splunk admins from
-                            editing an auto-generated file.
-
-
-
-.. _ksconf_cli_minimize:
-
-ksconf minimize
-***************
-
- .. code-block:: none
-
-    usage: ksconf minimize [-h] [--target TARGET] [--dry-run | --output OUTPUT]
-                           [--explode-default] [-k PRESERVE_KEY]
-                           CONF [CONF ...]
-    
-    Minimize a conf file by removing any duplicated default settings. Reduce a
-    local conf file to only your intended changes without manually tracking which
-    entries you've edited. Minimizing local conf files makes your local
-    customizations easier to read and often results in cleaner upgrades.
-    
-    positional arguments:
-      CONF                  The default configuration file(s) used to determine
-                            what base settings are. The base settings determine
-                            what is unnecessary to repeat in target file.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --target TARGET, -t TARGET
-                            The local file that you wish to remove duplicate
-                            settings from. This file will be read from and then
-                            replaced with a minimized version.
-      --dry-run, -D         Enable dry-run mode. Instead of writing and minimizing
-                            the TARGET file, preview what would be removed as a
-                            'diff'.
-      --output OUTPUT       Write the minimized output to a separate file instead
-                            of updating TARGET.
-      --explode-default, -E
-                            Enable minimization across stanzas for special use-
-                            cases. Helpful when dealing with stanzas downloaded
-                            from a REST endpoint or 'btool list' output.
-      -k PRESERVE_KEY, --preserve-key PRESERVE_KEY
-                            Specify attributes that should always be kept.
-
-
-
-.. _ksconf_cli_snapshot:
-
-ksconf snapshot
-***************
-
- .. code-block:: none
-
-    usage: ksconf snapshot [-h] [--output FILE] [--minimize] PATH [PATH ...]
-    
-    Build a static snapshot of various configuration files stored within a
-    structured json export format. If the .conf files being captured are within a
-    standard Splunk directory structure, then certain metadata and namespace
-    information is assumed based on typical path locations. Individual apps or
-    conf files can be collected as well, but less metadata may be extracted.
-    
-    positional arguments:
-      PATH                  Directory from which to load configuration files. All
-                            .conf and .meta file are included recursively.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --output FILE, -o FILE
-                            Save the snapshot to the named files. If not provided,
-                            the snapshot is written to standard output.
-      --minimize            Reduce the size of the JSON output by removing
-                            whitespace. Reduces readability.
-
-
-
-.. _ksconf_cli_sort:
-
-ksconf sort
-***********
-
- .. code-block:: none
-
-    usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
-                       FILE [FILE ...]
-    
-    Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
-    config file will be echoed to the screen.  (2) the config files are updated
-    in-place when the '-i' option is used.
-    
-    Manually managed conf files can be protected against changes by adding a comment containing the
-    string 'KSCONF-NO-SORT' to the top of any .conf file.
-    
-    positional arguments:
-      FILE                  Input file to sort, or standard input.
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --target FILE, -t FILE
-                            File to write results to. Defaults to standard output.
-      --inplace, -i         Replace the input file with a sorted version. WARNING:
-                            This a potentially destructive operation that may
-                            move/remove comments.
-      -n LINES, --newlines LINES
-                            Number of lines between stanzas.
-    
-    In-place update arguments:
-      -F, --force           Force file sorting for all files, even for files
-                            containing the special 'KSCONF-NO-SORT' marker.
-      -q, --quiet           Reduce the output. Reports only updated or invalid
-                            files. This is useful for pre-commit hooks, for
-                            example.
 
 
 
@@ -823,6 +755,74 @@ ksconf rest-publish
                             operation. In this mode, stanza attributes are
                             unnecessary. NOTE: This works for 'local' entities
                             only; the default folder cannot be updated.
+
+
+
+.. _ksconf_cli_snapshot:
+
+ksconf snapshot
+***************
+
+ .. code-block:: none
+
+    usage: ksconf snapshot [-h] [--output FILE] [--minimize] PATH [PATH ...]
+    
+    Build a static snapshot of various configuration files stored within a
+    structured json export format. If the .conf files being captured are within a
+    standard Splunk directory structure, then certain metadata and namespace
+    information is assumed based on typical path locations. Individual apps or
+    conf files can be collected as well, but less metadata may be extracted.
+    
+    positional arguments:
+      PATH                  Directory from which to load configuration files. All
+                            .conf and .meta file are included recursively.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --output FILE, -o FILE
+                            Save the snapshot to the named files. If not provided,
+                            the snapshot is written to standard output.
+      --minimize            Reduce the size of the JSON output by removing
+                            whitespace. Reduces readability.
+
+
+
+.. _ksconf_cli_sort:
+
+ksconf sort
+***********
+
+ .. code-block:: none
+
+    usage: ksconf sort [-h] [--target FILE | --inplace] [-F] [-q] [-n LINES]
+                       FILE [FILE ...]
+    
+    Sort a Splunk .conf file.  Sort has two modes:  (1) by default, the sorted
+    config file will be echoed to the screen.  (2) the config files are updated
+    in-place when the '-i' option is used.
+    
+    Manually managed conf files can be protected against changes by adding a comment containing the
+    string 'KSCONF-NO-SORT' to the top of any .conf file.
+    
+    positional arguments:
+      FILE                  Input file to sort, or standard input.
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      --target FILE, -t FILE
+                            File to write results to. Defaults to standard output.
+      --inplace, -i         Replace the input file with a sorted version. WARNING:
+                            This a potentially destructive operation that may
+                            move/remove comments.
+      -n LINES, --newlines LINES
+                            Number of lines between stanzas.
+    
+    In-place update arguments:
+      -F, --force           Force file sorting for all files, even for files
+                            containing the special 'KSCONF-NO-SORT' marker.
+      -q, --quiet           Reduce the output. Reports only updated or invalid
+                            files. This is useful for pre-commit hooks, for
+                            example.
 
 
 
