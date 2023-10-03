@@ -15,7 +15,7 @@ import os
 from ksconf.commands import ConfFileProxy, ConfFileType, KsconfCmd, dedent
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
-from ksconf.consts import EXIT_CODE_SUCCESS
+from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer
 
 
@@ -44,6 +44,12 @@ class MergeCmd(KsconfCmd):
         parser.add_argument("--ignore-missing", "-s", default=False, action="store_true",
                             help="Silently ignore any missing CONF files.")
 
+        parser.add_argument("--in-place", "-i", default=False, action="store_true",
+                            help=dedent("""
+            Enable in-place update mode.  When selected, the target file will also be considered as
+            the base of the merge operation.  All conf files will be merged with target.  When disabled,
+            any existing content within target is ignored and overwritten."""))
+
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.
             Instead of writing to TARGET, preview changes in 'diff' format.
@@ -51,6 +57,14 @@ class MergeCmd(KsconfCmd):
         parser.add_argument("--banner", "-b", default="", help=dedent("""\
             A banner or warning comment added to the top of the TARGET file.
             Used to discourage Splunk admins from editing an auto-generated file."""))
+
+    def pre_run(self, args):
+        if args.in_place:
+            if args.target.name == "<stdout>":
+                self.stderr.write("In-place mode require '--target=FILE'.\n")
+                return EXIT_CODE_BAD_ARGS
+            # Insert target as the first source CONF file to parse
+            args.conf.insert(0, args.target.name)
 
     def run(self, args):
         ''' Merge multiple configuration files into one '''
