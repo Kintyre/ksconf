@@ -163,7 +163,7 @@ ksconf combine
 
  .. code-block:: none
 
-    usage: ksconf combine [-h] [--target TARGET] [-m {auto,dir.d,disable}] [-q]
+    usage: ksconf combine [-h] --target TARGET [-m {auto,dir.d,disable}] [-q]
                           [-I PATTERN] [-E PATTERN] [--enable-handler {jinja}]
                           [--template-vars TEMPLATE_VARS] [--dry-run]
                           [--follow-symlink] [--banner BANNER] [-K KEEP_EXISTING]

@@ -17,7 +17,7 @@ from ksconf.combine import LayerCombiner, LayerCombinerException
 from ksconf.commands import KsconfCmd, add_file_handler, dedent
 from ksconf.compat import List
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
-                           EXIT_CODE_MISSING_ARG, EXIT_CODE_NO_SUCH_FILE)
+                           EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
 from ksconf.layer import LayerFile, layer_file_factory
 from ksconf.util.completers import DirectoriesCompleter
@@ -172,7 +172,7 @@ class CombineCmd(KsconfCmd):
             with the specific; later sources will override values from the earlier ones.
             Supports wildcards so a typical Unix ``conf.d/##-NAME`` directory structure works well.""")
                             ).completer = DirectoriesCompleter()
-        parser.add_argument("--target", "-t", help=dedent("""
+        parser.add_argument("--target", "-t", required=True, help=dedent("""
             Directory where the merged files will be stored.
             Typically either 'default' or 'local'""")
                             ).completer = DirectoriesCompleter()
@@ -277,10 +277,6 @@ class CombineCmd(KsconfCmd):
             for src in args.source:
                 self.stderr.write(f"Reading conf files from directory {src}\n")
             combiner.set_source_dirs(args.source)
-
-        if args.target is None:
-            self.stderr.write("Must provide the '--target' directory.\n")
-            return EXIT_CODE_MISSING_ARG
 
         self.stderr.write(f"Combining files into directory {args.target}\n")
 

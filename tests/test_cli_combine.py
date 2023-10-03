@@ -282,7 +282,7 @@ class CliKsconfCombineTestCase(unittest.TestCase):
     def test_require_arg(self):
         with ksconf_cli:
             ko = ksconf_cli("combine", "source-dir")
-            self.assertRegex(ko.stderr, "Must provide [^\r\n]+--target")
+            self.assertRegex(ko.stderr, "arguments are required: --target")
 
     def test_missing_marker(self):
         twd = TestWorkDir()
