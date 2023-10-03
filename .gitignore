@@ -12,6 +12,7 @@ build.cache
 .release_name
 .release_path
 docs/source/_build/
+docs/source/dyn/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

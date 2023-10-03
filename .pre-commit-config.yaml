@@ -36,12 +36,6 @@ repos:
       entry: ^(from build\.lib|import build\.)
       language: pygrep
       types: [python]
-    - id: make-dynamic-docs
-      name: Generating dynamic reference docs -> docs/source/cli.rst
-      language: script
-      entry: make_dyn_docs.py
-      types: [ python ]
-      pass_filenames: false
     - id: ksconf-unittest
       name: Run all unit tests for ksconf
       language: script
