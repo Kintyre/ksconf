@@ -12,7 +12,7 @@ ksconf
  .. code-block:: none
 
     usage: ksconf [-h] [--version] [--force-color] [--disable-color]
-                  {check,combine,diff,package,filter,get-value,set-value,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+                  {check,combine,diff,package,filter,attr-get,attr-set,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
                   ...
     
     KSCONF: Ksconf Splunk CONFig tool
@@ -25,7 +25,7 @@ ksconf
     "default" are all supported tasks which are not native to Splunk.
     
     positional arguments:
-      {check,combine,diff,package,filter,get-value,set-value,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
+      {check,combine,diff,package,filter,attr-get,attr-set,promote,merge,minimize,snapshot,sort,rest-export,rest-publish,unarchive,xml-format}
         check               Perform basic syntax and sanity checks on .conf files
         combine             Combine configuration files across multiple source
                             directories into a single destination directory. This
@@ -36,8 +36,8 @@ ksconf
                             ignoring spacing and sort order
         package             Create a Splunk app .spl file from a source directory
         filter              A stanza-aware GREP tool for conf files
-        get-value           Get the value from a specific stanzas and attribute
-        set-value           Set the value of a specific stanzas and attribute
+        attr-get            Get the value from a specific stanzas and attribute
+        attr-set            Set the value of a specific stanzas and attribute
         promote             Promote .conf settings between layers using either
                             batch or interactive mode. Frequently this is used to
                             promote conf changes made via the UI (stored in the
@@ -420,15 +420,15 @@ ksconf filter
 
 
 
-.. _ksconf_cli_get-value:
+.. _ksconf_cli_attr-get:
 
-ksconf get-value
-****************
+ksconf attr-get
+***************
 
  .. code-block:: none
 
-    usage: ksconf get-value [-h] [--missing-okay] [-o FILE]
-                            STANZA ATTR FILE [FILE ...]
+    usage: ksconf attr-get [-h] [--missing-okay] [-o FILE]
+                           STANZA ATTR FILE [FILE ...]
     
     Get a specific stanza and attribute value from a Splunk .conf file.
     
@@ -446,16 +446,16 @@ ksconf get-value
 
 
 
-.. _ksconf_cli_set-value:
+.. _ksconf_cli_attr-set:
 
-ksconf set-value
-****************
+ksconf attr-set
+***************
 
  .. code-block:: none
 
-    usage: ksconf set-value [-h] [--value-type TYPE] [--create-missing]
-                            [--no-overwrite]
-                            FILE STANZA ATTR VALUE
+    usage: ksconf attr-set [-h] [--value-type TYPE] [--create-missing]
+                           [--no-overwrite]
+                           FILE STANZA ATTR VALUE
     
     Set a specific stanza and attribute value of a Splunk .conf file.
     The value can be provided as a command line argument, file, or

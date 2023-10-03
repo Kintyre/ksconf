@@ -1,14 +1,20 @@
-""" SUBCOMMAND:  ``ksconf get-value <CONF>``
+""" SUBCOMMAND:  ``ksconf attr-get <CONF>``
 
 .. code-block:: sh
 
-    ksconf get-value launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/default/app.conf
+    ksconf attr-get launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/default/app.conf
 
 
-SUBCOMMAND:  ``ksconf set-value <CONF>``
+SUBCOMMAND:  ``ksconf attr-set <CONF>``
 
-    ksconf set-value launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --value 9.9.9
-    ksconf set-value launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --file /tmp/new_version
+    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --value 9.9.9
+
+    echo "9.9.9" > /tmp/new_version
+    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf -t file /tmp/new_version
+
+    export NEW_VERSION=1.2.3
+    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf -t env NEW_VERSION
+
 
 """
 
@@ -29,7 +35,7 @@ from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import expand_glob_list
 
 
-class GetValueCmd(KsconfCmd):
+class AttrGetCmd(KsconfCmd):
     help = "Get the value from a specific stanzas and attribute"
     description = dedent("""\
     Get a specific stanza and attribute value from a Splunk .conf file.
@@ -38,7 +44,6 @@ class GetValueCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
-        import argparse
         parser.add_argument("stanza", metavar="STANZA",
                             help="Name of the conf file stanza to retrieve.")
         parser.add_argument("attribute", metavar="ATTR",
@@ -93,7 +98,7 @@ class GetValueCmd(KsconfCmd):
         return EXIT_CODE_SUCCESS
 
 
-class SetValueCmd(KsconfCmd):
+class AttrSetCmd(KsconfCmd):
     help = "Set the value of a specific stanzas and attribute"
     description = dedent("""\
     Set a specific stanza and attribute value of a Splunk .conf file.

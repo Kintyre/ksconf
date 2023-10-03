@@ -9,6 +9,8 @@ Ksconf 0.12
 
 **Highlights:**
 
+*  Add new ksconf subcommands for very basic, but previously missing, `ksconf_cmd_attr-get` and `ksconf_cmd_attr-set`.
+   These commands allow for easy target information for capture or update.
 *  Pre-commit hooks have been moved into their own `ksconf pre-commit repo <ksconf-pre-commit>`_ repository.
    To allow time for migration to the new repo, the existing hooks will remain for a few release before being removed.
    To migrate, simply add ``-pre-commit`` to the end of the ``repo`` field, and update ``rev`` to ``v0.12.0`` or later.
@@ -30,7 +32,7 @@ Ksconf 0.12
 Ksconf v0.12.1 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Introducing `ksconf_cmd_get-value` and `ksconf_cmd_set-value` - the newest and simplest ksconf commands ever!
+*  Introducing `ksconf_cmd_attr-get` and `ksconf_cmd_attr-set` - the newest and simplest ksconf commands ever!
    Use this to quickly grab and/or update a specific stanzas, attribute combination from a conf file.
 *  Add new attribute-level matching logic to ``ksconf filter``.
    Use ``--attr-matches`` and/or ``--attr-not-matches`` to match specific attribute and value combinations for stanza matching.
