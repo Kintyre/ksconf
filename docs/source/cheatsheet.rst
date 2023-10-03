@@ -27,6 +27,31 @@ General purpose
 ---------------
 
 
+Extracting a single value
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Grabbing the definition of a single macro using :ref:`ksconf_cmd_attr-get`.
+Note in the case of a complex or multi-line expression, any line continuation characters will be removed.
+
+    .. code-block:: sh
+
+        ksconf attr-get macros.conf --stanza 'unroll_json_array(6)' --attribute definition
+
+
+Updating a single value
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose you have a macro called ``mydata_index`` that defines the source indexes for your dashboards.
+The following command uses :ref:`ksconf_cmd_attr-set` to update that macro directly from the CLI without opening an editor.
+
+    .. code-block:: sh
+
+        ksconf attr-set macros.conf --stanza mydata_index --attribute definition --value 'index=mydata1 OR index=otheridx'
+
+In this case the definition is a single line, but multi-line input is handled automatically.
+It's also possible to pull a vale from an existing file or from an environment variable, should that be useful.
+
+
 Comparing files
 ~~~~~~~~~~~~~~~~
 
@@ -78,7 +103,7 @@ Say you want to remove ``vsid`` from a legacy savedsearches file:
         ksconf filter search/default/savedsearches.conf --reject-attrs "vsid"
 
 
-To see just to the schedule and scheduler status of scheduled searches, run:
+To see just to the scheduled time and enablement status of scheduled searches, run:
 
     .. code-block:: sh
 
@@ -95,6 +120,16 @@ List apps configured in the deployment server
 
         ksconf filter -b serverclass.conf --stanza 'serverClass:*:app:*' | \
             cut -d: -f4 | sort | uniq
+
+
+Find saved searches with earliest=-1d@d
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    .. code-block:: sh
+
+        ksconf filter apps/*/default/savedsearches.conf \
+            --attr-eq dispatch.earliest_time "-1d@d"
+
 
 
 Cleaning up

@@ -1,19 +1,19 @@
-""" SUBCOMMAND:  ``ksconf attr-get <CONF>``
+""" SUBCOMMAND:  ``ksconf attr-get <CONF> --stanza STANZA --attribute ATTR``
 
 .. code-block:: sh
 
-    ksconf attr-get launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/default/app.conf
+    ksconf attr-get $SPLUNK_HOME/etc/apps/Splunk_TA_aws/default/app.conf --stanza launcher --attribute version
 
 
-SUBCOMMAND:  ``ksconf attr-set <CONF>``
+SUBCOMMAND:  ``ksconf attr-set <CONF> --stanza STANZA --attribute ATTR --value VALUE``
 
-    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --value 9.9.9
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version --value 9.9.9
 
     echo "9.9.9" > /tmp/new_version
-    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf -t file /tmp/new_version
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version  -t file /tmp/new_version
 
     export NEW_VERSION=1.2.3
-    ksconf attr-set launcher version $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf -t env NEW_VERSION
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version -t env NEW_VERSION
 
 
 """
@@ -25,12 +25,9 @@ import os
 from pathlib import Path
 
 from ksconf.commands import KsconfCmd, dedent
-from ksconf.conf.parser import (PARSECONF_STRICT, ConfParserException,
-                                parse_conf, update_conf, write_conf)
-from ksconf.consts import (EXIT_CODE_BAD_CONF_FILE,
-                           EXIT_CODE_CONF_NO_DATA_MATCH, EXIT_CODE_NO_SUCH_FILE,
-                           EXIT_CODE_NOTHING_TO_DO, EXIT_CODE_SORT_APPLIED,
-                           EXIT_CODE_SUCCESS, SMART_NOCHANGE)
+from ksconf.conf.parser import update_conf
+from ksconf.consts import (EXIT_CODE_CONF_NO_DATA_MATCH, EXIT_CODE_NO_SUCH_FILE,
+                           EXIT_CODE_NOTHING_TO_DO, EXIT_CODE_SUCCESS)
 from ksconf.util.completers import conf_files_completer
 from ksconf.util.file import expand_glob_list
 
@@ -44,15 +41,16 @@ class AttrGetCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
-        parser.add_argument("stanza", metavar="STANZA",
-                            help="Name of the conf file stanza to retrieve.")
-        parser.add_argument("attribute", metavar="ATTR",
-                            help="Name of the conf file attribute to retrieve.")
-
         parser.add_argument("conf", metavar="FILE", nargs="+",
                             default=["-"],
                             help="Input file to sort, or standard input."
                             ).completer = conf_files_completer
+
+        parser.add_argument("--stanza", "-s", metavar="STANZA", required=True,
+                            help="Name of the conf file stanza to retrieve.")
+        parser.add_argument("--attribute", "--attr", "-a",
+                            metavar="ATTR", required=True,
+                            help="Name of the conf file attribute to retrieve.")
 
         parser.add_argument("--missing-okay", action="store_true", default=False,
                             help="Ignore missing stanzas and attributes.  ")
@@ -71,7 +69,7 @@ class AttrGetCmd(KsconfCmd):
         args.conf = list(expand_glob_list(args.conf))
 
     def run(self, args):
-        ''' Sort one or more configuration file. '''
+        ''' For a given conf file, get the 'value' from [stanza] attribute = value '''
         for conf in args.conf:
             if len(args.conf) > 1:
                 args.output.write(f"---------------- [ {conf} ] ----------------\n\n")
@@ -115,10 +113,11 @@ class AttrSetCmd(KsconfCmd):
         parser.add_argument("conf", metavar="FILE",
                             help="Configuration file to update."
                             ).completer = conf_files_completer
-        parser.add_argument("stanza", metavar="STANZA",
-                            help="Name of the conf file stanza to retrieve.")
-        parser.add_argument("attribute", metavar="ATTR",
-                            help="Name of the conf file attribute to retrieve.")
+        parser.add_argument("--stanza", "-s", metavar="STANZA", required=True,
+                            help="Name of the conf file stanza to set.")
+        parser.add_argument("--attribute", "--attr", "-a",
+                            metavar="ATTR", required=True,
+                            help="Name of the conf file attribute to set.")
 
         parser.add_argument("value", metavar="VALUE",
                             help="Value to apply to the conf file.  Note that this can be a raw "
@@ -166,13 +165,13 @@ class AttrSetCmd(KsconfCmd):
                 if existing_value == value:
                     self.stderr.write(f"No change necessary.  {conf_file} "
                                       f"[{stanza}] {attribute} already has desired value.\n")
-                    conf.abort_update()
+                    conf.cancel()
                     return EXIT_CODE_SUCCESS
 
                 if no_overwrite:
                     self.stderr.write(f"Skipping updating {conf_file} due to --no-overwrite.  "
                                       f"[{stanza}] {attribute} already set.\n")
-                    conf.abort_update()
+                    conf.cancel()
                     return EXIT_CODE_NOTHING_TO_DO
 
             if stanza not in conf:
@@ -183,10 +182,8 @@ class AttrSetCmd(KsconfCmd):
         return EXIT_CODE_SUCCESS
 
     def run(self, args):
-        ''' Sort one or more configuration file. '''
+        ''' For a given conf file, set [stanza] attribute = value '''
         value = self.get_value(args.value, args.value_type)
-
-        print(f"args.conf:  {args.conf}")
         conf_path = Path(args.conf)
         return self.set_conf_value(conf_path, args.stanza, args.attribute, value,
                                    args.create_missing, args.no_overwrite)

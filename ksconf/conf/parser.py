@@ -172,6 +172,10 @@ else:
 
 
 def detect_by_bom(path: PathType) -> str:
+    # Refuse to consume a possibly read-once stream.  Could be a shell:  <(cmd)
+    # Using an assert because this really *should* be handled by the caller, but just in case...
+    assert not os.fspath(path).startswith("/dev/fd/"), "Don't bom my pipe!"
+
     with open(path, 'rb') as f:
         raw = f.read(4)    # will read less if the file is smaller
     encoding = _detect_lite(raw)
@@ -576,6 +580,7 @@ class update_conf:
     def update(self, *args, **kwargs):
         self._data.update(*args, **kwargs)
 
-    def abort_update(self):
-        """ Indicate that no updates were made. """
+    def cancel(self):
+        """ Indicate that no updates were made and all processing is complete.
+        An error will occur if additional read/writes are attempted. """
         self._data = None

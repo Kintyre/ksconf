@@ -32,12 +32,12 @@ Ksconf 0.12
 Ksconf v0.12.1 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Introducing `ksconf_cmd_attr-get` and `ksconf_cmd_attr-set` - the newest and simplest ksconf commands ever!
+*  Introducing :ref:`ksconf_cmd_attr-get` and :ref:`ksconf_cmd_attr-set` - the newest and simplest ksconf commands ever!
    Use this to quickly grab and/or update a specific stanzas, attribute combination from a conf file.
 *  Add new attribute-level matching logic to ``ksconf filter``.
    Use ``--attr-matches`` and/or ``--attr-not-matches`` to match specific attribute and value combinations for stanza matching.
    This can be used to find props with a specific ``KV_MODE``, find saved search containing a specific search command, or list indexes not using ``volume:`` designation.
-   See the `ksconf_cmd_filter` docs for example usage.
+   See the :ref:`ksconf_cmd_filter` docs for example usage.
 *  Add ``--in-place`` processing behavior for :ref:`ksconf_cmd_merge` to simplify the process of merging new content into an existing conf file.
 *  Fixed documentation generation bug that prevented command line options from showing up in the docs.
 *  Fixed some CLI file handling bug that resulted in broken use of ``-`` (stdin) and/or fancy shell commands involving ``<(some command)`` syntax, which can be a helpful trick to reduce the number of temporary files.
