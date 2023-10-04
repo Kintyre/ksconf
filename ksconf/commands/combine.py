@@ -229,8 +229,11 @@ class CombineCmd(KsconfCmd):
                             "that typically removes files in TARGET that no longer exist in SOURCE")
 
     def run(self, args):
-        combiner = RepeatableCombiner(follow_symlink=args.follow_symlink, banner=args.banner, dry_run=args.dry_run, quiet=args.quiet,
-                                      keep_existing=args.keep_existing, disable_cleanup=args.disable_cleanup, disable_marker=args.disable_marker)
+        combiner = RepeatableCombiner(follow_symlink=args.follow_symlink, banner=args.banner,
+                                      dry_run=args.dry_run, quiet=args.quiet,
+                                      keep_existing=args.keep_existing,
+                                      disable_cleanup=args.disable_cleanup,
+                                      disable_marker=args.disable_marker)
 
         # For now, just copy all settings from 'args' to class instance... needs work
         combiner.stdout = self.stdout
