@@ -47,7 +47,7 @@ Requirements
 *Python package install:*
 
  - `Python`_ Supports Python 3.7+
- - `PIP <https://pip.pypa.io/en/stable/installing/>`__ (strongly recommended)
+ - `PIP <https://pip.pypa.io/en/stable/installing/>`__
  - Tested on Mac, Linux, and Windows
 
 *Splunk app install:*

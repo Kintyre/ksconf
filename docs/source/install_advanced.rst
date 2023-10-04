@@ -7,7 +7,15 @@ However, that culminated in the collection of excellent information that is prov
 Please remember, the Splunk app install approach was introduced to alleviate several of these issues.
 
 A portion of this document is targeted at those who can't install packages as Admin or are forced to
-use Splunk's embedded Python. For everyone else, please start with the one-liner!
+use Splunk's embedded Python. For everyone else, please start with the one-liner:
+
+..  code-block:: sh
+
+    pip install -U ksconf
+
+This document includes some legacy information that may not longer be true.
+Generally speaking, installing Python packages has become much easier since Python 2 went away.
+However, there are still some weird corner cases out there so this document has be kept around for reference.
 
 
 ..  tip:: **Do any of these words for phrases strike fear in your heart?**
@@ -40,7 +48,7 @@ Flowchart
     -   Is the version greater than 3.7?
 
  -  Do you have admin access? (root/Administrator; or can you get it? How hard? Will you need it each time you upgrade the ksconf?)
- -  Do you already have a large Python deployment or dependency? (If so, you'll probably be fine. Use `virtualenv`_)
+ -  Do you already have a large Python deployment or dependency? (If so, you'll probably be fine. Use `venv`_)
  -  Do you have any prior Python packaging or administration experience?
  -  Are you dealing with some vendor-specific solution?
 
@@ -55,10 +63,10 @@ Flowchart
 Installation
 ------------
 
-There are several ways to install ksconf. Technically, all standard Python packaging approaches
-should work just fine as there's no compiled code or external run-time dependencies so installation
-is fairly easy. However, for non-Python developers, there are some snags. Installation options are
-listed from the most easy and recommended, to more obscure and difficult:
+There are several ways to install ksconf.
+Technically, all standard Python packaging approaches should work just fine.
+However, for non-Python developers, there are some snags.
+Installation options are listed from the most easy and recommended, to more obscure and difficult:
 
 Install from PyPI with PIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,19 +82,22 @@ Install ksconf into a virtual environment
 
 **Use this option if you don't have admin access**
 
-Installing ``ksconf`` with virtualenv_ is a great way to test the tool without requiring admin
+Installing ``ksconf`` with venv is a great way to test the tool without requiring admin
 privileges and has many advantages for a production install. Here are the basic steps to get
 started.
+
+..  note:: Virtualenv vs venv
+
+    We used to recommend using virtualenv_, which worked with Python 2 and 3.
+    But since Python now ships with venv_, there's no functional differences between the two approaches, we now suggest using 'venv'.
+    That being said, virtualenv still works fine and will continue to be supported.
 
 Please change ``venv`` to a suitable path for your environment.
 
 ..  code-block:: sh
 
-    # Install Python virtualenv package (if not already installed)
-    pip install virtualenv
-
     # Create and activte new 'venv' virtual environment
-    virtualenv venv
+    python3 -m venv venv
     source venv/bin/activate
 
     pip install ksconf
@@ -163,23 +174,10 @@ run the following:
     chmod +x /usr/local/bin/ksconf
 
 
-Install the Wheel manually (offline mode)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Download the latest "Wheel" file file from `PyPI <kintyre-splunk-conf-wheel>`_, copy it to the destination server
-and install with pip.
-
-Offline pip install:
-
-..  code-block:: sh
-
-    pip install ~/Downloads/kintyre-splunk-conf-0.4.2-py2.py3-none-any.whl
-
-
 On Linux or Mac
 ^^^^^^^^^^^^^^^
 
-Download the latest "Wheel" file file from `PyPI <ksconf-wheel>`_. The path to this download will be
+Download the latest `ksconf wheel`_ file from PyPI.  The path to this download will be
 set in the ``pkg`` variable as shown below.
 
 Setup the shell:
@@ -215,7 +213,7 @@ Test the install:
 On Windows
 ^^^^^^^^^^
 
-1.  Open a browser and download the latest "Wheel" file file from `PyPI <ksconf-wheel>`_.
+1.  Open a browser and download the latest `ksconf wheel`_ file from PyPI.
 2.  Rename the ``.whl`` extension to ``.zip``. (This may require showing file extensions in Explorer.)
 3.  Extract the zip file to a temporary folder. (This should create a folder named "ksconf")
 4.  Create a new folder called "Kintyre" under the Splunk installation path (aka ``SPLUNK_HOME``)
@@ -285,7 +283,7 @@ file copy procedures necessary for your organization.
     # Compress directory (on staging computer)
     tar -czvf ksconf-packages.tgz ksconf-packages
 
-    # Copy file using whatever means
+    # Copy file using whatever means (for example, scp)
     scp ksconf-packages.tgz user@server:/tmp/ksconf-packages.tgz
 
     # Extract the archive (on destination server)
@@ -296,7 +294,7 @@ file copy procedures necessary for your organization.
 ..  code-block:: sh
 
     # Install ksconf package with pip
-    pip install --no-index --find-links=ksconf-packages kntyre-splunk-conf
+    pip install --no-index --find-links=ksconf-packages ksconf
 
     # Test the installation
     ksconf --version
@@ -321,7 +319,7 @@ above and can be combined, if needed.)
     curl https://bootstrap.pypa.io/get-pip.py -o ksconf-packages/get-pip.py
     python3 -m pip download -d /tmp/my_packages pip setuptools wheel
 
-The ``ksconf-pacakges`` folder should contain 1 script, and 3 wheel (``*.whl``) files.
+The ``ksconf-packages`` folder should contain 1 script, and 3 wheel (``*.whl``) files.
 
 **Step 2**: Archive and/or copy to offline server
 
@@ -466,7 +464,7 @@ If this doesn't work, here are a few things to try:
         cd $SPLUNK_HOME/etc/apps/ksconf/bin/lib
         python -m ksconf --version
 
-    If this works, then the issue has something to do with your path.
+    If this works, then the issue is with PATH.
 
 
 It may be helpful to uninstall (remove) the Splunk app and reinstall from scratch.
@@ -481,8 +479,6 @@ Resources
 -   `Python packaging <https://docs.python.org/3/installing/index.html>`__ docs provide a general overview on installing Python
     packages, how to install per-user vs install system-wide.
 -   `Install PIP <https://pip.pypa.io/en/stable/installing/>`__ docs explain how to bootstrap or upgrade
-    ``pip`` the Python packaging tool. Recent versions of Python come with this by default, but
-    releases before Python 2.7.9 do not.
-
+    ``pip`` the Python packaging tool.  Python 3 comes with this by default, but some Linux distros break this into a separate package.
 
 ..  include:: common

@@ -197,3 +197,18 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+
+linkcheck_ignore = [
+    r'https://localhost:8089(/.*|$)'
+]
+
+
+linkcheck_allowed_redirects = {
+    r'https://github\.com/Kintyre/ksconf/issues/new.*':
+        r'https://github.com/login.*',
+    r'https://stackoverflow.com/a/\d+/\d+':
+        r'https://stackoverflow.com/questions/\d+/.*',
+}
+
+linkcheck_timeout = 3

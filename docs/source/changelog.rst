@@ -9,9 +9,9 @@ Ksconf 0.12
 
 **Highlights:**
 
-*  Add new ksconf subcommands for very basic, but previously missing, `ksconf_cmd_attr-get` and `ksconf_cmd_attr-set`.
+*  Add new ksconf subcommands for very basic, but previously missing, :ref:`ksconf_cmd_attr-get` and :ref:`ksconf_cmd_attr-set`.
    These commands allow for easy target information for capture or update.
-*  Pre-commit hooks have been moved into their own `ksconf pre-commit repo <ksconf-pre-commit>`_ repository.
+*  Pre-commit hooks have been moved into their own `ksconf-pre-commit repo`.
    To allow time for migration to the new repo, the existing hooks will remain for a few release before being removed.
    To migrate, simply add ``-pre-commit`` to the end of the ``repo`` field, and update ``rev`` to ``v0.12.0`` or later.
 
@@ -50,7 +50,7 @@ Ksconf v0.12.0 (2023-09-27)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Drop ``lxml`` and ``endpoints`` dependencies.
-*  Moved pre-commit hooks to `ksconf pre-commit repo <ksconf-pre-commit>`_, and started deprecation of the hooks in the main `ksconf repo <ksconf>`_ repo.
+*  Moved pre-commit hooks to `ksconf-pre-commit repo`_, and started deprecation of the hooks in the main `ksconf repo`_.
 
 
 Ksconf 0.11

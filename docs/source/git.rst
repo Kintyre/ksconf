@@ -19,7 +19,7 @@ We suggest that you read the pre-commit docs and review this section when you ar
 Hooks provided by ksconf
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Three hooks are currently defined by the `ksconf-pre-commit repo <ksconf-pre-commit>`_ repository:
+Three hooks are currently defined by the `ksconf-pre-commit repo`:
 
     ksconf-check
         Runs :ref:`ksconf_cmd_check` to perform basic validation tests against all files
