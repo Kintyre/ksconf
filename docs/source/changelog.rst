@@ -39,6 +39,12 @@ Ksconf v0.12.2 (2023-10-05)
 *  Enhanced plugin error handling.
 *  Many little doc build fixes.
 
+**Internal changes:**
+
+-  Switching to python package namespaces.  This allows for more flexible packaging of various ksconf components including optional subcommands and plugins.
+   Unless you are a python developer, you should never notice a difference.
+   Splunk App users should re-install to avoid any confusion.
+
 
 Ksconf v0.12.1 (2023-10-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

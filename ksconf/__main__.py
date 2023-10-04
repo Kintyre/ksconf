@@ -5,8 +5,7 @@
 # Unlike the rest of ksconf, this file should remain Python 2.7 compatible
 # This is just enough to gracefully report our presence in an unsupported
 # version of Python, if we happen to get installed there.  Try really hard
-# to avoid showing Python compiler errors as those are really confusing.
-
+# to avoid confusing Python compiler errors.
 """ KSCONF - Ksconf Splunk CONFig tool
 
 Optionally supports argcomplete for commandline argument (tab) completion.

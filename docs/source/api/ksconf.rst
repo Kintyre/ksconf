@@ -1,5 +1,7 @@
-ksconf package
-==============
+ksconf namespace
+================
+
+.. py:module:: ksconf
 
 Subpackages
 -----------
@@ -109,14 +111,6 @@ ksconf.xmlformat module
 -----------------------
 
 .. automodule:: ksconf.xmlformat
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: ksconf
    :members:
    :undoc-members:
    :show-inheritance:

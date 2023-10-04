@@ -9,7 +9,7 @@ from io import StringIO, open
 from subprocess import list2cmdline
 from textwrap import dedent
 
-from ksconf.__main__ import cli
+from ksconf.cli import cli
 from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
                                 parse_string as parse_string_, write_conf)
 from ksconf.util.file import file_hash

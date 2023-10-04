@@ -14,7 +14,7 @@ from textwrap import dedent
 from typing import TextIO
 from warnings import warn
 
-from ksconf import KsconfPluginWarning
+from ksconf._ksconf import KsconfPluginWarning
 from ksconf.compat import cache
 from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 detect_by_bom, parse_conf, smart_write_conf,

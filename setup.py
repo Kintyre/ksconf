@@ -5,7 +5,7 @@ import os
 import re
 from textwrap import dedent
 
-from setuptools import setup
+from setuptools import find_namespace_packages, setup
 
 from ksconf.setup_entrypoints import get_entrypoints_setup
 
@@ -175,14 +175,7 @@ setup(name=package_name,
       },
       packages=[
           "ksconf",
-          "ksconf.app",
-          "ksconf.builder",
-          "ksconf.commands",
-          "ksconf.conf",
-          "ksconf.util",
-          "ksconf.vc",
-          "ksconf.ext",    # Third-party modules shipping with ksconf
-      ],
+      ] + find_namespace_packages(include=['ksconf.*']),
       setup_requires=[
           "wheel",
       ],
@@ -203,8 +196,9 @@ setup(name=package_name,
               "argcomplete",
               "jinja2",
               "splunk-sdk",
+              "pyyaml",
           ]
       },
       include_package_data=True,
-      zip_safe=True
+      zip_safe=False
       )

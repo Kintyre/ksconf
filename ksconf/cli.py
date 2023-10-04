@@ -21,7 +21,7 @@ import sys
 from collections import defaultdict
 from typing import List
 
-import ksconf
+import ksconf._ksconf as ksc
 import ksconf.util
 from ksconf.commands import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG, is_debug
@@ -107,16 +107,16 @@ def build_cli_parser(do_formatter=False):
     version_info = []
 
     # XXX:  Check terminal size before picking a signature
-    version_info.append(choice(ksconf.__ascii_sigs__))
+    version_info.append(choice(ksc.__ascii_sigs__))
 
-    verbuild = f"%(prog)s {ksconf.__version__}"
-    if ksconf.__build__:
-        verbuild += f"  (Build {ksconf.__build__})"
+    verbuild = f"%(prog)s {ksc.__version__}"
+    if ksc.__build__:
+        verbuild += f"  (Build {ksc.__build__})"
     version_info.append(verbuild)
     version_info.append(f"Python: {sys.version.split()[0]}  ({sys.executable})")
-    if ksconf.__vcs_info__:
-        version_info.append(ksconf.__vcs_info__)
-    install_location = os.path.dirname(os.path.abspath(ksconf.__file__))
+    if ksc.__vcs_info__:
+        version_info.append(ksc.__vcs_info__)
+    install_location = os.path.dirname(os.path.abspath(ksc.__file__))
     version_info.append(f"Installed at: {install_location}")
     version_info.append(f"Platform:  {platform.version()}")
     try:
@@ -172,9 +172,9 @@ def build_cli_parser(do_formatter=False):
                         version_info.append(f"    hook    {caller.name}")
 
     # XXX:  Grab splunk version and home, if running as a splunk app
-    version_info.append(f"Written by {ksconf.__author__}.")
-    version_info.append(f"Copyright {ksconf.__copyright__}, all rights reserved.")
-    version_info.append(f"Licensed under {ksconf.__license__}")
+    version_info.append(f"Written by {ksc.__author__}.")
+    version_info.append(f"Copyright {ksc.__copyright__}, all rights reserved.")
+    version_info.append(f"Licensed under {ksc.__license__}")
 
     # Add entry-point subcommands
     subcommands = defaultdict(list)

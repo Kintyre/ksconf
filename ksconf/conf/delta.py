@@ -446,7 +446,7 @@ def write_diff_as_json(delta: List[DiffOp], stream, **dump_args):
     import json
     import sys
 
-    from ksconf import __vcs_info__, __version__
+    from ksconf._ksconf import __vcs_info__, __version__
     record = {
         "schema_version": 1,
         "software": {
