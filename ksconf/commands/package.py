@@ -93,11 +93,10 @@ class PackageCmd(KsconfCmd):
             "are specified, then all layers will be included.")
 
         player.add_argument("--layer-method",
-                            choices=["dir.d", "disable", "auto"],
+                            choices=["dir.d", "disable"],
                             default="dir.d",
                             help="Set the layer type used by SOURCE.  "
-                                 "Additional description provided in in the ``combine`` command."
-                                 "Note that 'auto' is no longer supported as of v0.10.")
+                                 "Additional description provided in in the ``combine`` command.")
         player.add_argument("-I", "--include", action="append", default=[], dest="layer_filter",
                             type=wb_type("include"), metavar="PATTERN",
                             help="Name or pattern of layers to include.")
@@ -208,15 +207,6 @@ class PackageCmd(KsconfCmd):
 
         packager = AppPackager(args.source, app_name, output=self.stderr,
                                template_variables=template_vars)
-
-        if args.layer_method == "auto":
-            # There'd no way to make this option legal but not shown in argparse.  :-(
-            # Yeah, all this needs *LOTS* of work!
-            self.stderr("The 'auto' option for layer_method is not longer supported.  "
-                        "This will be an error in v0.11 and removed in v0.12\n")
-            from ksconf import __version__
-            if __version__.startswith("0.11."):
-                return EXIT_CODE_CLI_ARG_DEPRECATED
 
         with packager:
             packager.combine(args.source, args.layer_filter,

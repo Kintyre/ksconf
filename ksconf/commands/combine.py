@@ -185,7 +185,7 @@ class CombineCmd(KsconfCmd):
             Use ``dir.d`` if you have directories like ``MyApp/default.d/##-layer-name``, or use
             ``disable`` to manage layers explicitly and avoid any accidental layer detection.
             By default, ``auto`` mode will enable transparent switching between 'dir.d' and 'disable'
-            (legacy) behavior.
+            (legacy) behavior, however this option will be removed in a future release.
             """)
 
         parser.add_argument("-q", "--quiet", action="store_true",
@@ -252,9 +252,9 @@ class CombineCmd(KsconfCmd):
         args.source = list(expand_glob_list(args.source, do_sort=True))
 
         if args.layer_method == "auto":
-            self.stderr.write(
-                "Warning:  Automatically guessing an appropriate directory layer detection.  "
-                "Consider using '--layer-method' to avoid this warning.\n")
+            from warnings import warn
+            warn("Using 'auto' layer detection will not be supported in future releases.  "
+                 "Consider using '--layer-method' to avoid this warning", DeprecationWarning)
             if len(args.source) == 1:
                 layer_method = "dir.d"
             else:
