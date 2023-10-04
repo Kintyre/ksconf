@@ -38,6 +38,7 @@ Ksconf v0.12.1 (2023-10-03)
    Use ``--attr-matches`` and/or ``--attr-not-matches`` to match specific attribute and value combinations for stanza matching.
    This can be used to find props with a specific ``KV_MODE``, find saved search containing a specific search command, or list indexes not using ``volume:`` designation.
    See the :ref:`ksconf_cmd_filter` docs for example usage.
+   Thanks to yohonet for inspiring this change, along with the new ``attr-get`` command.
 *  Add ``--in-place`` processing behavior for :ref:`ksconf_cmd_merge` to simplify the process of merging new content into an existing conf file.
 *  Docs Improvements:
    *  Fixed documentation generation bug that prevented command line options from showing up in the per-command doc pages.  (Broken since v0.10)
@@ -76,6 +77,7 @@ Ksconf v0.11.9 (2023-09-26)
 
 *  Splunk app packaging changes only.  No need to update the package for CLI usage.
 *  Fix packaging bug impacting the Ksconf Splunk app.  This issue was introduced in v0.11.6.
+   Thanks to yohonet for brining this to my attention.
 *  Note that this took two release cycles to fully resolve. (Ignore ksconf v0.11.8)
 
 
