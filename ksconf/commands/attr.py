@@ -43,14 +43,14 @@ class AttrGetCmd(KsconfCmd):
     def register_args(self, parser):
         parser.add_argument("conf", nargs="+",
                             default=["-"],
-                            help="Input file to sort, or standard input."
+                            help="Input file or standard input."
                             ).completer = conf_files_completer
 
         parser.add_argument("--stanza", "-s", required=True,
-                            help="Name of the conf file stanza to retrieve.")
+                            help="Name of the stanza within CONF to retrieve.")
         parser.add_argument("--attribute", "--attr", "-a",
                             metavar="ATTR", required=True,
-                            help="Name of the conf file attribute to retrieve.")
+                            help="Name of attribute within STANZA to retrieve.")
 
         parser.add_argument("--missing-okay", action="store_true", default=False,
                             help="Ignore missing stanzas and attributes.  ")
@@ -115,10 +115,10 @@ class AttrSetCmd(KsconfCmd):
                             help="Configuration file to update."
                             ).completer = conf_files_completer
         parser.add_argument("--stanza", "-s", required=True,
-                            help="Name of the conf file stanza to set.")
+                            help="Name of the stanza within CONF to set.")
         parser.add_argument("--attribute", "--attr", "-a",
                             metavar="ATTR", required=True,
-                            help="Name of the conf file attribute to set.")
+                            help="Name of the attribute within STANZA to set.")
 
         parser.add_argument("value",
                             help="Value to apply to the conf file.  Note that this can be a raw "
