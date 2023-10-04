@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 from copy import deepcopy
-from os import fspath
 from typing import List
 
 from ksconf.commands import ConfFileProxy

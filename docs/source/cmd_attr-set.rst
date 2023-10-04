@@ -42,10 +42,13 @@ Rewrite a saved search to match the new cooperate initiative to relabel all "CRI
 
     ..  code-block:: sh
 
-        printf '[drop_field(1)]\ndefinition=| fields - $field$\nargs=field\niseval=0\n' | ksconf merge --in-place --target macros.conf -
+        printf '[drop_field(1)]\ndefinition=| fields - $field$\nargs=field\niseval=0\n' \
+            | ksconf merge --in-place --target macros.conf -
+
 
         # which is identical to:
-        ksconf merge --in-place --target macros.conf <(printf '[drop_field(1)]\ndefinition=| fields - $field$\nargs=field\niseval=0\n')
+        ksconf merge --in-place --target macros.conf \
+            <(printf '[drop_field(1)]\ndefinition=| fields - $field$\nargs=field\niseval=0\n')
 
     Of course, neither of these are super easy to read.  If your content is static, then an easy answer it to use a static conf file.
     However, at some point it may be easier to just edit these using Python where any arbitrary level of complexity is possible.
@@ -69,7 +72,8 @@ Rewrite a saved search to match the new cooperate initiative to relabel all "CRI
                     if not conf_attr_boolean(conf[report].get("disabled", "0")):
                         # Update enabled search
                         search = conf[report].get("search", "")
-                        conf[report]["search"] = search.replace("cisco:old-understood-tech", "cisco:new-fangled-tech")
+                        conf[report]["search"] = search.replace("cisco:old-understood-tech",
+                                                                "cisco:new-fangled-tech")
                         conf[report]["description"] = f"We did an update.\n Old description: {conf[report].get('description', '')}"
 
     ..  Yes, we need an API intro for simple use cases like this.  For now, I guess this is it!?!

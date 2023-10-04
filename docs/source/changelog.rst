@@ -29,7 +29,7 @@ Ksconf 0.12
    In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
-Ksconf v0.12.1 (DRAFT)
+Ksconf v0.12.1 (2023-10-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Introducing :ref:`ksconf_cmd_attr-get` and :ref:`ksconf_cmd_attr-set` - the newest and simplest ksconf commands ever!
@@ -39,9 +39,10 @@ Ksconf v0.12.1 (DRAFT)
    This can be used to find props with a specific ``KV_MODE``, find saved search containing a specific search command, or list indexes not using ``volume:`` designation.
    See the :ref:`ksconf_cmd_filter` docs for example usage.
 *  Add ``--in-place`` processing behavior for :ref:`ksconf_cmd_merge` to simplify the process of merging new content into an existing conf file.
-*  Fixed documentation generation bug that prevented command line options from showing up in the docs.
+*  Docs Improvements:
+   *  Fixed documentation generation bug that prevented command line options from showing up in the per-command doc pages.  (Broken since v0.10)
+   *  Fixed docs embedded in the Splunk app (and possibly causing some other display issues on the main rtd site)
 *  Fixed some CLI file handling bug that resulted in broken use of ``-`` (stdin) and/or fancy shell commands involving ``<(some command)`` syntax, which can be a helpful trick to reduce the number of temporary files.
-
 
 
 Ksconf v0.12.0 (2023-09-27)

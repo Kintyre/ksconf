@@ -107,7 +107,7 @@ class RestExportCmd(KsconfCmd):
 
     """)
     format = "manual"
-    maturity = "beta"
+    maturity = "deprecated"
 
     def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", nargs="+",

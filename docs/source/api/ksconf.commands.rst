@@ -4,6 +4,14 @@ ksconf.commands package
 Submodules
 ----------
 
+ksconf.commands.attr module
+---------------------------
+
+.. automodule:: ksconf.commands.attr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.commands.check module
 ----------------------------
 
@@ -32,14 +40,6 @@ ksconf.commands.filter module
 -----------------------------
 
 .. automodule:: ksconf.commands.filter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ksconf.commands.getvalue module
--------------------------------
-
-.. automodule:: ksconf.commands.getvalue
    :members:
    :undoc-members:
    :show-inheritance:

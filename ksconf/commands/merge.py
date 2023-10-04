@@ -1,5 +1,5 @@
 """
-SUBCOMMAND:  ``ksconf merge --target=<CONF> <CONF> [ <CONF-n> ... ]``
+SUBCOMMAND:  ``ksconf merge --target=<TARGET_CONF> <CONF> [ <CONF-n> ... ]``
 
 Usage example:
 
@@ -29,13 +29,13 @@ class MergeCmd(KsconfCmd):
     maturity = "stable"
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE", nargs="+",
+        parser.add_argument("conf", nargs="+",
                             help="The source configuration file(s) to collect settings from."
                             ).completer = conf_files_completer
-        parser.add_argument("--target", "-t", metavar="FILE",
+        parser.add_argument("--target", "-t",
                             type=ConfFileType("r+", "none", parse_profile=PARSECONF_STRICT),
                             default=ConfFileProxy("<stdout>", "w", self.stdout), help=dedent("""\
-            Save the merged configuration files to this target file.
+            Destination file for merged configurations.
             If not provided, the merged conf is written to standard output.""")
                             ).completer = conf_files_completer
 
@@ -46,9 +46,9 @@ class MergeCmd(KsconfCmd):
 
         parser.add_argument("--in-place", "-i", default=False, action="store_true",
                             help=dedent("""
-            Enable in-place update mode.  When selected, the target file will also be considered as
-            the base of the merge operation.  All conf files will be merged with target.  When disabled,
-            any existing content within target is ignored and overwritten."""))
+            Enable in-place update mode.  When selected, the TARGET file will also be considered as
+            the base of the merge operation.  All CONF files will be merged with TARGET.
+            When disabled, any existing content within TARGET is ignored and overwritten."""))
 
         parser.add_argument("--dry-run", "-D", default=False, action="store_true", help=dedent("""\
             Enable dry-run mode.

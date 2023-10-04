@@ -41,12 +41,12 @@ class AttrGetCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE", nargs="+",
+        parser.add_argument("conf", nargs="+",
                             default=["-"],
                             help="Input file to sort, or standard input."
                             ).completer = conf_files_completer
 
-        parser.add_argument("--stanza", "-s", metavar="STANZA", required=True,
+        parser.add_argument("--stanza", "-s", required=True,
                             help="Name of the conf file stanza to retrieve.")
         parser.add_argument("--attribute", "--attr", "-a",
                             metavar="ATTR", required=True,
@@ -59,7 +59,7 @@ class AttrGetCmd(KsconfCmd):
                             help="Reduce the amount of output stderr")
         '''
 
-        parser.add_argument("-o", "--output", metavar="FILE",
+        parser.add_argument("-o", "--output",
                             type=argparse.FileType('w'), default=self.stdout,
                             help="File where the filtered results are written.  "
                                  "Defaults to standard out.")
@@ -88,7 +88,8 @@ class AttrGetCmd(KsconfCmd):
                 try:
                     value = stanza[args.attribute]
                 except KeyError:
-                    self.stderr.write(f"File {conf} does not have {args.attribute} in stanza [{args.stanza}]\n")
+                    self.stderr.write(f"File {conf} does not have {args.attribute} "
+                                      f"in stanza [{args.stanza}]\n")
                     return EXIT_CODE_CONF_NO_DATA_MATCH
             args.output.write(f"{value}\n")
             args.output.flush()
@@ -110,16 +111,16 @@ class AttrSetCmd(KsconfCmd):
     maturity = "beta"
 
     def register_args(self, parser):
-        parser.add_argument("conf", metavar="FILE",
+        parser.add_argument("conf",
                             help="Configuration file to update."
                             ).completer = conf_files_completer
-        parser.add_argument("--stanza", "-s", metavar="STANZA", required=True,
+        parser.add_argument("--stanza", "-s", required=True,
                             help="Name of the conf file stanza to set.")
         parser.add_argument("--attribute", "--attr", "-a",
                             metavar="ATTR", required=True,
                             help="Name of the conf file attribute to set.")
 
-        parser.add_argument("value", metavar="VALUE",
+        parser.add_argument("value",
                             help="Value to apply to the conf file.  Note that this can be a raw "
                             "text string, or the name of the file, or an environment variable")
 

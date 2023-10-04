@@ -9,11 +9,10 @@ ksconf merge
     :path: merge
     :nodefault:
 
-    --in-place: @after
-
-    The ``--in-place`` option was added in v0.12.1.
-    In earlier version of ksconf, and move forward, this same behavior can be accomplished by simply listing the target twice.
-    Once as in the ``--target`` option, and then a second time as the first CONF file.
+    --in-place -i : @after
+        The ``--in-place`` option was added in v0.12.1.
+        In earlier version of ksconf, and moving forward, this same behavior can be accomplished by simply listing the target twice.
+        Once as in the ``--target`` option, and then a second time as the first CONF file.
 
 
 Examples

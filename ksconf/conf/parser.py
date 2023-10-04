@@ -530,7 +530,7 @@ class update_conf:
     :param dict profile:  Parsing settings and strictness profile.
     :param str encoding:  encoding to use for file operations.
     :param bool make_missing:  When true, a new blank configuration file will be created
-                               with the updates rather than raising an exception.
+                               if ``conf_path`` is missing, otherwise an exception will be raised.
     """
 
     def __init__(self, conf_path: PathType,

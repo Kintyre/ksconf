@@ -25,7 +25,7 @@ Show the version of the Splunk AWS technology addon:
 
 
 Fetch the search string for the "Internal Server Errors" search in the from my_app.
-The search is saved to a text file without any metadata or line continuation markers (trailing ```\\`` characters.)
+The search is saved to a text file without any metadata or line continuation markers (trailing ``\`` characters.)
 Note that ``kconf merge`` is used here to ensure that the "live" version of the search is shown, so ``local`` will be used if present, otherwise ``default`` will be shown.
 
 ..  code-block:: sh
