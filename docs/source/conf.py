@@ -105,11 +105,11 @@ print(f"Using theme:  {html_theme}")
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_context = {
-    'css_files': [
-        '_static/theme_overrides.css',  # override wide tables in RTD theme
-    ],
-}
+
+def setup(app):
+    # Reminder:  Don't edit html_context directly, at that clobbers the theme's css files...
+    app.add_css_file("theme_overrides.css", 300)
+
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
