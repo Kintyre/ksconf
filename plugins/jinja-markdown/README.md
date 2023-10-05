@@ -49,6 +49,7 @@ ksconf package --enable-handler=jinja --template_vars @inputs.conf my_app
 ## Release steps
 
 ```sh
+python setup.py build
 python setup.py bdist_wheel sdist
 twine upload dist/ksconf_jinja_markdown-*any.whl dist/ksconf-jinja-markdown-*.tar.gz
 ```

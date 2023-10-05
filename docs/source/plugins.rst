@@ -140,7 +140,7 @@ Here's an example of a ``setup.py`` file:
 
 .. code-block:: python
 
-    from setuptools import setup, find_namespace_packages
+    from setuptools import setup
 
     setup(name="ksconf-fancy-plugin",
           version="0.5.0",
@@ -149,8 +149,7 @@ Here's an example of a ``setup.py`` file:
               "some-fancy-library",   # Add 3rd party libraries here, if needed
           ],
           entry_points={"ksconf_plugin": ["fancy-plugin = ksconf.plugins.fancy_plugin"]},
-          packages=find_namespace_packages(include=['ksconf.plugins.*']),
-          py_modules=["ksconf_fancy_plugin"],
+          packages=["ksconf.plugins"],
           description="Adds general fanciness within Ksconf",
           classifiers=["Environment :: Plugins"],
           author="Your name",

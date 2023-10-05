@@ -1,8 +1,8 @@
-from setuptools import find_namespace_packages, setup
+from setuptools import setup
 
 setup(
     name="ksconf-jinja-markdown",
-    version="1.1.0",
+    version="1.2.0",
     install_requires=[
         "commonmark>=0.9",
         "jinja2>=3.0",
@@ -13,7 +13,7 @@ setup(
             "jinja-markdown = ksconf.plugins.jinja_markdown"
         ]
     },
-    packages=find_namespace_packages(include=['ksconf.plugins.*']),
+    packages=["ksconf.plugins"],
     description="Markdown rendering support for Jinja2 templates within Ksconf",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
