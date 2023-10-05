@@ -14,7 +14,14 @@ from typing import NamedTuple
 class Ep(NamedTuple):
     name: str
     module_name: str
-    object_name: str
+    object_name: str = None
+
+    @property
+    def formatted(self):
+        if self.object_name is None:
+            return f"{self.name} = {self.module_name}"
+        else:
+            return f"{self.name} = {self.module_name}:{self.object_name}"
 
 
 # autopep8: off
@@ -49,7 +56,7 @@ def get_entrypoints_setup():
     """ Build entry point text descriptions for ksconf packaging """
     setup = {}
     for (group, entries) in _entry_points.items():
-        setup[group] = [f"{ep.name} = {ep.module_name}:{ep.object_name}" for ep in entries]
+        setup[group] = [ep.formatted for ep in entries]
     return setup
 
 
@@ -78,10 +85,13 @@ def get_entrypoints_fallback(group):
 def debug():
     # For debugging internally defined entrypoints
     print("Builtin entrypoints:")
-    for (_, entries) in _entry_points.items():
-        print("[group]")
+    for (group, entries) in _entry_points.items():
+        print(f"[{group}]")
         for ep in entries:
-            print(f"{ep.name:15} = {ep.module_name:30} : {ep.object_name}")
+            if ep.object_name:
+                print(f"{ep.name:15} = {ep.module_name:30} : {ep.object_name}")
+            else:
+                print(f"{ep.name:15} = {ep.module_name:30}")
         print("")
 
 

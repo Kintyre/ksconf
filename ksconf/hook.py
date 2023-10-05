@@ -3,11 +3,16 @@ import sys
 
 from pluggy import HookimplMarker, PluginManager
 
-from ksconf.consts import PLUGGY_DISABLE_HOOK, PLUGGY_HOOK, is_debug
+from ksconf.consts import EXIT_CODE_BROKEN_PLUGIN, PLUGGY_DISABLE_HOOK, PLUGGY_HOOK, is_debug
 from ksconf.hookspec import KsconfHookSpecs
 
 # decorator to mark ksconf hooks
 ksconf_hook = HookimplMarker(PLUGGY_HOOK)
+
+
+class BadPluginWarning(UserWarning):
+    """ Issue with one or more plugins """
+    pass
 
 
 class _plugin_manager:
@@ -27,7 +32,7 @@ class _plugin_manager:
 
     def _startup(self):
         # This runs on demand, exactly once.
-        pm = PluginManager(PLUGGY_HOOK)
+        self.__plugin_manager = pm = PluginManager(PLUGGY_HOOK)
 
         if PLUGGY_DISABLE_HOOK in os.environ:
             disabled_hooks = os.environ[PLUGGY_DISABLE_HOOK].split()
@@ -36,8 +41,27 @@ class _plugin_manager:
                 pm.set_blocked(hook)
 
         pm.add_hookspecs(KsconfHookSpecs)
-        pm.load_setuptools_entrypoints("ksconf_plugin")
-        self.__plugin_manager = pm
+
+        # Disable *ALL* 'ksconf_plugin' hooks
+        disabled_things = os.environ.get("KSCONF_DISABLE_PLUGINS", "").split()
+        self.log(f"Disabled stuff:   {disabled_things }")
+        if "ksconf_plugin" in disabled_things:
+            if is_debug:
+                self.log("All plugins are disabled")
+            return
+
+        # XXX: Find a way to report *which* plugin failed.  For now, use traceback
+        try:
+            pm.load_setuptools_entrypoints("ksconf_plugin")
+        except ModuleNotFoundError as e:
+            self.log("Unable to load one or more ksconf plugins.  "
+                     f"Please correct or uninstall the offending plugin.\n  {e}\n"
+                     "Run with KSCONF_DEBUG=1 to see a traceback")
+            if is_debug():
+                raise e
+            else:
+                sys.exit(EXIT_CODE_BROKEN_PLUGIN)
+
         # Maybe this should be it's own setting someday?  (disconnected from KSCONF_DEBUG)
         if is_debug():
             self.enable_monitoring()

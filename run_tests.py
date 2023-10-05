@@ -22,7 +22,7 @@ for k in list(os.environ):
         del os.environ[k]
 
 # Tell KSCONF cmd loaders to use the locally defined list, and ignore externally defined commands
-os.environ["KSCONF_DISABLE_PLUGINS"] = "ksconf_cmd"
+os.environ["KSCONF_DISABLE_PLUGINS"] = "ksconf_cmd ksconf_plugin"
 
 
 def run_all():

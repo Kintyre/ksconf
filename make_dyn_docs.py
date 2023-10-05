@@ -18,7 +18,7 @@ PY_ENV = {
     "PYTHONWARNINGS": "ignore",
     "PYTHONIOENCODING": "utf-8",
     "PYTHONHASHSEED": "1",
-    "KSCONF_DISABLE_PLUGINS": "ksconf_cmd",
+    "KSCONF_DISABLE_PLUGINS": "ksconf_cmd ksconf_plugin",
 }
 
 
