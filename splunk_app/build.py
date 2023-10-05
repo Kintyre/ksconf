@@ -54,6 +54,9 @@ def make_wheel(step):
 
 def make_docs(step):
     log = step.get_logger()
+
+    log("Build dynamic doc content")
+    step.run(sys.executable, "make_dyn_docs.py", cwd=GIT_ROOT)
     log("Making html docs via Sphinx")
     docs_dir = GIT_ROOT / "docs"
     static_docs = APP_FOLDER / "appserver/static/docs"
