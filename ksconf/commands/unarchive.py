@@ -19,7 +19,7 @@ from ksconf.app import get_facts_manifest_from_archive
 from ksconf.app.facts import AppFacts
 from ksconf.app.manifest import AppArchiveContentError, AppArchiveError
 from ksconf.archive import extract_archive, gen_arch_file_remapper
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_LOOSE, ConfParserException, parse_conf
 from ksconf.consts import (EXIT_CODE_BAD_ARCHIVE_FILE, EXIT_CODE_BAD_ARGS,
                            EXIT_CODE_FAILED_SAFETY_CHECK, EXIT_CODE_GIT_FAILURE,

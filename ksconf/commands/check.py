@@ -12,7 +12,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 from collections import Counter
 
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_STRICT_NC, ConfParserException, parse_conf
 from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_SUCCESS
 from ksconf.util import debug_traceback

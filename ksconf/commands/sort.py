@@ -9,7 +9,7 @@ Usage example:  To recursively sort all files (in-place):
 """
 from __future__ import absolute_import, unicode_literals
 
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.conf.parser import PARSECONF_STRICT, ConfParserException, write_conf
 from ksconf.consts import (EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SORT_APPLIED,
                            EXIT_CODE_SUCCESS, SMART_NOCHANGE)

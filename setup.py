@@ -175,7 +175,8 @@ setup(name=package_name,
       },
       packages=[
           "ksconf",
-      ] + find_namespace_packages(include=['ksconf.*']),
+          "ksconf.commands"
+      ] + find_namespace_packages(include=['ksconf.*', 'ksconf.commands.*']),
       setup_requires=[
           "wheel",
       ],

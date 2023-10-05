@@ -11,7 +11,7 @@ from os import fspath
 from pathlib import Path
 from typing import Callable
 
-from ksconf.commands import ConfFileProxy
+from ksconf.command import ConfFileProxy
 from ksconf.compat import List, Tuple
 from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files

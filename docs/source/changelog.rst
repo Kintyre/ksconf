@@ -46,6 +46,23 @@ Ksconf v0.12.2 (2023-10-05)
    Splunk App users should re-install to avoid any confusion.
 
 
+New namespaces:
+
+-  `ksconf`
+-  `ksconf.commands`
+
+Renames:
+
+-  ``ksconf/__init__`` -> ``ksconf._ksconf``
+- ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
+
+
+
+
+
+
+
+
 Ksconf v0.12.1 (2023-10-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -13,7 +13,7 @@ import os
 from argparse import SUPPRESS
 from collections import Counter
 
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.consts import (EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_FORMAT_APPLIED,
                            EXIT_CODE_INTERNAL_ERROR, EXIT_CODE_SUCCESS)
 from ksconf.util import debug_traceback
@@ -114,6 +114,10 @@ class XmlFormatCmd(KsconfCmd):
         else:
             files = args.xml
         c = Counter()
+
+        # Copy this locally, to avoid an even stranger exception later
+        ParseError = etree.ParseError
+
         exit_code = EXIT_CODE_SUCCESS
         for fn in files:
             c["checked"] += 1
@@ -130,7 +134,7 @@ class XmlFormatCmd(KsconfCmd):
                         self.stderr.write(f"Already formatted {fn}\n")
                     c["no-action"] += 1
                 self.stderr.flush()
-            except etree.ParseError as e:
+            except ParseError as e:
                 self.stderr.write(f"Error parsing file {fn}:  {e}\n")
                 self.stderr.flush()
                 c["error"] += 1

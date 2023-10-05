@@ -22,7 +22,7 @@ import sys
 from argparse import ArgumentParser
 from typing import List, Tuple
 
-from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.command import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import (PARSECONF_MID_NC, ConfParserException,
                                 conf_attr_boolean, write_conf_stream)
 from ksconf.consts import EXIT_CODE_BAD_CONF_FILE, EXIT_CODE_SUCCESS

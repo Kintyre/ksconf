@@ -43,6 +43,14 @@ ksconf.combine module
    :undoc-members:
    :show-inheritance:
 
+ksconf.command module
+---------------------
+
+.. automodule:: ksconf.command
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.compat module
 --------------------
 

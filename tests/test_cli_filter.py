@@ -346,7 +346,7 @@ class CliKsconfFilter(unittest.TestCase):
         f = open(self.sample01)
         fd_dev = f"/dev/fd/{f.fileno()}"
         try:
-            with mock.patch("ksconf.commands.os.path.isfile") as m, ksconf_cli:
+            with mock.patch("ksconf.command.os.path.isfile") as m, ksconf_cli:
                 m.return_value = False
                 # m.wraps = my_isfile
                 ko = ksconf_cli("filter", fd_dev, "--stanza", "Errors in the last hour")

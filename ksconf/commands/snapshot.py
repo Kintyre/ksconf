@@ -16,7 +16,7 @@ import sys
 from argparse import FileType
 
 from ksconf._ksconf import __vcs_info__, __version__
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_MID_NC, ConfParserException, parse_conf
 from ksconf.consts import EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_SUCCESS
 from ksconf.util.completers import DirectoriesCompleter, FilesCompleter

@@ -24,7 +24,7 @@ import argparse
 import os
 from pathlib import Path
 
-from ksconf.commands import KsconfCmd, dedent
+from ksconf.command import KsconfCmd, dedent
 from ksconf.conf.parser import update_conf
 from ksconf.consts import (EXIT_CODE_CONF_NO_DATA_MATCH, EXIT_CODE_NO_SUCH_FILE,
                            EXIT_CODE_NOTHING_TO_DO, EXIT_CODE_SUCCESS)

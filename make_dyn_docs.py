@@ -101,7 +101,7 @@ def make_cli_docs(readme_file):
 def make_subcommands_table(csv_path):
     import csv
 
-    from ksconf.commands import get_all_ksconf_cmds
+    from ksconf.command import get_all_ksconf_cmds
 
     # Explicitly sort commands by name (no more random git diffs!)
     commands = [(ep.name, ep) for ep in get_all_ksconf_cmds()]

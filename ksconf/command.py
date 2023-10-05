@@ -1,3 +1,14 @@
+""" ksconf.command:
+
+Helpers functions and classes in support of the actual commands that live under
+``ksconf.commands.*``.
+
+Note that ``ksconf.commands`` is a namespace package, which can be contributed
+to by multiple python packages (technically called "distributions").  Because of
+this, there can be no __init__.py, which is where this content logically belongs.
+
+"""
+
 from __future__ import absolute_import, unicode_literals
 
 import argparse
@@ -26,7 +37,7 @@ from ksconf.util import debug_traceback
 
 __all__ = [
     "KsconfCmd",
-    "ConfDirProxy",
+    "ConfDirProxy"
     "ConfFileProxy",
     "ConfFileType",
     "dedent",

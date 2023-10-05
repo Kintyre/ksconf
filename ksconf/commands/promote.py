@@ -15,7 +15,7 @@ import os
 import shutil
 from copy import deepcopy
 
-from ksconf.commands import ConfDirProxy, ConfFileType, KsconfCmd, dedent
+from ksconf.command import ConfDirProxy, ConfFileType, KsconfCmd, dedent
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
                                DIFF_OP_REPLACE, DiffStanza, DiffStzKey,
                                compare_cfgs, show_diff, summarize_cfg_diffs)

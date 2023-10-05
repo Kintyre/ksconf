@@ -16,7 +16,7 @@ Example workflow:
 """
 from __future__ import absolute_import, unicode_literals
 
-from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.command import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
                                DIFF_OP_REPLACE, DiffStanza, compare_cfgs,
                                show_diff)

@@ -11,7 +11,7 @@ from __future__ import absolute_import, unicode_literals
 
 import argparse
 
-from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.command import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.delta import compare_cfgs, show_diff, write_diff_as_json
 from ksconf.conf.parser import PARSECONF_MID_NC
 from ksconf.consts import EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON

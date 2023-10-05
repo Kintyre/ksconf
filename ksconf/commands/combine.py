@@ -14,7 +14,7 @@ from __future__ import absolute_import, unicode_literals
 from pathlib import Path
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
-from ksconf.commands import KsconfCmd, add_file_handler, dedent
+from ksconf.command import KsconfCmd, add_file_handler, dedent
 from ksconf.compat import List
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_NO_SUCH_FILE)

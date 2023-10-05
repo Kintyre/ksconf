@@ -84,7 +84,7 @@ class KsconfMiscIternalsTest(unittest.TestCase):
             break
 
     def test_entrypoints(self):
-        from ksconf.commands import _get_fallback, get_entrypoints
+        from ksconf.command import _get_fallback, get_entrypoints
         get_entrypoints("ksconf_cmd", "sort")
 
         # Just to exercise this (coverage and prevent regressions)

@@ -23,7 +23,7 @@ import sys
 from argparse import ArgumentParser, FileType
 from urllib.parse import quote
 
-from ksconf.commands import ConfFileType, KsconfCmd, dedent
+from ksconf.command import ConfFileType, KsconfCmd, dedent
 from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE
 from ksconf.consts import EXIT_CODE_SUCCESS
 from ksconf.util.completers import conf_files_completer

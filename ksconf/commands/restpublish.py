@@ -17,9 +17,9 @@ import sys
 from argparse import ArgumentParser, Namespace
 from urllib.parse import urlparse
 
-from ksconf.commands import (ConfFileProxy, ConfFileType, KsconfCmd,
-                             add_splunkd_access_args, add_splunkd_namespace,
-                             dedent)
+from ksconf.command import (ConfFileProxy, ConfFileType, KsconfCmd,
+                            add_splunkd_access_args, add_splunkd_namespace,
+                            dedent)
 from ksconf.conf.delta import DiffHeader, compare_stanzas, is_equal, reduce_stanza, show_diff
 from ksconf.conf.meta import MetaData
 from ksconf.conf.parser import GLOBAL_STANZA, PARSECONF_LOOSE, ConfType, conf_attr_boolean

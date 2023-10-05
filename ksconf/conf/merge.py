@@ -6,7 +6,7 @@ import sys
 from copy import deepcopy
 from typing import List
 
-from ksconf.commands import ConfFileProxy
+from ksconf.command import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
 from ksconf.conf.parser import (GLOBAL_STANZA, ConfType, _extract_comments,
                                 inject_section_comments, parse_conf, write_conf)
