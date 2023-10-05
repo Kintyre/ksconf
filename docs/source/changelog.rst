@@ -29,16 +29,15 @@ Ksconf 0.12
    In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
-Ksconf v0.12.2 (DRAFT)
+Ksconf v0.12.2 (2023-10-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-**App building with Ksconf**
-
--  Added a convenience method to allow running ksconf commands more easily during the build process.
+*  *App building with Ksconf*:  Added a convenience method to allow running ksconf commands more easily during the build process.
    You can now invoke ksconf using :py:meth:`~ksconf.build.BuildStep.run_ksconf` method which allows direct execution of a ksconf command.
    Previously this was accomplished by using :py:meth:`~ksconf.build.BuildStep.run`, using Python interpreter internal path as the executable, launching the ksconf in "module" mode.
    So this approach is simpler and in the future it may be invoked internally, removing the need for launching an additional Python process.
+*  Enhanced plugin error handling.
+*  Many little doc build fixes.
 
 
 Ksconf v0.12.1 (2023-10-03)
