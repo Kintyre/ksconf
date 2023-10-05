@@ -24,6 +24,11 @@ Renames:
 
 
 
+Ksconf v0.13.1 (2023-10-05)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Removed overlooked debug message at startup.
+
 
 Ksconf v0.13.0 (2023-10-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

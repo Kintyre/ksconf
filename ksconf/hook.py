@@ -44,7 +44,6 @@ class _plugin_manager:
 
         # Disable *ALL* 'ksconf_plugin' hooks
         disabled_things = os.environ.get("KSCONF_DISABLE_PLUGINS", "").split()
-        self.log(f"Disabled stuff:   {disabled_things }")
         if "ksconf_plugin" in disabled_things:
             if is_debug:
                 self.log("All plugins are disabled")
