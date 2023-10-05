@@ -48,6 +48,10 @@ _entry_points = {
         Ep("unarchive",     "ksconf.commands.unarchive",    "UnarchiveCmd"),
         Ep("xml-format",    "ksconf.commands.xmlformat",    "XmlFormatCmd"),
     ],
+    "ksconf_plugins": [
+        Ep("internal_plugins", "ksconf.plugins._internal"),
+    ],
+
 }
 # autopep8: on
 

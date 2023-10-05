@@ -3,6 +3,36 @@ Changelog
 
 .. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
 
+Ksconf 0.13
+-----------
+
+Switching to use Python's namespace packages.
+This is an internal change that should make future expansions easier but should have no impact on normal users.
+
+
+New namespaces:
+
+-  ``ksconf``
+-  ``ksconf.commands``
+-  ``ksconf.plugins``
+
+
+Renames:
+
+- ``ksconf/__init__`` -> ``ksconf._ksconf``
+- ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
+
+
+
+
+Ksconf v0.13.0 (2023-10-05)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Switching to python package namespaces for  for ``ksconf`` and ``ksconf.commands`` and created ``ksconf.plugins``.
+   This allows for more flexible packaging of various ksconf components including optional subcommands and plugins.
+   Unless you are a python developer, you should never notice a difference.
+   Splunk App users should re-install to avoid any confusion.
+
 
 Ksconf 0.12
 -----------
@@ -38,29 +68,6 @@ Ksconf v0.12.2 (2023-10-05)
    So this approach is simpler and in the future it may be invoked internally, removing the need for launching an additional Python process.
 *  Enhanced plugin error handling.
 *  Many little doc build fixes.
-
-**Internal changes:**
-
--  Switching to python package namespaces.  This allows for more flexible packaging of various ksconf components including optional subcommands and plugins.
-   Unless you are a python developer, you should never notice a difference.
-   Splunk App users should re-install to avoid any confusion.
-
-
-New namespaces:
-
--  `ksconf`
--  `ksconf.commands`
-
-Renames:
-
--  ``ksconf/__init__`` -> ``ksconf._ksconf``
-- ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
-
-
-
-
-
-
 
 
 Ksconf v0.12.1 (2023-10-03)

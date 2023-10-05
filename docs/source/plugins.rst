@@ -132,31 +132,38 @@ Packaging a Plugin
 ==================
 
 Packing is fairy easy, and there are examples in the ``plugins`` folder in the ksconf GitHub repository.
-Briefly, here's an example of a ``setup.py`` file.
-This example assumes your packing a plugin that lives in a ``ksconf_fancy_plugin.py``:
+This example assumes your packing a plugin that lives in a ``ksconf/plugins/fancy_plugin.py``.
+Note that the ``ksconf/plugins`` is a top-level directory that puts your new plugin in the ``ksconf.plugins`` namespace.
+(This isn't technically required, but it's the recommended approach.)
+
+Here's an example of a ``setup.py`` file:
 
 .. code-block:: python
 
-    from setuptools import setup
+    from setuptools import setup, find_namespace_packages
+
     setup(name="ksconf-fancy-plugin",
           version="0.5.0",
           install_requires=[
-              "ksconf>=0.11.6",
+              "ksconf>=0.13.0",
               "some-fancy-library",   # Add 3rd party libraries here, if needed
           ],
-          entry_points={"ksconf_plugin": ["fancy-plugin = ksconf_fancy_plugin"]},
+          entry_points={"ksconf_plugin": ["fancy-plugin = ksconf.plugins.fancy_plugin"]},
+          packages=find_namespace_packages(include=['ksconf.plugins.*']),
           py_modules=["ksconf_fancy_plugin"],
           description="Adds general fanciness within Ksconf",
           classifiers=["Environment :: Plugins"],
           author="Your name",
           author_email="your@name.example",
-          url="Repo")
+          url="Repo",
+          zip_safe=False)
+
 
 Then simply build and install your package.
 
 ..  code-block:: sh
 
-    python setup.py install
+    pip install .
 
 
 If you need to remove it, you can always run:
