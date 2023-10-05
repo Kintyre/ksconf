@@ -64,6 +64,13 @@ Ksconf 0.12
    In many cases, this really isn't a new dependency, since pluggy requires it as well.
 
 
+Ksconf v0.12.3 (2023-10-05)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Removed overlooked debug message at startup.
+
+
+
 Ksconf v0.12.2 (2023-10-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
