@@ -95,6 +95,19 @@ class BuildStep:
             raise BuildExternalException(f"Exit code of {process.returncode} "
                                          f"while executing {executable}")
 
+    def run_ksconf(self, *args, cwd=None):
+        """ Execute 'ksconf' command in the build folder.
+        Currently this runs as a separate process, but in the future is may be
+        optimized to run from within the same python process.  This is an
+        implementation detail the caller shouldn't care about.
+
+        :param str args: Additional argument(s) for the ksconf command.
+        :param str cwd:  Optional kw arg to change the working directory.  This
+                         defaults to the build folder.
+        """
+        # Historically '-m ksconf' was used, but here safely skip python version check
+        return self.run(sys.executable, "-m", "ksconf.cli", *args, cwd=cwd)
+
 
 from ksconf.builder.core import BuildManager  # noqa
 

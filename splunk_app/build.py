@@ -42,7 +42,7 @@ SPL_NAME = "ksconf-app_for_splunk-{{version}}.tgz"
 REQUIREMENTS = "requirements-app.txt"
 
 
-def make_wheel(step):
+def make_wheel(step: BuildStep):
     log = step.get_logger()
     step.run(sys.executable, "setup.py", "bdist_wheel",
              "-d", str(step.dist_path),
@@ -52,7 +52,7 @@ def make_wheel(step):
     return wheel
 
 
-def make_docs(step):
+def make_docs(step: BuildStep):
     log = step.get_logger()
 
     log("Build dynamic doc content")
@@ -94,7 +94,7 @@ def filter_requirements(step: BuildStep, src: Path, re_block: str, *extras: str)
 
 # XXX: this breaks when cache is enabled.  Figured this out, some path handling is busted
 # @manager.cache(["requirements.txt"], ["bin/lib/"], timeout=7200)
-def python_packages(step):
+def python_packages(step: BuildStep):
     # Reuse shared function from ksconf.build.steps
     pip_install(step, REQUIREMENTS, APP_FOLDER / "bin/lib",
                 handle_dist_info="rename",
@@ -103,33 +103,34 @@ def python_packages(step):
                 dependencies=False)  # managing dependencies manually
 
 
-def package_spl(step):
+def package_spl(step: BuildStep):
     top_dir = step.dist_path.parent
     release_path = top_dir / ".release_path"
     release_name = top_dir / ".release_name"
     build_no = 0
     if "GITHUB_RUN_NUMBER" in os.environ:
         build_no = 1000 + int(os.environ["GITHUB_RUN_NUMBER"])
-    step.run(sys.executable, "-m", "ksconf", "package",
-             "--file", step.dist_path / SPL_NAME,
-             "--set-version", "{{git_tag}}",
-             "--set-build", build_no,
-             "--blocklist", "fonts",       # From build docs
-             "--blocklist", ".buildinfo",  # From build docs
-             "--blocklist", ".doctrees",   # From build docs
-             "--blocklist", "build.py",    # docs; AppInspect triggers manual_check / code review
-             "--blocklist", REQUIREMENTS,
-             "--block-local",
-             "--layer-method=disable",
-             "--release-file", str(release_path),
-             APP_FOLDER)
+    step.run_ksconf(
+        "package",
+        "--file", step.dist_path / SPL_NAME,
+        "--set-version", "{{git_tag}}",
+        "--set-build", build_no,
+        "--blocklist", "fonts",       # From build docs
+        "--blocklist", ".buildinfo",  # From build docs
+        "--blocklist", ".doctrees",   # From build docs
+        "--blocklist", "build.py",    # docs; AppInspect triggers manual_check / code review
+        "--blocklist", REQUIREMENTS,
+        "--block-local",
+        "--layer-method=disable",
+        "--release-file", str(release_path),
+        APP_FOLDER)
     # Provide the dist file as a short name too (used by some CI/CD tools)
     path = release_path.read_text()
     short_name = Path(path).name
     release_name.write_text(short_name)
 
 
-def build(step, args):
+def build(step: BuildStep, args):
     """ Build process """
 
     # Cleanup build folder

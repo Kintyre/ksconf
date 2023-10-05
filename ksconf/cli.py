@@ -297,3 +297,7 @@ def check_py():
             sys.exit(EXIT_CODE_ENV_BUSTED)
     # Okay, now NEVER call this code again....   (helpful for unit-testing & nested calls)
     globals()["check_py"] = lambda: None
+
+
+if __name__ == "__main__":  # pragma: no cover
+    cli()
