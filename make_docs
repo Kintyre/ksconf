@@ -56,6 +56,10 @@ sphinx-apidoc -f -o "docs/source/api" ksconf 'ksconf/ext'
 
 echo "Building local html docs and opening browser window"
 # Or, something like:   make html
-LINKCHECK_ARGS=""
-# LINKCHECK_ARGS="-b linkcheck"
-sphinx-autobuild --port 9999 --watch ksconf docs/source docs/build/html ${LINKCHECK_ARGS} --open-browser
+LINKCHECK_ARGS=()
+
+if [[ "z$LINKCHECK" != "z" ]]; then
+    LINKCHECK_ARGS=(-b linkcheck)
+fi
+
+sphinx-autobuild --port 9999 --watch ksconf docs/source docs/build/html "${LINKCHECK_ARGS[@]}" --open-browser
