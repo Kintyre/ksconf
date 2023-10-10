@@ -113,7 +113,12 @@ class RestPublishCmd(KsconfCmd):
     def connect_splunkd(self, args: Namespace):
         up = urlparse(args.url)
         # Take username/password form URL, if encoded there; otherwise use defaults from argparse
-        if args.session_key:
+        if args.token:
+            auth_args = {
+                "splunkToken": args.token
+            }
+            login_fail_info = f"splunkToken={args.token[:10]}..."
+        elif args.session_key:
             auth_args = {
                 "token": args.session_key
             }

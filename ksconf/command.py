@@ -527,6 +527,8 @@ def add_splunkd_access_args(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--session-key", default=None,
                         help="Use an existing session token instead of using a "
                              "username and password to login.")
+    parser.add_argument("--token", default=None,
+                        help="Use a Splunk token (bearer token)")
     return parser
 
 

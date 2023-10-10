@@ -23,6 +23,13 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.2 (2023-10-10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Add ``--token`` to allow bearer authentication for rest-publish.
+
+
+
 
 Ksconf v0.13.1 (2023-10-05)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
