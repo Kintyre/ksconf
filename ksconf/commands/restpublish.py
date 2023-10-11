@@ -87,8 +87,8 @@ class RestPublishCmd(KsconfCmd):
         # add_splunkd_namespace(
         #    add_splunkd_access_args(parser.add_argument("Splunkd endpoint")))
 
-        add_splunkd_namespace(
-            add_splunkd_access_args(parser))
+        add_splunkd_namespace(parser)
+        add_splunkd_access_args(parser)
 
         parsg1 = parser.add_mutually_exclusive_group(required=False)
         '''
@@ -135,6 +135,7 @@ class RestPublishCmd(KsconfCmd):
             self._service = splunklib.client.connect(
                 host=up.hostname, port=up.port,
                 owner=args.owner, app=args.app, sharing=args.sharing,
+                verify=False if args.insecure else True,
                 **auth_args)
             # Sanity check to:
             #   (1) confirm that session key is good, and
@@ -313,8 +314,12 @@ class RestPublishCmd(KsconfCmd):
 
             svc = config_file.service
             all_headers = svc.additional_headers + svc._auth_headers
+            prefix = stz.path
+            if not prefix.endswith("/"):
+                prefix += "/"
+
             resource = svc.authority + \
-                svc._abspath(stz.path + "acl",
+                svc._abspath(prefix + "acl",
                              owner=svc.namespace.owner, app=svc.namespace.app,
                              sharing=svc.namespace.sharing)
             # logger.debug("request to do the ACL THING!  (Round trip debugging)")
@@ -356,9 +361,6 @@ class RestPublishCmd(KsconfCmd):
             return ("nochange", res)
 
     def run(self, args: Namespace):
-        if args.insecure:
-            raise NotImplementedError("Need to implement -k feature")
-
         if args.meta:
             self.meta = MetaData()
             for meta_file in args.meta:

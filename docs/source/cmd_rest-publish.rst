@@ -18,6 +18,10 @@ ksconf rest-publish
     :path: rest-publish
     :nodefault:
 
+    -m, --meta:
+        Note that ``mtime`` is ignored as that attribute is updated automatically every time a change occurs.
+        There is no known way to work around this without file system access.
+
 --------
 
 

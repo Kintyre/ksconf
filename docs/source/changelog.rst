@@ -23,12 +23,20 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.3 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Changes for :ref:`ksconf_cmd_rest-publish`:
+
+   * Implement ``--insecure`` parameter.
+     Previously, SSL/TLS validation was not enforced as expected.
+   * Fix bug with ``acl`` endpoint URL.
+
+
 Ksconf v0.13.2 (2023-10-10)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Add ``--token`` to allow bearer authentication for rest-publish.
-
-
 
 
 Ksconf v0.13.1 (2023-10-05)
