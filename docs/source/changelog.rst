@@ -28,10 +28,8 @@ Ksconf v0.13.3 (2023-10-12)
 
 *  Created a new public interface :ref:py:mod:`ksconf.version`.
    This provides a consistent means of getting the version information without any extra modules being loaded, now that ksconf is a namespace package.
-
    Note that for v0.13.0 - 0.13.2, this was called ``ksconf._ksconf``.
    Hopefully in that short time frame nobody got too attached to that terrible name.
-
 
 *  Changes for :ref:`ksconf_cmd_rest-publish`:
 
@@ -42,6 +40,9 @@ Ksconf v0.13.3 (2023-10-12)
      More work may be needed.  (Unit testing desperately needed.)
    * Fix some incorrect/misleading CLI argument help.
    * Internal improvements for long-term maintenance.
+
+*  Shell scripts:  If you need the ksconf version from a shell script, it's possible to use ``python -m ksconf.version`` to spit out shell variables to get version information.
+   This previously worked with ``ksconf._version``, but that was never publicly documented and should be avoided in the future.
 
 
 Ksconf v0.13.2 (2023-10-10)

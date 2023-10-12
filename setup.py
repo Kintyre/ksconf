@@ -58,7 +58,7 @@ def get_ver(_allow_git_fetch=True):
     version = version.lstrip("v")   # Tags format is v0.0.0
     del gitout
 
-    # NOTE:  pre-commit building complexities go away after v0.13.0
+    # NOTE:  pre-commit building complexities go away after v0.14.0
 
     # If version is hex string, assume there's an issue (aka running from pre-commit's install)
     # Pre-commit has it's own shallow clone that doesn't check out that tags we need to build the
@@ -91,8 +91,11 @@ def get_ver(_allow_git_fetch=True):
         vcs_info = {vc_info!r}
         package_name = {package_name!r}
 
+        SHELL_VER_VARS = 'KSCONF_VERSION="{version}"\\nKSCONF_BUILD="{build_no}"\\nKSCONF_VCS_INFO="{vc_info}"'
+
         if __name__ == '__main__':
-            print('KSCONF_VERSION="{version}"\\nKSCONF_BUILD="{build_no}"\\nKSCONF_VCS_INFO="{vc_info}"')
+            print("# Please use 'python -m ksconf.version' instead.  This will eventually go away.")
+            print(SHELL_VER_VARS)
         """)
     open(ver_file, "w").write(code_block)
     return version

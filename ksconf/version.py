@@ -95,3 +95,7 @@ kkkkkkkk    kkkkkkksssssssssss        cccccccccccccccc   ooooooooooo     nnnnnn 
 |   <\__ \ (_| (_) | | | |  _|
 |_|\_\___/\___\___/|_| |_|_|
 """)
+
+if __name__ == '__main__':
+    from ._version import SHELL_VER_VARS
+    print(SHELL_VER_VARS)
