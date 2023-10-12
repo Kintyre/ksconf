@@ -19,12 +19,19 @@ New namespaces:
 
 Renames:
 
-- ``ksconf/__init__`` -> ``ksconf._ksconf``
+- ``ksconf/__init__`` -> ``ksconf.version``
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
-Ksconf v0.13.3 (DRAFT)
+Ksconf v0.13.3 (2023-10-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Created a new public interface :ref:py:mod:`ksconf.version`.
+   This provides a consistent means of getting the version information without any extra modules being loaded, now that ksconf is a namespace package.
+
+   Note that for v0.13.0 - 0.13.2, this was called ``ksconf._ksconf``.
+   Hopefully in that short time frame nobody got too attached to that terrible name.
+
 
 *  Changes for :ref:`ksconf_cmd_rest-publish`:
 

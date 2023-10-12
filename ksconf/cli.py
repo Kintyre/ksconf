@@ -21,8 +21,8 @@ import sys
 from collections import defaultdict
 from typing import List
 
-import ksconf._ksconf as ksc
 import ksconf.util
+import ksconf.version as ksc
 from ksconf.command import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG, is_debug
 from ksconf.hook import plugin_manager

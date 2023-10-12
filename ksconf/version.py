@@ -1,14 +1,4 @@
-""" ksconf - Ksconf Splunk CONFig tool
-
-
-Design goals:
-
- * Multi-purpose go-to ``.conf`` tool.
- * Dependability
- * Simplicity
- * No eternal dependencies (single source file, if possible; or packable as single file.)
- * Stable CLI
- * Good scripting interface for deployment scripts and/or git hooks
+""" ksconf.version:  Version and release info for the core ksconf package
 
 """
 
@@ -25,10 +15,6 @@ except ImportError:     # pragma: no cover
     __version__ = None
     __build__ = None
     __vcs_info__ = None
-
-
-class KsconfPluginWarning(Warning):
-    pass
 
 
 # Because how do you pick just just ONE?!!

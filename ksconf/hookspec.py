@@ -30,6 +30,10 @@ except ImportError:
         pass
 
 
+class KsconfPluginWarning(Warning):
+    pass
+
+
 hookspec = HookspecMarker(PLUGGY_HOOK)
 
 

@@ -23,8 +23,8 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 project = u'KSConf'
 copyright = u'2020, Kintyre Solutions'
 
-from ksconf._ksconf import __author__ as author  # noqa
-from ksconf._ksconf import __version__ as release  # noqa
+from ksconf.version import __author__ as author  # noqa
+from ksconf.version import __version__ as release  # noqa
 
 if release is None:
     release = "0.0.0"

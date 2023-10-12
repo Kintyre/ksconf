@@ -25,7 +25,6 @@ from textwrap import dedent
 from typing import TextIO
 from warnings import warn
 
-from ksconf._ksconf import KsconfPluginWarning
 from ksconf.compat import cache
 from ksconf.conf.parser import (ConfParserException, ParserConfig,
                                 detect_by_bom, parse_conf, smart_write_conf,
@@ -33,6 +32,7 @@ from ksconf.conf.parser import (ConfParserException, ParserConfig,
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_BAD_CONF_FILE,
                            EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum)
 from ksconf.hook import plugin_manager
+from ksconf.hookspec import KsconfPluginWarning
 from ksconf.util import debug_traceback
 
 __all__ = [
