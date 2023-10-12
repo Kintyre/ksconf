@@ -26,11 +26,15 @@ Renames:
 Ksconf v0.13.3 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Changes for :ref:`ksconf_cmd_rest-publish`:
+*  Changes for :ref:`ksconf_cmd_rest-publish`:
 
    * Implement ``--insecure`` parameter.
      Previously, SSL/TLS validation was not enforced as expected.
    * Fix bug with ``acl`` endpoint URL.
+   * Fix issue where sharing namespace settings could be ignored.
+     More work may be needed.  (Unit testing desperately needed.)
+   * Fix some incorrect/misleading CLI argument help.
+   * Internal improvements for long-term maintenance.
 
 
 Ksconf v0.13.2 (2023-10-10)

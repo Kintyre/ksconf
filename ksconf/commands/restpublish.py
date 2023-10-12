@@ -165,7 +165,7 @@ class RestPublishCmd(KsconfCmd):
             stanza_data = conf[stanza_name]
 
             if not stanza_data:
-                print(f"Skipping empty stanza [{stanza_name}]")
+                sys.stderr.write(f"Skipping empty stanza [{stanza_name}]\n")
                 continue
 
             if stanza_name is GLOBAL_STANZA or stanza_name == "":
@@ -180,7 +180,7 @@ class RestPublishCmd(KsconfCmd):
             else:
                 action, info = self.publish_conf(stanza_name, stanza_data, config_file)
 
-            print(f"{stanza_name:50} {action:8}   (delta size: { len(info.get('delta', [])) })")
+            self.stdout.write(f"{stanza_name:50} {action:8}   (delta size: { len(info.get('delta', [])) })\n")
 
             update_time = info.get("updated", 0)
             # headers = (conf_proxy.name, f"{args.url}/{config_file.path}")
@@ -190,7 +190,7 @@ class RestPublishCmd(KsconfCmd):
                 show_diff(self.stdout, info["delta"], headers=(conf_proxy.name, rest_header))
 
             if "meta" in info:
-                print(info["meta"])
+                self.stdout.write(f'{info["meta"]}\n')
 
             if "acl_delta" in info:
                 show_diff(self.stdout, info["acl_delta"])
@@ -200,15 +200,16 @@ class RestPublishCmd(KsconfCmd):
                      stanza_data: ConfType,
                      config_file):
         if self.meta:
+            namespace = self._service.namespace
             metadata = self.meta.get(config_file.name, stanza_name)
-            owner = metadata.get("owner", None)
-            app = config_file.service.namespace.app
+            owner = metadata.get("owner", namespace.owner)
+            app = namespace.app
             if metadata.get("export", None) == "system":
                 sharing = "global"
             else:
                 # Could still be "user" technically; but it seems unlikely that '--meta' would be given
                 # in that case.  Still, there's possible room for improvement.
-                sharing = "app"
+                sharing = namespace.sharing
         else:
             metadata = {}
             owner = None
@@ -328,7 +329,7 @@ class RestPublishCmd(KsconfCmd):
             res["meta_response"] = response
         except Exception:
             # Don't die on exceptions for ACLs...  print the error and move on (too many things to go wrong here)
-            print(f"Failed hitting:  {resource}  ARGS={final_meta}")
+            sys.stderr.write(f"Failed hitting:  {resource}  ARGS={final_meta}\n")
             import traceback
             traceback.print_exc()
             # XXX:  Do better
@@ -364,7 +365,7 @@ class RestPublishCmd(KsconfCmd):
         if args.meta:
             self.meta = MetaData()
             for meta_file in args.meta:
-                print(f"Loading metadata from {meta_file}")
+                self.stdout.write(f"Loading metadata from {meta_file}\n")
                 self.meta.feed_file(meta_file)
 
         self.connect_splunkd(args)
