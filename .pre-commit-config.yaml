@@ -29,6 +29,17 @@ repos:
     - id: autopep8
       exclude: (ksconf/ext/)
 
+-   repo: https://github.com/pycqa/flake8
+    rev: "6.1.0"
+    hooks:
+    -   id: flake8
+        args:
+          - --ignore
+          - E741
+          - --per-file-ignores=ksconf/setup_entrypoints.py:E241
+        exclude: '(ksconf/_version\.py|tests/test_.*\.py)'
+
+
 - repo: local
   hooks:
     - id: do-not-commit
