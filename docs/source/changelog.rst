@@ -23,6 +23,13 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.3 (2023-10-13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Expand :py:class:`~ksconf.app.manifest.AppManifest` class to support file filtering upon manifest creation.
+   Also added some inline docs.
+
+
 Ksconf v0.13.3 (2023-10-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

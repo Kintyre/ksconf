@@ -10,7 +10,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from os import fspath
 from pathlib import Path, PurePosixPath
-from typing import Iterable
+from typing import Callable, Iterable
 
 from ksconf.archive import extract_archive
 from ksconf.compat import List
@@ -37,6 +37,11 @@ class AppManifestStorageInvalid(AppManifestStorageError):
 
 @dataclass(order=True)
 class AppManifestFile:
+    """
+    Manifest entry for a single file contained within an app.
+
+    You probably don't want this class.  Use :py:class:`AppManifest` instead.
+    """
     path: PurePosixPath
     mode: int
     size: int
@@ -66,6 +71,23 @@ class AppManifestFile:
 
 @dataclass
 class AppManifest:
+    """
+    Manifest of a Splunk app.  It contains the signatures of contained files and
+    optionally a hash signature of app content.
+
+    This is quite very different than a tarball hash, which includes "noise",
+    like file modification time and possibly tarball creation time.  These
+    factors make comparison more expensive.  The goal of this class is the
+    ability to capture an app's content "fingerprint" and quickly determine if
+    another app is the same or not.  And to compare apps across equally between
+    tarballs, expanded folders, or a serialized capture at a point in time.
+
+    Build instances using:
+
+    * :py:meth:`from_tarball` - from a Splunk ``.spl`` or ``.tar.gz`` file.
+    * :py:meth:`from_filesystem` - from an extracted Splunk app directory
+    * :py:meth:`from_dict` - primarily for json serialization from :py:meth:`to_dict`.
+    """
     name: str = None
     source: str = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
@@ -133,7 +155,9 @@ class AppManifest:
 
     @classmethod
     def from_archive(cls, archive: Path,
-                     calculate_hash=True) -> AppManifest:
+                     calculate_hash=True,
+                     *,
+                     filter_file: Callable = None) -> AppManifest:
         """
         Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
         False when only a file listing is needed.
@@ -157,8 +181,10 @@ class AppManifest:
             app, relpath = gaf.path.split("/", 1)
             app_names.add(app)
             hash = gethash(gaf.payload)
-            f = AppManifestFile(PurePosixPath(relpath), gaf.mode, gaf.size, hash)
-            manifest.files.append(f)
+            relpath = PurePosixPath(relpath)
+            if filter_file is None or filter_file(relpath):
+                f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
+                manifest.files.append(f)
         if len(app_names) > 1:
             raise AppArchiveContentError("Found multiple top-level app names!  "
                                          f"Archive {archive} contains apps {', '.join(app_names)}")
@@ -169,7 +195,9 @@ class AppManifest:
     def from_filesystem(cls, path: Path,
                         name: str = None,
                         follow_symlinks=False,
-                        calculate_hash=True) -> AppManifest:
+                        calculate_hash=True,
+                        *,
+                        filter_file: Callable = None) -> AppManifest:
         """
         Create as new AppManifest from an existing directory structure.
         Set ``calculate_hash`` as False when only a file listing is needed.
@@ -184,6 +212,8 @@ class AppManifest:
             root_path = PurePosixPath(root)
             for file_name in files:
                 rel_path: PurePosixPath = root_path.joinpath(file_name)
+                if filter_file is not None and not filter_file(rel_path):
+                    continue
                 full_path: Path = path.joinpath(root, file_name)
                 st = full_path.stat()
                 amf = AppManifestFile(rel_path, st.st_mode & 0o777, st.st_size)
