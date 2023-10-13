@@ -13,6 +13,7 @@ Subpackages
    ksconf.builder
    ksconf.commands
    ksconf.conf
+   ksconf.plugins
    ksconf.util
    ksconf.vc
 
@@ -111,6 +112,14 @@ ksconf.setup\_entrypoints module
 --------------------------------
 
 .. automodule:: ksconf.setup_entrypoints
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ksconf.version module
+---------------------
+
+.. automodule:: ksconf.version
    :members:
    :undoc-members:
    :show-inheritance:

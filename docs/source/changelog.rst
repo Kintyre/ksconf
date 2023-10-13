@@ -23,17 +23,23 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
-Ksconf v0.13.3 (2023-10-13)
+Ksconf v0.13.4 (2023-10-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**API Changes (only)**:
+
+*  Minor tweaks to :py:mod:`ksconf.version` to use public names instead of dunder names.
+   So ``from ksconf.version import version`` instead of ``from ksconf.version import __version__``.
+   Note that the old names still exist, with no deprecation planned.
+   The api docs were updated to demo the best approach to determine the :ref:`ksconf version <api_ksconf_version>`
 *  Expand :py:class:`~ksconf.app.manifest.AppManifest` class to support file filtering upon manifest creation.
-   Also added some inline docs.
+*  Updated splunk app building example.
 
 
 Ksconf v0.13.3 (2023-10-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*  Created a new public interface :ref:py:mod:`ksconf.version`.
+*  Created a new public interface :py:mod:`ksconf.version`.
    This provides a consistent means of getting the version information without any extra modules being loaded, now that ksconf is a namespace package.
    Note that for v0.13.0 - 0.13.2, this was called ``ksconf._ksconf``.
    Hopefully in that short time frame nobody got too attached to that terrible name.

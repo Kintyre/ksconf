@@ -48,12 +48,12 @@ def package_spl(step: BuildStep):
     release_name = top_dir / ".release_name"
     # Verbose message
     log("Starting to package SPL file!", VERBOSE)
-    step.run(sys.executable, "-m", "ksconf", "package",
-             "--file", step.dist_path / SPL_NAME,   # Path to created tarball
-             "--app-name", APP_FOLDER,              # Top-level directory name
-             "--block-local",                       # VC build, no 'local' folder
-             "--release-file", str(release_path),
-             ".")
+    step.run_ksconf("package",
+                    "--file", step.dist_path / SPL_NAME,   # Path to created tarball
+                    "--app-name", APP_FOLDER,              # Top-level directory name
+                    "--block-local",                       # VC build, no 'local' folder
+                    "--release-file", str(release_path),
+                    ".")
     # Provide the dist file as a short name too (used by some CI/CD tools)
     path = release_path.read_text()
     short_name = Path(path).name
