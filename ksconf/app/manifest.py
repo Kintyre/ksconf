@@ -101,18 +101,23 @@ class AppManifest:
 
     @property
     def hash(self):
-        # How do we trigger an update if files is updated?  Should we make the caller worry about this?  Maybe call a reset() method?
-        # Should we convert the list to a tuple as soon as hash is calculated for the first time, then require cloning to make further modifications?
+        """ Return hash, either from deserialization or local calculation. """
         if self._hash is UNSET:
             self._hash = self._calculate_hash()
         return self._hash
 
+    @hash.deleter
+    def hash(self):
+        """ Reset the hash calculation.  Do this after modifying 'files'. """
+        assert self.files, "Refusing to reset hash without 'files'"
+        self._hash = UNSET
+
     def recalculate_hash(self) -> bool:
         """ Recalculate hash and indicate if hash has changed. """
-        assert self._hash is not UNSET, "Hash has not been calculated or provided"
-        assert self._hash is not None, "Hash cannot be calculated"
         first_hash = self._hash
-        self._hash = UNSET
+        assert first_hash is not UNSET, "Hash has not been calculated or provided"
+        assert first_hash is not None, "Hash cannot be calculated"
+        del self.hash
         return first_hash != self.hash
 
     def _calculate_hash(self) -> str:
