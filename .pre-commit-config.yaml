@@ -1,59 +1,57 @@
 # See http://pre-commit.com for more information
 # See http://pre-commit.com/hooks.html for more hooks
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.5.0
-  hooks:
-    - id: trailing-whitespace
-      exclude: (cli\.rst|\.md|\.csv)$
-    - id: end-of-file-fixer
-      exclude: (cli\.rst|\.md|\.csv)$
-    - id: check-ast
-    - id: check-added-large-files
-      args: [ '--maxkb=200' ]
-    - id: check-merge-conflict
-    - id: detect-private-key
-    - id: mixed-line-ending
-      args: [ '--fix=lf' ]
-      exclude: (\.bat|\.csv)$
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: (cli\.rst|\.md|\.csv)$
+      - id: end-of-file-fixer
+        exclude: (cli\.rst|\.md|\.csv)$
+      - id: check-ast
+      - id: check-added-large-files
+        args: ["--maxkb=200"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        exclude: (\.bat|\.csv)$
 
-- repo: https://github.com/PyCQA/isort.git
-  rev: 5.12.0
-  hooks:
-    - id: isort
-      exclude: (ksconf/ext/)
+  - repo: https://github.com/PyCQA/isort.git
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        exclude: (ksconf/ext/)
 
-- repo: https://github.com/pre-commit/mirrors-autopep8
-  rev: v1.5.6
-  hooks:
-    - id: autopep8
-      exclude: (ksconf/ext/)
+  - repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: v1.5.6
+    hooks:
+      - id: autopep8
+        exclude: (ksconf/ext/)
 
--   repo: https://github.com/pycqa/flake8
+  - repo: https://github.com/pycqa/flake8
     rev: "6.1.0"
     hooks:
-    -   id: flake8
+      - id: flake8
         args:
           - --ignore
           - E741
           - --per-file-ignores=ksconf/setup_entrypoints.py:E241
         exclude: '(ksconf/_version\.py|tests/test_.*\.py)'
 
-
-- repo: local
-  hooks:
-    - id: do-not-commit
-      name: Block commits with invalid lines
-      entry: ^(from build\.lib|import build\.)
-      language: pygrep
-      types: [python]
-    - id: ksconf-unittest
-      name: Run all unit tests for ksconf
-      language: script
-      entry: run_tests.py
-      types: [ python ]
-      pass_filenames: false
-
+  - repo: local
+    hooks:
+      - id: do-not-commit
+        name: Block commits with invalid lines
+        entry: ^(from build\.lib|import build\.)
+        language: pygrep
+        types: [python]
+      - id: ksconf-unittest
+        name: Run all unit tests for ksconf
+        language: script
+        entry: run_tests.py
+        types: [python]
+        pass_filenames: false
 # Way too much noise.... (or I just have bad code, either way it's too much)
 #- repo: https://github.com/pre-commit/mirrors-pylint
 #  rev: master
