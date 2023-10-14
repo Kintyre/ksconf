@@ -19,7 +19,7 @@ import os
 import platform
 import sys
 from collections import defaultdict
-from typing import List
+from typing import TYPE_CHECKING, Any, List
 
 import ksconf.util
 import ksconf.version as ksc
@@ -35,6 +35,11 @@ try:
 except OSError:  # WindowsError:  pragma: no cover
     def choice(options):
         return options[0]
+
+if TYPE_CHECKING:
+    from pluggy import HookCaller, HookImpl
+else:
+    HookCaller = HookImpl = Any
 
 
 ###################################################################################################
@@ -151,9 +156,9 @@ def build_cli_parser(do_formatter=False):
                 version_info.append(f"  plugins:  {getattr(plugin, '__name__', repr(plugin))}")
 
             workaround_dups = set()
-            hookcallers = plugin_manager.get_hookcallers(plugin)    # type: List[_HookCaller]
+            hookcallers: List[HookCaller] = plugin_manager.get_hookcallers(plugin)
             for caller in hookcallers:
-                hookimpls = caller.get_hookimpls()   # type: List[HookImpl]
+                hookimpls: List[HookImpl] = caller.get_hookimpls()
                 parts = []
                 show = False
                 if len(hookimpls) > 1 or hookimpls[0].function.__name__ != caller.name:

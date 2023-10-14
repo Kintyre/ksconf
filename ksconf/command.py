@@ -37,7 +37,7 @@ from ksconf.util import debug_traceback
 
 __all__ = [
     "KsconfCmd",
-    "ConfDirProxy"
+    "ConfDirProxy",
     "ConfFileProxy",
     "ConfFileType",
     "dedent",

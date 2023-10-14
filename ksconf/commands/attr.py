@@ -1,4 +1,4 @@
-""" SUBCOMMAND:  ``ksconf attr-get <CONF> --stanza STANZA --attribute ATTR``
+"""r SUBCOMMAND:  ``ksconf attr-get <CONF> --stanza STANZA --attribute ATTR``
 
 .. code-block:: sh
 
@@ -7,14 +7,18 @@
 
 SUBCOMMAND:  ``ksconf attr-set <CONF> --stanza STANZA --attribute ATTR --value VALUE``
 
-    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version --value 9.9.9
+.. code-block:: sh
+
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf \
+        --stanza launcher --attribute version --value 9.9.9
 
     echo "9.9.9" > /tmp/new_version
-    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version  -t file /tmp/new_version
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf \
+        --stanza launcher --attribute version  -t file /tmp/new_version
 
     export NEW_VERSION=1.2.3
-    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf --stanza launcher --attribute version -t env NEW_VERSION
-
+    ksconf attr-set $SPLUNK_HOME/etc/apps/Splunk_TA_aws/local/app.conf \
+        --stanza launcher --attribute version -t env NEW_VERSION
 
 """
 

@@ -24,7 +24,7 @@ import json
 import os
 
 from ksconf.command import KsconfCmd, add_file_handler, dedent
-from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_CLI_ARG_DEPRECATED, EXIT_CODE_SUCCESS
+from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_SUCCESS
 from ksconf.layer import layer_file_factory
 from ksconf.package import AppPackager
 

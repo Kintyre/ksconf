@@ -10,3 +10,6 @@ from ksconf.hook import ksconf_hook
 def modify_jinja_env(env):
     pass
 '''
+
+# Keep flake8 happy
+del ksconf_hook
