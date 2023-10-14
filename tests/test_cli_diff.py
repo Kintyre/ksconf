@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, print_function, unicode_literals
 
+import json
 import os
 import re
 import sys
@@ -48,6 +49,24 @@ class CliDiffTest(unittest.TestCase):
             # Keep this really simple for now
             self.assertRegex(ko.stdout, r"\x1b\[\d+m", "No TTY color markers found")
             self.assertEqual(ko.returncode, EXIT_CODE_DIFF_CHANGE)
+
+        # Test the json format output
+        with ksconf_cli:
+            ko = ksconf_cli("diff", "--format", "json", conf1, conf2)
+            # This is weird.  Why are returning EQUAL?  That's been inplace for a long time, not for a today.
+            self.assertEqual(ko.returncode, EXIT_CODE_DIFF_EQUAL)
+            diff_data = json.loads(ko.stdout)
+            self.assertEqual(diff_data["schema_version"], 1)
+            self.assertEqual(diff_data["records"], [{
+                "tag": "replace",
+                "location": {
+                    "type": "key",
+                    "stanza": "x",
+                    "key": "search"
+                },
+                "a": "noop",
+                "b": "tstats count where index=hippo by sourcetype, source \n| stats values(source) by sourcetype"
+            }])
 
     '''
     def test_diff_stdin(self):

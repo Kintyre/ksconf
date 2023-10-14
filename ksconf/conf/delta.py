@@ -17,7 +17,7 @@ from ksconf.util.terminal import ANSI_BOLD, ANSI_GREEN, ANSI_RED, ANSI_RESET, AN
 # DiffVerb logic
 
 
-class DiffVerb(Enum):
+class DiffVerb(str, Enum):
     INSERT = "insert"
     DELETE = "delete"
     REPLACE = "replace"
@@ -38,7 +38,7 @@ DIFF_OP_REPLACE = DiffVerb.REPLACE
 DIFF_OP_EQUAL = DiffVerb.EQUAL
 
 
-class DiffLevel(Enum):
+class DiffLevel(str, Enum):
     GLOBAL = "global"
     STANZA = "stanza"
     KEY = "key"
@@ -446,12 +446,12 @@ def write_diff_as_json(delta: List[DiffOp], stream, **dump_args):
     import json
     import sys
 
-    from ksconf._ksconf import __vcs_info__, __version__
+    from ksconf.version import vcs_info, version
     record = {
         "schema_version": 1,
         "software": {
             "name": "ksconf",
-            "version": [__version__, __vcs_info__],
+            "version": [version, vcs_info],
             "command": sys.argv,
             "cwd": os.getcwd(),
         }

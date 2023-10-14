@@ -23,6 +23,14 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.5 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Fix bug in `ksconf diff`` when using the ``--format=json`` option.
+   This has been broken for a number of releases (added a unit test to keep that from repeating).
+   Fixed the newly caused import issue caused by a missed file during the v0.13.4 release, as well as earlier Enum-related bug:  ``TypeError: Object of type DiffVerb is not JSON serializable``.
+
+
 Ksconf v0.13.4 (2023-10-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
