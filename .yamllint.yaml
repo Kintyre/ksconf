@@ -1,0 +1,10 @@
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 100
+    level: warning
+  truthy:
+    #  Too many "on" keys in GitHub actions...
+    check-keys: false

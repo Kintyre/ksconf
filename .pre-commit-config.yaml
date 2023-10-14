@@ -39,6 +39,11 @@ repos:
           - --per-file-ignores=ksconf/setup_entrypoints.py:E241
         exclude: '(ksconf/_version\.py|tests/test_.*\.py)'
 
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+
   - repo: local
     hooks:
       - id: do-not-commit

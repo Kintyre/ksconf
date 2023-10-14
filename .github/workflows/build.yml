@@ -28,7 +28,8 @@ jobs:
           - os: ubuntu-latest
             python-version: 3.9
             build_sdist: true
-            build_splunk_app: true  # Building docs against python 3.7 results in old Sphnix package, and very bloated output
+            # Building docs with 3.7 results in old Sphnix and bloated output
+            build_splunk_app: true
           # - os: ubuntu-latest
           #   python-version: 3.7
           #   build_splunk_app: true
@@ -114,14 +115,15 @@ jobs:
       #   Using lcov file: ./coverage/lcov.info
       #   Error: Lcov file not found.
       # - name: Coveralls
-      #
+
       #  uses: coverallsapp/github-action@master
       #  with:
       #      github-token: ${{ secrets.GITHUB_TOKEN }}
 
       ###############################################################
-      #  This fails with:     requests.exceptions.HTTPError: 422 Client Error: Unprocessable Entity for url: https://coveralls.io/api/v1/jobs
-      #- run: coveralls
+      #  This fails with:
+      #   requests.exceptions.HTTPError: 422 Client Error: Unprocessable Entity for url: https://coveralls.io/api/v1/jobs
+      # - run: coveralls
       #  env:
       #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
