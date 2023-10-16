@@ -4,7 +4,7 @@
 import re
 import sys
 from shutil import copy2, rmtree
-from typing import List
+from typing import List, Optional
 
 from ksconf.builder import QUIET, VERBOSE, BuildStep
 
@@ -26,7 +26,7 @@ def clean_build(step: BuildStep) -> None:
 
 def copy_files(step: BuildStep,
                patterns: List[str],
-               target: str = None) -> None:
+               target: Optional[str] = None) -> None:
     """ Copy source files into the build folder that match given glob patterns """
     log = step.get_logger()
     if target:
@@ -98,7 +98,7 @@ def pip_install(step: BuildStep,
                 requirements_file: str = "requirements.txt",
                 dest: str = "lib",
                 *,
-                python_path: str = None,
+                python_path: Optional[str] = None,
                 isolated: bool = True,
                 dependencies: bool = True,
                 handle_dist_info: str = "remove",  # or 'rename'

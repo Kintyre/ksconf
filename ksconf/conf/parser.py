@@ -19,9 +19,10 @@ import re
 from enum import Enum
 from io import StringIO, open
 from pathlib import Path
-from typing import Dict, Generator, Iterable, List, TextIO, Tuple, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Tuple, Union
 
 from ..consts import SmartEnum
+from ..types import PathType
 from ..util.compare import fileobj_compare
 from ..util.file import atomic_open, atomic_writer
 
@@ -32,7 +33,6 @@ default_encoding = "utf-8"
 
 StanzaType = Dict[str, str]
 ConfType = Dict[str, StanzaType]
-PathType = Union[Path, str]
 _StreamInput = Union[TextIO, Iterable[str]]
 _StreamOutput = Union[PathType, TextIO]
 _StreamNameFile = Union[PathType, _StreamInput]
@@ -116,9 +116,9 @@ class DuplicateStanzaException(ConfParserException):
 # Core parsing / conf file writing logic
 
 
-def section_reader(stream: Iterable[str],
+def section_reader(stream: Sequence[str],
                    section_re: re.Pattern = re.compile(r'^[\s\t]*\[(.*)\]\s*$')
-                   ) -> Generator[Tuple[str, List[str]], None, None]:
+                   ) -> Iterator[Tuple[str, List[str]]]:
     """
     This generator break a configuration file stream into sections.  Each section contains a name
     and a list of text lines held within that section.
@@ -132,10 +132,10 @@ def section_reader(stream: Iterable[str],
     :return: sections in the form of `(section_name, lines_of_text)`
     :rtype: tuple
     """
-    buf = []
+    buf: List[str] = []
     section = None
     for line in stream:
-        line = line.rstrip("\r\n")
+        line: str = line.rstrip("\r\n")
         match = section_re.match(line)
         if match:
             yield section, buf
@@ -185,7 +185,7 @@ def detect_by_bom(path: PathType) -> str:
 def cont_handler(iterable: Iterable[str],
                  continue_re: re.Pattern = re.compile(r"^(.*)\\$"),
                  breaker: str = "\n"
-                 ) -> Generator[str, None, None]:
+                 ) -> Iterator[str]:
     r"""
     Look for trailing backslashes ("`\\`") which indicate a value for an attribute is split across
     multiple lines.  This function will group such lines together, and pass all other lines through
@@ -219,7 +219,7 @@ def splitup_kvpairs(lines: Iterable[str],
                     comments_re: re.Pattern = re.compile(r"^\s*[#;]"),
                     keep_comments: bool = False,
                     strict: bool = False
-                    ) -> Generator[Tuple[str, str], None, None]:
+                    ) -> Iterator[Tuple[str, str]]:
     """
     Break up 'attribute=value' entries in a configuration file.
 
@@ -252,7 +252,7 @@ def splitup_kvpairs(lines: Iterable[str],
 
 def parse_conf(stream: _StreamNameFile,
                profile: ParserConfig = PARSECONF_MID,
-               encoding: str = None
+               encoding: Optional[str] = None
                ) -> ConfType:
     """
     Parse a .conf file.  This is a wrapper around :func:`parse_conf_stream` that allows filenames
@@ -281,7 +281,7 @@ def parse_conf(stream: _StreamNameFile,
 
 
 def parse_string(s: str,
-                 name: str = None,
+                 name: Optional[str] = None,
                  profile: ParserConfig = PARSECONF_MID) -> ConfType:
     """
     Parse a .conf file that's already in memory, as a string.
@@ -359,7 +359,7 @@ def write_conf(stream: _StreamOutput,
                stanza_delim: str = "\n",
                sort: bool = True,
                temp_suffix: str = ".tmp",
-               mtime: float = None):
+               mtime: Optional[float] = None):
     if not hasattr(stream, "write"):
         # Assume it's a filename
         with atomic_open(stream, temp_suffix, mode="w",
@@ -411,7 +411,7 @@ def smart_write_conf(filename: PathType,
                      stanza_delim: str = "\n",
                      sort: bool = True,
                      temp_suffix: str = ".tmp",
-                     mtime: float = None) -> SmartEnum:
+                     mtime: Optional[float] = None) -> SmartEnum:
     """ Write conf data to a specific file, but only when necessary.
     This function is essentially the same as :func:`write_conf`, except that it
     avoids updating the file if it already exists and has the desired content.
@@ -457,8 +457,8 @@ def _extract_comments(section: StanzaType) -> List[str]:
 
 
 def inject_section_comments(section: StanzaType,
-                            prepend: str = None,
-                            append: str = None):
+                            prepend: Optional[str] = None,
+                            append: Optional[str] = None):
     """
     Extract existing comments from section dict (in order; and remove them)
     Add in any prepend/append comments (if that comment isn't already present)
@@ -535,13 +535,13 @@ class update_conf:
 
     def __init__(self, conf_path: PathType,
                  profile: ParserConfig = PARSECONF_MID,
-                 encoding: str = None,
+                 encoding: Optional[str] = None,
                  make_missing: bool = False):
         self.path = conf_path
         self.profile = profile
         self.encoding = encoding
         self.make_missing = make_missing
-        self._data: ConfType = None
+        self._data: Optional[ConfType] = None
 
     def __enter__(self):
         if not os.path.isfile(self.path) and self.make_missing:

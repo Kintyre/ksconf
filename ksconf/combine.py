@@ -9,7 +9,7 @@ import re
 import sys
 from os import fspath
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional, Sequence
 
 from ksconf.command import ConfFileProxy
 from ksconf.compat import List, Tuple
@@ -66,7 +66,7 @@ class LayerCombiner:
                  banner: str = "",
                  dry_run: bool = False,
                  quiet: bool = False):
-        self.layer_root: LayerRootBase = None
+        self.layer_root: Optional[LayerRootBase] = None
         self.context = LayerContext()
         self.layer_filter = LayerFilter()
         self.banner = banner
@@ -162,7 +162,7 @@ class LayerCombiner:
         if not target.is_dir():
             target.mkdir()
 
-    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> List[LayerFile]:
+    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> Sequence[LayerFile]:
         """ Hook point for pre-processing before any files are copied/merged """
         del target
         return src_files

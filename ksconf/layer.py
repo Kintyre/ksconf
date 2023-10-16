@@ -7,7 +7,7 @@ from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterator, Match
+from typing import Callable, Iterator, Match, Optional
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
@@ -167,7 +167,7 @@ class LayerFile(PathLike):
     def __init__(self,
                  layer: LayerRootBase.Layer,
                  relative_path: PurePath,
-                 stat: stat_result = None):
+                 stat: Optional[stat_result] = None):
         self.layer = layer
         self.relative_path = relative_path
         self._stat = stat
@@ -380,7 +380,7 @@ class LayerRootBase:
                         return None
 
     # LayerRootBase
-    def __init__(self, context: LayerContext = None):
+    def __init__(self, context: Optional[LayerContext] = None):
         self._layers: List[LayerRootBase.Layer] = []
         self.context = context or LayerContext()
 

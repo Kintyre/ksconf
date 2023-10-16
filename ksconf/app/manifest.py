@@ -10,7 +10,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from os import fspath
 from pathlib import Path, PurePosixPath
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 from ksconf.archive import extract_archive
 from ksconf.compat import List
@@ -45,9 +45,9 @@ class AppManifestFile:
     path: PurePosixPath
     mode: int
     size: int
-    hash: str = None
+    hash: Optional[str] = None
 
-    def content_match(self, other):
+    def content_match(self, other: AppManifestFile):
         return self.hash == other.hash
 
     def to_dict(self):
@@ -88,8 +88,8 @@ class AppManifest:
     * :py:meth:`from_filesystem` - from an extracted Splunk app directory
     * :py:meth:`from_dict` - primarily for json serialization from :py:meth:`to_dict`.
     """
-    name: str = None
-    source: str = None
+    name: Optional[str] = None
+    source: Optional[str] = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
     _hash: str = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
@@ -162,7 +162,7 @@ class AppManifest:
     def from_archive(cls, archive: Path,
                      calculate_hash=True,
                      *,
-                     filter_file: Callable = None) -> AppManifest:
+                     filter_file: Optional[Callable] = None) -> AppManifest:
         """
         Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
         False when only a file listing is needed.
@@ -198,11 +198,11 @@ class AppManifest:
 
     @classmethod
     def from_filesystem(cls, path: Path,
-                        name: str = None,
+                        name: Optional[str] = None,
                         follow_symlinks=False,
                         calculate_hash=True,
                         *,
-                        filter_file: Callable = None) -> AppManifest:
+                        filter_file: Optional[Callable] = None) -> AppManifest:
         """
         Create as new AppManifest from an existing directory structure.
         Set ``calculate_hash`` as False when only a file listing is needed.
@@ -318,7 +318,7 @@ class StoredArchiveManifest:
                            archive: Path,
                            stored_file: Path,
                            *,
-                           permanent_archive: Path = None) -> StoredArchiveManifest:
+                           permanent_archive: Optional[Path] = None) -> StoredArchiveManifest:
         """
         Attempt to load an archive stored manifest from ``archive`` and ``stored_file`` paths.
         If the archive has changed since the manifest was stored, then an
@@ -370,11 +370,11 @@ def create_manifest_from_archive(
 
 def load_manifest_for_archive(
         archive: Path,
-        manifest_file: Path = None,
+        manifest_file: Optional[Path] = None,
         *,
         read_manifest=True,
         write_manifest=True,
-        permanent_archive: Path = None,
+        permanent_archive: Optional[Path] = None,
         log_callback=print) -> AppManifest:
     """
     Load manifest for ``archive`` and create a stored copy of the manifest in

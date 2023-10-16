@@ -69,3 +69,20 @@ repos:
   #   rev: master
   #   hooks:
   #     - id: gitlint
+
+  # Yup this one is too busy too.  I attacked *some* of these, but there were still 270+ errors remaining to address (and some of these are like wack-a-mole, a small "fix" breaks something else.)
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.6.0
+  #   hooks:
+  #     - id: mypy
+  #       args:
+  #         - '--explicit-package-bases'
+  #       exclude: '(plugins/.*|splunk_app/.*)'
+  #       additional_dependencies:
+  #         - argcomplete
+  #         - importlib-metadata
+  #         - jinja2
+  #         - lxml
+  #         - pluggy
+  #         - pyyaml
+  #         - splunk-sdk

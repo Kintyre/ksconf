@@ -18,7 +18,7 @@ LEVELS:
 from __future__ import absolute_import, unicode_literals
 
 import re
-from typing import TextIO
+from typing import List, TextIO
 from urllib.parse import quote, unquote
 
 from ksconf.conf.parser import GLOBAL_STANZA, parse_conf
@@ -82,14 +82,13 @@ class MetaData:
         self._meta = MetaLayer("")
 
     @staticmethod
-    def expand_layers(layers):
+    def expand_layers(layers: List[MetaLayer]) -> dict:
         """
         :param layers: layer of stanzas, starting with the global ending with conf/stanza/attr
         :type layers: list(dict)
         :return:  Expanded layer
         :rtype: dict
         """
-        # type: (list(layers)) -> dict
         exp = {}
         for layer in layers:
             if layer:

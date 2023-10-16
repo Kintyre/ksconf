@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 from copy import deepcopy
-from typing import List
+from typing import List, Optional
 
 from ksconf.command import ConfFileProxy
 from ksconf.conf.delta import compare_cfgs, show_diff
@@ -61,7 +61,7 @@ def merge_conf_dicts(*dicts: ConfType) -> ConfType:
 def merge_conf_files(dest: ConfFileProxy,
                      configs: List[ConfFileProxy],
                      dry_run: bool = False,
-                     banner_comment: str = None) -> SmartEnum:
+                     banner_comment: Optional[str] = None) -> SmartEnum:
     # Parse all config files
     cfgs = [conf.data for conf in configs]
     newest_mtime = max(conf.mtime for conf in configs) if configs else None

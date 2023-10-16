@@ -8,13 +8,13 @@ This is a silly hack allows for fallback mechanism when
 from __future__ import absolute_import, unicode_literals
 
 from importlib import import_module
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 class Ep(NamedTuple):
     name: str
     module_name: str
-    object_name: str = None
+    object_name: Optional[str] = None
 
     @property
     def formatted(self):

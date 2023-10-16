@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from io import open
 from os import PathLike, fspath
-from typing import List, NamedTuple, Sequence, TextIO, Union
+from typing import List, NamedTuple, Optional, Sequence, TextIO, Union
 
 from ksconf.conf.parser import GLOBAL_STANZA, ConfType, StanzaType, _format_stanza, default_encoding
 from ksconf.consts import EXIT_CODE_DIFF_CHANGE, EXIT_CODE_DIFF_EQUAL, EXIT_CODE_DIFF_NO_COMMON
@@ -69,7 +69,7 @@ class DiffOp(NamedTuple):
 @dataclass
 class DiffHeader:
     name: str
-    mtime: float = None
+    mtime: Optional[float] = None
 
     def __init__(self, name, mtime=None):
         self.name = name
@@ -280,7 +280,7 @@ _diff_color_mapping = {
 
 def _show_diff_header(stream: TextIO,
                       files: List[Union[DiffHeader, str]],
-                      diff_line: Union[str, None] = None):
+                      diff_line: Optional[str] = None):
     headers = []
 
     for f in files:

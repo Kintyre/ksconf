@@ -9,7 +9,7 @@ import tempfile
 from functools import wraps
 from os import fspath
 from pathlib import Path
-from typing import TextIO, Union
+from typing import Optional, TextIO, Union
 
 from ksconf.app.manifest import AppManifest
 from ksconf.combine import LayerCombiner
@@ -61,16 +61,16 @@ class PackagingException(Exception):
 class AppPackager:
 
     def __init__(self, src_path, app_name: str, output: TextIO,
-                 template_variables: dict = None,
+                 template_variables: Optional[dict] = None,
                  predictable_mtime: bool = True):
         self.src_path = fspath(src_path)
         self.app_name = app_name
-        self.build_dir = None
-        self.app_dir = None
+        self.build_dir: str = None
+        self.app_dir: str = None
         self.output = output
-        self._var_magic = None
-        self._mutable = None
-        self._frozen_by = str
+        self._var_magic: AppVarMagic = None
+        self._mutable: bool = None
+        self._frozen_by = ""
         self.template_variables = template_variables
         self.predictable_mtime = predictable_mtime
 
@@ -105,7 +105,7 @@ class AppPackager:
         """
         return self._var_magic.expand(value)
 
-    def expand_new_only(self, value: str) -> Union[str, None]:
+    def expand_new_only(self, value: str) -> Union[str, bool]:
         """ Expand a variable but return False if no substitution occurred
 
         :param str value:  String that may contain ``{{variable}}`` substitution.
@@ -181,7 +181,9 @@ class AppPackager:
             os.unlink(local_meta)
 
     @require_active_context
-    def update_app_conf(self, version: str = None, build: str = None):
+    def update_app_conf(self,
+                        version: Optional[str] = None,
+                        build: Optional[str] = None):
         """ Update version and/or build in ``apps.conf`` """
         app_settings = [
             ("launcher", "version", version),
@@ -247,10 +249,9 @@ class AppPackager:
                         self.output.write(f"Found hidden {t}:  {root}/{name}\n")
 
     @require_active_context(mutable=False)
-    def make_archive(self, filename, temp_suffix: str = ".tmp"):
+    def make_archive(self, filename: str, temp_suffix: str = ".tmp") -> str:
         """ Create a compressed tarball of the build directory.
         """
-        # type: (str) -> str
         self.freeze("make_archive")
         # if os.path.isfile(filename):
         #    raise ValueError(f"Destination file already exists:  {filename}")

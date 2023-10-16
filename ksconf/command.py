@@ -22,7 +22,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
 from io import StringIO, open
 from textwrap import dedent
-from typing import TextIO
+from typing import Optional, TextIO
 from warnings import warn
 
 from ksconf.compat import cache
@@ -60,10 +60,10 @@ class ConfDirProxy:
 
 
 class ConfFileProxy:
-    def __init__(self, name: str, mode: str, stream: TextIO = None,
+    def __init__(self, name: str, mode: str, stream: Optional[TextIO] = None,
                  *,
-                 parse_profile: ParserConfig = None,
-                 is_file: bool = None):
+                 parse_profile: Optional[ParserConfig] = None,
+                 is_file: Optional[bool] = None):
         self.name = os.fspath(name)
         self._mode = mode
         if is_file is not None:
@@ -227,7 +227,7 @@ class ConfFileType:
     """
 
     def __init__(self, mode='r', action="open",
-                 parse_profile: ParserConfig = None,
+                 parse_profile: Optional[ParserConfig] = None,
                  accept_dir: bool = False):
         self._mode = mode
         self._action = action
@@ -327,11 +327,11 @@ class KsconfCmdReadConfException(Exception):
 
 class KsconfCmd:
     """ Ksconf command specification base class. """
-    help = None
-    description = None
+    help: Optional[str] = None
+    description: Optional[str] = None
     format = "default"
     maturity = "alpha"
-    version_extra = None
+    version_extra: Optional[str] = None
 
     def __init__(self, name):
         self.name = name.lower()
@@ -441,7 +441,7 @@ class KsconfCmd:
         return cfp
 
     def parse_conf(self, path: str, mode: str = "r",
-                   profile: ParserConfig = None,
+                   profile: Optional[ParserConfig] = None,
                    raw_exec: bool = False) -> ConfFileProxy:
         if raw_exec:
             return self._parse_conf(path, mode, profile)

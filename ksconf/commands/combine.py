@@ -12,10 +12,11 @@ Usage example:
 from __future__ import absolute_import, unicode_literals
 
 from pathlib import Path
+from typing import Optional, Sequence
 
 from ksconf.combine import LayerCombiner, LayerCombinerException
 from ksconf.command import KsconfCmd, add_file_handler, dedent
-from ksconf.compat import List
+from ksconf.compat import Set
 from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_COMBINE_MARKER_MISSING,
                            EXIT_CODE_NO_SUCH_FILE)
 from ksconf.filter import create_filtered_list
@@ -44,7 +45,7 @@ class RepeatableCombiner(LayerCombiner):
                  disable_cleanup: bool = False,
                  keep_existing: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.target_extra_files: set = None
+        self.target_extra_files: Optional[set] = None
         self.disable_marker = disable_marker
         self.disable_cleanup = disable_cleanup
         self.keep_existing = keep_existing
@@ -74,7 +75,7 @@ class RepeatableCombiner(LayerCombiner):
             if not self.disable_marker:
                 marker_file.write_text("This directory is managed by KSCONF.  Don't touch\n")
 
-    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> List[LayerFile]:
+    def pre_combine_inventory(self, target: Path, src_files: Sequence[LayerFile]) -> Set[LayerFile]:
         """
         Find a set of files that exist in the target folder, but in NO source folder (for cleanup)
         """

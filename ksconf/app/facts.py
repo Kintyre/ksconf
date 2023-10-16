@@ -10,14 +10,18 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field, fields
 from os import fspath
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, Optional
 
 from ksconf.app.manifest import AppArchiveContentError
 from ksconf.archive import extract_archive, gaf_filter_name_like
-from ksconf.compat import List, Tuple
+from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
                                 default_encoding, parse_conf, parse_string)
+
+OInt = Optional[int]
+OStr = Optional[str]
+OBool = Optional[bool]
 
 
 @dataclass
@@ -26,25 +30,26 @@ class AppFacts:
     A majority of these facts are extracted from ``app.conf``
     """
     name: str
-    label: str = None
-    id: str = None
-    version: str = None
-    author: str = None
-    description: str = None
-    state: str = None
-    build: int = None
 
-    is_configured: bool = field(init=False, default=None)
-    allows_disable: bool = field(init=False, default=None)
-    state_change_requires_restart: bool = field(init=False, default=None)
+    label: OStr = None
+    id: OStr = None
+    version: OStr = None
+    author: OStr = None
+    description: OStr = None
+    state: OStr = None
+    build: OStr = None
 
-    install_source_checksum: str = field(init=False, default=None)
-    install_source_local_checksum: str = field(init=False, default=None)
-    check_for_updates: bool = field(init=False, default=None)
-    is_visible: bool = field(init=False, default=None)
+    is_configured: OBool = field(init=False, default=None)
+    allows_disable: OBool = field(init=False, default=None)
+    state_change_requires_restart: OBool = field(init=False, default=None)
 
-    deployer_lookups_push_mode: str = field(init=False, default=None)
-    deployer_push_mode: str = field(init=False, default=None)
+    install_source_checksum: OStr = field(init=False, default=None)
+    install_source_local_checksum: OStr = field(init=False, default=None)
+    check_for_updates: OBool = field(init=False, default=None)
+    is_visible: OBool = field(init=False, default=None)
+
+    deployer_lookups_push_mode: OStr = field(init=False, default=None)
+    deployer_push_mode: OStr = field(init=False, default=None)
 
     _conf_translate_pairs: ClassVar[List[Tuple[str, List[str]]]] = [
         ("launcher", [
@@ -75,26 +80,28 @@ class AppFacts:
     def to_dict(self) -> dict:
         return asdict(self)
 
-    def to_tiny_dict(self, *keep_attrs) -> dict:
+    def to_tiny_dict(self, *keep_attrs: str) -> Dict[str, Any]:
         """ Return dict representation, discarding the Nones """
         return {k: v for k, v in asdict(self).items() if v is not None or k in keep_attrs}
 
     @classmethod
-    def from_conf(cls, name, conf: ConfType) -> AppFacts:
+    def from_conf(cls, name: str, conf: ConfType) -> AppFacts:
         """
         Create AppFacts from an app.conf configuration content.
         """
         new = cls(name)
 
-        type_mapping = {f.name: f.type for f in fields(cls) if f.type in ("bool", "int")}
+        # Another possible option:
+        # typing.get_type_hints(ksconf.app.facts.AppFacts)["build"].__args__[0]      (__args__[0] due to Optional)
+        type_mapping = {f.name: f.type for f in fields(cls) if f.type in ("OBool", "OInt")}
 
         def convert_attr(attr_name, value):
             # XXX: Is there a better approach for dataclasses?  fields() returns a list
             data_type = type_mapping.get(attr_name, None)
             convert_function = None
-            if data_type == "bool":
+            if data_type == "OBool":
                 convert_function = conf_attr_boolean
-            elif data_type == "int":
+            elif data_type == "OInt":
                 convert_function = int
             else:
                 return value
@@ -135,8 +142,8 @@ class AppFacts:
         ''' Returns list of app names, merged app_conf and a dictionary of extra facts that may be useful '''
         archive = Path(archive)
 
-        app_names = set()
-        app_confs = defaultdict(dict)
+        app_names: Set[str] = set()
+        app_confs: Dict[str, str] = defaultdict(dict)
 
         is_app_conf = gaf_filter_name_like("app.conf")
         for gaf in extract_archive(archive, extract_filter=is_app_conf):

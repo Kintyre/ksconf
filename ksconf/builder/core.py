@@ -27,7 +27,7 @@ from __future__ import annotations
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Union
+from typing import List, Optional, Union
 
 from ksconf.builder import QUIET, VERBOSE, BuildCacheException, BuildStep
 from ksconf.builder.cache import CachedRun, FileSet
@@ -49,9 +49,9 @@ class BuildManager:
     """
 
     def __init__(self):
-        self.source_path: Path = None
-        self.build_path: Path = None
-        self.dist_path: Path = None
+        self.source_path: Optional[Path] = None
+        self.build_path: Optional[Path] = None
+        self.dist_path: Optional[Path] = None
         self.cache_path = None
         self._cache_enabled = True
         self._taint = False
@@ -73,7 +73,7 @@ class BuildManager:
     def set_folders(self,
                     source_path: Path,
                     build_path: Path,
-                    dist_path: Path = None):
+                    dist_path: Optional[Path] = None):
         self._folder_set = True
         self.source_path = Path(source_path).absolute()
         self.build_path = Path(build_path).absolute()
@@ -97,9 +97,9 @@ class BuildManager:
         return cache_info
 
     def cache(self, inputs: List[str], outputs: int,
-              timeout: int = None,
-              name: str = None,
-              cache_invalidation: Union[dict, list, str] = None) -> None:
+              timeout: Optional[int] = None,
+              name: Optional[str] = None,
+              cache_invalidation: Union[dict, list, str, None] = None) -> None:
         """ function decorator for caching build steps
         Wrapped function must accept BuildStep instance as first parameters
 

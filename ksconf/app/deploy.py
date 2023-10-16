@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from os import fspath
 from pathlib import Path, PurePath, PurePosixPath
-from typing import Set
+from typing import NewType, Optional, Set, Union
 
 from ksconf.app import AppManifest
 from ksconf.archive import extract_archive
@@ -39,21 +39,15 @@ class DeployActionType(Enum):
 @dataclass
 class DeployAction:
     # Abstract base class
-    action: str
+    action: DeployActionType
 
     def to_dict(self) -> dict:
         data = asdict(self)
-        data["action"] = str(self.action)
-
-        for dc_field in fields(self):
-            if dc_field.name == "action":
-                continue
-
-            value = data[dc_field.name]
-            t = eval(dc_field.type)
-            if issubclass(t, PurePath):
-                value = fspath(value)
-                data[dc_field.name] = value
+        action = data.pop("action")
+        for key, value in data.items():
+            if isinstance(value, PurePath):
+                data[key] = fspath(value)
+        data["action"] = str(action)
         return data
 
     @classmethod
@@ -66,44 +60,46 @@ class DeployAction:
             if dc_field.name == "action":
                 continue
             value = data[dc_field.name]
-            t = eval(dc_field.type)
-            if issubclass(t, PurePath):
-                value = t(value)
+            if "PurePosixPath" in dc_field.type:
+                value = PurePosixPath(value)
                 data[dc_field.name] = value
         return da_class(**data)
 
 
+DeployAction_T = NewType("DeployAction_T", DeployAction)
+
+
 @dataclass
 class DeployAction_ExtractFile(DeployAction):
-    action: str = field(init=False, default=DeployActionType.EXTRACT_FILE)
+    action: DeployActionType = field(init=False, default=DeployActionType.EXTRACT_FILE)
     subtype: str
     path: PurePosixPath
-    mode: int = None
-    mtime: int = None
-    hash: str = None
-    rel_path: str = None
+    mode: Optional[int] = None
+    mtime: Optional[int] = None
+    hash: Optional[str] = None
+    rel_path: Optional[str] = None
 
 
 @dataclass
 class DeployAction_RemoveFile(DeployAction):
-    action: str = field(init=False, default=DeployActionType.REMOVE_FILE)
+    action: DeployActionType = field(init=False, default=DeployActionType.REMOVE_FILE)
     path: PurePosixPath
 
 
 @dataclass
 class DeployAction_SetAppName(DeployAction):
-    action: str = field(init=False, default=DeployActionType.SET_APP_NAME)
+    action: DeployActionType = field(init=False, default=DeployActionType.SET_APP_NAME)
     name: str
 
 
 @dataclass
 class DeployAction_SourceReference(DeployAction):
-    action: str = field(init=False, default=DeployActionType.SOURCE_REFERENCE)
+    action: DeployActionType = field(init=False, default=DeployActionType.SOURCE_REFERENCE)
     archive_path: str
     hash: str
 
 
-def get_deploy_action_class(action: str) -> DeployAction:
+def get_deploy_action_class(action: Union[DeployActionType, str]) -> DeployAction_T:
     return {
         DeployActionType.EXTRACT_FILE: DeployAction_ExtractFile,
         DeployActionType.REMOVE_FILE: DeployAction_RemoveFile,
@@ -139,7 +135,7 @@ class DeploySequence:
         self.actions: List[DeployAction] = []
         self.actions_by_type = Counter()
 
-    def add(self, action: str, *args, **kwargs):
+    def add(self, action: Union[str, DeployAction], *args, **kwargs):
         if not isinstance(action, DeployAction):
             action_cls = get_deploy_action_class(action)
             action = action_cls(*args, **kwargs)

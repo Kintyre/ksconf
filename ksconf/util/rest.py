@@ -1,7 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 
+from typing import Optional
 
-def build_rest_namespace(base, owner=None, app=None):
+
+def build_rest_namespace(base: str,
+                         owner: Optional[str] = None,
+                         app: Optional[str] = None) -> str:
     if owner and app:
         p = (base, "servicesNS", owner, app)
     elif app:
@@ -13,6 +17,9 @@ def build_rest_namespace(base, owner=None, app=None):
     return "/".join(p)
 
 
-def build_rest_url(base, service, owner=None, app=None):
+def build_rest_url(base: str,
+                   service: str,
+                   owner: Optional[str] = None,
+                   app: Optional[str] = None) -> str:
     prefix = build_rest_namespace(base, owner, app)
-    return prefix + "/" + service
+    return f"{prefix}/{service}"

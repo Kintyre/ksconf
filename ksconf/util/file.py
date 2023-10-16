@@ -10,9 +10,10 @@ from glob import glob
 from io import open
 from pathlib import Path
 from random import randint
-from typing import IO, Callable, Union
+from typing import IO, Callable, Iterable, List, Tuple, Union
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, is_debug
+from ksconf.types import PathType
 from ksconf.util.compare import file_compare
 
 
@@ -110,7 +111,9 @@ def splglob_simple(pattern):
     return pattern
 
 
-def relwalk(top, topdown=True, onerror=None, followlinks=False):
+def relwalk(top: PathType,
+            topdown=True, onerror=None, followlinks=False
+            ) -> Iterable[Tuple[str, List[str], List[str]]]:
     """ Relative path walker
     Like os.walk() except that it doesn't include the "top" prefix in the resulting 'dirpath'.
     """
@@ -123,7 +126,7 @@ def relwalk(top, topdown=True, onerror=None, followlinks=False):
         yield (dirpath, dirnames, filenames)
 
 
-def file_hash(path, algorithm="sha256"):
+def file_hash(path: PathType, algorithm="sha256") -> str:
     import hashlib
     h = hashlib.new(algorithm)
     with open(path, "rb") as fp:
@@ -134,7 +137,7 @@ def file_hash(path, algorithm="sha256"):
     return h.hexdigest()
 
 
-def _samefile(file1, file2):
+def _samefile(file1: PathType, file2: PathType) -> bool:
     if hasattr(os.path, "samefile"):
         # Nix
         return os.path.samefile(file1, file2)
@@ -173,7 +176,8 @@ def secure_delete(path: Path, passes=3):
 
 
 @contextmanager
-def atomic_writer(dest: Path, temp_name: Union[str, Path, Callable, None]) -> str:
+def atomic_writer(dest: Path,
+                  temp_name: Union[Path, str, Callable[[Path], Path], None]) -> Path:
     """
     Context manager to atomically update a destination.  When entering the context, a temporary file
     name is returned.  When the context is successfully exited, the temporary file is renamed into
@@ -231,7 +235,7 @@ def atomic_writer(dest: Path, temp_name: Union[str, Path, Callable, None]) -> st
 
 @contextmanager
 def atomic_open(name: Path,
-                temp_name: Union[str, Path, Callable, None],
+                temp_name: Union[Path, str, Callable[[Path], Path], None],
                 mode="w",
                 **open_kwargs) -> IO:
     """

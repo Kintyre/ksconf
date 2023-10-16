@@ -15,6 +15,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from argparse import ArgumentParser, Namespace
+from typing import Optional
 from urllib.parse import urlparse
 
 from ksconf.command import (ConfFileProxy, ConfFileType, KsconfCmd,
@@ -57,7 +58,7 @@ class RestPublishCmd(KsconfCmd):
     def __init__(self, *args, **kwargs):
         super(RestPublishCmd, self).__init__(*args, **kwargs)
         self._service = None
-        self.meta: MetaData = None
+        self.meta: Optional[MetaData] = None
 
     @classmethod
     def _handle_imports(cls):

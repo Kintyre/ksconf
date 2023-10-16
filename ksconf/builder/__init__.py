@@ -6,7 +6,7 @@ import re
 import sys
 from pathlib import Path
 from subprocess import Popen
-from typing import Callable, List, TextIO
+from typing import Callable, List, Optional, TextIO
 
 from ksconf.consts import EXIT_CODE_INTERNAL_ERROR, is_debug
 
@@ -28,8 +28,8 @@ class BuildStep:
 
     def __init__(self,
                  build: Path,
-                 source: Path = None,
-                 dist: Path = None,
+                 source: Optional[Path] = None,
+                 dist: Optional[Path] = None,
                  output: TextIO = sys.stdout):
         self.build_path = build
         self.source_path = source
@@ -54,7 +54,7 @@ class BuildStep:
     def is_verbose(self):
         return self.verbosity >= VERBOSE
 
-    def get_logger(self, prefix: str = None) -> Callable:
+    def get_logger(self, prefix: Optional[str] = None) -> Callable:
         if prefix is None:
             prefix = inspect.currentframe().f_back.f_code.co_name
         elif re.match(r'[\w_]+', prefix):

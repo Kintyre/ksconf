@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 from fnmatch import fnmatch
-from typing import Iterable, NamedTuple, Sequence, Tuple, Union
+from typing import ByteString, Callable, Iterable, NamedTuple, Optional, Sequence, Tuple
 
 from ksconf.consts import RegexType
 
@@ -11,10 +11,10 @@ class GenArchFile(NamedTuple):
     path: str
     mode: int
     size: int
-    payload: Union[bytes, None]
+    payload: Optional[ByteString]
 
 
-def extract_archive(archive_name, extract_filter: callable = None) -> Iterable[GenArchFile]:
+def extract_archive(archive_name, extract_filter: Optional[Callable] = None) -> Iterable[GenArchFile]:
     if extract_filter is not None and not callable(extract_filter):  # pragma: no cover
         raise ValueError("extract_filter must be a callable!")
     archive_name = os.fspath(archive_name)

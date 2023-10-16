@@ -1,7 +1,11 @@
 from __future__ import unicode_literals
 
+from typing import IO, List, Set, Tuple, TypeVar
 
-def fileobj_compare(f1, f2):
+from ksconf.types import PathType
+
+
+def fileobj_compare(f1: IO, f2: IO) -> bool:
     # Borrowed from filecmp
     f1.seek(0)
     f2.seek(0)
@@ -15,13 +19,16 @@ def fileobj_compare(f1, f2):
             return True
 
 
-def file_compare(fn1, fn2):
+def file_compare(fn1: PathType, fn2: PathType) -> bool:
     with open(fn1, "rb") as f1, \
             open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)
 
 
-def cmp_sets(a, b):
+T = TypeVar("T")
+
+
+def cmp_sets(a: Set[T], b: Set[T]) -> Tuple[List[T], List[T], List[T]]:
     """ Result tuples in format (a-only, common, b-only) """
     set_a = set(a)
     set_b = set(b)
@@ -31,5 +38,5 @@ def cmp_sets(a, b):
     return (a_only, common, b_only)
 
 
-# For backwards compability
+# For backwards compatibility
 _cmp_sets = cmp_sets
