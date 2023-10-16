@@ -9,7 +9,8 @@ cache:
 matrix:
   include:
     - os: linux
-      # Travis Python 3.7 support https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
+      # Travis Python 3.7 support
+      # https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
       python: "3.7"
       env: BUILD_SDIST=true
       dist: xenial
@@ -75,7 +76,10 @@ after_success:
   - '[[ $BUILD_SDIST == "true" ]] && coverage run -a -m make_cli_docs'
   - codecov
   - coveralls
-  - '[[ $BUILD_SDIST == "true" ]] && python -m pip install -r requirements-doc.txt && KSCONF_DEBUG=1 python splunk_app/build.py -vv'
+  - >-
+    [[ $BUILD_SDIST == "true" ]]
+    && python -m pip install -r requirements-doc.txt
+    && KSCONF_DEBUG=1 python splunk_app/build.py -vv
   - '[[ $BUILD_SDIST == "true" ]] && ls -lsh zdist'
 deploy:
   - provider: releases

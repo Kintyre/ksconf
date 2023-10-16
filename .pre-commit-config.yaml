@@ -18,7 +18,7 @@ repos:
         exclude: (\.bat|\.csv)$
 
   - repo: https://github.com/PyCQA/isort.git
-    rev: 5.12.0
+    rev: "5.12.0"
     hooks:
       - id: isort
         exclude: (ksconf/ext/)
@@ -51,19 +51,21 @@ repos:
         entry: ^(from build\.lib|import build\.)
         language: pygrep
         types: [python]
+
       - id: ksconf-unittest
         name: Run all unit tests for ksconf
         language: script
         entry: run_tests.py
         types: [python]
         pass_filenames: false
-# Way too much noise.... (or I just have bad code, either way it's too much)
-#- repo: https://github.com/pre-commit/mirrors-pylint
-#  rev: master
-#  hooks:
-#    - id: pylint
 
-#- repo: https://github.com/jorisroovers/gitlint
-#  rev: master
-#  hooks:
-#    - id: gitlint
+  # Way too much noise.... (or I just have bad code, either way it's too much)
+  # - repo: https://github.com/pylint-dev/pylint
+  #   rev: v3.0.1
+  #   hooks:
+  #     - id: pylint
+
+  # - repo: https://github.com/jorisroovers/gitlint
+  #   rev: master
+  #   hooks:
+  #     - id: gitlint

@@ -1,15 +1,17 @@
 # REPO MOVE!
 #
 # Please update your '.pre-commit-config.yaml' files.
-# The new purpose-built repository is located here:  https://github.com/Kintyre/ksconf-pre-commit
+# The new purpose-built repository is located here:
+# https://github.com/Kintyre/ksconf-pre-commit
 #
-# Support for running pre-commit directly against *this* repository will
-# continue to through 2024, but will be subject to increasingly aggressive reminders ;-)
+# Support for running pre-commit directly against *this* repository will continue
+# to through 2024, but will be subject to increasingly aggressive reminders ;-)
 #
-# Note tha the 'lxml' requirement will be dropped much sooner and therefore may require tweaking,
-# so you may as well go ahead and switch repos!
+# Note tha the 'lxml' requirement will be dropped much sooner and therefore may require
+# tweaking, so you may as well go ahead and switch repos!
 #
-# After v0.13, we'll sunset these hooks using the technique descried here:  https://github.com/pre-commit/pre-commit/issues/2003#issuecomment-895375482
+# After v0.13, we'll sunset these hooks using the technique descried here:
+# https://github.com/pre-commit/pre-commit/issues/2003#issuecomment-895375482
 #
 #   name: {OLDNAME} Migrated to {REPO}
 #   language: fail
@@ -23,16 +25,20 @@
 
 - id: ksconf-sort
   name: Ksconf Splunk CONF - Sort conf files
-  description: Sort all stanzas and keys in .conf files.  Files can be skipped by adding a comment with KSCONF-NO-SORT
+  description: >
+    Sort all stanzas and keys in .conf files.  Files can be skipped by adding a
+    comment with KSCONF-NO-SORT
   entry: ksconf sort -i -q
   language: python
   files: (\.conf|(local|default)\.meta)$
 
 - id: ksconf-xml-format
-  # If you intend to use this, you must add: additional_dependencies: [lxml] to your .pre-commit-config.yaml
-  # Even better.  Migrate to 'ksconf-pre-commit'!
+  # If you intend to use this, you must add: additional_dependencies: [lxml] to your
+  # .pre-commit-config.yaml Even better.  Migrate to 'ksconf-pre-commit'!
   name: Ksconf Splunk CONF - Normalize XML
-  description: Normalize and apply consistent XML indentation and CDATA usage for XML dashboards and navigation files.
+  description: >
+    Normalize and apply consistent XML indentation and CDATA usage for XML
+    dashboards and navigation files.
   entry: ksconf xml-format -q
   language: python
   files: data/ui/(views|nav)/[^/]+\.xml$

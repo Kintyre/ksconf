@@ -5,6 +5,9 @@ rules:
   line-length:
     max: 100
     level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
   truthy:
     #  Too many "on" keys in GitHub actions...
     check-keys: false
