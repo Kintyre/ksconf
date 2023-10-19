@@ -10,11 +10,11 @@ import json
 from dataclasses import asdict, dataclass, field
 from os import fspath
 from pathlib import Path, PurePosixPath
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Optional, Union
 
 from ksconf.archive import extract_archive
 from ksconf.compat import List
-from ksconf.consts import MANIFEST_HASH, UNSET
+from ksconf.consts import _UNSET, MANIFEST_HASH, UNSET
 from ksconf.util.file import atomic_open, file_hash, relwalk
 
 
@@ -69,6 +69,9 @@ class AppManifestFile:
         return cls(PurePosixPath(data["path"]), mode, data["size"], data["hash"])
 
 
+FileFilterFunction = Callable[[PurePosixPath], bool]
+
+
 @dataclass
 class AppManifest:
     """
@@ -89,9 +92,9 @@ class AppManifest:
     * :py:meth:`from_dict` - primarily for json serialization from :py:meth:`to_dict`.
     """
     name: Optional[str] = None
-    source: Optional[str] = None
+    source: Union[str, Path, None] = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
-    _hash: str = field(default=UNSET, init=False)
+    _hash: Union[str, _UNSET] = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
 
     def __eq__(self, other: AppManifest) -> bool:
@@ -120,7 +123,7 @@ class AppManifest:
         del self.hash
         return first_hash != self.hash
 
-    def _calculate_hash(self) -> str:
+    def _calculate_hash(self) -> Optional[str]:
         """ Build unique hash based on file content """
         # Path sort order notes.  Sorting based on Path objects is different
         # than textual sorting, consider:
@@ -162,7 +165,7 @@ class AppManifest:
     def from_archive(cls, archive: Path,
                      calculate_hash=True,
                      *,
-                     filter_file: Optional[Callable] = None) -> AppManifest:
+                     filter_file: Optional[FileFilterFunction] = None) -> AppManifest:
         """
         Create as new AppManifest from a tarball.  Set ``calculate_hash`` as
         False when only a file listing is needed.
@@ -202,7 +205,7 @@ class AppManifest:
                         follow_symlinks=False,
                         calculate_hash=True,
                         *,
-                        filter_file: Optional[Callable] = None) -> AppManifest:
+                        filter_file: Optional[FileFilterFunction] = None) -> AppManifest:
         """
         Create as new AppManifest from an existing directory structure.
         Set ``calculate_hash`` as False when only a file listing is needed.
@@ -402,6 +405,8 @@ def load_manifest_for_archive(
             manifest_file = get_stored_manifest_name(archive)
         else:
             manifest_file = get_stored_manifest_name(permanent_archive)
+    else:
+        manifest_file = Path(manifest_file)
 
     if read_manifest and manifest_file.exists():
         try:

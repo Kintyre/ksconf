@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from os import fspath
 from pathlib import Path, PurePath, PurePosixPath
-from typing import NewType, Optional, Set, Union
+from typing import Optional, Set, Type, Union
 
 from ksconf.app import AppManifest
 from ksconf.archive import extract_archive
@@ -54,7 +54,6 @@ class DeployAction:
     def from_dict(self, data: dict) -> DeployAction:
         data = data.copy()
         action = data.pop("action")
-        action = DeployActionType(action)
         da_class = get_deploy_action_class(action)
         for dc_field in fields(da_class):
             if dc_field.name == "action":
@@ -64,9 +63,6 @@ class DeployAction:
                 value = PurePosixPath(value)
                 data[dc_field.name] = value
         return da_class(**data)
-
-
-DeployAction_T = NewType("DeployAction_T", DeployAction)
 
 
 @dataclass
@@ -99,13 +95,14 @@ class DeployAction_SourceReference(DeployAction):
     hash: str
 
 
-def get_deploy_action_class(action: Union[DeployActionType, str]) -> DeployAction_T:
-    return {
-        DeployActionType.EXTRACT_FILE: DeployAction_ExtractFile,
-        DeployActionType.REMOVE_FILE: DeployAction_RemoveFile,
-        DeployActionType.SET_APP_NAME: DeployAction_SetAppName,
-        DeployActionType.SOURCE_REFERENCE: DeployAction_SourceReference,
-    }[action]
+def get_deploy_action_class(action: Union[DeployActionType, str]) -> Type[DeployAction]:
+    lookup = {
+        str(DeployActionType.EXTRACT_FILE): DeployAction_ExtractFile,
+        str(DeployActionType.REMOVE_FILE): DeployAction_RemoveFile,
+        str(DeployActionType.SET_APP_NAME): DeployAction_SetAppName,
+        str(DeployActionType.SOURCE_REFERENCE): DeployAction_SourceReference,
+    }
+    return lookup[str(action)]
 
 
 '''
@@ -173,7 +170,7 @@ class DeploySequence:
         dc.add(DeployAction_SourceReference(manifest.source, manifest.hash))
         dc.add(DeployAction_SetAppName(manifest.name))
         for f in manifest.files:
-            dc.add(DeployActionType.EXTRACT_FILE, "create", f.path, mode=f.mode, hash=f.hash)
+            dc.add(DeployActionType.EXTRACT_FILE.value, "create", f.path, mode=f.mode, hash=f.hash)
         return dc
 
     @classmethod
@@ -186,7 +183,7 @@ class DeploySequence:
             return cls.from_manifest(target)
         if base.name != target.name:
             raise ValueError(f"Manifest must have the same app name.  {base.name} != {target.name}")
-        seq.add(DeployAction_SourceReference(target.source, target.hash))
+        seq.add(DeployAction_SourceReference(str(target.source), target.hash))
         seq.add(DeployAction_SetAppName(target.name))
 
         # Run safety checks before any path-level processing
@@ -263,6 +260,7 @@ class DeployApply:
         make_dirs: Set[Path] = set()
         remove_path: Set[Path] = set()
         app_path = Path()
+        archive = None
         for action in deployment_sequence.actions:
             if isinstance(action, DeployAction_ExtractFile):
                 path = app_path.joinpath(action.path)
@@ -283,6 +281,10 @@ class DeployApply:
             # Even with careful sorting, we must still use parents=True as some
             # directories contain no files, such as 'ui' in 'default/data/ui/nav'.
             dest_dir.mkdir(self.dir_mode, parents=True, exist_ok=True)
+
+        if not archive:
+            raise TypeError(f"Missing {DeployActionType.SOURCE_REFERENCE} event. "
+                            "Therefore archive is unknown.")
 
         # Expand matching files
         for gaf in extract_archive(archive):
