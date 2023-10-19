@@ -74,9 +74,9 @@ class AppTestCase(unittest.TestCase):
         self.assertIsNotNone(manifest.files[0].hash)
         self.assertEquals(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
 
+    @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
     def test_filesystem_manifest_with_filter(self):
         twd = self.twd
-
         tf = TarFile.open(static_data("apps/modsecurity-add-on-for-splunk_12.tgz"), "r:gz")
         tf.extractall(twd.get_path("."))
         manifest = AppManifest.from_filesystem(twd.get_path("Splunk_TA_modsecurity"),
