@@ -116,6 +116,14 @@ ksconf.setup\_entrypoints module
    :undoc-members:
    :show-inheritance:
 
+ksconf.types module
+-------------------
+
+.. automodule:: ksconf.types
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ksconf.version module
 ---------------------
 
