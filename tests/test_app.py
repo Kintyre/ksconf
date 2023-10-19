@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from tarfile import TarFile
 
 # Allow interactive execution from CLI,  cd tests; ./test_app.py
 if __package__ is None:
@@ -62,8 +63,28 @@ class AppTestCase(unittest.TestCase):
         tarball_path = static_data("apps/modsecurity-add-on-for-splunk_12.tgz")
         manifest = AppManifest.from_archive(tarball_path, calculate_hash=False)
         self.assertEqual(len(manifest.files), 15)
-        self.assertEqual(manifest.files[0].hash, None)
+        self.assertIsNone(manifest.files[0].hash)
         self.assertIs(manifest.hash, None)
+
+    def test_tarball_manifest_with_filter(self):
+        tarball_path = static_data("apps/modsecurity-add-on-for-splunk_12.tgz")
+        manifest = AppManifest.from_archive(tarball_path, calculate_hash=True,
+                                            filter_file=lambda relpath: relpath.name != "README.txt")
+        self.assertEqual(len(manifest.files), 14)
+        self.assertIsNotNone(manifest.files[0].hash)
+        self.assertEquals(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
+
+    def test_filesystem_manifest_with_filter(self):
+        twd = self.twd
+
+        tf = TarFile.open(static_data("apps/modsecurity-add-on-for-splunk_12.tgz"), "r:gz")
+        tf.extractall(twd.get_path("."))
+        manifest = AppManifest.from_filesystem(twd.get_path("Splunk_TA_modsecurity"),
+                                               calculate_hash=True,
+                                               filter_file=lambda relpath: relpath.name != "README.txt")
+        self.assertEqual(len(manifest.files), 14)
+        self.assertIsNotNone(manifest.files[0].hash)
+        self.assertEquals(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
 
     def test_the_do_it_all_function(self):
         tarball_path = static_data("apps/modsecurity-add-on-for-splunk_12.tgz")
