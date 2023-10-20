@@ -17,7 +17,7 @@ from ksconf.archive import extract_archive, gaf_filter_name_like
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.conf.merge import merge_conf_dicts
 from ksconf.conf.parser import (PARSECONF_LOOSE, ConfType, conf_attr_boolean,
-                                default_encoding, parse_conf, parse_string)
+                                default_encoding, parse_conf, parse_conf_string)
 
 OInt = Optional[int]
 OStr = Optional[str]
@@ -150,9 +150,10 @@ class AppFacts:
             app_name, relpath = gaf.path.split("/", 1)
             if relpath.endswith("/app.conf") and gaf.payload:
                 conf_folder = relpath.rsplit("/")[0]
-                app_confs[conf_folder] = parse_string(gaf.payload.decode(default_encoding),
-                                                      name=fspath(archive.joinpath(gaf.path)),
-                                                      profile=PARSECONF_LOOSE)
+                app_confs[conf_folder] = parse_conf_string(
+                    gaf.payload.decode(default_encoding),
+                    name=fspath(archive.joinpath(gaf.path)),
+                    profile=PARSECONF_LOOSE)
             app_names.add(app_name)
             del app_name, relpath
 

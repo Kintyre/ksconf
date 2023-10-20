@@ -11,7 +11,7 @@ from textwrap import dedent
 
 from ksconf.cli import cli
 from ksconf.conf.parser import (GLOBAL_STANZA, PARSECONF_MID, parse_conf,
-                                parse_string as parse_string_, write_conf)
+                                parse_conf_string, write_conf)
 from ksconf.util.file import file_hash
 from ksconf.vc.git import git_cmd
 
@@ -51,7 +51,7 @@ def parse_string(text, profile=None, **kwargs):
     text = dedent(text)
     if profile is None:
         profile = kwargs
-    return parse_string_(text, profile=profile)
+    return parse_conf_string(text, profile=profile)
 
 
 '''
@@ -90,7 +90,7 @@ class _KsconfCli():
             """ Parse stdout as a .conf file"""
             if profile is None:
                 profile = kwargs
-            return parse_string_(self.stdout, profile=profile)
+            return parse_conf_string(self.stdout, profile=profile)
 
     @staticmethod
     def _as_string(stream):

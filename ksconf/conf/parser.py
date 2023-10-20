@@ -280,9 +280,9 @@ def parse_conf(stream: _StreamNameFile,
         raise ConfParserException(f"Encoding error encountered: {e}")
 
 
-def parse_string(s: str,
-                 name: Optional[str] = None,
-                 profile: ParserConfig = PARSECONF_MID) -> ConfType:
+def parse_conf_string(s: str,
+                      name: Optional[str] = None,
+                      profile: ParserConfig = PARSECONF_MID) -> ConfType:
     """
     Parse a .conf file that's already in memory, as a string.
     """
@@ -290,6 +290,16 @@ def parse_string(s: str,
     if name:
         stream.name = name
     return parse_conf_stream(stream, **profile)
+
+
+def parse_string(*args, **kwargs):
+    """ Deprecated wrapper around :py:func:`parse_conf_string`.  Use that instead. """
+    from warnings import warn
+
+    from ksconf.version import version_info
+    if version_info > (0, 15):
+        warn("Please use parse_conf_string() instead of parse_string().  This will be removed in Ksconf v0.20.0")
+    return parse_conf_string(*args, **kwargs)
 
 
 def parse_conf_stream(stream: _StreamInput,
@@ -302,7 +312,7 @@ def parse_conf_stream(stream: _StreamInput,
     """
     Low-level conf parsing functionality.
 
-    Most often, either :func:`parse_conf` or :func:`parse_string` are better options.
+    Most often, either :func:`parse_conf` or :func:`parse_conf_string` are better options.
     """
     if hasattr(stream, "name"):
         stream_name = stream.name
@@ -406,6 +416,15 @@ def write_conf_stream(stream: TextIO,
             stream.write(stanza_delim)
 
 
+def write_conf_string(conf: ConfType,
+                      stanza_delim: str = "\n",
+                      sort: bool = True) -> str:
+    """ Write conf data to a string. """
+    output = StringIO()
+    write_conf_stream(output, conf, stanza_delim=stanza_delim, sort=sort)
+    return output.getvalue()
+
+
 def smart_write_conf(filename: PathType,
                      conf: ConfType,
                      stanza_delim: str = "\n",
@@ -457,8 +476,8 @@ def _extract_comments(section: StanzaType) -> List[str]:
 
 
 def inject_section_comments(section: StanzaType,
-                            prepend: Optional[str] = None,
-                            append: Optional[str] = None):
+                            prepend: Optional[Sequence[str]] = None,
+                            append: Optional[Sequence[str]] = None):
     """
     Extract existing comments from section dict (in order; and remove them)
     Add in any prepend/append comments (if that comment isn't already present)

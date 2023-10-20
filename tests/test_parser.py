@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
+import time
 import unittest
 from collections import OrderedDict
 from copy import deepcopy
@@ -19,12 +20,14 @@ if __package__ is None:
 
 from ksconf.conf.delta import (DIFF_OP_DELETE, DIFF_OP_EQUAL, DIFF_OP_INSERT,
                                DIFF_OP_REPLACE, DiffLevel, compare_cfgs,
-                               show_diff, summarize_cfg_diffs)
+                               reduce_stanza, show_diff, summarize_cfg_diffs)
 from ksconf.conf.parser import (DUP_EXCEPTION, DUP_MERGE, DUP_OVERWRITE,
                                 GLOBAL_STANZA, PARSECONF_MID,
                                 ConfParserException, DuplicateKeyException,
-                                DuplicateStanzaException, parse_conf,
-                                section_reader, write_conf)
+                                DuplicateStanzaException,
+                                inject_section_comments, parse_conf,
+                                section_reader, write_conf, write_conf_stream,
+                                write_conf_string)
 from tests.cli_helper import TestWorkDir, parse_string
 
 
@@ -347,7 +350,7 @@ class ParserTestCase(unittest.TestCase):
         d = {"stanza": {"boolean1": True, "boolean2": False, "int1": 99, "int2": 0,
                         "none": None}}
         tfile = StringIO()
-        write_conf(tfile, d)
+        write_conf(tfile, d, mtime=time.time())
         tfile.seek(0)
         d2 = parse_conf(tfile)
         st = d2["stanza"]
@@ -385,6 +388,29 @@ class ParserTestCase(unittest.TestCase):
         write_conf(tfile2, d, sort=True)
         # Sorted version and non-sorted version SHOULD differ
         self.assertNotEqual(tfile1.getvalue(), tfile2.getvalue())
+
+    def test_inject_section_comments(self):
+        orig = {"#-000000": "# my comment"}
+        stanza = orig.copy()
+        inject_section_comments(stanza, append=["# AFTER", "# EVEN LATER"])
+        text = write_conf_string({"stanza": stanza})
+        self.assertRegex(text, r"my comment[\r\n]+.*AFTER")
+
+        stanza = orig.copy()
+        inject_section_comments(stanza, prepend=["# WAY BEFORE", "# JUST BEFORE"])
+        before_text = write_conf_string({"stanza": stanza})
+        self.assertRegex(before_text, r"# JUST BEFORE[\r\n]+#\s*my comment")
+
+        stanza = orig.copy()
+        inject_section_comments(stanza,
+                                prepend=["# EARLIER"],
+                                append=["# LATER"])
+        self.assertEqual(
+            write_conf_string({"stanza": stanza}).splitlines(), [
+                "[stanza]",
+                "# EARLIER",
+                "# my comment",
+                "# LATER"])
 
 
 class ConfigDiffTestCase(unittest.TestCase):
@@ -573,6 +599,12 @@ class ConfigDiffTestCase(unittest.TestCase):
         diffs = compare_cfgs(c1, c2)
         output = StringIO()
         summarize_cfg_diffs(diffs, output)
+
+    def test_reduce_stanza(self):
+        start = {"a": 1, "b": 2, "c": 3}
+        self.assertEqual(reduce_stanza(start, ["a", "b"]), {"a": 1, "b": 2})
+        self.assertEqual(reduce_stanza(start, ["a", "d"]), {"a": 1})
+        self.assertEqual(reduce_stanza(start, ["x"]), {})
 
 
 if __name__ == '__main__':  # pragma: no cover
