@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import sys
+from pathlib import Path
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
@@ -57,6 +58,9 @@ class KsconfUtilsTest(unittest.TestCase):
         # Using match_path() handles dos->unix (*if running on Windows)
         if sys.platform.startswith("win"):
             self.assertTrue(fl.match_path("\\not\\supported\\pict.jpg"))
+
+        # Gracefully handle if Pathlib objects are passed in
+        self.assertTrue(fl.match_path(Path("prefix/blah/suffix")))
 
         self.assertTrue(fl.match("prefix/blah/suffix"))
         self.assertFalse(fl.match("prefix/b/l/a/h/suffix"))

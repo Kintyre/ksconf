@@ -29,8 +29,8 @@ class FilteredList:
     VERBOSE = 4
 
     def __init__(self, flags: int = 0, default: bool = True):
-        self.data = []
-        self.rules = None
+        self.patterns = []
+        self.compiled_patterns = None
         self.counter: Counter = Counter()
         self.flags: int = flags
         self._prep = True
@@ -50,29 +50,28 @@ class FilteredList:
         return items
 
     def feed(self, item: str, filter: Optional[Callable[[str], str]] = None):
-        """
-        Fee a new rule into the
-        Use :py:obj:`filter` to enable calling a transformation function on :py:obj:`item` at
-        the last minute.
-        This allows item to contain ``file://...`` entries to include a list from the filesystem and
-        yet still manipulate item is some pre-defined way.
+        """ Feed a new pattern into the rule set.
+
+        Use :py:obj:`filter` to enable pre-processing on patterns expressions.  This is handled,
+        *after* checking for specially values. Specifically, the ``file://...`` syntax is used to
+        feed additional patterns from a file.
         """
         if isinstance(item, Path):
-            item = os.fspath(item)
+            # Simply using os.fspath() may return a Windows-style path; which isn't good because
+            # match_path() assumes unix-style paths.  The right long-term solution is to use
+            # PurePosixPath, but since we don't need it... Just make the limitation explicit.
+            raise TypeError("Passing 'item' as Path object is not yet supported")  # pragma: no cover
 
         if item.startswith("file://"):
             # File ingestion mode
             filename = item[7:]
-            # Technically we allow 'file://' inside a file.   No recursion depth limits in place.  (Stack overflow)
-            '''
-            for item in self._feed_from_file(filename):
-                self.feed(item, filter)
-            '''
+            # Technically, recursive 'file://' references are possible.  No recursion depth limits
+            # are inplace, and will result in an an unhandled OverflowError
             self.feedall(self._feed_from_file(filename), filter)
         else:
             if filter:
                 item = filter(item)
-            self.data.append(item)
+            self.patterns.append(item)
         # New items added.  Mark prep-work as incomplete
         self._prep = False
 
@@ -100,9 +99,9 @@ class FilteredList:
 
     def match(self, item: str) -> bool:
         """ See if given item matches any of the given patterns.  If no patterns were provided,
-        :py:obj:default: will be returned.
+        :py:attr:default: will be returned.
         """
-        if self.data:
+        if self.patterns:
             self.prep()
             ret = self._match(item)
             if ret:
@@ -110,7 +109,6 @@ class FilteredList:
                 result = True
             else:
                 result = False
-
         else:
             #  No patterns defined, use default
             return self.default
@@ -136,14 +134,14 @@ class FilteredList:
         return self.match(stanza)
 
     def init_counter(self) -> Counter:
-        return Counter({n: 0 for n in self.data})
+        return Counter({n: 0 for n in self.patterns})
 
     @property
     def has_rules(self) -> bool:
-        return bool(self.data)
+        return bool(self.patterns)
 
-    def _match(self, item) -> Union[str, bool]:
-        """ Return name of rule, indicating a match or not. """
+    def _match(self, item: str) -> Union[str, bool]:
+        """ Return name of patten that matched, or False if no pattern matched. """
         raise NotImplementedError  # pragma: no cover
 
 
@@ -152,23 +150,22 @@ class FilteredListString(FilteredList):
 
     def _pre_match(self):
         if self.flags & self.IGNORECASE:
-            # Lower-case all strings in self.data.  (Only need to do this once)
-            self.rules = {i.lower() for i in self.data}
+            # Lower-case all strings in self.patterns.  (Only need to do this once)
+            self.compiled_patterns = {i.lower() for i in self.patterns}
         else:
-            self.rules = set(self.data)
-        return self.rules
+            self.compiled_patterns = set(self.patterns)
 
     def _match(self, item: str) -> Union[str, bool]:
         if self.flags & self.IGNORECASE:
             item = item.lower()
-        if item in self.rules:
+        if item in self.compiled_patterns:
             return item
         else:
             return False
 
     def init_counter(self) -> Counter:
         # Set all the counters to 0, so the caller can know which filters had 0 hits
-        return Counter({n: 0 for n in self.rules})
+        return Counter({n: 0 for n in self.compiled_patterns})
 
 
 class FilteredListRegex(FilteredList):
@@ -184,16 +181,16 @@ class FilteredListRegex(FilteredList):
         # Compile all regular expressions
         re_flags = self.calc_regex_flags()
         # XXX: Add better error handling here for friendlier user feedback
-        self.rules = [(pattern, re.compile(pattern, re_flags)) for pattern in self.data]
+        self.compiled_patterns = [(pattern, re.compile(pattern, re_flags)) for pattern in self.patterns]
 
     def _match(self, item: str) -> Union[str, bool]:
-        for name, pattern_re in self.rules:
+        for name, pattern_re in self.compiled_patterns:
             if pattern_re.match(item):
                 return name
         return False
 
     def init_counter(self) -> Counter:
-        return Counter({n: 0 for n in self.data})
+        return Counter({n: 0 for n in self.patterns})
 
 
 class FilteredListWildcard(FilteredListRegex):
@@ -204,7 +201,7 @@ class FilteredListWildcard(FilteredListRegex):
     def _pre_match(self):
         # Use fnmatch to translate wildcard expression to a regex, and compile regex
         re_flags = self.calc_regex_flags()
-        self.rules = [(wc, re.compile(fnmatch.translate(wc), re_flags)) for wc in self.data]
+        self.compiled_patterns = [(wc, re.compile(fnmatch.translate(wc), re_flags)) for wc in self.patterns]
 
 
 class FilteredListSplunkGlob(FilteredListRegex):
@@ -215,7 +212,7 @@ class FilteredListSplunkGlob(FilteredListRegex):
     def _pre_match(self):
         # Use splglob_to_regex to translate wildcard expression to a regex, and compile regex
         re_flags = self.calc_regex_flags()
-        self.rules = [(wc, splglob_to_regex(wc, re_flags)) for wc in self.data]
+        self.compiled_patterns = [(wc, splglob_to_regex(wc, re_flags)) for wc in self.patterns]
 
 
 class_mapping: Dict[str, Type[FilteredList]] = {

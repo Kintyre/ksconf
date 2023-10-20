@@ -66,7 +66,7 @@ class FilterTestCase(unittest.TestCase):
         # After running the filter once, add another filter rule and add more items.
         fl.feed("ftp:*")
         res2 = [item for item in sample if fl.match(item)]
-        self.assertEqual(len(fl.rules), 2)
+        self.assertEqual(len(fl.compiled_patterns), 2)
         self.assertEqual(res2, sample)
         # Note that 'http:*' is 2 again, and NOT 4.   Counters were reset after earlier match() call.
         self.assertEqual(fl.counter["http:*"], 2)
