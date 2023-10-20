@@ -23,6 +23,13 @@ from ksconf.util.file import splglob_to_regex
 # wildcard otherwise stick with simple string matching, for efficiency...)
 
 
+# This should be re-written to (1) use functions/class pattern type handlers per item (slightly less
+# efficient in some cases, but way more flexible by allowing mixing of wildcard and regex in one
+# rule set, for example. (2) This should be registration based, (3) add support for switching modes
+# with prefix patterns; therefore hooks could be used so that a plugin could add their own pattern
+# matching scheme.
+
+
 class FilteredList:
     IGNORECASE = 1
     INVERT = 2
@@ -99,7 +106,7 @@ class FilteredList:
 
     def match(self, item: str) -> bool:
         """ See if given item matches any of the given patterns.  If no patterns were provided,
-        :py:attr:default: will be returned.
+        :py:attr:`default`: will be returned.
         """
         if self.patterns:
             self.prep()

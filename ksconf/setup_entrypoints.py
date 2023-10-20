@@ -79,7 +79,7 @@ class LocalEntryPoint:
         return getattr(mod, self.object_name)
 
 
-def get_entrypoints_fallback(group):
+def get_entrypoints_fallback(group) -> dict:
     entry_points = {}
     for ep in _entry_points[group]:
         entry_points[ep.name] = LocalEntryPoint(ep)

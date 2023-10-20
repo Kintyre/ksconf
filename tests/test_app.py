@@ -82,7 +82,7 @@ class AppTestCase(unittest.TestCase):
                                             filter_file=lambda relpath: relpath.name != "README.txt")
         self.assertEqual(len(manifest.files), 14)
         self.assertIsNotNone(manifest.files[0].hash)
-        self.assertEquals(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
+        self.assertEqual(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
 
     @unittest.skipIf(sys.platform == "win32", "Requires NIX with file modes")
     def test_filesystem_manifest_with_filter(self):
@@ -94,7 +94,7 @@ class AppTestCase(unittest.TestCase):
                                                filter_file=lambda relpath: relpath.name != "README.txt")
         self.assertEqual(len(manifest.files), 14)
         self.assertIsNotNone(manifest.files[0].hash)
-        self.assertEquals(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
+        self.assertEqual(manifest.hash, "6a747149379376f9d29aee55ba40147c14cb8374988c1ff87a3547a3a18634a5")
 
     def test_the_do_it_all_function(self):
         tarball_path = static_data("apps/modsecurity-add-on-for-splunk_12.tgz")

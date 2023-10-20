@@ -22,7 +22,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections import namedtuple
 from io import StringIO, open
 from textwrap import dedent
-from typing import Optional, TextIO
+from typing import Mapping, Optional, TextIO
 from warnings import warn
 
 from ksconf.compat import cache
@@ -363,7 +363,7 @@ class KsconfCmd:
     def exit(self, exit_code):
         """ Allow overriding for unittesting or other high-level functionality, like an
         interactive interface. """
-        sys.exit(exit_code)
+        sys.exit(exit_code)  # pragma: no cover
 
     def add_parser(self, subparser):
         # Passing in the object return by 'ArgumentParser.add_subparsers()'
@@ -553,7 +553,8 @@ def add_file_handler(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
-def _get_importlib_entrypoints(group, name=None) -> list:
+def _get_importlib_entrypoints(group, name=None) -> Mapping:
+    # Returns "EntryPoints", but that complicates the imports.  "Mapping" gets the job done
     # Using a backport library to get Python 3.10 EntryPoints.select() functionality.
     # But practically, if the backport is available, use it.  It's likely newer than stdlib.
     try:
@@ -569,7 +570,7 @@ def _get_fallback(group, name=None):
     if name is None:
         return entrypoints
     else:
-        return entrypoints[name]
+        return {name: entrypoints[name]}
 
 
 __get_entity_resolvers = [
@@ -585,7 +586,7 @@ if "ksconf_cmd" in os.environ.get("KSCONF_DISABLE_PLUGINS", ""):    # pragma: no
 
 # This caching is *mostly* beneficial for unittest CLI testing
 @cache
-def get_entrypoints(group, name=None):
+def get_entrypoints(group, name=None) -> Mapping:
 
     for resolver in list(__get_entity_resolvers):
         results = None
@@ -602,10 +603,12 @@ KsconfCmdEntryPoint = namedtuple("KsconfCmdEntryPoint", ["name", "entry", "cmd_c
 
 
 def get_all_ksconf_cmds(on_error="warn"):
-    for (name, entry) in get_entrypoints("ksconf_cmd").items():
+    entry_points = get_entrypoints("ksconf_cmd")
+    for name in entry_points:
+        entry = entry_points[name]
         try:
             cmd_cls = entry.load()
-        except (ImportError, NameError, SyntaxError) as e:
+        except (ImportError, NameError, SyntaxError) as e:  # pragma: no cover
             if on_error == "warn":
                 warn(f"Unable to load entrypoint for {name}.  Disabling.\n"
                      f"Base exception {e}.", KsconfPluginWarning)
@@ -615,7 +618,7 @@ def get_all_ksconf_cmds(on_error="warn"):
             else:
                 raise e
             continue
-        if not issubclass(cmd_cls, KsconfCmd):
+        if not issubclass(cmd_cls, KsconfCmd):  # pragma: no cover
             msg = "Issue loading class for entrypoint:  Disabling.\n" \
                   f"{entry!r} is not derived from KsconfCmd.  "
             if on_error == "warn":
@@ -627,7 +630,7 @@ def get_all_ksconf_cmds(on_error="warn"):
             continue
         try:
             cmd_cls._handle_imports()
-        except ImportError as e:
+        except ImportError as e:   # pragma: no cover
             module = e.name
             if on_error == "warn":
                 warn(f"Unable to load external modules for {name}.  Disabling.  "

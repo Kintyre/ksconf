@@ -10,6 +10,7 @@ if __package__ is None:
 
 import unittest
 
+from ksconf.command import get_entrypoints
 from ksconf.consts import EXIT_CODE_NO_SUCH_FILE, EXIT_CODE_SUCCESS, EXIT_CODE_USER_QUIT
 from tests.cli_helper import FakeStdin, TestWorkDir, ksconf_cli
 
@@ -48,6 +49,11 @@ class CliSimpleTestCase(unittest.TestCase):
                 ko = ksconf_cli(*base_cmd + ["-"])
                 self.assertIn(ko.returncode, (EXIT_CODE_USER_QUIT, EXIT_CODE_NO_SUCH_FILE))
                 self.assertRegex(ko.stderr, ".*(failed to parse|invalid ConfFileType).*")
+
+    def test_get_named_entrypoint(self):
+        eps = get_entrypoints("ksconf_cmd", "diff")
+        self.assertEqual(len(eps), 1)
+        assert eps["diff"]
 
 
 if __name__ == '__main__':  # pragma: no cover
