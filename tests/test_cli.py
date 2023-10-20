@@ -3,11 +3,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import sys
+from io import StringIO
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import contextlib
 import unittest
 
 from ksconf.command import get_entrypoints
@@ -54,6 +56,13 @@ class CliSimpleTestCase(unittest.TestCase):
         eps = get_entrypoints("ksconf_cmd", "diff")
         self.assertEqual(len(eps), 1)
         assert eps["diff"]
+
+    def test_entrypoint_debug(self):
+        from ksconf.setup_entrypoints import debug
+        stdout = StringIO()
+        with contextlib.redirect_stdout(stdout):
+            debug()
+        assert "Builtin entrypoints" in stdout.getvalue()
 
 
 if __name__ == '__main__':  # pragma: no cover
