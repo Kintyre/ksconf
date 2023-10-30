@@ -49,8 +49,8 @@ class FilterCmd(KsconfCmd):
 
     def __init__(self, *args, **kwargs):
         super(FilterCmd, self).__init__(*args, **kwargs)
-        self.stanza_filters = None
-        self.attr_presence_filters = None
+        self.stanza_filters: FilteredList = None
+        self.attr_presence_filters: FilteredList = None
 
     def register_args(self, parser: ArgumentParser):
         parser.add_argument("conf", metavar="CONF", help="Input conf file", nargs="+",
@@ -139,6 +139,10 @@ class FilterCmd(KsconfCmd):
             Match any stanza containing ATTR != PATTERN.
             See ``--attr-matches`` for additional details."""))
 
+        pg_sel.add_argument("--empty-stanzas", action="store_true", default=False,
+                            help="Show only empty stanzas.  This is incompatible with many"
+                            "other attribute filter options.")
+
         pg_eod = pg_sel.add_mutually_exclusive_group()
         pg_eod.add_argument("-e", "--enabled-only", action="store_true",
                             help=dedent("""
@@ -193,6 +197,11 @@ class FilterCmd(KsconfCmd):
                 value_filter.feed(value)
                 self.attr_value_filters.append((attr, value_filter))
 
+        if args.empty_stanzas:
+            self.empty_filter = lambda attrs: len(attrs) == 0
+        else:
+            self.empty_filter = lambda _: True
+
         if args.enabled_only:
             self.disabled_filter = lambda attrs: not is_disabled(attrs)
         elif args.disabled_only:
@@ -215,6 +224,9 @@ class FilterCmd(KsconfCmd):
         if self.stanza_filters.match_stanza(stanza):
             # Exclude based on value of 'disabled' attribute
             if not self.disabled_filter(attributes):
+                return False
+
+            if not self.empty_filter(attributes):
                 return False
 
             # If attr matching is in use, then test all attribute/match.  All must match.

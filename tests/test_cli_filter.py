@@ -43,6 +43,17 @@ class CliKsconfFilter(unittest.TestCase):
     dispatch.earliest_time = -24h
     """
 
+    _sample02 = """\
+    #   Version 7.2.0
+    [not_empty]
+    some = content
+
+    [empty]
+
+    [empty_with_comment]
+    # Hello comment!
+    """
+
     def setUp(self):
         self.twd = TestWorkDir()
 
@@ -53,6 +64,10 @@ class CliKsconfFilter(unittest.TestCase):
     @property
     def sample01(self):
         return self.twd.write_file("savedsearches.conf", self._sample01)
+
+    @property
+    def sample02(self):
+        return self.twd.write_file("test.conf", self._sample02)
 
     def test_filter_stanas(self):
         "Test simple stanza filter (wildcard is the default)"
@@ -192,6 +207,21 @@ class CliKsconfFilter(unittest.TestCase):
             # Same test but with "-l" added
             ko = ksconf_cli("filter", self.sample01, "--stanza", "BOGUS", "--verbose", "-l")
             self.assertRegex(ko.stderr, "No matching stanzas")
+
+    def test_find_empty_stanza(self):
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample02, "--empty-stanza")
+            out = ko.get_conf()
+            # Should the exit code be different here?
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertEqual(len(out), 2)
+            self.assertEqual(sorted(out), ["empty", "empty_with_comment"])
+        with ksconf_cli:
+            ko = ksconf_cli("filter", self.sample02, "--empty-stanza", "--invert")
+            out = ko.get_conf()
+            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
+            self.assertEqual(len(out), 1)
+            self.assertEqual(sorted(out), ["not_empty"])
 
     def test_match_from_flat_file(self):
         "Load a list of stanzas to keep from a text file"
