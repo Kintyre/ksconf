@@ -9,7 +9,7 @@ import re
 import sys
 from os import fspath
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Callable, Optional, Sequence, Union
 
 from ksconf.command import ConfFileProxy
 from ksconf.compat import List, Tuple
@@ -123,7 +123,7 @@ class LayerCombiner:
     def add_layer_filter(self, action, pattern):
         self.layer_filter.add_rule(action, pattern)
 
-    def combine(self, target: Path, *, hook_label=""):
+    def combine(self, target: Union[Path, str], *, hook_label=""):
         """
         Combine layers into ``target`` directory.
         Any ``hook_label`` given will be passed to the plugin system via the
@@ -132,6 +132,7 @@ class LayerCombiner:
         layer_root = self.layer_root
         if layer_root is None:
             raise TypeError("Call either set_source_dirs() or set_layer_root() before calling combine()")
+        target = Path(target)
         self.prepare(target)
         # Build a common tree of all src files.
         src_file_listing = layer_root.list_files()
@@ -145,8 +146,6 @@ class LayerCombiner:
         """ Start the combine process.  This includes directory checking,
         applying layer filtering, and marker file handling. """
         layer_root, layer_filter = self.layer_root, self.layer_filter
-        target = Path(target)
-
         self.prepare_target_dir(target)
 
         self.layer_names_all.update(layer_root.list_layer_names())

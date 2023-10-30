@@ -7,7 +7,7 @@ from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterator, Match, Optional
+from typing import Callable, Iterator, Optional, Pattern, Type, Union
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
@@ -48,7 +48,7 @@ This must work with an explicitly given list of layers
 """
 
 
-def _path_join(*parts):
+def _path_join(*parts) -> Path:
     """ A slightly smarter / more flexible path appender.
     Drop any None
     """
@@ -68,7 +68,7 @@ class LayerUsageException(LayerException):
 @dataclass
 class LayerContext:
     follow_symlink: bool = False
-    block_files: Match = re.compile(r"\.(bak|swp)$")
+    block_files: Pattern = re.compile(r"\.(bak|swp)$")
     block_dirs: set = field(default_factory=lambda: {".git"})
     template_variables: dict = field(default_factory=dict)
 
@@ -76,7 +76,7 @@ class LayerContext:
 @dataclass
 class _FileFactoryHandler:
     name: str
-    handler: LayerFile
+    handler: Type[LayerFile]
     priority: int = 0
     enabled: bool = False
 
@@ -87,7 +87,7 @@ class FileFactory:
 
     def __init__(self):
         # Make this class a singleton?
-        self._context_state = None
+        self._context_state: tuple = ()
 
     def _recalculate(self):
         self._enabled_handlers = [
@@ -105,7 +105,7 @@ class FileFactory:
     def list_available_handlers(self) -> List[str]:
         return [h.name for h in self._registered_handlers.values() if not h.enabled]
 
-    def __call__(self, layer, path: PurePath, *args, **kwargs) -> LayerFile:
+    def __call__(self, layer, path: PurePath, *args, **kwargs) -> Union[LayerFile, None]:
         """
         Factory thats finds the appropriate LayerFile class and returns a new instance.
         """
@@ -114,7 +114,7 @@ class FileFactory:
                 return cls(layer, path, *args, **kwargs)
 
     def register_handler(self, name: str, **kwargs):
-        def wrapper(handler_class: LayerFile):
+        def wrapper(handler_class: Type[LayerFile]) -> Type[LayerFile]:
             handler = _FileFactoryHandler(name, handler_class, **kwargs)
             self._registered_handlers[handler.name] = handler
             self._recalculate()
@@ -131,7 +131,7 @@ class FileFactory:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._registered_handlers, self._enabled_handlers = self._context_state
-        self._context_state = None
+        self._context_state = ()
 
 
 # Single shared instance
@@ -173,7 +173,7 @@ class LayerFile(PathLike):
         self._stat = stat
 
     def __fspath__(self) -> str:
-        return self.resource_path
+        return str(self.resource_path)
 
     @staticmethod
     def match(path: PurePath):
@@ -216,7 +216,7 @@ class LayerRenderedFile(LayerFile):
 
     def __init__(self, *args, **kwargs):
         super(LayerRenderedFile, self).__init__(*args, **kwargs)
-        self._rendered_resource = None
+        self._rendered_resource: Path = None
 
     def __del__(self):
         if getattr(self, "_rendered_resource", None) and self._rendered_resource.is_file():
@@ -307,7 +307,7 @@ class LayerFilter:
         if not self._rules:
             if action == "include":
                 first_filter = ("exclude", "*")
-            elif "exclude":
+            else:
                 first_filter = ("include", "*")
             self._rules.append(first_filter)
         self._rules.append((action, pattern))
@@ -369,7 +369,7 @@ class LayerRootBase:
                 self._cache_files = list(self.iter_files())
             return self._cache_files
 
-        def get_file(self, path: Path) -> LayerFile:
+        def get_file(self, path: Path) -> Union[LayerFile, None]:
             """ Return file object (by logical path), if it exists in this layer. """
             # TODO:  Optimize by caching.  Use a dict with a logical_path as the key
             for file in self.list_files():
