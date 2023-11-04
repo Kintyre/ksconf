@@ -113,5 +113,21 @@ def get_plugin_manager() -> _plugin_manager:
     return plugin_manager
 
 
+_need_init = True
+
+
+def init_ksconf():
+    """ Call for ksconf initialization hook.
+
+    This method only acts the very first time called.
+    Any class that relies on plugin functionality should call this from __init__().
+    """
+    global _need_init
+    if _need_init:
+        # This should be called exactly once for the life time of the python process
+        plugin_manager.hook.ksconf_cli_init()
+    _need_init = False
+
+
 if __name__ == '__main__':
     print(plugin_manager.list_name_plugin())

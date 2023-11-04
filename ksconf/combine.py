@@ -17,7 +17,7 @@ from ksconf.conf.delta import show_text_diff
 from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
-from ksconf.hook import plugin_manager
+from ksconf.hook import init_ksconf, plugin_manager
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
 from ksconf.util.compare import file_compare
@@ -82,6 +82,8 @@ class LayerCombiner:
         # Not a great long-term design, but good enough for initial conversion from command-based design
         self.stdout = sys.stdout
         self.stderr = sys.stderr
+
+        init_ksconf()
 
     @classmethod
     def register_handler(cls, regex_match):

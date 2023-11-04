@@ -3,6 +3,15 @@ Changelog
 
 .. note:: Changes in the *devel* branch, but not released yet are marked as *DRAFT*.
 
+
+Ksconf 0.14
+-----------
+
+Start reducing the ksconf footprint by moving specialty functionality into separate packages.
+
+Use ``pip install ksconf-render-jinja`` to enable the ``ksconf package`` option ``--enable-handler=jinja``.
+
+
 Ksconf 0.13
 -----------
 

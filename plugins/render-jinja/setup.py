@@ -1,16 +1,15 @@
 from setuptools import setup
 
 setup(
-    name="ksconf-jinja-markdown",
-    version="1.2.0",
+    name="ksconf-render-jinja",
+    version="1.0.0",
     install_requires=[
         "jinja2>=3.0",
         "ksconf>=0.13.0",
-        "ksconf-render-jinja>=1.0.0",
     ],
     entry_points={
         "ksconf_plugin": [
-            "jinja-markdown = ksconf.plugins.jinja_markdown"
+            "render-jinja = ksconf.plugins.render_jinja"
         ]
     },
     packages=["ksconf.plugins"],
@@ -22,12 +21,11 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
         "Environment :: Plugins",
-        "Topic :: Text Processing :: Markup",
         "Programming Language :: Python :: 3",
     ],
-    keywords='ksconf splunk jinja markdown',
+    keywords='ksconf splunk jinja',
     author="Lowell Alleman",
     author_email="lowell.alleman@cdillc.com",
-    url="https://github.com/Kintyre/ksconf/tree/devel/plugins/jinja-markdown",
+    url="https://github.com/Kintyre/ksconf/tree/devel/plugins/render-jinja",
     zip_safe=False
 )

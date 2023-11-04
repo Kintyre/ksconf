@@ -16,7 +16,7 @@ from ksconf.combine import LayerCombiner
 from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import is_debug
-from ksconf.hook import plugin_manager
+from ksconf.hook import init_ksconf, plugin_manager
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
@@ -73,6 +73,7 @@ class AppPackager:
         self._frozen_by = ""
         self.template_variables = template_variables
         self.predictable_mtime = predictable_mtime
+        init_ksconf()
 
     @decorator_with_opt_kwargs
     def require_active_context(funct, mutable=True):

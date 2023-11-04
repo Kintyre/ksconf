@@ -16,10 +16,7 @@ from ksconf.consts import PLUGGY_HOOK
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
-
-    from jinja2 import Environment
 else:
-    Environment = Any
     ArgumentParser = Namespace = Any
 
 # For Python 3.7 (Protocol added in 3.8)
@@ -141,12 +138,14 @@ class KsconfHookSpecs(Protocol):
 
     @staticmethod
     @hookspec
-    def modify_jinja_env(env: Environment):
+    def modify_jinja_env(env):
         """
         Modify the Jinja2 environment object.  This can be used to add custom
         filters or tests, for example.
 
-        Invoked by :py:class:`~ksconf.layer.LayerFile_Jinja2` immediately after
+        This hook is only available when the ``ksconf-render-jinja`` package is installed.
+
+        Invoked by :py:class:`~ksconf.plugins.render_jinja.LayerFile_Jinja2` immediately after
         initial Environment creation.  :py:obj:`env` should be mutated in place.
         """
         ...

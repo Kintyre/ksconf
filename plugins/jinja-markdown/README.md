@@ -11,7 +11,7 @@ a rendered Splunk app using the `ksconf package` command.
 ## Install
 
 ```sh
-pip install -U ksconf-jinja2-markdown
+pip install -U ksconf-jinja-markdown
 ```
 
 Installation can be validated by running:  `ksconf --version`

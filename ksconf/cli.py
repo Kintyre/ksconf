@@ -25,7 +25,7 @@ import ksconf.util
 import ksconf.version as ksc
 from ksconf.command import DescriptionHelpFormatterPreserveLayout, get_all_ksconf_cmds
 from ksconf.consts import EXIT_CODE_ENV_BUSTED, EXIT_CODE_INTERNAL_ERROR, KSCONF_DEBUG, is_debug
-from ksconf.hook import plugin_manager
+from ksconf.hook import init_ksconf, plugin_manager
 from ksconf.util.completers import autocomplete
 
 # Workaround PY2:  WindowsError: [Error -2146893795] Provider DLL failed to initialize correctly
@@ -256,6 +256,7 @@ def build_cli_parser(do_formatter=False):
 
 def cli(argv=None, _unittest=False):
     # TODO:  Rename '_unitest' to something more appropriate, maybe _exit=True?
+    init_ksconf()
     check_py()
 
     parser = build_cli_parser(True)

@@ -5,8 +5,6 @@ import os
 import sys
 import unittest
 
-from ksconf.layer import layer_file_factory
-
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
 if __package__ is None:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,11 +12,6 @@ if __package__ is None:
 from ksconf.conf.parser import PARSECONF_LOOSE, parse_conf
 from ksconf.consts import EXIT_CODE_COMBINE_MARKER_MISSING, EXIT_CODE_SUCCESS
 from tests.cli_helper import TestWorkDir, ksconf_cli
-
-try:
-    import jinja2
-except ImportError:
-    jinja2 = None
 
 
 class CliKsconfCombineTestCase(unittest.TestCase):
@@ -180,27 +173,6 @@ class CliKsconfCombineTestCase(unittest.TestCase):
             self.assertIn("aws_sns_modular_alert", alert_action)
             self.assertEqual(alert_action["aws_sns_modular_alert"]["param.account"], "DeptAwsAccount")  # layer 10
             self.assertEqual(alert_action["aws_sns_modular_alert"]["label"], "AWS SNS Alert")  # layer 60
-
-    @unittest.skipIf(jinja2 is None, "Test requires 'jinja2'")
-    def test_combine_dird_with_JINJA(self):
-        twd = TestWorkDir()
-        self.build_test01(twd)
-        template_vars = '{"big_ole_number": 8383}'
-        twd.write_file("etc/apps/Splunk_TA_aws/default.d/99-dynamic-magic/props.conf.j2", """
-        [aws:config]
-        TRUNCATE = {{ big_ole_number }}
-        """)
-        default = twd.get_path("etc/apps/Splunk_TA_aws")
-        target = twd.get_path("etc/apps/Splunk_TA_aws-OUTPUT")
-        with ksconf_cli, layer_file_factory:
-            ko = ksconf_cli("combine", "--layer-method", "dir.d",
-                            "--template-vars", template_vars,
-                            "--enable-handler", "jinja",
-                            "--target", target, default)
-            self.assertEqual(ko.returncode, EXIT_CODE_SUCCESS)
-            cfg = parse_conf(target + "/default/props.conf")
-            self.assertIn("aws:config", cfg)
-            self.assertEqual(cfg["aws:config"]["TRUNCATE"], '8383')
 
     def test_keep_existing_ds_local_app(self):
         twd = TestWorkDir()

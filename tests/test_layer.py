@@ -84,46 +84,6 @@ class HelperFunctionsTestCase(unittest.TestCase):
                              ["10-upstream", "20-kintyre", "30-indexers", "30-searchhead", "30-cloudinputs"])
 
 
-class LayerTemplateTestCase(unittest.TestCase):
-
-    @unittest.skipIf(jinja2 is None, "Test requires 'jinja2'")
-    def test_simple_mapping(self):
-        t_context = {
-            "max_size": 83830
-        }
-        with TestWorkDir() as twd, layer_file_factory:
-            layer_file_factory.enable("jinja")
-            app_dir = twd.makedir("app01")
-            twd.write_file("app01/default.d/10-upstream/props.conf", """\
-                [mysourcetype]
-                SHOULD_LINEBREAK = false
-                """)
-            twd.write_file("app01/default.d/20-common/props.conf", """\
-                [yoursourcetype]
-                TIME_FORMAT = %s
-                """)
-            twd.write_file("app01/default.d/75-custom-magic/props.conf.j2", """\
-                [yoursourcetype]
-                TRUNCATE = {{ max_size | default('99') }}
-                """)
-
-            layer_root = DotDLayerRoot()
-            layer_root.set_root(Path(app_dir))
-            layer_root.context.template_variables = t_context
-            self.assertListEqual(layer_root.list_layer_names(),
-                                 ["10-upstream", "20-common", "75-custom-magic"])
-            self.assertEqual(len(layer_root.list_logical_files()), 1)
-            self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
-            self.assertEqual(len(layer_root.list_physical_files()), 3)
-
-            layer = list(layer_root.get_layers_by_name("75-custom-magic"))[0]
-            # the .j2; extension has been removed for the logical path
-            f = layer.get_file(PurePath("default/props.conf"))
-
-            conf = twd.read_conf(f.resource_path)
-            self.assertEqual(conf["yoursourcetype"]["TRUNCATE"], "83830")
-
-
 class DefaultLayerTestCase(unittest.TestCase):
     """ Test the DefaultLayerRoot class """
 

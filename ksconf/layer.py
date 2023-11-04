@@ -10,7 +10,6 @@ from tempfile import NamedTemporaryFile
 from typing import Callable, Iterator, Optional, Pattern, Type, Union
 
 from ksconf.compat import Dict, List, Set, Tuple
-from ksconf.hook import plugin_manager
 from ksconf.util.file import relwalk, secure_delete
 
 """
@@ -254,43 +253,6 @@ class LayerRenderedFile(LayerFile):
             content = self.render(self.physical_path)
             self._rendered_resource.write_text(content)
         return self._rendered_resource
-
-
-@register_file_handler("jinja", priority=50, enabled=False)
-class LayerFile_Jinja2(LayerRenderedFile):
-    @staticmethod
-    def match(path: PurePath):
-        return path.suffix == ".j2"
-
-    @staticmethod
-    def transform_name(path: PurePath):
-        return path.with_name(path.name[:-3])
-
-    @property
-    def jinja2_env(self):
-        # Use context object to 'cache' the jinja2 environment
-        if not hasattr(self.layer.context, "jinja2_environment"):
-            self.layer.context.jinja2_environment = self._build_jinja2_env()
-        return self.layer.context.jinja2_environment
-
-    def _build_jinja2_env(self):
-        from jinja2 import Environment, FileSystemLoader, StrictUndefined
-        environment = Environment(
-            undefined=StrictUndefined,
-            loader=FileSystemLoader(self.layer.root),
-            auto_reload=False)
-
-        # Call plugin for jinja environment tweaking
-        plugin_manager.hook.modify_jinja_env(env=environment)
-
-        environment.globals.update(self.layer.context.template_variables)
-        return environment
-
-    def render(self, template_path: Path) -> str:
-        rel_template_path = template_path.relative_to(self.layer.root)
-        template = self.jinja2_env.get_template("/".join(rel_template_path.parts))
-        value = template.render()
-        return value
 
 
 class LayerFilter:

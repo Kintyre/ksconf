@@ -549,7 +549,9 @@ def add_file_handler(parser: ArgumentParser) -> ArgumentParser:
     handlers = layer_file_factory.list_available_handlers()
 
     parser.add_argument("--enable-handler", action="append", default=[], choices=handlers,
-                        help="Enable optional file handling support")
+                        help="Enable optional file handling support.  "
+                        "Note that the list of handlers can be influenced by "
+                        "installed plugin packages.")
     return parser
 
 
