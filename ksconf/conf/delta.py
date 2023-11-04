@@ -429,7 +429,7 @@ def show_text_diff(stream: TextIO, a: PathLike, b: PathLike):
             tc.reset()
 
 
-def reduce_stanza(stanza: StanzaType, keep_attrs: Sequence) -> dict:
+def reduce_stanza(stanza: StanzaType, keep_attrs: Sequence[str]) -> dict:
     """ Pre-process a stanzas so that only a common set of keys will be compared.
 
     :param stanza: Stanzas containing attributes and values

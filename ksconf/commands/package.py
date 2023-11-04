@@ -22,6 +22,7 @@ Build system example:
 import argparse
 import json
 import os
+from typing import Iterable
 
 from ksconf.command import KsconfCmd, add_file_handler, dedent
 from ksconf.consts import EXIT_CODE_BAD_ARGS, EXIT_CODE_SUCCESS
@@ -150,7 +151,7 @@ class PackageCmd(KsconfCmd):
                                  "so the final name may not be known ahead of time.")
 
     @staticmethod
-    def load_blocklist(path):
+    def load_blocklist(path: str) -> Iterable[str]:
         with open(path) as stream:
             for line in stream:
                 line = line.rstrip()

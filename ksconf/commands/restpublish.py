@@ -15,7 +15,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from argparse import ArgumentParser, Namespace
-from typing import Optional
+from typing import Dict, Optional
 from urllib.parse import urlparse
 
 from ksconf.command import (ConfFileProxy, ConfFileType, KsconfCmd,
@@ -272,7 +272,7 @@ class RestPublishCmd(KsconfCmd):
         if not metadata:
             res["meta"] = f"No metadata found for [{config_file.name}/{stanza_name}]"
             return (action, res)
-        final_meta = {}
+        final_meta: Dict[str, str] = {}
         if "access.read" in metadata:
             final_meta["perms.read"] = ",".join(metadata["access.read"])
         if "access.write" in metadata:
@@ -300,7 +300,7 @@ class RestPublishCmd(KsconfCmd):
                 access["perms." + x] = ""
         # print(f"[{stanza_name}] fm={final_meta} access:  {access}")
 
-        acl_delta = compare_stanzas(reduce_stanza(access, final_meta), final_meta,
+        acl_delta = compare_stanzas(reduce_stanza(access, list(final_meta)), final_meta,
                                     stanza_name + "/acl")
         if is_equal(acl_delta):
             res["acl_delta"] = []
