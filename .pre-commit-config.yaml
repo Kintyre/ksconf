@@ -46,6 +46,12 @@ repos:
     hooks:
       - id: yamllint
 
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.27.1
+    hooks:
+      - id: check-github-workflows
+      - id: check-readthedocs
+
   - repo: local
     hooks:
       - id: do-not-commit
