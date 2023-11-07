@@ -193,7 +193,6 @@ setup(name=package_name,
       extras_require={
           "xml": ["lxml"],
           "bash": ["argcomplete"],
-          "jinja": ["jinja2"],
           "thirdparty": [
               "splunk-sdk>=1.7.0",
               "lxml",
@@ -201,9 +200,12 @@ setup(name=package_name,
           "fully-loaded": [
               "lxml",
               "argcomplete",
-              "jinja2",
               "splunk-sdk",
               "pyyaml",
+          ],
+          # Matching what was included in ksconf circa v0.13.5
+          "classic-plugins": [
+              "ksconf-render-jinja",
           ]
       },
       include_package_data=True,
