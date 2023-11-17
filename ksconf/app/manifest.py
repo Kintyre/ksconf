@@ -440,7 +440,7 @@ def load_manifest_for_archive(
             sam = StoredArchiveManifest.from_json_manifest(archive, manifest_file,
                                                            permanent_archive=permanent_archive)
             manifest = sam.manifest
-        except AppManifestStorageError as e:
+        except (AppManifestStorageError, AssertionError) as e:
             log_callback(f"Loading stored manifest failed:  {e}")
 
     if manifest is None:
