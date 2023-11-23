@@ -220,7 +220,10 @@ class AppManifest:
             if filter_file is None or filter_file(relpath):
                 f = AppManifestFile(relpath, gaf.mode, gaf.size, hash)
                 manifest.files.append(f)
-        if len(app_names) > 1:
+        num_apps = len(app_names)
+        if num_apps == 0:
+            raise AppArchiveContentError(f"Found no app within archive {archive}")
+        elif num_apps > 1:
             raise AppArchiveContentError("Found multiple top-level app names!  "
                                          f"Archive {archive} contains apps {', '.join(app_names)}")
         manifest.name = app_names.pop()
