@@ -156,7 +156,7 @@ class UnarchiveCmd(KsconfCmd):
             self.stderr.write(f"The 'unarchive' command does not support the {tarball} archive.\n{e}")
             return EXIT_CODE_FAILED_SAFETY_CHECK
 
-        local_files = set(app_manifest.find_local())
+        local_files = list(app_manifest.find_local())
         app_name = app_facts.name
 
         if local_files:
@@ -298,7 +298,7 @@ class UnarchiveCmd(KsconfCmd):
         excludes = list(args.exclude)
         if not args.allow_local:
             for pattern in local_files:
-                excludes.append("./" + pattern)
+                excludes.append(f"./{pattern.path}")
         excludes = fixup_pattern_bw(excludes, app_basename)
         self.stderr.write(f"Extraction exclude patterns:  {excludes!r}\n")
         exclude_filter = create_filtered_list("splunk", default=False)
