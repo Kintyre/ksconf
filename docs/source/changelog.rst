@@ -23,8 +23,13 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
-Ksconf v0.13.6 (DRAFT)
+Ksconf v0.13.6 (2023-12-06)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Add new ``--empty-stanza`` to :ref:`ksconf_cmd_filter`.  Thanks to Manoj Baba for the idea.
+*  Fix ``unarchive`` bug when dealing with local files.
+*  Improve handling of UTF8-BOM in some situations.  As always, the marker (BOM) will be silently discarded.
+
 
 **API Changes**:
 
@@ -33,11 +38,6 @@ Ksconf v0.13.6 (DRAFT)
    Hopefully not many people are relying on this function yet, at it was only introduced 2 moths ago in v0.11.5.
    This function will be removed in v0.20.0.
 *  Created new :py:func:`~ksconf.conf.parser.write_conf_string` function for writing a conf file to a python string.
-
-
-*  Add new ``--empty-stanza`` to :ref:`ksconf_cmd_filter`.  Thanks to Manoj Baba for the idea.
-*  Fix ``unarchive`` bug when dealing with local files.
-*  Allow better handling of UTF8-BOM in some situations.  As always, the marker (BOM) will be silently discarded.
 
 
 Ksconf v0.13.5 (2023-10-20)
