@@ -246,7 +246,10 @@ def splitup_kvpairs(lines: Iterable[str],
             # ToDo:  There should be a 'loose' mode that allows this to be ignored...
             raise ConfParserException(f"Dangling stanza header:  {entry}")
         elif strict and entry.strip():
-            #  if entry == "\ufeff": continue # UTF-8 BOM read as UTF-8;  But this ONLY works for PY3
+            # Silently ignore (drop) UTF-8 BOM as we assume UTF-8 anyway
+            # This should only happen when parsing a stream (for files BOM is handled earlier)
+            if entry == "\ufeff":
+                continue
             raise ConfParserException(f"Unexpected entry:  {entry!r}")
 
 

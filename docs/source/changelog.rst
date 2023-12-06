@@ -37,6 +37,7 @@ Ksconf v0.13.6 (DRAFT)
 
 *  Add new ``--empty-stanza`` to :ref:`ksconf_cmd_filter`.  Thanks to Manoj Baba for the idea.
 *  Fix ``unarchive`` bug when dealing with local files.
+*  Allow better handling of UTF8-BOM in some situations.  As always, the marker (BOM) will be silently discarded.
 
 
 Ksconf v0.13.5 (2023-10-20)
