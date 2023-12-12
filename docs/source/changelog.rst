@@ -23,6 +23,13 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.7 (2023-12-12)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Update some app builder internal caching mechanisms that are now re-used by the ``ksconf_package`` command in the `cdillc.splunk`_ collection.
+   That's it.  Everyone else can just skip this version.
+
+
 Ksconf v0.13.6 (2023-12-06)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

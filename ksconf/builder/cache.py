@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
+from os import fspath
 from pathlib import Path, PurePath
 from shutil import copy2, rmtree
-from typing import List
+from typing import Callable, List, Union
 
 from ksconf.builder import BuildCacheException
 from ksconf.util.file import file_hash
@@ -13,16 +14,19 @@ from ksconf.util.file import file_hash
 
 
 def fingerprint_hash(path: Path) -> dict:
+    """ Build a fingerprint based a file's content hash. """
     return {
         "hash": file_hash(path)
     }
 
 
 def fingerprint_stat(path: Path) -> dict:
+    """ Build fingerprint based on a file's stats. """
+    # This is used by cdillc.splunk.ksconf_package
     stat = path.stat()
     return {
-        "mtime": stat.st_mtime,
-        "ctime": stat.st_ctime,
+        "mtime": int(stat.st_mtime),
+        "ctime": int(stat.st_ctime),
         "size": stat.st_size,
     }
 
@@ -41,10 +45,10 @@ class FileSet:
     # XXX: Do we need both files (set), and file_meta (dict)?  Try to make this work with just files_meta
     __slots__ = ["files", "files_meta", "get_fingerprint"]
 
-    def __init__(self, fingerprint=fingerprint_hash):
+    def __init__(self, *, fingerprint=fingerprint_hash):
         self.files = set()
         self.files_meta = {}
-        self.get_fingerprint = fingerprint
+        self.get_fingerprint: Callable[[Path], dict] = fingerprint
 
     def __eq__(self, other: FileSet) -> bool:
         return self.files_meta == other.files_meta
@@ -72,12 +76,15 @@ class FileSet:
         return len(self.files)
 
     @classmethod
-    def from_filesystem(cls, root: Path, files: List[str] = None) -> FileSet:
+    def from_filesystem(cls,
+                        root: Path,
+                        files: Union[List[str], None] = None,
+                        **kw_init_args) -> FileSet:
         """
         Create a new FileSet instance based on a filesystem location.
         If ``files`` is None, then the entire directory is added recursively.
         """
-        instance = cls()
+        instance = cls(**kw_init_args)
         root = Path(root)
         if files is None:
             # Add root recursively
@@ -94,18 +101,23 @@ class FileSet:
         return instance
 
     @classmethod
-    def from_cache(cls, data):
-        instance = cls()
+    def from_cache(cls, data: dict,
+                   **kw_init_args) -> FileSet:
+        instance = cls(**kw_init_args)
         for file_name, meta in data.items():
             file_name = PurePath(file_name)
             instance.files.add(file_name)
             instance.files_meta[file_name] = meta
         return instance
 
+    def to_cache(self) -> dict:
+        """ Return a json-friendly dict """
+        return {fspath(f): v for f, v in self.files_meta.items()}
+
     def add_file(self, root: Path, relative_path: str):
         """ Add a simple relative path to a file to the FileSet. """
-        relative_path = PurePath(relative_path)
-        p = root / relative_path
+        rel_path = PurePath(relative_path)
+        p: Path = root / rel_path
         if not p.is_file():
             if p.is_dir():
                 # Audience: Exception text relevant to from_filesystem() caller
@@ -115,8 +127,8 @@ class FileSet:
                     f"'{p}/'")
             raise BuildCacheException(f"Missing expected file {p}")
         fp = self.get_fingerprint(p)
-        self.files.add(relative_path)
-        self.files_meta[relative_path] = fp
+        self.files.add(rel_path)
+        self.files_meta[rel_path] = fp
 
     def add_glob(self, root: Path, pattern: str):
         """ Recursively add all files matching glob pattern. """
@@ -239,7 +251,7 @@ class CachedRun:
 
     def set_cache_info(self, type: str, data: FileSet):
         assert type in ("inputs", "outputs")
-        self._info[type] = data.files_meta
+        self._info[type] = data.to_cache()
 
     def rename(self, dest):
         if dest.is_dir():
