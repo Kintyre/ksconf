@@ -7,7 +7,7 @@ from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterator, Optional, Pattern, Type, Union
+from typing import Callable, Iterator, Optional, Pattern, Sequence, Type, Union
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
@@ -420,13 +420,13 @@ class LayerRootBase:
         for layer in self._layers:
             yield from layer.iter_files()
 
-    def list_physical_files(self) -> List[LayerFile]:
+    def list_physical_files(self) -> List[Path]:
         files = set()
         for file_ in self.iter_all_files():
             files.add(file_.physical_path)
         return list(files)
 
-    def list_logical_files(self) -> List[LayerFile]:
+    def list_logical_files(self) -> List[Path]:
         """ Return a list of logical paths. """
         files = set()
         for file_ in self.iter_all_files():
@@ -520,7 +520,7 @@ class DotDLayerRoot(LayerRootBase):
                      logical: PurePath,
                      context: LayerContext,
                      file_factory: Callable,
-                     prune_points: Set[Path] = None):
+                     prune_points: Optional[Sequence[Path]] = None):
             super(DotDLayerRoot.Layer, self).__init__(name, root, physical, logical, context=context,
                                                       file_factory=file_factory)
             self.prune_points: Set[Path] = set(prune_points) if prune_points else set()

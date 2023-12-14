@@ -9,7 +9,7 @@ import re
 import sys
 from os import fspath
 from pathlib import Path
-from typing import Callable, Optional, Sequence, Union
+from typing import Callable, Union
 
 from ksconf.command import ConfFileProxy
 from ksconf.compat import List, Tuple
@@ -66,7 +66,7 @@ class LayerCombiner:
                  banner: str = "",
                  dry_run: bool = False,
                  quiet: bool = False):
-        self.layer_root: Optional[LayerRootBase] = None
+        self.layer_root: LayerRootBase = None  # type: ignore
         self.context = LayerContext()
         self.layer_filter = LayerFilter()
         self.banner = banner
@@ -84,7 +84,7 @@ class LayerCombiner:
         self.stderr = sys.stderr
 
     @classmethod
-    def register_handler(cls, regex_match):
+    def register_handler(cls, regex_match: str):
         """ Decorator that registers a new file type handler.  The handler is
         used if a file name matches a regex.  Regex 'search' mode is used.
         """
@@ -115,7 +115,7 @@ class LayerCombiner:
         for src in sources:
             self.layer_root.add_layer(Path(src))
 
-    def set_layer_root(self, root: LayerRootBase.Layer):
+    def set_layer_root(self, root: Path):
         layer_root = DotDLayerRoot(context=self.context)
         layer_root.set_root(root)
         self.layer_root = layer_root
@@ -135,7 +135,7 @@ class LayerCombiner:
         target = Path(target)
         self.prepare(target)
         # Build a common tree of all src files.
-        src_file_listing = layer_root.list_files()
+        src_file_listing = layer_root.list_logical_files()
         src_file_listing = self.pre_combine_inventory(target, src_file_listing)
         self.combine_files(target, src_file_listing)
         self.post_combine(target)
@@ -161,12 +161,12 @@ class LayerCombiner:
         if not target.is_dir():
             target.mkdir()
 
-    def pre_combine_inventory(self, target: Path, src_files: List[LayerFile]) -> Sequence[LayerFile]:
+    def pre_combine_inventory(self, target: Path, src_files: List[Path]) -> List[Path]:
         """ Hook point for pre-processing before any files are copied/merged """
         del target
         return src_files
 
-    def post_combine(self, target):
+    def post_combine(self, target: Path):
         """ Hook point for post-processing after all copy/merge operations have been completed. """
         del target
 
@@ -188,12 +188,16 @@ class LayerCombiner:
                 dest_dir.mkdir(parents=True)
 
             # Determine handling method based on source count and filename pattern
+            # Handlers only run to address conflicts, so there must be more than 1 source file
             if len(sources) > 1:
                 for matcher, handler in self.filetype_handlers:
                     if matcher(dest_fn):
                         handler(self, dest_path, sources, self.dry_run)
                         do_copy = False
+                        # Stop after first matching handler has run
+                        break
 
+            # If no specific handler has been run, copy highest priority file to target
             if do_copy:
                 # self.debug((f"Considering {fspath(dest_fn):50}  NON-CONF Copy from source:  "
                 #             f"{sources[-1].physical_path!r}")
@@ -237,6 +241,7 @@ def handle_merge_conf_files(combiner: LayerCombiner,
     """
     sources_physical = [fspath(p.physical_path) for p in sources]
     # Note that latest mtime logic is handled by merge_conf_files()
+    dest = None
     srcs = []
     try:
         # Handle merging conf files
@@ -248,10 +253,11 @@ def handle_merge_conf_files(combiner: LayerCombiner,
                                     banner_comment=combiner.banner)
         if smart_rc != SMART_NOCHANGE:
             combiner.debug(f"Merge <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}")
-        return smart_rc
+        # return smart_rc  # ignored
     finally:
         # Protect against any dangling open files:  (ResourceWarning: unclosed file)
-        dest.close()
+        if dest:
+            dest.close()
         for src in srcs:
             src.close()
 
@@ -287,4 +293,4 @@ def handle_spec_concatenate(combiner: LayerCombiner,
     os.utime(dest_path, (last_mtime, last_mtime))
     if smart_rc != SMART_NOCHANGE:
         combiner.debug(f"Concatenate <{smart_rc}>   {fspath(dest_path):50}  from {sources_physical!r}")
-    return smart_rc
+    # return smart_rc
