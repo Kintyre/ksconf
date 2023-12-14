@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional, Sequence, Type, Union
 
 from ksconf.conf.parser import GLOBAL_STANZA
+from ksconf.types import StrPath
 from ksconf.util.file import splglob_to_regex
 
 # Note on future direction:
@@ -44,7 +45,7 @@ class FilteredList:
         #  If no patterns defined, return default.  (True => match everything)
         self.default = default
 
-    def _feed_from_file(self, path: Union[str, Path]):
+    def _feed_from_file(self, path: StrPath):
         items = []
         with open(path) as f:
             for line in f:

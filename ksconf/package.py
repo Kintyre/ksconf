@@ -116,7 +116,7 @@ class AppPackager:
         return new_value if new_value != value else False
 
     @require_active_context
-    def combine(self, src, filters, layer_method="dir.d", allow_symlink=False):
+    def combine(self, src: Path, filters, layer_method="dir.d", allow_symlink=False):
         combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
         if self.template_variables:
             combiner.context.template_variables = self.template_variables

@@ -10,10 +10,10 @@ from glob import glob
 from io import open
 from pathlib import Path
 from random import randint
-from typing import IO, Callable, Iterable, List, Tuple, Union
+from typing import IO, Callable, Generator, Iterable, List, Tuple, Union
 
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE, is_debug
-from ksconf.types import PathType
+from ksconf.types import StrPath
 from ksconf.util.compare import file_compare
 
 
@@ -111,7 +111,7 @@ def splglob_simple(pattern):
     return pattern
 
 
-def relwalk(top: PathType,
+def relwalk(top: StrPath,
             topdown=True, onerror=None, followlinks=False
             ) -> Iterable[Tuple[str, List[str], List[str]]]:
     """ Relative path walker
@@ -120,13 +120,13 @@ def relwalk(top: PathType,
     top = os.fspath(top)
     if not top.endswith(os.path.sep):
         top += os.path.sep
-    prefix = len(top)
+    prefix = len(top)  # type: ignore
     for (dirpath, dirnames, filenames) in os.walk(top, topdown, onerror, followlinks):
         dirpath = dirpath[prefix:]
         yield (dirpath, dirnames, filenames)
 
 
-def file_hash(path: PathType, algorithm="sha256") -> str:
+def file_hash(path: StrPath, algorithm="sha256") -> str:
     import hashlib
     h = hashlib.new(algorithm)
     with open(path, "rb") as fp:
@@ -137,7 +137,7 @@ def file_hash(path: PathType, algorithm="sha256") -> str:
     return h.hexdigest()
 
 
-def _samefile(file1: PathType, file2: PathType) -> bool:
+def _samefile(file1: StrPath, file2: StrPath) -> bool:
     if hasattr(os.path, "samefile"):
         # Nix
         return os.path.samefile(file1, file2)
@@ -177,7 +177,8 @@ def secure_delete(path: Path, passes=3):
 
 @contextmanager
 def atomic_writer(dest: Path,
-                  temp_name: Union[Path, str, Callable[[Path], Path], None]) -> Path:
+                  temp_name: Union[Path, str, Callable[[Path], Path], None]
+                  ) -> Generator[Path, None, None]:
     """
     Context manager to atomically update a destination.  When entering the context, a temporary file
     name is returned.  When the context is successfully exited, the temporary file is renamed into
@@ -237,7 +238,7 @@ def atomic_writer(dest: Path,
 def atomic_open(name: Path,
                 temp_name: Union[Path, str, Callable[[Path], Path], None],
                 mode="w",
-                **open_kwargs) -> IO:
+                **open_kwargs) -> Generator[IO, None, None]:
     """
     Context manager to atomically write to a file stream.  Like the open() context manager, a file
     handle returned when the context is entered.  Upon successful completion, the temporary file is
@@ -258,16 +259,17 @@ class ReluctantWriter:
     to a temp file, and then compared to the current file's content.  The file file will be
     overwritten only if the contents changed.
     """
+    # TODO: Convert to Path native class
 
-    def __init__(self, path, *args, **kwargs):
+    def __init__(self, path: StrPath, *args, **kwargs):
         self.path = path
         self._arg = (args, kwargs)
-        self._fp = None
-        self._tmpfile = path + ".tmp"
+        self._fp: IO = None  # type: ignore
+        self._tmpfile = os.fspath(path) + ".tmp"
         self.change_needed = None
         self.result = None
 
-    def __enter__(self):
+    def __enter__(self) -> IO:
         args, kwargs = self._arg
         self._fp = open(self._tmpfile, *args, **kwargs)
         return self._fp

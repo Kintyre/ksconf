@@ -15,6 +15,7 @@ from typing import Callable, Iterable, Optional, Union
 from ksconf.archive import extract_archive
 from ksconf.compat import List
 from ksconf.consts import _UNSET, MANIFEST_HASH, UNSET
+from ksconf.types import StrPath
 from ksconf.util.file import atomic_open, file_hash, relwalk
 
 
@@ -92,7 +93,7 @@ class AppManifest:
     * :py:meth:`from_dict` - primarily for json serialization from :py:meth:`to_dict`.
     """
     name: Optional[str] = None
-    source: Union[str, Path, None] = None
+    source: Optional[StrPath] = None
     hash_algorithm: str = field(default=MANIFEST_HASH)
     _hash: Union[str, _UNSET] = field(default=UNSET, init=False)
     files: List[AppManifestFile] = field(default_factory=list)
@@ -181,7 +182,7 @@ class AppManifest:
     def to_dict(self):
         d = {
             "name": self.name,
-            "source": fspath(self.source),
+            "source": fspath(self.source) if self.source else None,
             "hash_algorithm": self.hash_algorithm,
             "hash": self.hash,
             "files": [f.to_dict() for f in self.files]
@@ -204,7 +205,7 @@ class AppManifest:
         if calculate_hash:
             h_ = hashlib.new(cls.hash_algorithm)
 
-            def gethash(content):
+            def gethash(content):  # type: ignore
                 h = h_.copy()
                 h.update(content)
                 return h.hexdigest()
@@ -290,7 +291,7 @@ class StoredArchiveManifest:
     mtime: float
     hash: str
     _manifest_dict: dict = field(init=False)
-    _manifest: AppManifest = field(init=False, default=None)
+    _manifest: AppManifest = field(init=False, default=None)  # type: ignore
 
     @property
     def manifest(self) -> AppManifest:

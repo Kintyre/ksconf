@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from typing import IO, List, Set, Tuple, TypeVar
 
-from ksconf.types import PathType
+from ksconf.types import StrPath
 
 
 def fileobj_compare(f1: IO, f2: IO) -> bool:
@@ -19,7 +19,7 @@ def fileobj_compare(f1: IO, f2: IO) -> bool:
             return True
 
 
-def file_compare(fn1: PathType, fn2: PathType) -> bool:
+def file_compare(fn1: StrPath, fn2: StrPath) -> bool:
     with open(fn1, "rb") as f1, \
             open(fn2, "rb") as f2:
         return fileobj_compare(f1, f2)

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Dict, Iterable, Iterator, List, Optional, Sequence, TextIO, Tuple, Union
 
 from ..consts import SmartEnum
-from ..types import PathType
+from ..types import StrPath
 from ..util.compare import fileobj_compare
 from ..util.file import atomic_open, atomic_writer
 
@@ -34,8 +34,8 @@ default_encoding = "utf-8"
 StanzaType = Dict[str, str]
 ConfType = Dict[str, StanzaType]
 _StreamInput = Union[TextIO, Iterable[str]]
-_StreamOutput = Union[PathType, TextIO]
-_StreamNameFile = Union[PathType, _StreamInput]
+_StreamOutput = Union[StrPath, TextIO]
+_StreamNameFile = Union[StrPath, _StreamInput]
 ParserConfig = Dict
 
 
@@ -171,7 +171,7 @@ else:
 """
 
 
-def detect_by_bom(path: PathType) -> str:
+def detect_by_bom(path: StrPath) -> str:
     # Refuse to consume a possibly read-once stream.  Could be a shell:  <(cmd)
     # Using an assert because this really *should* be handled by the caller, but just in case...
     assert not os.fspath(path).startswith("/dev/fd/"), "Don't bom my pipe!"
@@ -428,7 +428,7 @@ def write_conf_string(conf: ConfType,
     return output.getvalue()
 
 
-def smart_write_conf(filename: PathType,
+def smart_write_conf(filename: StrPath,
                      conf: ConfType,
                      stanza_delim: str = "\n",
                      sort: bool = True,
@@ -555,7 +555,7 @@ class update_conf:
                                if ``conf_path`` is missing, otherwise an exception will be raised.
     """
 
-    def __init__(self, conf_path: PathType,
+    def __init__(self, conf_path: StrPath,
                  profile: ParserConfig = PARSECONF_MID,
                  encoding: Optional[str] = None,
                  make_missing: bool = False):

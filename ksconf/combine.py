@@ -9,7 +9,7 @@ import re
 import sys
 from os import fspath
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable
 
 from ksconf.command import ConfFileProxy
 from ksconf.compat import List, Tuple
@@ -20,6 +20,7 @@ from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.hook import plugin_manager
 from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
                           LayerFile, LayerFilter, LayerRootBase)
+from ksconf.types import StrPath
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
 
@@ -123,7 +124,7 @@ class LayerCombiner:
     def add_layer_filter(self, action, pattern):
         self.layer_filter.add_rule(action, pattern)
 
-    def combine(self, target: Union[Path, str], *, hook_label=""):
+    def combine(self, target: StrPath, *, hook_label=""):
         """
         Combine layers into ``target`` directory.
         Any ``hook_label`` given will be passed to the plugin system via the

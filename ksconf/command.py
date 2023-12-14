@@ -33,6 +33,7 @@ from ksconf.consts import (EXIT_CODE_BAD_ARGS, EXIT_CODE_BAD_CONF_FILE,
                            EXIT_CODE_NO_SUCH_FILE, SMART_CREATE, SmartEnum)
 from ksconf.hook import plugin_manager
 from ksconf.hookspec import KsconfPluginWarning
+from ksconf.types import StrPath
 from ksconf.util import debug_traceback
 
 __all__ = [
@@ -60,7 +61,7 @@ class ConfDirProxy:
 
 
 class ConfFileProxy:
-    def __init__(self, name: str, mode: str, stream: Optional[TextIO] = None,
+    def __init__(self, name: StrPath, mode: str, stream: Optional[TextIO] = None,
                  *,
                  parse_profile: Optional[ParserConfig] = None,
                  is_file: Optional[bool] = None):

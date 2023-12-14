@@ -1,5 +1,5 @@
-
-from pathlib import Path
+from os import PathLike
 from typing import Union
 
-PathType = Union[Path, str]
+# Borrowing name form typeshed
+StrPath = Union[str, PathLike]
