@@ -231,7 +231,7 @@ class AppManifest:
         return manifest
 
     @classmethod
-    def from_filesystem(cls, path: Path,
+    def from_filesystem(cls, path: StrPath,
                         name: Optional[str] = None,
                         follow_symlinks=False,
                         calculate_hash=True,

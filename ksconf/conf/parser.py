@@ -33,9 +33,9 @@ default_encoding = "utf-8"
 
 StanzaType = Dict[str, str]
 ConfType = Dict[str, StanzaType]
-_StreamInput = Union[TextIO, Iterable[str]]
+_StreamIterable = Union[TextIO, Iterable[str]]
 _StreamOutput = Union[StrPath, TextIO]
-_StreamNameFile = Union[StrPath, _StreamInput]
+_StreamNameFile = Union[StrPath, _StreamIterable]
 ParserConfig = Dict
 
 
@@ -116,9 +116,9 @@ class DuplicateStanzaException(ConfParserException):
 # Core parsing / conf file writing logic
 
 
-def section_reader(stream: Sequence[str],
+def section_reader(stream: _StreamIterable,
                    section_re: re.Pattern = re.compile(r'^[\s\t]*\[(.*)\]\s*$')
-                   ) -> Iterator[Tuple[str, List[str]]]:
+                   ) -> Iterator[Tuple[Optional[str], List[str]]]:
     """
     This generator break a configuration file stream into sections.  Each section contains a name
     and a list of text lines held within that section.
@@ -182,7 +182,7 @@ def detect_by_bom(path: StrPath) -> str:
     return encoding["encoding"]
 
 
-def cont_handler(iterable: Iterable[str],
+def cont_handler(iterable: _StreamIterable,
                  continue_re: re.Pattern = re.compile(r"^(.*)\\$"),
                  breaker: str = "\n"
                  ) -> Iterator[str]:
@@ -253,7 +253,7 @@ def splitup_kvpairs(lines: Iterable[str],
             raise ConfParserException(f"Unexpected entry:  {entry!r}")
 
 
-def parse_conf(stream: _StreamNameFile,
+def parse_conf(stream: Union[StrPath, _StreamIterable],
                profile: ParserConfig = PARSECONF_MID,
                encoding: Optional[str] = None
                ) -> ConfType:
@@ -272,13 +272,13 @@ def parse_conf(stream: _StreamNameFile,
     try:
         # Placeholder stub for an eventual migration to proper class-oriented parser
         if hasattr(stream, "read"):
-            return parse_conf_stream(stream, **profile)
+            return parse_conf_stream(stream, **profile)  # type: ignore
         else:
             if not encoding:
-                encoding = detect_by_bom(stream)
+                encoding = detect_by_bom(stream)  # type: ignore
             # Assume it's a filename
             with open(stream, "r", encoding=encoding) as stream:
-                return parse_conf_stream(stream, **profile)
+                return parse_conf_stream(stream, **profile)  # type: ignore
     except UnicodeDecodeError as e:
         raise ConfParserException(f"Encoding error encountered: {e}")
 
@@ -305,7 +305,7 @@ def parse_string(*args, **kwargs):
     return parse_conf_string(*args, **kwargs)
 
 
-def parse_conf_stream(stream: _StreamInput,
+def parse_conf_stream(stream: _StreamIterable,
                       keys_lower: bool = False,
                       handle_conts: bool = True,
                       keep_comments: bool = False,

@@ -67,6 +67,7 @@ class LayerUsageException(LayerException):
 
 @dataclass
 class LayerContext:
+    # Other attributes may dynamically be added by plugins or custom classed derived from LayerFile
     follow_symlink: bool = False
     block_files: Pattern = re.compile(r"\.(bak|swp)$")
     block_dirs: set = field(default_factory=lambda: {".git"})
@@ -151,16 +152,26 @@ class LayerFile(PathLike):
     ``logical_path``
         Conceptual file path.  This is the final path after all layers are resolved.
         Think of this as the 'destination' file.
+        The file name, directory, or extension may be different from what's on the filesystem.
 
     ``physical_path``
-        Actual file path.  The location of the physical file found within a source layer.
-        Most of the time this is the 'source' file, however this doesn't take into considerations layer combining or
-        template expansion requirements.  (In the case of a template, this would be the template file)
+        Actual file system path.  The location of the physical file found within a source layer.
+        This file contains either the actual content of a file or the input material by which the
+        file's contents are generated.
 
     ``resource_path``
         Content location.  Often this the ``physical_path``, but in the case of abstracted layers
         (like templates, or archived layers), this would be the location of a temporary resource that contains
         the expanded/rendered content.
+
+    Example:
+
+    Given the file ``default.d/30-my-org/indexes.conf.j2``, the paths are:
+
+        * ``logical_path``: default/indexes.conf
+        * ``physical_path``: default.d/30-my-org/indexes.conf.j2
+        * ``resource_path``: /tmp/<RANDOM>-indexes.conf (temporary with automatic cleanup; see subclasses)
+
     '''
     __slots__ = ["layer", "relative_path", "_stat"]
 
@@ -177,6 +188,9 @@ class LayerFile(PathLike):
 
     @staticmethod
     def match(path: PurePath):
+        """
+        Determine if this class can handle the given (:py:obj:`path`) based on name matching.
+        """
         return True
 
     @property
@@ -216,7 +230,7 @@ class LayerRenderedFile(LayerFile):
 
     def __init__(self, *args, **kwargs):
         super(LayerRenderedFile, self).__init__(*args, **kwargs)
-        self._rendered_resource: Path = None
+        self._rendered_resource: Path = None  # type: ignore
 
     def __del__(self):
         if getattr(self, "_rendered_resource", None) and self._rendered_resource.is_file():
@@ -232,7 +246,7 @@ class LayerRenderedFile(LayerFile):
         raise NotImplementedError
 
     @staticmethod
-    def transform_name(path: PurePath):
+    def transform_name(path: PurePath) -> PurePath:
         # Remove trailing suffix
         return path.with_name(path.stem)
 
@@ -258,20 +272,21 @@ class LayerRenderedFile(LayerFile):
 
 @register_file_handler("jinja", priority=50, enabled=False)
 class LayerFile_Jinja2(LayerRenderedFile):
+
     @staticmethod
     def match(path: PurePath):
         return path.suffix == ".j2"
 
     @staticmethod
-    def transform_name(path: PurePath):
+    def transform_name(path: PurePath) -> PurePath:
         return path.with_name(path.name[:-3])
 
     @property
     def jinja2_env(self):
         # Use context object to 'cache' the jinja2 environment
         if not hasattr(self.layer.context, "jinja2_environment"):
-            self.layer.context.jinja2_environment = self._build_jinja2_env()
-        return self.layer.context.jinja2_environment
+            self.layer.context.jinja2_environment = self._build_jinja2_env()  # type: ignore
+        return self.layer.context.jinja2_environment  # type: ignore
 
     def _build_jinja2_env(self):
         from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -294,16 +309,25 @@ class LayerFile_Jinja2(LayerRenderedFile):
 
 
 class LayerFilter:
+    """
+    Container for filter rules that can be applied via :py:meth:`~LayerRootBase.apply_filter`.
+    The action of the last matching rule wins.  Wildcard matching is supported using fnmatch().
+    When no rules are given, the filter accepts all layers.
+
+    The action of the first rule determines the matching mode or non-matching behavior.  That is,
+    if the first rule is 'exclude', then the first rule become 'include *'.
+    """
     _valid_actions = ("include", "exclude")
 
     def __init__(self):
         self._rules = []
 
-    def add_rule(self, action, pattern):
+    def add_rule(self, action: str, pattern: str):
+        """ Add include/exclude rule for layer name matching. """
         # If no filter rules have been setup yet, be sure to set the default
         if action not in self._valid_actions:
             raise ValueError(f"Unknown action of {action}.  "
-                             f"Valid actions include: {self._valid_actions}")
+                             f"Valid actions are: {self._valid_actions}")
         if not self._rules:
             if action == "include":
                 first_filter = ("exclude", "*")
@@ -311,8 +335,10 @@ class LayerFilter:
                 first_filter = ("include", "*")
             self._rules.append(first_filter)
         self._rules.append((action, pattern))
+        return self
 
     def evaluate(self, layer: LayerRootBase.Layer) -> bool:
+        """ Evaluate if layer matches the given rule set. """
         response = True
         layer_name = layer.name
         for rule_action, rule_pattern in self._rules:
@@ -413,6 +439,7 @@ class LayerRootBase:
                 yield layer
 
     def list_layer_names(self) -> List[str]:
+        """ Return a list the names of all remaining layers. """
         return [l.name for l in self.list_layers()]
 
     def iter_all_files(self) -> Iterator[LayerFile]:

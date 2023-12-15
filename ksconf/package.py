@@ -17,6 +17,7 @@ from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import is_debug
 from ksconf.hook import plugin_manager
+from ksconf.types import StrPath
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
 from ksconf.vc.git import git_cmd
@@ -60,16 +61,20 @@ class PackagingException(Exception):
 
 class AppPackager:
 
-    def __init__(self, src_path, app_name: str, output: TextIO,
+    def __init__(self, src_path: StrPath,
+                 app_name: str,
+                 output: TextIO,
                  template_variables: Optional[dict] = None,
                  predictable_mtime: bool = True):
         self.src_path = fspath(src_path)
         self.app_name = app_name
-        self.build_dir: str = None
-        self.app_dir: str = None
         self.output = output
-        self._var_magic: AppVarMagic = None
-        self._mutable: bool = None
+        # Safely setting these to None for now.  Populated by __enter__
+        self.build_dir: str = None              # type: ignore
+        self.app_dir: str = None                # type: ignore
+        self._var_magic: AppVarMagic = None     # type: ignore
+        self._mutable: bool = None              # type: ignore
+
         self._frozen_by = ""
         self.template_variables = template_variables
         self.predictable_mtime = predictable_mtime
@@ -78,6 +83,8 @@ class AppPackager:
     def require_active_context(funct, mutable=True):
         """ Decorator to mark member functions that cannot be used until the
         context manager has been activated.
+
+        This decorator helps avoid programmatic mistakes when using this class.
         """
         @wraps(funct)
         def wrapper(self: AppPackager, *args, **kwargs):
@@ -92,9 +99,9 @@ class AppPackager:
     def cleanup(self):
         # Do we need  https://stackoverflow.com/a/21263493/315892  (Windows): -- See tests/cli_helper
         shutil.rmtree(self.build_dir)
-        self.build_dir = None
-        self.app_dir = None
-        self._mutable = None
+        self.build_dir = None   # type: ignore
+        self.app_dir = None     # type: ignore
+        self._mutable = None    # type: ignore
 
     def expand_var(self, value: str) -> str:
         """ Expand a variable, if present
@@ -116,7 +123,12 @@ class AppPackager:
         return new_value if new_value != value else False
 
     @require_active_context
-    def combine(self, src: Path, filters, layer_method="dir.d", allow_symlink=False):
+    def combine(self, src: Path, filters: list, layer_method="dir.d", allow_symlink=False):
+        """
+        Combine a source directory into the build directory.  The source directory may contain
+        layers which can be filtered based on the :py:obj:`filters`.
+        """
+        # XXX: It feels like a design flaw to have to pass in 'src' here; already given to init
         combiner = LayerCombiner(follow_symlink=allow_symlink, quiet=True)
         if self.template_variables:
             combiner.context.template_variables = self.template_variables
@@ -227,6 +239,7 @@ class AppPackager:
         except KeyError:
             self.output.write("Skipped folder and package id check due to missing app.conf entry\n")
             package_id = None
+            target_splunkbase = False
 
         if package_id:
             if not self.app_name or self.app_name == ".":
@@ -264,7 +277,7 @@ class AppPackager:
         if new_filename:
             self.output.write(f"Creating archive:  {new_filename}  (Expanded "
                               f"from '{os.path.basename(filename)}'\n")
-            filename = new_filename
+            filename = new_filename  # type: ignore
         else:
             self.output.write(f"Creating archive:  {filename}\n")
 
