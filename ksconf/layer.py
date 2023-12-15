@@ -7,11 +7,14 @@ from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterator, Optional, Pattern, Sequence, Type, Union
+from typing import Any, Callable, Iterator, Optional, Pattern, Sequence, Type, Union
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
-from ksconf.util.file import relwalk, secure_delete
+from ksconf.util.file import file_hash, relwalk, secure_delete
+
+# TODO:  Rename Layer root to layer collection.  Layer root is to confusing with root directory or top directory
+
 
 """
 
@@ -27,7 +30,8 @@ LayerRoot methods:
                       Ask about layers per file later.
     - list_layers():  Iterate over layer objects (metadata retrievable, on demand)
     - get_file():     Return files (in ranked layer order)
-
+    - calculate_signature():
+                      Get a dictionary describing the on-disk state of an app
 
 Other possible methods:
     list_dirs():      Return list of known directories?   Not sure how we want this part to work.
@@ -218,6 +222,24 @@ class LayerFile(PathLike):
     def mtime(self):
         return self.stat.st_mtime
 
+    def calculate_signature(self) -> Dict[str, Union[str, int]]:
+        """
+        Calculate a unique content signature used for change detection.
+
+        Simple or cheap methods are preferred over expensive ones.  That being said, in some
+        situations like template rendering that relies on external variables, where there is no way
+        to accurately detect changes without fully rendering.  In such cases, a full cryptographic
+        hash of the rendered output is necessary.
+
+        Output should be JSON safe.
+        """
+        stat = self.stat
+        return {
+            "mtime": int(stat.st_mtime),
+            "ctime": int(stat.st_ctime),
+            "size": stat.st_size,
+        }
+
 
 class LayerRenderedFile(LayerFile):
     """
@@ -227,6 +249,9 @@ class LayerRenderedFile(LayerFile):
     __slots__ = ["_rendered_resource"]
 
     use_secure_delete = False
+
+    # True: hash rendered content; False: use stats-based check (same as base class)
+    signature_requires_resource_hash = True
 
     def __init__(self, *args, **kwargs):
         super(LayerRenderedFile, self).__init__(*args, **kwargs)
@@ -269,9 +294,26 @@ class LayerRenderedFile(LayerFile):
             self._rendered_resource.write_text(content)
         return self._rendered_resource
 
+    def calculate_signature(self) -> Dict[str, Union[str, int]]:
+        """
+        Calculate a unique content signature used for change detection based on the rendered template output.
+
+        Note that subclasses can control this by setting :py:attr:`signature_requires_resource_hash` to False,
+        this indicate that rendered output is deterministic based on changes to the physical_path.
+        """
+        if self.signature_requires_resource_hash:
+            return {
+                "hash": file_hash(self.resource_path)
+            }
+        else:
+            return super(LayerRenderedFile, self).calculate_signature()
+
 
 @register_file_handler("jinja", priority=50, enabled=False)
 class LayerFile_Jinja2(LayerRenderedFile):
+
+    signature_requires_resource_hash = True     # Changes in 'template_vars' can vary rendered output
+    use_secure_delete = False
 
     @staticmethod
     def match(path: PurePath):
@@ -408,6 +450,7 @@ class LayerRootBase:
     # LayerRootBase
     def __init__(self, context: Optional[LayerContext] = None):
         self._layers: List[LayerRootBase.Layer] = []
+        self._layers_discarded: List[LayerRootBase.Layer] = []
         self.context = context or LayerContext()
 
     def apply_filter(self, layer_filter: LayerFilter) -> bool:
@@ -417,18 +460,26 @@ class LayerRootBase:
 
         Returns True if layers were removed
         """
-        layers = [l for l in self._layers if layer_filter(l)]
+        layers = []
+        discard = []
+        for l in self._layers:
+            if layer_filter(l):
+                layers.append(l)
+            else:
+                discard.append(l)
         result = self._layers != layers
         self._layers = layers
+        self._layers_discarded.extend(discard)
         return result
 
-    def order_layers(self):
-        raise NotImplementedError
+    @staticmethod
+    def order_layers(layers: List[Layer]) -> List[Layer]:
+        return layers
 
     def add_layer(self, layer: Layer, do_sort=True):
         self._layers.append(layer)
         if do_sort:
-            self.order_layers()
+            self._layers = self.order_layers(self._layers)
 
     def list_layers(self) -> List[Layer]:
         return self._layers
@@ -441,6 +492,15 @@ class LayerRootBase:
     def list_layer_names(self) -> List[str]:
         """ Return a list the names of all remaining layers. """
         return [l.name for l in self.list_layers()]
+
+    def list_all_layer_names(self) -> List[str]:
+        """ Return the full list of all discovered layers.  This will not change
+        before/after :py:methd:`apply_filter` is called. """
+        if self._layers_discarded:
+            layers = self.order_layers(self.list_layers() + self._layers_discarded)
+            return [l.name for l in layers]
+        else:
+            return self.list_layer_names()
 
     def iter_all_files(self) -> Iterator[LayerFile]:
         """ Iterator over all physical files. """
@@ -467,6 +527,23 @@ class LayerRootBase:
             if file_:
                 yield file_
 
+    def calculate_signature(self,
+                            relative_paths: bool = True,
+                            key_factory: Optional[Callable[[Path], Any]] = None
+                            ) -> dict:
+        """
+        Calculate the full signature of all LayerFiles into a nested dictionary structure
+        """
+        data = {}
+        for lf in self.iter_all_files():
+            key = lf.physical_path
+            if relative_paths:
+                key = key.relative_to(lf.layer.root)
+            if callable(key_factory):
+                key = key_factory(key)
+            data[key] = lf.calculate_signature()
+        return data
+
     # Legacy names
     list_files = list_logical_files
 
@@ -488,10 +565,6 @@ class DirectLayerRoot(LayerRootBase):
         layer = Layer(layer_name, path, None, None, context=self.context,
                       file_factory=layer_file_factory)
         super(DirectLayerRoot, self).add_layer(layer)
-
-    def order_layers(self):
-        # No op.  Irrelevant as layers are given (CLI) in the order they should be applied.
-        pass
 
 
 """
@@ -648,6 +721,7 @@ class DotDLayerRoot(LayerRootBase):
         # Avoiding self._layers[:-1] because there could be cases where root isn't included.
         return [l for l in self._layers if l is not self._root_layer]
 
-    def order_layers(self):
+    @staticmethod
+    def order_layers(layers: List[Layer]) -> List[Layer]:
         # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
-        self._layers.sort(key=lambda l: l.name)
+        return sorted(layers, key=lambda l: l.name)

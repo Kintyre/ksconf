@@ -23,6 +23,12 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.8 (2023-12-15)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*  Additional Layer handling improvements for AppPackager and LayerCombiner.
+   Primary benefits of these internal improvements are for the ``ksconf_package`` command in the `cdillc.splunk`_ collection, and anyone who has to look at the code.
+
+
 Ksconf v0.13.7 (2023-12-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

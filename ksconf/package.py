@@ -17,6 +17,7 @@ from ksconf.conf.merge import merge_app_local, merge_conf_dicts
 from ksconf.conf.parser import conf_attr_boolean, parse_conf, update_conf
 from ksconf.consts import is_debug
 from ksconf.hook import plugin_manager
+from ksconf.layer import LayerRootBase
 from ksconf.types import StrPath
 from ksconf.util import decorator_with_opt_kwargs
 from ksconf.util.file import atomic_writer
@@ -123,6 +124,15 @@ class AppPackager:
         return new_value if new_value != value else False
 
     @require_active_context
+    def combine_from_layer(self, collection: LayerRootBase):
+        """
+        Combine an existing layer collection into the build directory.  Any desired layer filtering
+        or template variable assignment must be performed against :py:obj:`collection` first.
+        """
+        combiner = LayerCombiner.from_layer_collection(collection, quiet=True)
+        self._execute_combiner(combiner)
+
+    @require_active_context
     def combine(self, src: Path, filters: list, layer_method="dir.d", allow_symlink=False):
         """
         Combine a source directory into the build directory.  The source directory may contain
@@ -141,6 +151,9 @@ class AppPackager:
                                       "Please use 'dir.d' or 'disable'.")
         for action, path in filters:
             combiner.add_layer_filter(action, path)
+        self._execute_combiner(combiner)
+
+    def _execute_combiner(self, combiner: LayerCombiner):
         combiner.combine(self.app_dir, hook_label="package")
         self._var_magic.meta["layers"] = combiner.layer_names_used
 

@@ -44,6 +44,14 @@ class LayerCombiner:
             (1) lc.set_source_dirs()  OR
             (2) lc.set_layer_root()
 
+    Or, if you already have an existing set of layers, use:
+
+    ::
+        layer_collection = DotDLayerRoot(...)
+        ...
+        lc = LayerCombiner.from_layer_collection(layer_collection)
+        # In this case, you should not call set_source_dirs() or set_layer_root()
+
     Call hierarch:
 
     ::
@@ -85,6 +93,19 @@ class LayerCombiner:
         self.stderr = sys.stderr
 
     @classmethod
+    def from_layer_collection(cls,
+                              collection: LayerRootBase,
+                              banner: str = "",
+                              dry_run: bool = False,
+                              quiet: bool = False) -> LayerCombiner:
+        """ Alternate constructor for use when you already have a LayerRootBase object.
+        """
+        obj = cls(collection.context.follow_symlink, banner, dry_run, quiet)
+        obj.context = collection.context
+        obj.layer_root = collection
+        return obj
+
+    @classmethod
     def register_handler(cls, regex_match: str):
         """ Decorator that registers a new file type handler.  The handler is
         used if a file name matches a regex.  Regex 'search' mode is used.
@@ -112,11 +133,13 @@ class LayerCombiner:
             self.log(message)
 
     def set_source_dirs(self, sources: List[Path]):
+        assert self.layer_root is None, "Unable to call set_source_dirs() after layer_root has been set"
         self.layer_root = DirectLayerRoot(context=self.context)
         for src in sources:
             self.layer_root.add_layer(Path(src))
 
     def set_layer_root(self, root: Path):
+        assert self.layer_root is None, "Unable to call set_layer_root() after layer_root has been set"
         layer_root = DotDLayerRoot(context=self.context)
         layer_root.set_root(root)
         self.layer_root = layer_root
@@ -148,12 +171,9 @@ class LayerCombiner:
         applying layer filtering, and marker file handling. """
         layer_root, layer_filter = self.layer_root, self.layer_filter
         self.prepare_target_dir(target)
-
-        self.layer_names_all.update(layer_root.list_layer_names())
-        if layer_root.apply_filter(layer_filter):
-            self.layer_names_used.update(layer_root.list_layer_names())
-        else:
-            self.layer_names_used.update(self.layer_names_all)
+        layer_root.apply_filter(layer_filter)
+        self.layer_names_used = layer_root.list_layer_names()
+        self.layer_names_all = layer_root.list_all_layer_names()
 
     def prepare_target_dir(self, target: Path):
         """ Hook to ensure destination directory is ready for use.  This can be overridden
