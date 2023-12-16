@@ -417,6 +417,10 @@ class LayerRootBase:
             self._cache_files: List[LayerFile] = []
 
         def walk(self) -> R_walk:
+            """
+            Low-level walk over the file system, blocking unwanted file patterns
+            and given directories.  Paths are relative.
+            """
             # In the simple case, this is good enough.   Some subclasses will need to override
             for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
                                                followlinks=self.context.follow_symlink):
@@ -428,18 +432,20 @@ class LayerRootBase:
                 yield (root, dirs, files)
 
         def iter_files(self) -> Iterator[LayerFile]:
+            """ Low-level loop over files without caching. """
             for (top, _, files) in self.walk():
                 for file in files:
                     yield self._file_factory(self, top / file)
 
         def list_files(self) -> List[LayerFile]:
+            """ Get a list of LayerFile objects.  Cache enabled. """
             if not self._cache_files:
                 self._cache_files = list(self.iter_files())
             return self._cache_files
 
         def get_file(self, path: Path) -> Union[LayerFile, None]:
             """ Return file object (by logical path), if it exists in this layer. """
-            # TODO:  Optimize by caching.  Use a dict with a logical_path as the key
+            # TODO:  Further optimize by making cache a dict with logical_path as key
             for file in self.list_files():
                 if file.logical_path == path:
                     if file.physical_path.is_file():
