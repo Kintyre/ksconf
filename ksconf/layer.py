@@ -175,7 +175,7 @@ class LayerFile(PathLike):
     __slots__ = ["layer", "relative_path", "_stat"]
 
     def __init__(self,
-                 layer: LayerCollectionBase.Layer,
+                 layer: Layer,
                  relative_path: PurePath,
                  stat: Optional[stat_result] = None):
         self.layer = layer
@@ -374,7 +374,7 @@ class LayerFilter:
         self._rules.append((action, pattern))
         return self
 
-    def evaluate(self, layer: LayerCollectionBase.Layer) -> bool:
+    def evaluate(self, layer: Layer) -> bool:
         """ Evaluate if layer matches the given rule set. """
         response = True
         layer_name = layer.name
@@ -389,75 +389,75 @@ class LayerFilter:
 R_walk = Iterator[Tuple[Path, List[str], List[str]]]
 
 
+class Layer:
+    """ Basic layer container:   Connects logical and physical paths.
+
+    Files on the filesystem are only scanned one time and then cached.
+    """
+    __slots__ = ["name", "root", "logical_path", "physical_path", "context",
+                 "_file_factory", "_cache_files"]
+
+    def __init__(self, name: str,
+                 root: Path,
+                 physical: PurePath,
+                 logical: PurePath,
+                 context: LayerContext,
+                 file_factory: Callable):
+        self.name = name
+        self.root = root
+        self.physical_path = physical
+        self.logical_path = logical
+        self.context = context
+        self._file_factory = file_factory
+        self._cache_files: List[LayerFile] = []
+
+    def walk(self) -> R_walk:
+        """
+        Low-level walk over the file system, blocking unwanted file patterns
+        and given directories.  Paths are relative.
+        """
+        # In the simple case, this is good enough.   Some subclasses will need to override
+        for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
+                                           followlinks=self.context.follow_symlink):
+            root = Path(root)
+            files = [f for f in files if not self.context.block_files.search(f)]
+            for d in list(dirs):
+                if d in self.context.block_dirs:
+                    dirs.remove(d)
+            yield (root, dirs, files)
+
+    def iter_files(self) -> Iterator[LayerFile]:
+        """ Low-level loop over files without caching. """
+        for (top, _, files) in self.walk():
+            for file in files:
+                yield self._file_factory(self, top / file)
+
+    def list_files(self) -> List[LayerFile]:
+        """ Get a list of LayerFile objects.  Cache enabled. """
+        if not self._cache_files:
+            self._cache_files = list(self.iter_files())
+        return self._cache_files
+
+    def get_file(self, path: Path) -> Union[LayerFile, None]:
+        """ Return file object (by logical path), if it exists in this layer. """
+        # TODO:  Further optimize by making cache a dict with logical_path as key
+        for file in self.list_files():
+            if file.logical_path == path:
+                if file.physical_path.is_file():
+                    return file
+                else:
+                    return None
+
+
 class LayerCollectionBase:
     """ A collection of layer containers which contains layer files.
 
     Note:  All 'path's here are relative to the ROOT.
     """
 
-    class Layer:
-        """ Basic layer container:   Connects logical and physical paths.
-
-        Files on the filesystem are only scanned one time and then cached.
-        """
-        __slots__ = ["name", "root", "logical_path", "physical_path", "context",
-                     "_file_factory", "_cache_files"]
-
-        def __init__(self, name: str,
-                     root: Path,
-                     physical: PurePath,
-                     logical: PurePath,
-                     context: LayerContext,
-                     file_factory: Callable):
-            self.name = name
-            self.root = root
-            self.physical_path = physical
-            self.logical_path = logical
-            self.context = context
-            self._file_factory = file_factory
-            self._cache_files: List[LayerFile] = []
-
-        def walk(self) -> R_walk:
-            """
-            Low-level walk over the file system, blocking unwanted file patterns
-            and given directories.  Paths are relative.
-            """
-            # In the simple case, this is good enough.   Some subclasses will need to override
-            for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
-                                               followlinks=self.context.follow_symlink):
-                root = Path(root)
-                files = [f for f in files if not self.context.block_files.search(f)]
-                for d in list(dirs):
-                    if d in self.context.block_dirs:
-                        dirs.remove(d)
-                yield (root, dirs, files)
-
-        def iter_files(self) -> Iterator[LayerFile]:
-            """ Low-level loop over files without caching. """
-            for (top, _, files) in self.walk():
-                for file in files:
-                    yield self._file_factory(self, top / file)
-
-        def list_files(self) -> List[LayerFile]:
-            """ Get a list of LayerFile objects.  Cache enabled. """
-            if not self._cache_files:
-                self._cache_files = list(self.iter_files())
-            return self._cache_files
-
-        def get_file(self, path: Path) -> Union[LayerFile, None]:
-            """ Return file object (by logical path), if it exists in this layer. """
-            # TODO:  Further optimize by making cache a dict with logical_path as key
-            for file in self.list_files():
-                if file.logical_path == path:
-                    if file.physical_path.is_file():
-                        return file
-                    else:
-                        return None
-
-    # LayerCollectionBase
     def __init__(self, context: Optional[LayerContext] = None):
-        self._layers: List[LayerCollectionBase.Layer] = []
-        self._layers_discarded: List[LayerCollectionBase.Layer] = []
+        self._layers: List[Layer] = []
+        self._layers_discarded: List[Layer] = []
         self.context = context or LayerContext()
 
     def apply_filter(self, layer_filter: LayerFilter) -> bool:
@@ -491,7 +491,7 @@ class LayerCollectionBase:
     def list_layers(self) -> List[Layer]:
         return self._layers
 
-    def iter_layers_by_name(self, name: str) -> Iterator[LayerCollectionBase.Layer]:
+    def iter_layers_by_name(self, name: str) -> Iterator[Layer]:
         for layer in self.list_layers():
             if layer.name == name:
                 yield layer
@@ -573,7 +573,6 @@ class MultiDirLayerCollection(LayerCollectionBase):
     """
 
     def add_layer(self, path: Path):
-        Layer = self.Layer
         # Layer name should be considered arbitrary and unimportant here
         layer_name = path.name
         if not path.is_dir():
@@ -624,32 +623,33 @@ A:  Multiple LayerCollections SHOULD be supported.
 """
 
 
+class DotdLayer(Layer):
+    __slots__ = ["prune_points"]
+
+    def __init__(self, name: str,
+                 root: Path,
+                 physical: PurePath,
+                 logical: PurePath,
+                 context: LayerContext,
+                 file_factory: Callable,
+                 prune_points: Optional[Sequence[Path]] = None):
+        super(DotdLayer, self).__init__(
+            name, root, physical, logical, context=context,
+            file_factory=file_factory)
+        self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
+
+    def walk(self) -> R_walk:
+        for (root, dirs, files) in super(DotdLayer, self).walk():
+            if root in self.prune_points:
+                # Cleanup files/dirs to keep walk() from descending deeper
+                del dirs[:]
+            else:
+                yield (root, dirs, files)
+
+
 # Q:  How do we mark "mount-points" in the directory structure to keep multiple layers
 #     from claiming the same files?????
 class DotDLayerCollection(LayerCollectionBase):
-
-    class Layer(LayerCollectionBase.Layer):
-        __slots__ = ["prune_points"]
-
-        def __init__(self, name: str,
-                     root: Path,
-                     physical: PurePath,
-                     logical: PurePath,
-                     context: LayerContext,
-                     file_factory: Callable,
-                     prune_points: Optional[Sequence[Path]] = None):
-            super(DotDLayerCollection.Layer, self).__init__(
-                name, root, physical, logical, context=context,
-                file_factory=file_factory)
-            self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
-
-        def walk(self) -> R_walk:
-            for (root, dirs, files) in super(DotDLayerCollection.Layer, self).walk():
-                if root in self.prune_points:
-                    # Cleanup files/dirs to keep walk() from descending deeper
-                    del dirs[:]
-                else:
-                    yield (root, dirs, files)
 
     '''
     class MountBase:
@@ -670,8 +670,7 @@ class DotDLayerCollection(LayerCollectionBase):
 
     def __init__(self, context=None):
         super(DotDLayerCollection, self).__init__(context)
-        # self.root = None
-        self._root_layer: LayerCollectionBase.Layer = None
+        self._root_layer: Layer = None  # type: ignore
         self._mount_points: Dict[Path, List[str]] = defaultdict(list)
 
     def apply_filter(self, layer_filter: LayerFilter):
@@ -687,7 +686,6 @@ class DotDLayerCollection(LayerCollectionBase):
         ``default.d/10-props.conf`` won't be handled here.
         A valid name would be ``default.d/10-name/props.conf``.
         """
-        Layer = self.Layer
         root = Path(root)
         if follow_symlinks is None:
             follow_symlinks = self.context.follow_symlink
@@ -701,12 +699,12 @@ class DotDLayerCollection(LayerCollectionBase):
                     dir_mo = self.layer_regex.match(dir_)
                     if dir_mo:
                         # XXX: Nested layers breakage, must substitute multiple ".d" folders in `top`
-                        layer = Layer(dir_mo.group("layer"),
-                                      root,
-                                      physical=top / dir_,
-                                      logical=top.parent / mount_mo.group("realname"),
-                                      context=self.context,
-                                      file_factory=layer_file_factory)
+                        layer = DotdLayer(dir_mo.group("layer"),
+                                          root,
+                                          physical=top / dir_,
+                                          logical=top.parent / mount_mo.group("realname"),
+                                          context=self.context,
+                                          file_factory=layer_file_factory)
                         self.add_layer(layer)
                         self._mount_points[top].append(dir_)
                     else:
@@ -728,13 +726,13 @@ class DotDLayerCollection(LayerCollectionBase):
         prune_points = [mount / layer
                         for mount, layers in self._mount_points.items()
                         for layer in layers]
-        layer = Layer("<root>", root, None, None, context=self.context,
-                      file_factory=layer_file_factory,
-                      prune_points=prune_points)
+        layer = DotdLayer("<root>", root, None, None, context=self.context,
+                          file_factory=layer_file_factory,
+                          prune_points=prune_points)
         self.add_layer(layer, do_sort=False)
         self._root_layer = layer
 
-    def list_layers(self) -> List[Layer]:
+    def list_layers(self) -> List[DotdLayer]:
         # Return all but the root layer.
         # Avoiding self._layers[:-1] because there could be cases where root isn't included.
         return [l for l in self._layers if l is not self._root_layer]

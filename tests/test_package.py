@@ -164,7 +164,7 @@ class PackageTest(unittest.TestCase):
     def test_package_dird_explict_layer_collection(self):
         twd = TestWorkDir()
         self.build_dird_test01(twd)
-        # log_out = StringIO()
+        log_out = StringIO()
 
         def pkg_with_filter(*filters):
             lc = DotDLayerCollection()
@@ -173,7 +173,7 @@ class PackageTest(unittest.TestCase):
             for fltr in filters:
                 lf.add_rule(*fltr)
             lc.apply_filter(lf)
-            with AppPackager(twd.get_path("."), "Splunk_TA_aws", sys.stdout) as packager:
+            with AppPackager(twd.get_path("."), "Splunk_TA_aws", log_out) as packager:
                 packager.combine_from_layer(lc)
                 packager.update_app_conf(version="1.2.3")
                 packager.check()
