@@ -195,7 +195,7 @@ class LayerCombiner:
         layer_root = self.layer_root
         for src_file in sorted(src_files):
             do_copy = True
-            sources = list(layer_root.get_file(src_file))
+            sources = layer_root.get_files(src_file)
             try:
                 dest_fn = sources[0].logical_path
             except IndexError:

@@ -520,12 +520,20 @@ class LayerRootBase:
             files.add(file_.logical_path)
         return list(files)
 
-    def get_file(self, path) -> Iterator[LayerFile]:
+    def get_files(self, path: Path) -> List[LayerFile]:
         """ return all layers associated with the given relative path. """
+        files = []
         for layer in self._layers:
             file_ = layer.get_file(path)
             if file_:
-                yield file_
+                files.append(file_)
+        return files
+
+    def get_file(self, path: Path) -> Iterator[LayerFile]:
+        """ Confusingly named.  For backwards compatibility.
+        Use :py:meth:`get_files` instead. """
+        # XXX: Raise warning here
+        return iter(self.get_files(path))
 
     def calculate_signature(self,
                             relative_paths: bool = True,
