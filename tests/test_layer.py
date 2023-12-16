@@ -24,7 +24,8 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import DirectLayerCollection, DotDLayerCollection, LayerFilter, layer_file_factory
+from ksconf.layer import (DotDLayerCollection, LayerFilter,
+                          MultiDirLayerCollection, layer_file_factory)
 from tests.cli_helper import TestWorkDir
 
 
@@ -185,12 +186,12 @@ class DefaultLayerTestCase(unittest.TestCase):
         twd = self.common_data01()
         default = twd.get_path("etc/apps/TA-myproduct/default")
 
-        dlr = DirectLayerCollection()
+        lc = MultiDirLayerCollection()
         # Take CLI args and apply to root
         for src in sorted(glob(os.path.join(default + ".d", "*"))):
-            dlr.add_layer(Path(src))
+            lc.add_layer(Path(src))
         # Note: Layer order matters
-        layers = list([l.name for l in dlr.list_layers()])
+        layers = list([l.name for l in lc.list_layers()])
         self.assertListEqual(layers, ["10-upstream", "20-corp", "60-dept"])
         # Order doesn't matter for file names
         expect_files = [
@@ -198,15 +199,15 @@ class DefaultLayerTestCase(unittest.TestCase):
             "props.conf",
             "transforms.conf",
         ]
-        self.assertListEqual(sorted(fspaths(dlr.list_files())), sorted(expect_files))
+        self.assertListEqual(sorted(fspaths(lc.list_files())), sorted(expect_files))
 
     def test_dotd_simple01(self):
         twd = self.common_data01()
         ta_path = twd.get_path("etc/apps/TA-myproduct")
-        dlr = DotDLayerCollection()
-        dlr.set_root(ta_path)
+        lc = DotDLayerCollection()
+        lc.set_root(ta_path)
 
-        layers = list([l.name for l in dlr.list_layers()])
+        layers = list([l.name for l in lc.list_layers()])
         self.assertListEqual(layers, ["10-upstream", "20-corp", "60-dept"])
 
         self.maxDiff = 1000
@@ -219,7 +220,7 @@ class DefaultLayerTestCase(unittest.TestCase):
             "default/transforms.conf",
         ])
         expect_files = sorted([np(f) for f in expect_files])
-        self.assertListEqual(sorted(fspaths(dlr.list_files())), sorted(expect_files))
+        self.assertListEqual(sorted(fspaths(lc.list_files())), sorted(expect_files))
 
 
 if __name__ == '__main__':  # pragma: no cover

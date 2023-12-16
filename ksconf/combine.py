@@ -18,9 +18,9 @@ from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.hook import plugin_manager
-from ksconf.layer import (DirectLayerCollection, DotDLayerCollection,
-                          LayerCollectionBase, LayerContext, LayerFile,
-                          LayerFilter)
+from ksconf.layer import (DotDLayerCollection, LayerCollectionBase,
+                          LayerContext, LayerFile, LayerFilter,
+                          MultiDirLayerCollection)
 from ksconf.types import StrPath
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
@@ -135,7 +135,7 @@ class LayerCombiner:
 
     def set_source_dirs(self, sources: List[Path]):
         assert self.collection is None, "Unable to call set_source_dirs() after collection has been set"
-        self.collection = DirectLayerCollection(context=self.context)
+        self.collection = MultiDirLayerCollection(context=self.context)
         for src in sources:
             self.collection.add_layer(Path(src))
 

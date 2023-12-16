@@ -564,11 +564,12 @@ class LayerCollectionBase:
     get_layers_by_name = iter_layers_by_name    # No known usages
 
 
-class DirectLayerCollection(LayerCollectionBase):
+class MultiDirLayerCollection(LayerCollectionBase):
     """
-    A very simple direct LayerCollection implementation that relies on all layer paths to be explicitly
-    given without any automatic detection mechanisms.  You can think of this as the legacy
-    implementation.
+    A very simple LayerCollection implementation that allow one or more directories to act as
+    layers.  These layers must be given as explicitly, without any automatic detection mechanisms.
+
+    Consider this the legacy layer implementation.
     """
 
     def add_layer(self, path: Path):
@@ -580,7 +581,7 @@ class DirectLayerCollection(LayerCollectionBase):
                                       f"Given path '{path}' is not a directory.")
         layer = Layer(layer_name, path, None, None, context=self.context,
                       file_factory=layer_file_factory)
-        super(DirectLayerCollection, self).add_layer(layer)
+        super(MultiDirLayerCollection, self).add_layer(layer)
 
 
 """
@@ -747,4 +748,4 @@ class DotDLayerCollection(LayerCollectionBase):
 # LEGACY class names (for backwards compatibility)
 LayerRootBase = LayerCollectionBase
 DotDLayerRoot = DotDLayerCollection
-DirectLayerRoot = DirectLayerCollection
+DirectLayerRoot = MultiDirLayerCollection

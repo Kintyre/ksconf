@@ -8,7 +8,7 @@ import unittest
 from io import StringIO
 from pathlib import Path
 
-from ksconf.layer import DirectLayerCollection, DotDLayerCollection, LayerFilter
+from ksconf.layer import DotDLayerCollection, LayerFilter, MultiDirLayerCollection
 from ksconf.package import AppPackager
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
@@ -144,7 +144,7 @@ class PackageTest(unittest.TestCase):
         self.build_basic_app_01(twd, "my_app", "default")
         log_out = StringIO()
 
-        lc = DirectLayerCollection()
+        lc = MultiDirLayerCollection()
         lc.add_layer(Path(twd.get_path("my_app")))
 
         with AppPackager(twd.get_path("."), "my_app_on_splunkbase", log_out, predictable_mtime=False) as packager:
