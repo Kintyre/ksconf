@@ -18,8 +18,9 @@ from ksconf.conf.merge import merge_conf_files
 from ksconf.conf.parser import PARSECONF_MID, PARSECONF_STRICT
 from ksconf.consts import SMART_CREATE, SMART_NOCHANGE, SMART_UPDATE
 from ksconf.hook import plugin_manager
-from ksconf.layer import (DirectLayerRoot, DotDLayerRoot, LayerContext,
-                          LayerFile, LayerFilter, LayerRootBase)
+from ksconf.layer import (DirectLayerCollection, DotDLayerCollection,
+                          LayerCollectionBase, LayerContext, LayerFile,
+                          LayerFilter)
 from ksconf.types import StrPath
 from ksconf.util.compare import file_compare
 from ksconf.util.file import _is_binary_file, smart_copy
@@ -47,9 +48,9 @@ class LayerCombiner:
     Or, if you already have an existing set of layers, use:
 
     ::
-        layer_collection = DotDLayerRoot(...)
+        collection = DotDLayerCollection(...)
         ...
-        lc = LayerCombiner.from_layer_collection(layer_collection)
+        lc = LayerCombiner.from_layer_collection(collection)
         # In this case, you should not call set_source_dirs() or set_layer_root()
 
     Call hierarch:
@@ -75,7 +76,7 @@ class LayerCombiner:
                  banner: str = "",
                  dry_run: bool = False,
                  quiet: bool = False):
-        self.layer_root: LayerRootBase = None  # type: ignore
+        self.collection: LayerCollectionBase = None  # type: ignore
         self.context = LayerContext()
         self.layer_filter = LayerFilter()
         self.banner = banner
@@ -94,15 +95,15 @@ class LayerCombiner:
 
     @classmethod
     def from_layer_collection(cls,
-                              collection: LayerRootBase,
+                              collection: LayerCollectionBase,
                               banner: str = "",
                               dry_run: bool = False,
                               quiet: bool = False) -> LayerCombiner:
-        """ Alternate constructor for use when you already have a LayerRootBase object.
+        """ Alternate constructor for use when you already have a LayerCollectionBase object.
         """
         obj = cls(collection.context.follow_symlink, banner, dry_run, quiet)
         obj.context = collection.context
-        obj.layer_root = collection
+        obj.collection = collection
         return obj
 
     @classmethod
@@ -133,16 +134,16 @@ class LayerCombiner:
             self.log(message)
 
     def set_source_dirs(self, sources: List[Path]):
-        assert self.layer_root is None, "Unable to call set_source_dirs() after layer_root has been set"
-        self.layer_root = DirectLayerRoot(context=self.context)
+        assert self.collection is None, "Unable to call set_source_dirs() after collection has been set"
+        self.collection = DirectLayerCollection(context=self.context)
         for src in sources:
-            self.layer_root.add_layer(Path(src))
+            self.collection.add_layer(Path(src))
 
     def set_layer_root(self, root: Path):
-        assert self.layer_root is None, "Unable to call set_layer_root() after layer_root has been set"
-        layer_root = DotDLayerRoot(context=self.context)
-        layer_root.set_root(root)
-        self.layer_root = layer_root
+        assert self.collection is None, "Unable to call set_layer_root() after collection has been set"
+        collection = DotDLayerCollection(context=self.context)
+        collection.set_root(root)
+        self.collection = collection
 
     def add_layer_filter(self, action, pattern):
         self.layer_filter.add_rule(action, pattern)
@@ -153,13 +154,13 @@ class LayerCombiner:
         Any ``hook_label`` given will be passed to the plugin system via the
         ``usage`` field.
         """
-        layer_root = self.layer_root
-        if layer_root is None:
+        collection = self.collection
+        if collection is None:
             raise TypeError("Call either set_source_dirs() or set_layer_root() before calling combine()")
         target = Path(target)
         self.prepare(target)
         # Build a common tree of all src files.
-        src_file_listing = layer_root.list_logical_files()
+        src_file_listing = collection.list_logical_files()
         src_file_listing = self.pre_combine_inventory(target, src_file_listing)
         self.combine_files(target, src_file_listing)
         self.post_combine(target)
@@ -169,11 +170,11 @@ class LayerCombiner:
     def prepare(self, target: Path):
         """ Start the combine process.  This includes directory checking,
         applying layer filtering, and marker file handling. """
-        layer_root, layer_filter = self.layer_root, self.layer_filter
+        collection, layer_filter = self.collection, self.layer_filter
         self.prepare_target_dir(target)
-        layer_root.apply_filter(layer_filter)
-        self.layer_names_used = layer_root.list_layer_names()
-        self.layer_names_all = layer_root.list_all_layer_names()
+        collection.apply_filter(layer_filter)
+        self.layer_names_used = collection.list_layer_names()
+        self.layer_names_all = collection.list_all_layer_names()
 
     def prepare_target_dir(self, target: Path):
         """ Hook to ensure destination directory is ready for use.  This can be overridden
@@ -192,10 +193,10 @@ class LayerCombiner:
         del target
 
     def combine_files(self, target: Path, src_files: List[LayerFile]):
-        layer_root = self.layer_root
+        collection = self.collection
         for src_file in sorted(src_files):
             do_copy = True
-            sources = layer_root.get_files(src_file)
+            sources = collection.get_files(src_file)
             try:
                 dest_fn = sources[0].logical_path
             except IndexError:

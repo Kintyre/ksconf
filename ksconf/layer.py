@@ -13,15 +13,10 @@ from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
 from ksconf.util.file import file_hash, relwalk, secure_delete
 
-# TODO:  Rename Layer root to layer collection.  Layer root is to confusing with root directory or top directory
-
-
 """
+Each Layer Collection has one or more 'Layer', each layer has one or more 'File's.
 
-LayerRootBase has one or more 'Layer', each layer has one or more 'File's.
-
-
-LayerRoot methods:
+LayerCollection methods:
 
     - list_files():   Return superset of all file names returned by all layers (order undefined)
     - walk():         Return list_files() like content in a os.walk() (or relwalker) like way --
@@ -40,8 +35,8 @@ Other possible methods:
 
 dotD style layers:
 
-    LayerRootDotD   has one or more 'LayerMount', each LayerMount has one or more Layer,
-                    which has one or more 'File's.
+    LayerCollectionDotD:  has one or more 'LayerMount', each LayerMount has one or more Layer,
+                          which has one or more 'File's.
 
 
 
@@ -180,7 +175,7 @@ class LayerFile(PathLike):
     __slots__ = ["layer", "relative_path", "_stat"]
 
     def __init__(self,
-                 layer: LayerRootBase.Layer,
+                 layer: LayerCollectionBase.Layer,
                  relative_path: PurePath,
                  stat: Optional[stat_result] = None):
         self.layer = layer
@@ -352,7 +347,7 @@ class LayerFile_Jinja2(LayerRenderedFile):
 
 class LayerFilter:
     """
-    Container for filter rules that can be applied via :py:meth:`~LayerRootBase.apply_filter`.
+    Container for filter rules that can be applied via :py:meth:`~LayerCollectionBase.apply_filter`.
     The action of the last matching rule wins.  Wildcard matching is supported using fnmatch().
     When no rules are given, the filter accepts all layers.
 
@@ -379,7 +374,7 @@ class LayerFilter:
         self._rules.append((action, pattern))
         return self
 
-    def evaluate(self, layer: LayerRootBase.Layer) -> bool:
+    def evaluate(self, layer: LayerCollectionBase.Layer) -> bool:
         """ Evaluate if layer matches the given rule set. """
         response = True
         layer_name = layer.name
@@ -394,11 +389,17 @@ class LayerFilter:
 R_walk = Iterator[Tuple[Path, List[str], List[str]]]
 
 
-class LayerRootBase:
-    """ All 'path's here are relative to the ROOT. """
+class LayerCollectionBase:
+    """ A collection of layer containers which contains layer files.
+
+    Note:  All 'path's here are relative to the ROOT.
+    """
 
     class Layer:
-        """ Basic layer Container:   Connects logical and physical paths. """
+        """ Basic layer container:   Connects logical and physical paths.
+
+        Files on the filesystem are only scanned one time and then cached.
+        """
         __slots__ = ["name", "root", "logical_path", "physical_path", "context",
                      "_file_factory", "_cache_files"]
 
@@ -453,10 +454,10 @@ class LayerRootBase:
                     else:
                         return None
 
-    # LayerRootBase
+    # LayerCollectionBase
     def __init__(self, context: Optional[LayerContext] = None):
-        self._layers: List[LayerRootBase.Layer] = []
-        self._layers_discarded: List[LayerRootBase.Layer] = []
+        self._layers: List[LayerCollectionBase.Layer] = []
+        self._layers_discarded: List[LayerCollectionBase.Layer] = []
         self.context = context or LayerContext()
 
     def apply_filter(self, layer_filter: LayerFilter) -> bool:
@@ -490,7 +491,7 @@ class LayerRootBase:
     def list_layers(self) -> List[Layer]:
         return self._layers
 
-    def get_layers_by_name(self, name: str) -> Iterator[LayerRootBase.Layer]:
+    def iter_layers_by_name(self, name: str) -> Iterator[LayerCollectionBase.Layer]:
         for layer in self.list_layers():
             if layer.name == name:
                 yield layer
@@ -560,11 +561,12 @@ class LayerRootBase:
 
     # Legacy names
     list_files = list_logical_files
+    get_layers_by_name = iter_layers_by_name    # No known usages
 
 
-class DirectLayerRoot(LayerRootBase):
+class DirectLayerCollection(LayerCollectionBase):
     """
-    A very simple direct LayerRoot implementation that relies on all layer paths to be explicitly
+    A very simple direct LayerCollection implementation that relies on all layer paths to be explicitly
     given without any automatic detection mechanisms.  You can think of this as the legacy
     implementation.
     """
@@ -578,7 +580,7 @@ class DirectLayerRoot(LayerRootBase):
                                       f"Given path '{path}' is not a directory.")
         layer = Layer(layer_name, path, None, None, context=self.context,
                       file_factory=layer_file_factory)
-        super(DirectLayerRoot, self).add_layer(layer)
+        super(DirectLayerCollection, self).add_layer(layer)
 
 
 """
@@ -600,9 +602,9 @@ class DirectLayerRoot(LayerRootBase):
 
 Q:  What about nested layers, should that be supported?  (Yes, this is an horrific example)
 A:  Let's support if it just works naturally, otherwise, let's not go to extra lengths to support
-A:  Multiple LayerRoots SHOULD be supported.
+A:  Multiple LayerCollections SHOULD be supported.
 
-    MyApp/                          <- LayerRoot & Layer (Anonymous -- lowest ranking)
+    MyApp/                          <- LayerCollection & Layer (Anonymous -- lowest ranking)
         lib.d/
             10-upstream
                 botocore/
@@ -623,9 +625,9 @@ A:  Multiple LayerRoots SHOULD be supported.
 
 # Q:  How do we mark "mount-points" in the directory structure to keep multiple layers
 #     from claiming the same files?????
-class DotDLayerRoot(LayerRootBase):
+class DotDLayerCollection(LayerCollectionBase):
 
-    class Layer(LayerRootBase.Layer):
+    class Layer(LayerCollectionBase.Layer):
         __slots__ = ["prune_points"]
 
         def __init__(self, name: str,
@@ -635,12 +637,13 @@ class DotDLayerRoot(LayerRootBase):
                      context: LayerContext,
                      file_factory: Callable,
                      prune_points: Optional[Sequence[Path]] = None):
-            super(DotDLayerRoot.Layer, self).__init__(name, root, physical, logical, context=context,
-                                                      file_factory=file_factory)
+            super(DotDLayerCollection.Layer, self).__init__(
+                name, root, physical, logical, context=context,
+                file_factory=file_factory)
             self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
 
         def walk(self) -> R_walk:
-            for (root, dirs, files) in super(DotDLayerRoot.Layer, self).walk():
+            for (root, dirs, files) in super(DotDLayerCollection.Layer, self).walk():
                 if root in self.prune_points:
                     # Cleanup files/dirs to keep walk() from descending deeper
                     del dirs[:]
@@ -658,23 +661,23 @@ class DotDLayerRoot(LayerRootBase):
 
     class MountDotD(MountBase):
         def __init__(self, path):
-            super(DotDLayerRoot.MountDotD, self).__init__(path)
+            super(DotDLayerCollection.MountDotD, self).__init__(path)
     '''
 
     mount_regex = re.compile(r"(?P<realname>[\w_.-]+)\.d$")
     layer_regex = re.compile(r"(?P<layer>\d\d-[\w_.-]+)")
 
     def __init__(self, context=None):
-        super(DotDLayerRoot, self).__init__(context)
+        super(DotDLayerCollection, self).__init__(context)
         # self.root = None
-        self._root_layer: LayerRootBase.Layer = None
+        self._root_layer: LayerCollectionBase.Layer = None
         self._mount_points: Dict[Path, List[str]] = defaultdict(list)
 
     def apply_filter(self, layer_filter: LayerFilter):
         # Apply filter function, but also be sure to keep the root layer
         def fltr(l):
             return l is self._root_layer or layer_filter(l)
-        return super(DotDLayerRoot, self).apply_filter(fltr)
+        return super(DotDLayerCollection, self).apply_filter(fltr)
 
     def set_root(self, root: Path, follow_symlinks=None):
         """ Set a root path, and auto discover all '.d' directories.
@@ -739,3 +742,9 @@ class DotDLayerRoot(LayerRootBase):
     def order_layers(layers: List[Layer]) -> List[Layer]:
         # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
         return sorted(layers, key=lambda l: l.name)
+
+
+# LEGACY class names (for backwards compatibility)
+LayerRootBase = LayerCollectionBase
+DotDLayerRoot = DotDLayerCollection
+DirectLayerRoot = DirectLayerCollection

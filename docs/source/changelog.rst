@@ -27,7 +27,8 @@ Ksconf v0.13.8 (2023-12-15)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 *  Additional Layer handling improvements for AppPackager and LayerCombiner.
    Primary benefits of these internal improvements are for the ``ksconf_package`` command in the `cdillc.splunk`_ collection, and anyone who has to look at the code.
-
+*  Replace all ``LayerRoot*`` terminology with ``LayerCollection`` to reduce confusion.
+   The term _root_ was used multiple places within the layering system to both a top-level folder, as well as a container of layers.
 
 Ksconf v0.13.7 (2023-12-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

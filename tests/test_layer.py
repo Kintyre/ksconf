@@ -24,7 +24,7 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter, layer_file_factory
+from ksconf.layer import DirectLayerCollection, DotDLayerCollection, LayerFilter, layer_file_factory
 from tests.cli_helper import TestWorkDir
 
 
@@ -107,16 +107,16 @@ class LayerTemplateTestCase(unittest.TestCase):
                 TRUNCATE = {{ max_size | default('99') }}
                 """)
 
-            layer_root = DotDLayerRoot()
-            layer_root.set_root(Path(app_dir))
-            layer_root.context.template_variables = t_context
-            self.assertListEqual(layer_root.list_layer_names(),
+            collection = DotDLayerCollection()
+            collection.set_root(Path(app_dir))
+            collection.context.template_variables = t_context
+            self.assertListEqual(collection.list_layer_names(),
                                  ["10-upstream", "20-common", "75-custom-magic"])
-            self.assertEqual(len(layer_root.list_logical_files()), 1)
-            self.assertEqual(layer_root.list_logical_files()[0].name, "props.conf")
-            self.assertEqual(len(layer_root.list_physical_files()), 3)
+            self.assertEqual(len(collection.list_logical_files()), 1)
+            self.assertEqual(collection.list_logical_files()[0].name, "props.conf")
+            self.assertEqual(len(collection.list_physical_files()), 3)
 
-            layer = list(layer_root.get_layers_by_name("75-custom-magic"))[0]
+            layer = list(collection.get_layers_by_name("75-custom-magic"))[0]
             # the .j2; extension has been removed for the logical path
             f = layer.get_file(PurePath("default/props.conf"))
 
@@ -185,7 +185,7 @@ class DefaultLayerTestCase(unittest.TestCase):
         twd = self.common_data01()
         default = twd.get_path("etc/apps/TA-myproduct/default")
 
-        dlr = DirectLayerRoot()
+        dlr = DirectLayerCollection()
         # Take CLI args and apply to root
         for src in sorted(glob(os.path.join(default + ".d", "*"))):
             dlr.add_layer(Path(src))
@@ -203,7 +203,7 @@ class DefaultLayerTestCase(unittest.TestCase):
     def test_dotd_simple01(self):
         twd = self.common_data01()
         ta_path = twd.get_path("etc/apps/TA-myproduct")
-        dlr = DotDLayerRoot()
+        dlr = DotDLayerCollection()
         dlr.set_root(ta_path)
 
         layers = list([l.name for l in dlr.list_layers()])

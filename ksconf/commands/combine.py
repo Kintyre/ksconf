@@ -272,8 +272,8 @@ class CombineCmd(KsconfCmd):
                 return EXIT_CODE_BAD_ARGS
 
             combiner.set_layer_root(args.source[0])
-            layer_root = combiner.layer_root
-            for (dir, layers) in layer_root._mount_points.items():
+            layer_collection = combiner.collection
+            for (dir, layers) in layer_collection._mount_points.items():
                 self.stderr.write(f"Found layer parent folder:  {dir}  "
                                   f"with layers {', '.join(layers)}\n")
         else:

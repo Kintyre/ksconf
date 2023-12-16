@@ -8,7 +8,7 @@ import unittest
 from io import StringIO
 from pathlib import Path
 
-from ksconf.layer import DirectLayerRoot, DotDLayerRoot, LayerFilter
+from ksconf.layer import DirectLayerCollection, DotDLayerCollection, LayerFilter
 from ksconf.package import AppPackager
 
 # Allow interactive execution from CLI,  cd tests; ./test_cli.py
@@ -144,7 +144,7 @@ class PackageTest(unittest.TestCase):
         self.build_basic_app_01(twd, "my_app", "default")
         log_out = StringIO()
 
-        lc = DirectLayerRoot()
+        lc = DirectLayerCollection()
         lc.add_layer(Path(twd.get_path("my_app")))
 
         with AppPackager(twd.get_path("."), "my_app_on_splunkbase", log_out, predictable_mtime=False) as packager:
@@ -167,7 +167,7 @@ class PackageTest(unittest.TestCase):
         # log_out = StringIO()
 
         def pkg_with_filter(*filters):
-            lc = DotDLayerRoot()
+            lc = DotDLayerCollection()
             lc.set_root(Path(twd.get_path("Splunk_TA_aws")))
             lf = LayerFilter()
             for fltr in filters:
