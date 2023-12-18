@@ -374,6 +374,11 @@ class LayerFilter:
         self._rules.append((action, pattern))
         return self
 
+    def add_rules(self, rules):
+        for action, pattern in rules:
+            self.add_rule(action, pattern)
+        return self
+
     def evaluate(self, layer: Layer) -> bool:
         """ Evaluate if layer matches the given rule set. """
         response = True
@@ -741,6 +746,24 @@ class DotDLayerCollection(LayerCollectionBase):
     def order_layers(layers: List[Layer]) -> List[Layer]:
         # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
         return sorted(layers, key=lambda l: l.name)
+
+
+def build_layer_collection(source: Path,
+                           layer_method: str,
+                           context: Optional[LayerContext] = None,
+                           ) -> LayerCollectionBase:
+    if context is None:
+        context = LayerContext()
+    if layer_method == "dir.d":
+        collection = DotDLayerCollection(context)
+        collection.set_root(source, context.follow_symlink)
+    elif layer_method == "disable":
+        collection = MultiDirLayerCollection(context)
+        collection.add_layer(source)
+    else:
+        raise NotImplementedError(f"layer_method of '{layer_method}' is not supported.  "
+                                  "Please use 'dir.d' or 'disable'.")
+    return collection
 
 
 # LEGACY class names (for backwards compatibility)

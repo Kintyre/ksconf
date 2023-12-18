@@ -23,12 +23,20 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
-Ksconf v0.13.8 (2023-12-15)
+Ksconf v0.13.8 (2023-12-18)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+More internal Laying improvements for the ansible collections (and general readability improvements).
+No improvements for CLI users.
+
 *  Additional Layer handling improvements for AppPackager and LayerCombiner.
    Primary benefits of these internal improvements are for the ``ksconf_package`` command in the `cdillc.splunk`_ collection, and anyone who has to look at the code.
 *  Replace all ``LayerRoot*`` terminology with ``LayerCollection`` to reduce confusion.
    The term _root_ was used multiple places within the layering system to both a top-level folder, as well as a container of layers.
+*  Replace confusing nested ``Layer`` class structure for a more traditional flat one.
+*  Add a convenience function for LayerCollection creation (that handles various layering schemes).
+*  Add :py:method:~`ksconf.layer.LayerFilter.add_rules` to simplify frequent use case.
+
 
 Ksconf v0.13.7 (2023-12-12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
