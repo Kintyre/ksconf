@@ -414,7 +414,7 @@ class Layer:
         self.logical_path = logical
         self.context = context
         self._file_factory = file_factory
-        self._cache_files: List[LayerFile] = []
+        self._cache_files: Dict[PurePath, LayerFile] = {}
 
     def walk(self) -> R_walk:
         """
@@ -437,21 +437,22 @@ class Layer:
             for file in files:
                 yield self._file_factory(self, top / file)
 
+    def _build_cache(self):
+        self._cache_files = {lf.logical_path: lf for lf in self.iter_files()}
+
     def list_files(self) -> List[LayerFile]:
         """ Get a list of LayerFile objects.  Cache enabled. """
         if not self._cache_files:
-            self._cache_files = list(self.iter_files())
-        return self._cache_files
+            self._build_cache()
+        return list(self._cache_files.values())
 
-    def get_file(self, path: Path) -> Union[LayerFile, None]:
+    def get_file(self, path: PurePath) -> Union[LayerFile, None]:
         """ Return file object (by logical path), if it exists in this layer. """
-        # TODO:  Further optimize by making cache a dict with logical_path as key
-        for file in self.list_files():
-            if file.logical_path == path:
-                if file.physical_path.is_file():
-                    return file
-                else:
-                    return None
+        if not self._cache_files:
+            self._build_cache()
+        lf = self._cache_files.get(path)
+        if lf and lf.physical_path.is_file():
+            return lf
 
 
 class LayerCollectionBase:
