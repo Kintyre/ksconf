@@ -21,7 +21,7 @@ jobs:
         python-version:
           - '3.7'
           - '3.8'
-          - '3.9.17'
+          - '3.9.17'    # Seems to be this:  https://github.com/python/cpython/issues/91351
           - '3.10'
           - '3.11'
         include:
