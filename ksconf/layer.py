@@ -422,7 +422,15 @@ class Layer:
         self.logical_path = logical
         self.context = context
         self._file_factory = file_factory
-        self._cache_files: Dict[PurePath, LayerFile] = {}
+        self._cache_files: Dict[PurePath, LayerFile] = None  # type: ignore
+
+    def __len__(self) -> int:
+        if self._cache_files is None:
+            self._build_cache()
+        return len(self._cache_files)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} [{self.name}] {len(self)} files root={self.root}>"
 
     def walk(self) -> R_walk:
         """
@@ -450,13 +458,13 @@ class Layer:
 
     def list_files(self) -> List[LayerFile]:
         """ Get a list of LayerFile objects.  Cache enabled. """
-        if not self._cache_files:
+        if self._cache_files is None:
             self._build_cache()
         return list(self._cache_files.values())
 
     def get_file(self, path: PurePath) -> Union[LayerFile, None]:
         """ Return file object (by logical path), if it exists in this layer. """
-        if not self._cache_files:
+        if self._cache_files is None:
             self._build_cache()
         lf = self._cache_files.get(path)
         if lf and lf.physical_path.is_file():
@@ -525,6 +533,7 @@ class LayerCollectionBase:
 
     def iter_all_files(self) -> Iterator[LayerFile]:
         """ Iterator over all physical files. """
+        # This method bypasses layer caching
         for layer in self._layers:
             yield from layer.iter_files()
 
@@ -536,9 +545,7 @@ class LayerCollectionBase:
 
     def list_logical_files(self) -> List[Path]:
         """ Return a list of logical paths. """
-        files = set()
-        for file_ in self.iter_all_files():
-            files.add(file_.logical_path)
+        files = set(f.logical_path for l in self._layers for f in l.list_files())
         return list(files)
 
     def get_files(self, path: Path) -> List[LayerFile]:
