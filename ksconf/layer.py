@@ -3,15 +3,18 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
+from enum import Enum
 from fnmatch import fnmatch
 from os import PathLike, stat_result
 from pathlib import Path, PurePath
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable, Iterator, Optional, Pattern, Sequence, Type, Union
+from warnings import warn
 
 from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
 from ksconf.util.file import file_hash, relwalk, secure_delete
+from ksconf.version import version_info
 
 try:
     # Fallback for Python 3.7
@@ -128,7 +131,10 @@ class FileFactory:
         return wrapper
 
     def __enter__(self) -> FileFactory:
-        # The primary use case is for clean unit testing
+        """
+        Context manager that allows settings to be temporarily applied and then
+        cleanly reverted at exit.  Used for internal unit testing.
+        """
         assert not self._context_state, "Nested contexts are not supported"
         from copy import deepcopy
         self._context_state = (deepcopy(self._registered_handlers),
@@ -178,6 +184,7 @@ class LayerFile(PathLike):
         * ``resource_path``: /tmp/<RANDOM>-indexes.conf (temporary with automatic cleanup; see subclasses)
 
     '''
+    # Are slots helpful here?  (parent class already has __dict__), need that for cached_properties
     __slots__ = ["layer", "relative_path", "_stat"]
 
     def __init__(self,
@@ -198,7 +205,7 @@ class LayerFile(PathLike):
         """
         return True
 
-    @property
+    @cached_property
     def physical_path(self) -> Path:
         return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
 
@@ -402,22 +409,36 @@ class LayerFilter:
 R_walk = Iterator[Tuple[Path, List[str], List[str]]]
 
 
+class LayerType(Enum):
+    EXPLICIT = "explicit"
+    IMPLICIT = "implicit"
+
+
 class Layer:
     """ Basic layer container:   Connects logical and physical paths.
 
-    Files on the filesystem are only scanned one time and then cached.
+    An explicit layer is that has been clearly marked or labeled.  Depending on
+    the exact layering scheme in use, this may take different forms.  Layers
+    that are have no marking or indicator are implicit layers.  This could be
+    a plain directory contain a simple Splunk app, or the top-level folder of
+    a complex app that contains multiple explicit layers.
+
+    Files on the filesystem are scanned one time and then cached.
     """
     __slots__ = ["name", "root", "logical_path", "physical_path", "context",
-                 "_file_factory", "_cache_files"]
+                 "type", "_file_factory", "_cache_files"]
 
     def __init__(self, name: str,
                  root: Path,
                  physical: PurePath,
                  logical: PurePath,
                  context: LayerContext,
-                 file_factory: Callable):
+                 *,
+                 file_factory: Callable = layer_file_factory,
+                 type: LayerType = LayerType.EXPLICIT):
         self.name = name
         self.root = root
+        self.type = type
         self.physical_path = physical
         self.logical_path = logical
         self.context = context
@@ -470,6 +491,18 @@ class Layer:
         if lf and lf.physical_path.is_file():
             return lf
 
+    def block_file(self, path: PurePath) -> bool:
+        """ Block a file (remove from cache).  This prevents processing.
+        No action is taken on :py:attr:`physical_file`. """
+        # NOTE:  Resetting the cache would loose any removal info.  Not supported.
+        if self._cache_files is None:
+            self._build_cache()
+        try:
+            del self._cache_files[path]
+            return True
+        except KeyError:
+            return False
+
 
 class LayerCollectionBase:
     """ A collection of layer containers which contains layer files.
@@ -480,35 +513,78 @@ class LayerCollectionBase:
     def __init__(self, context: Optional[LayerContext] = None):
         self._layers: List[Layer] = []
         self._layers_discarded: List[Layer] = []
+        self._files_discarded: List[LayerFile] = []
         self.context = context or LayerContext()
 
-    def apply_filter(self, layer_filter: LayerFilter) -> bool:
+    def apply_layer_filter(self, layer_filter: LayerFilter) -> bool:
         """
         Apply a destructive filter to all layers.  ``layer_filter(layer)`` will be called one for each
         layer, if the filter returns True than the layer is kept.  Root layers are always kept.
 
         Returns True if layers were removed
         """
-        layers = []
+        changed = False
+        for layer in list(self._layers):
+            if layer.type == LayerType.IMPLICIT:
+                # Must keep
+                continue
+            elif not layer_filter(layer):
+                self.block_layer(layer)
+                changed = True
+        return changed
+
+    def apply_path_filter(self, path_filter: Callable[[PurePath], bool]) -> bool:
+        """
+        Apply a path filter to all logical paths.  After file filtering, any
+        layers no longer containing files are discarded.
+        """
+        logical_to_layer: Dict[PurePath, List[Layer]] = defaultdict(list)
+        for layer in self._layers:
+            for lf in layer.list_files():
+                logical_to_layer[lf.logical_path].append(layer)
+
         discard = []
-        for l in self._layers:
-            if layer_filter(l):
-                layers.append(l)
-            else:
-                discard.append(l)
-        result = self._layers != layers
-        self._layers = layers
-        self._layers_discarded.extend(discard)
-        return result
+        for logical_path, layers in logical_to_layer.items():
+            if not path_filter(logical_path):
+                discard.append(logical_path)
+                for layer in layers:
+                    layer.block_file(logical_path)
+        self._files_discarded.extend(discard)
+
+        if discard:
+            # Remove explicit layers that are now empty
+            for layer in list(self._layers):
+                if layer.type != LayerType.IMPLICIT and len(layer) == 0:
+                    self.block_layer(layer)
+            return True
+        return False
+
+    def apply_filter(self, layer_filter: LayerFilter) -> bool:
+        """ Legacy name.  Use :py:method:`apply_layer_filter` instead. """
+        if version_info > (0, 15):
+            warn("Please use apply_layer_filter() instead of apply_filter()", DeprecationWarning)
+        return self.apply_layer_filter(layer_filter)
 
     @staticmethod
     def order_layers(layers: List[Layer]) -> List[Layer]:
-        return layers
+        """ Simple ordering so that explicit layers come before implicit layers.
+        Otherwise layer order is preserved. """
+        return sorted(layers, key=lambda layer: layer.type.value)
 
     def add_layer(self, layer: Layer, do_sort=True):
         self._layers.append(layer)
         if do_sort:
             self._layers = self.order_layers(self._layers)
+
+    def block_layer(self, layer: Layer):
+        """
+        Remove a layer from the active set of layers.   (Layer is retained in the discarded list,
+        as sometimes seeing the entire list of detected layers is desirable, for example.)
+        """
+        if layer in self._layers:
+            assert layer.type != LayerType.IMPLICIT, "Unable to block an implicit layer"
+            self._layers.remove(layer)
+            self._layers_discarded.append(layer)
 
     def list_layers(self) -> List[Layer]:
         return self._layers
@@ -524,7 +600,7 @@ class LayerCollectionBase:
 
     def list_all_layer_names(self) -> List[str]:
         """ Return the full list of all discovered layers.  This will not change
-        before/after :py:methd:`apply_filter` is called. """
+        before/after :py:meth:`apply_layer_filter` or :py:meth:apply_path_filter` is called. """
         if self._layers_discarded:
             layers = self.order_layers(self.list_layers() + self._layers_discarded)
             return [l.name for l in layers]
@@ -548,7 +624,7 @@ class LayerCollectionBase:
         files = set(f.logical_path for l in self._layers for f in l.list_files())
         return list(files)
 
-    def get_files(self, path: Path) -> List[LayerFile]:
+    def get_files(self, path: PurePath) -> List[LayerFile]:
         """ return all layers associated with the given relative path. """
         files = []
         for layer in self._layers:
@@ -557,10 +633,11 @@ class LayerCollectionBase:
                 files.append(file_)
         return files
 
-    def get_file(self, path: Path) -> Iterator[LayerFile]:
+    def get_file(self, path: PurePath) -> Iterator[LayerFile]:
         """ Confusingly named.  For backwards compatibility.
         Use :py:meth:`get_files` instead. """
-        # XXX: Raise warning here
+        if version_info > (0, 15):
+            warn("Please use get_files() not get_file()", DeprecationWarning)
         return iter(self.get_files(path))
 
     def calculate_signature(self,
@@ -652,10 +729,12 @@ class DotdLayer(Layer):
                  physical: PurePath,
                  logical: PurePath,
                  context: LayerContext,
-                 file_factory: Callable,
+                 *,
+                 file_factory: Callable = layer_file_factory,
+                 type: LayerType = LayerType.EXPLICIT,
                  prune_points: Optional[Sequence[Path]] = None):
         super(DotdLayer, self).__init__(
-            name, root, physical, logical, context=context,
+            name, root, physical, logical, context=context, type=type,
             file_factory=file_factory)
         self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
 
@@ -691,16 +770,11 @@ class DotDLayerCollection(LayerCollectionBase):
 
     def __init__(self, context=None):
         super(DotDLayerCollection, self).__init__(context)
-        self._root_layer: Layer = None  # type: ignore
         self._mount_points: Dict[Path, List[str]] = defaultdict(list)
 
-    def apply_filter(self, layer_filter: LayerFilter):
-        # Apply filter function, but also be sure to keep the root layer
-        def fltr(l):
-            return l is self._root_layer or layer_filter(l)
-        return super(DotDLayerCollection, self).apply_filter(fltr)
-
     def set_root(self, root: Path, follow_symlinks=None):
+        # XXX:  Rename this to "discover()"  "add_path",  "from_dir", ...?
+        #       (Ideally this should be the same for all LayerCollection classes)
         """ Set a root path, and auto discover all '.d' directories.
 
         Note:  We currently only support ``.d/<layer>`` directories, a file like
@@ -748,20 +822,23 @@ class DotDLayerCollection(LayerCollectionBase):
                         for mount, layers in self._mount_points.items()
                         for layer in layers]
         layer = DotdLayer("<root>", root, None, None, context=self.context,
+                          type=LayerType.IMPLICIT,
                           file_factory=layer_file_factory,
                           prune_points=prune_points)
         self.add_layer(layer, do_sort=False)
-        self._root_layer = layer
 
     def list_layers(self) -> List[DotdLayer]:
         # Return all but the root layer.
         # Avoiding self._layers[:-1] because there could be cases where root isn't included.
-        return [l for l in self._layers if l is not self._root_layer]
+        return [l for l in self._layers if l.type != LayerType.IMPLICIT]
 
-    @staticmethod
-    def order_layers(layers: List[Layer]) -> List[Layer]:
-        # Sort based on layer name (or other sorting priority:  00-<name> to 99-<name>
-        return sorted(layers, key=lambda l: l.name)
+    @classmethod
+    def order_layers(cls, layers: List[Layer]) -> List[Layer]:
+        """
+        Sort layers based on layer name (or other sorting priority:  00-<name> to 99-<name>
+        """
+        layers = sorted(layers, key=lambda l: l.name)
+        return super().order_layers(layers)
 
 
 def build_layer_collection(source: Path,

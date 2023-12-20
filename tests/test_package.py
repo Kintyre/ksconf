@@ -170,9 +170,8 @@ class PackageTest(unittest.TestCase):
             lc = DotDLayerCollection()
             lc.set_root(Path(twd.get_path("Splunk_TA_aws")))
             lf = LayerFilter()
-            for fltr in filters:
-                lf.add_rule(*fltr)
-            lc.apply_filter(lf)
+            lf.add_rules(filters)
+            lc.apply_layer_filter(lf)
             with AppPackager(twd.get_path("."), "Splunk_TA_aws", log_out) as packager:
                 packager.combine_from_layer(lc)
                 packager.update_app_conf(version="1.2.3")

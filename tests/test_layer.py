@@ -24,7 +24,7 @@ except ImportError:
 
 
 # Stuff for testing
-from ksconf.layer import (DotDLayerCollection, LayerFilter,
+from ksconf.layer import (DotDLayerCollection, Layer, LayerFilter,
                           MultiDirLayerCollection, layer_file_factory)
 from tests.cli_helper import TestWorkDir
 
@@ -86,7 +86,6 @@ class HelperFunctionsTestCase(unittest.TestCase):
 
 
 class LayerTemplateTestCase(unittest.TestCase):
-
     @unittest.skipIf(jinja2 is None, "Test requires 'jinja2'")
     def test_simple_mapping(self):
         t_context = {
@@ -125,8 +124,76 @@ class LayerTemplateTestCase(unittest.TestCase):
             self.assertEqual(conf["yoursourcetype"]["TRUNCATE"], "83830")
 
 
-class DefaultLayerTestCase(unittest.TestCase):
-    """ Test the DefaultLayerRoot class """
+class DotDLayerTestCase(unittest.TestCase):
+
+    def test_filtering(self):
+        with TestWorkDir() as twd, layer_file_factory:
+            app_dir = twd.makedir("app01")
+            twd.write_file("app01/default.d/10-upstream/props.conf", """\
+                [mysourcetype]
+                SHOULD_LINEBREAK = false
+                """)
+            twd.write_file("app01/default.d/10-upstream/app.conf", """\
+                [ui]
+                label = APP 001
+
+                [launcher]
+                author = lowell
+                version = 0.0.1
+                """)
+            twd.write_file("app01/default.d/20-common/indexes.conf", """\
+                [myindex]
+                coldPath = $SPLUNK_DB/$_index_name/colddb
+                homePath = $SPLUNK_DB/$_index_name/db
+                thawedPath = $SPLUNK_DB/$_index_name/thaweddb
+                """)
+            twd.write_file("app01/default.d/75-custom-magic/props.conf", """\
+                [yoursourcetype]
+                TRUNCATE = 5
+                [minesourcetype]
+                rename = yoursourcetype
+                """)
+            twd.write_file("app01/default.d/88-single-file/fields.conf", r"""\
+                [From]
+                TOKENIZER = (\w[\w\.\-]*@[\w\.\-]*\w)
+                """)
+
+            collection = DotDLayerCollection()
+            collection.set_root(Path(app_dir))
+            self.assertListEqual(collection.list_layer_names(),
+                                 ["10-upstream", "20-common", "75-custom-magic", "88-single-file"])
+            self.assertEqual(len(collection.list_logical_files()), 4)
+            self.assertEqual(len(collection.list_physical_files()), 5)
+
+            fn_props = PurePath("default/props.conf")
+            self.assertEqual(len(collection.get_files(fn_props)), 2)
+
+            layer: Layer = list(collection.get_layers_by_name("75-custom-magic"))[0]
+            f = layer.get_file(fn_props)
+            conf = twd.read_conf(f.resource_path)
+            self.assertEqual(conf["yoursourcetype"]["TRUNCATE"], "5")
+
+            collection.apply_layer_filter(lambda layer: layer.name != "20-common")
+            self.assertEqual(len(collection.list_logical_files()), 3)
+            self.assertNotIn("20-common", collection.list_layer_names())
+
+            self.assertEqual(collection.list_all_layer_names(),
+                             ["10-upstream", "20-common", "75-custom-magic", "88-single-file"])
+
+            collection.apply_path_filter(lambda p: p.name != "fields.conf")
+            self.assertEqual(len(collection.list_logical_files()), 2)
+            self.assertNotIn("88-single-file", collection.list_layer_names())
+
+            self.assertEqual(collection.list_layer_names(),
+                             ["10-upstream", "75-custom-magic"])
+
+            # The '*_all_*' version should report all the layers, even those filtered out
+            self.assertEqual(collection.list_all_layer_names(),
+                             ["10-upstream", "20-common", "75-custom-magic", "88-single-file"])
+
+
+class MultiDirLayerTestCase(unittest.TestCase):
+    """ Test the MultiDirLayerCollection class """
 
     def common_data01(self):
         twd = TestWorkDir()
