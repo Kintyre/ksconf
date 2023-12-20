@@ -13,6 +13,12 @@ from ksconf.compat import Dict, List, Set, Tuple
 from ksconf.hook import plugin_manager
 from ksconf.util.file import file_hash, relwalk, secure_delete
 
+try:
+    # Fallback for Python 3.7
+    from functools import cached_property
+except ImportError:
+    cached_property = property
+
 """
 Each Layer Collection has one or more 'Layer', each layer has one or more 'File's.
 
@@ -196,12 +202,14 @@ class LayerFile(PathLike):
     def physical_path(self) -> Path:
         return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
 
-    @property
+    @cached_property
     def logical_path(self) -> Path:
         return _path_join(self.layer.logical_path, self.relative_path)
 
-    # For "normal" files, the resource_path is the physical_path (not true for rendered files)
-    resource_path = physical_path
+    @property
+    def resource_path(self):
+        # For "normal" files, the resource_path is the physical_path (not true for rendered files)
+        return self.physical_path
 
     @property
     def stat(self) -> stat_result:
@@ -270,12 +278,12 @@ class LayerRenderedFile(LayerFile):
         # Remove trailing suffix
         return path.with_name(path.stem)
 
-    @property
+    @cached_property
     def logical_path(self) -> Path:
         return _path_join(self.layer.logical_path,
                           self.transform_name(self.relative_path))
 
-    @property
+    @cached_property
     def physical_path(self) -> Path:
         return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
 
