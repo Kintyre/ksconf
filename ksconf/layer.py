@@ -264,7 +264,7 @@ class LayerRenderedFile(LayerFile):
     signature_requires_resource_hash = True
 
     def __init__(self, *args, **kwargs):
-        super(LayerRenderedFile, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._rendered_resource: Path = None  # type: ignore
 
     def __del__(self):
@@ -316,7 +316,7 @@ class LayerRenderedFile(LayerFile):
                 "hash": file_hash(self.resource_path)
             }
         else:
-            return super(LayerRenderedFile, self).calculate_signature()
+            return super().calculate_signature()
 
 
 @register_file_handler("jinja", priority=50, enabled=False)
@@ -678,7 +678,7 @@ class MultiDirLayerCollection(LayerCollectionBase):
                                       f"Given path '{path}' is not a directory.")
         layer = Layer(layer_name, path, None, None, context=self.context,
                       file_factory=layer_file_factory)
-        super(MultiDirLayerCollection, self).add_layer(layer)
+        super().add_layer(layer)
 
 
 """
@@ -733,13 +733,13 @@ class DotdLayer(Layer):
                  file_factory: Callable = layer_file_factory,
                  type: LayerType = LayerType.EXPLICIT,
                  prune_points: Optional[Sequence[Path]] = None):
-        super(DotdLayer, self).__init__(
+        super().__init__(
             name, root, physical, logical, context=context, type=type,
             file_factory=file_factory)
         self.prune_points: Set[Path] = set(prune_points) if prune_points else set()
 
     def walk(self) -> R_walk:
-        for (root, dirs, files) in super(DotdLayer, self).walk():
+        for (root, dirs, files) in super().walk():
             if root in self.prune_points:
                 # Cleanup files/dirs to keep walk() from descending deeper
                 del dirs[:]
@@ -762,14 +762,14 @@ class DotDLayerCollection(LayerCollectionBase):
 
     class MountDotD(MountBase):
         def __init__(self, path):
-            super(DotDLayerCollection.MountDotD, self).__init__(path)
+            super().__init__(path)
     '''
 
     mount_regex = re.compile(r"(?P<realname>[\w_.-]+)\.d$")
     layer_regex = re.compile(r"(?P<layer>\d\d-[\w_.-]+)")
 
     def __init__(self, context=None):
-        super(DotDLayerCollection, self).__init__(context)
+        super().__init__(context)
         self._mount_points: Dict[Path, List[str]] = defaultdict(list)
 
     def set_root(self, root: Path, follow_symlinks=None):

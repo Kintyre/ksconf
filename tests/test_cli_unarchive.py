@@ -17,7 +17,7 @@ from tests.cli_helper import TestWorkDir, ksconf_cli, static_data
 class CliKsconfUnarchiveTestCase(unittest.TestCase):
     '''
     def __init__(self, *args, **kwargs):
-        super(CliKsconfUnarchiveTestCase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._modsec_workdir = TestWorkDir(git_repo=True)
     '''
 

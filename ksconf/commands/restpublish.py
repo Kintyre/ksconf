@@ -56,7 +56,7 @@ class RestPublishCmd(KsconfCmd):
     maturity = "alpha"
 
     def __init__(self, *args, **kwargs):
-        super(RestPublishCmd, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._service = None
         self.meta: Optional[MetaData] = None
 

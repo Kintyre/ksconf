@@ -48,7 +48,7 @@ class FilterCmd(KsconfCmd):
     maturity = "alpha"
 
     def __init__(self, *args, **kwargs):
-        super(FilterCmd, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.stanza_filters: FilteredList = None
         self.attr_presence_filters: FilteredList = None
 
