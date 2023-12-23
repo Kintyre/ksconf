@@ -512,16 +512,19 @@ class LayerCollectionBase:
 
     def __init__(self, context: Optional[LayerContext] = None):
         self._layers: List[Layer] = []
-        self._layers_discarded: List[Layer] = []
-        self._files_discarded: List[LayerFile] = []
+        self._layers_blocked: List[Layer] = []
+        self._files_blocked: List[LayerFile] = []
         self.context = context or LayerContext()
+
+    def __len__(self):
+        """ Determine total number of active layers (implicit + explicit).  Blocked layers are not counted. """
+        return len(self._layers)
 
     def apply_layer_filter(self, layer_filter: LayerFilter) -> bool:
         """
-        Apply a destructive filter to all layers.  ``layer_filter(layer)`` will be called one for each
-        layer, if the filter returns True than the layer is kept.  Root layers are always kept.
-
-        Returns True if layers were removed
+        Apply a destructive filter to all explicit layers.  ``layer_filter(layer)`` is called
+        once per layer, and True means the layer is retain. Implicit layers cannot be blocked.
+        Returns True if any layers were blocked.
         """
         changed = False
         for layer in list(self._layers):
@@ -536,7 +539,7 @@ class LayerCollectionBase:
     def apply_path_filter(self, path_filter: Callable[[PurePath], bool]) -> bool:
         """
         Apply a path filter to all logical paths.  After file filtering, any
-        layers no longer containing files are discarded.
+        layers no longer containing files are also blocked.
         """
         logical_to_layer: Dict[PurePath, List[Layer]] = defaultdict(list)
         for layer in self._layers:
@@ -549,7 +552,7 @@ class LayerCollectionBase:
                 discard.append(logical_path)
                 for layer in layers:
                     layer.block_file(logical_path)
-        self._files_discarded.extend(discard)
+        self._files_blocked.extend(discard)
 
         if discard:
             # Remove explicit layers that are now empty
@@ -578,13 +581,14 @@ class LayerCollectionBase:
 
     def block_layer(self, layer: Layer):
         """
-        Remove a layer from the active set of layers.   (Layer is retained in the discarded list,
-        as sometimes seeing the entire list of detected layers is desirable, for example.)
+        Remove a layer from the active set of layers.
+
+        Blocked layers are internally remembered for the :py:meth:`list_all_layer_names` use case.
         """
         if layer in self._layers:
             assert layer.type != LayerType.IMPLICIT, "Unable to block an implicit layer"
             self._layers.remove(layer)
-            self._layers_discarded.append(layer)
+            self._layers_blocked.append(layer)
 
     def list_layers(self) -> List[Layer]:
         return self._layers
@@ -601,8 +605,8 @@ class LayerCollectionBase:
     def list_all_layer_names(self) -> List[str]:
         """ Return the full list of all discovered layers.  This will not change
         before/after :py:meth:`apply_layer_filter` or :py:meth:apply_path_filter` is called. """
-        if self._layers_discarded:
-            layers = self.order_layers(self.list_layers() + self._layers_discarded)
+        if self._layers_blocked:
+            layers = self.order_layers(self.list_layers() + self._layers_blocked)
             return [l.name for l in layers]
         else:
             return self.list_layer_names()
@@ -775,6 +779,7 @@ class DotDLayerCollection(LayerCollectionBase):
     def set_root(self, root: Path, follow_symlinks=None):
         # XXX:  Rename this to "discover()"  "add_path",  "from_dir", ...?
         #       (Ideally this should be the same for all LayerCollection classes)
+        #       Drop the 'follow_symlink' param and rely on context instead.
         """ Set a root path, and auto discover all '.d' directories.
 
         Note:  We currently only support ``.d/<layer>`` directories, a file like
