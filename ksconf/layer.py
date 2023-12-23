@@ -55,12 +55,7 @@ This must work with an explicitly given list of layers
 
 """
 
-
-def _path_join(*parts) -> Path:
-    """ A slightly smarter / more flexible path appender.
-    Drop any None
-    """
-    return Path(*filter(None, parts))
+no_path = PurePath()
 
 
 # Exceptions
@@ -207,11 +202,11 @@ class LayerFile(PathLike):
 
     @cached_property
     def physical_path(self) -> Path:
-        return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
+        return Path(self.layer.root, self.layer.physical_path, self.relative_path)
 
     @cached_property
     def logical_path(self) -> Path:
-        return _path_join(self.layer.logical_path, self.relative_path)
+        return Path(self.layer.logical_path, self.relative_path)
 
     @property
     def resource_path(self):
@@ -287,12 +282,12 @@ class LayerRenderedFile(LayerFile):
 
     @cached_property
     def logical_path(self) -> Path:
-        return _path_join(self.layer.logical_path,
-                          self.transform_name(self.relative_path))
+        return Path(self.layer.logical_path,
+                    self.transform_name(self.relative_path))
 
     @cached_property
     def physical_path(self) -> Path:
-        return _path_join(self.layer.root, self.layer.physical_path, self.relative_path)
+        return Path(self.layer.root, self.layer.physical_path, self.relative_path)
 
     @property
     def resource_path(self) -> Path:
@@ -459,7 +454,7 @@ class Layer:
         and given directories.  Paths are relative.
         """
         # In the simple case, this is good enough.   Some subclasses will need to override
-        for (root, dirs, files) in relwalk(_path_join(self.root, self.physical_path),
+        for (root, dirs, files) in relwalk(Path(self.root, self.physical_path),
                                            followlinks=self.context.follow_symlink):
             root = Path(root)
             files = [f for f in files if not self.context.block_files.search(f)]
@@ -680,7 +675,7 @@ class MultiDirLayerCollection(LayerCollectionBase):
         if not path.is_dir():
             raise LayerUsageException("Layers must be directories.  "
                                       f"Given path '{path}' is not a directory.")
-        layer = Layer(layer_name, path, None, None, context=self.context,
+        layer = Layer(layer_name, path, no_path, no_path, context=self.context,
                       file_factory=layer_file_factory)
         super().add_layer(layer)
 
@@ -783,7 +778,7 @@ class DotDLayerCollection(LayerCollectionBase):
         """ Set a root path, and auto discover all '.d' directories.
 
         Note:  We currently only support ``.d/<layer>`` directories, a file like
-        ``default.d/10-props.conf`` won't be handled here.
+        ``props.conf.d/10-upstream`` won't be handled here.
         A valid name would be ``default.d/10-name/props.conf``.
         """
         root = Path(root)
@@ -826,7 +821,7 @@ class DotDLayerCollection(LayerCollectionBase):
         prune_points = [mount / layer
                         for mount, layers in self._mount_points.items()
                         for layer in layers]
-        layer = DotdLayer("<root>", root, None, None, context=self.context,
+        layer = DotdLayer("<root>", root, no_path, no_path, context=self.context,
                           type=LayerType.IMPLICIT,
                           file_factory=layer_file_factory,
                           prune_points=prune_points)
