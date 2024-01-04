@@ -23,6 +23,17 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.9 (DRAFT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*  Internal layering improvements.
+   *  Add/improve layer caching mechanisms.
+      Packaging large apps saw a 2-3x performance improvement during development.
+   *  Add ability to filter layer operations base on based path names (not just layer names).
+   *  Created concept of layer types, currently supporting implicit vs explicit layers.
+   *  Cleanup some internally confusing terminology.
+
+
 Ksconf v0.13.8 (2023-12-18)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
