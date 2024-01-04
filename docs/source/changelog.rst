@@ -23,7 +23,7 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
-Ksconf v0.13.9 (DRAFT)
+Ksconf v0.13.9 (2024-01-04)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *  Fix app deployment bug that can occur if a previously deployed path changes from a file to a directory.

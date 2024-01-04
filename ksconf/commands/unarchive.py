@@ -39,8 +39,26 @@ allowed_extensions = ("*.tgz", "*.tar.gz", "*.spl", "*.zip")
 
 # XXX:  Update code base to use ksconf.layer, as was done for the 'ksconf combine' command.
 
+# XXX:  Use AppManifest to make a content hash of the file being imported...  (capture in git message)
 
 DEFAULT_DIR = "default"
+
+
+def fixup_pattern_bw(patterns, prefix=None):
+    modified = []
+    for pattern in patterns:
+        if pattern.startswith("./"):
+            if prefix:
+                pattern = f"{prefix}/{pattern[2:]}"
+            else:
+                pattern = pattern[2:]
+            modified.append(pattern)
+        # If a pattern like 'tags.conf' or '*.bak' is provided, use basename match (any dir)
+        elif "/" not in pattern:
+            modified.append("(^|.../)" + pattern)
+        else:
+            modified.append(pattern)
+    return modified
 
 
 class UnarchiveCmd(KsconfCmd):
@@ -179,16 +197,16 @@ class UnarchiveCmd(KsconfCmd):
                                   f"'{app_name}' will be extracted as '{new_app_name}'\n")
 
         app_basename = new_app_name or app_name
-        dest_app: Path = dest / app_basename
+        dest_app = Path(dest, app_basename)
         self.stdout.write(f"Inspecting destination folder:    {dest_app.absolute()}\n")
 
         # FEEDBACK TO THE USER:   UPGRADE VS INSTALL, GIT?, APP RENAME, ...
         app_name_msg = app_name
 
+        is_git = False
         git_ver = git_version()
         if git_ver is None:
             vc_msg = "without version control support (git not present)"
-            is_git = False
         else:
             vc_msg = "without version control support"
 
@@ -276,22 +294,6 @@ class UnarchiveCmd(KsconfCmd):
             self.stdout.write(f"Before upgrade.  App has {len(existing_files)} files\n")
         elif is_git:
             self.stdout.write("Git clean check skipped.  Not needed for a fresh app install.\n")
-
-        def fixup_pattern_bw(patterns, prefix=None):
-            modified = []
-            for pattern in patterns:
-                if pattern.startswith("./"):
-                    if prefix:
-                        pattern = f"{prefix}/{pattern[2:]}"
-                    else:
-                        pattern = pattern[2:]
-                    modified.append(pattern)
-                # If a pattern like 'tags.conf' or '*.bak' is provided, use basename match (any dir)
-                elif "/" not in pattern:
-                    modified.append("(^|.../)" + pattern)
-                else:
-                    modified.append(pattern)
-            return modified
 
         # PREP ARCHIVE EXTRACTION
         installed_files = set()
