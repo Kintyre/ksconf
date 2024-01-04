@@ -26,6 +26,7 @@ Renames:
 Ksconf v0.13.9 (DRAFT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+*  Fix app deployment bug that can occur if a previously deployed path changes from a file to a directory.
 *  Internal layering improvements.
    *  Add/improve layer caching mechanisms.
       Packaging large apps saw a 2-3x performance improvement during development.

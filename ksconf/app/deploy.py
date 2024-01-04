@@ -275,15 +275,11 @@ class DeployApply:
             else:
                 raise TypeError(f"Unable to handle action of type {type(action)}")
 
-        # Handle special case:  Existing file becomes a directory
-        files_now_dirs = remove_path.intersection(make_dirs)
-        if files_now_dirs:
-            # Delete these first
-            for p in files_now_dirs:
-                full_path: Path = self.dest.joinpath(p)
-                if full_path.is_file():
-                    full_path.unlink()
-                remove_path.remove(p)
+        # Cleanup removed files (avoid corner cases caused by op ordering)
+        for p in remove_path:
+            full_path: Path = self.dest.joinpath(p)
+            if full_path.is_file():
+                full_path.unlink()
 
         # Make necessary directories
         for d in sorted(make_dirs, key=_path_by_part_len):
@@ -304,12 +300,6 @@ class DeployApply:
                 dest_path.write_bytes(gaf.payload)
                 # Should we use the chmod from the archive, or the one from the deployment sequence object?
                 dest_path.chmod(gaf.mode)
-
-        # Cleanup removed files
-        for p in remove_path:
-            full_path: Path = self.dest.joinpath(p)
-            if full_path.is_file():
-                full_path.unlink()
 
         # Cleanup any empty directories (longest paths first)
         for d in sorted(set(f.parent for f in remove_path),
