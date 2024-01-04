@@ -275,6 +275,10 @@ class DeployApply:
             else:
                 raise TypeError(f"Unable to handle action of type {type(action)}")
 
+        if not archive:
+            raise TypeError(f"Missing {DeployActionType.SOURCE_REFERENCE} event. "
+                            "Therefore archive is unknown.")
+
         # Cleanup removed files (avoid corner cases caused by op ordering)
         for p in remove_path:
             full_path: Path = self.dest.joinpath(p)
@@ -287,10 +291,6 @@ class DeployApply:
             # Even with careful sorting, we must still use parents=True as some
             # directories contain no files, such as 'ui' in 'default/data/ui/nav'.
             dest_dir.mkdir(self.dir_mode, parents=True, exist_ok=True)
-
-        if not archive:
-            raise TypeError(f"Missing {DeployActionType.SOURCE_REFERENCE} event. "
-                            "Therefore archive is unknown.")
 
         # Expand matching files
         for gaf in extract_archive(archive):
