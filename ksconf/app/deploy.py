@@ -275,6 +275,16 @@ class DeployApply:
             else:
                 raise TypeError(f"Unable to handle action of type {type(action)}")
 
+        # Handle special case:  Existing file becomes a directory
+        files_now_dirs = remove_path.intersection(make_dirs)
+        if files_now_dirs:
+            # Delete these first
+            for p in files_now_dirs:
+                full_path: Path = self.dest.joinpath(p)
+                if full_path.is_file():
+                    full_path.unlink()
+                remove_path.remove(p)
+
         # Make necessary directories
         for d in sorted(make_dirs, key=_path_by_part_len):
             dest_dir: Path = self.dest.joinpath(d)
