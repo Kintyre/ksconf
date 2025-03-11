@@ -102,7 +102,8 @@ def pip_install(step: BuildStep,
                 isolated: bool = True,
                 dependencies: bool = True,
                 handle_dist_info: str = "remove",  # or 'rename'
-                remove_console_scripts: bool = True
+                remove_console_scripts: bool = True,
+                extra_args: Optional[list[str]] = None
                 ) -> None:
     dist_info_options = ("remove", "rename", "keep")
     if handle_dist_info not in dist_info_options:
@@ -113,7 +114,8 @@ def pip_install(step: BuildStep,
         python_path = sys.executable
     target = step.build_path / dest
 
-    extra_args = []
+    if extra_args is None:
+        extra_args = []
 
     if isolated:
         extra_args.append("--isolated")

@@ -23,6 +23,11 @@ Renames:
 - ``ksconf/commands/__init__.py`` -> ``ksconf/command.py``
 
 
+Ksconf v0.13.10 (2025-03-11)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*  Add ``extra_args`` field for :py:func:`~ksconf.builder.steps.pip_install` to allow a command line pass-thru for special use cases.
+
+
 Ksconf v0.13.9 (2024-01-04)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

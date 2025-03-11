@@ -8,6 +8,7 @@ gitlint
 sphinx
 sphinx-argparse
 sphinx_rtd_theme
+lxml
 
 twine
 pyOpenSSL
