@@ -19,11 +19,11 @@ jobs:
         os:
           - ubuntu-latest
         python-version:
-          - '3.7'
           - '3.8'
-          - '3.9.17'    # Seems to be this:  https://github.com/python/cpython/issues/91351
+          - '3.9'
           - '3.10'
           - '3.11'
+          - '3.12'
         include:
           - os: ubuntu-latest
             python-version: 3.10
@@ -34,12 +34,12 @@ jobs:
           #   python-version: 3.7
           #   build_splunk_app: true
           - os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             extra_packages: argcomplete
           - os: macos-latest
-            python-version: 3.7.12
+            python-version: 3.9
           - os: windows-latest
-            python-version: 3.7
+            python-version: 3.9
     steps:
       - name: Job details
         env:
