@@ -13,7 +13,7 @@
 
 # These are copied from requirements.txt
 # NOTE:  We copy instead of reference because this list is used by build.py.
-splunk-sdk>=1.7.0
+splunk-sdk>=2.1.0
 # 1.3.0 Drops Python 3.7 support
 pluggy>=1.2.0,<1.3
 
@@ -22,4 +22,4 @@ pluggy>=1.2.0,<1.3
 # Pluggy support for legacy python versions (max to limit for Python 3.7)
 importlib-metadata>=6.0,<6.8
 typing-extensions>=4.7,<4.8
-zipp>=3.15,<3.16
+zipp>=3.15,<3.16    # Known security issue prior to 3.19.1, but that won't support Python 3.7
